@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;1.3. Режимы работы RDS</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_1">Глава 1. Устройство RDS</a></p>
+<div class="level"><p>&sect;1.3. Режимы работы RDS</p>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_1_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_1_4.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_1_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 1. Устройство RDS</h2>
+<h3>&sect;1.3. Режимы работы RDS</h3>
+<p class="abstract">Описываются три режима работы RDS и циклический вызов моделей блоков в режиме расчета.</p>
+
+
+<p><span id="ref1">RDS</span>
+может находиться в одном из трех режимов:
+<span class="term">редактирования</span>,
+<span class="term">моделирования</span> и
+<span class="term">расчета</span> (см. <a href="um_1_3.htm" title="&sect;1.3. Режимы работы RDS">&sect;1.3 описания пользователя</a>).</p>
+
+<p>В режиме <span class="term"  id="light_ref1">редактирования</span> пользователь может изменять схему,
+добавляя и удаляя блоки
+и связи и вводя их параметры. При этом информация о движении курсора и нажатии кнопок мыши и клавиш не
+передается в <a href="pm_1_2.htm#ref1" title="Модель блока">модели блоков</a>. Тем не менее, блоки продолжают реагировать на остальные события пользовательского
+интерфейса: вывод всплывающей подсказки, вызов настройки, перемещение и т.п.</p>
+
+<p><span id="ref2">В</span>
+режиме <span class="term" id="light_ref2">моделирования</span> пользователь не может ни редактировать схему,
+ни вызвать функцию настройки блока &ndash; все события мыши и клавиатуры передаются в функцию модели.</p>
+
+<p><span id="ref3">В</span>
+режиме <span class="term" id="light_ref3">расчета</span> все события мыши и клавиатуры также передаются в
+функции блоков. Кроме того, постоянно (как правило, в отдельном потоке) циклически выполняется следующая
+последовательность действий:</p>
+
+<ul>
+  <li>По очереди в произвольном порядке вызываются все модели
+  <a href="pm_1_2.htm#light_ref3" title="Простой блок">простых блоков</a> (при этом в функцию модели
+  передается идентификатор события
+  <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>), у которых установлен параметр
+  &laquo;запуск каждый такт&raquo; или значение первой однобайтовой статической переменной (как правило, она
+  называется &laquo;<span class="rdsvar">Start</span>&raquo;) равно единице. При этом перед вызовом каждой модели значение переменной
+  &laquo;<span class="rdsvar">Start</span>&raquo; сбрасывается в 0, и второй однобайтовой статической переменной блока (как правило, она
+  называется &laquo;<span class="rdsvar">Ready</span>&raquo;) присваивается единица. Перед вызовом реакции
+  <span class="cpp">RDS_BFM_MODEL</span> у блоков, модели которых взвели флаг
+  <span class="cpp"><a href="RDS_BLOCKDATA.htm#light_ref16" title="Флаг RDS_CTRLCALC">RDS_CTRLCALC</a></span> в своей структуре данных
+  <span class="cpp"><a href="RDS_BLOCKDATA.htm#ref3" title="Структура RDS_BLOCKDATA">RDS_BLOCKDATA</a></span>,
+  вызывается дополнительная реакция
+  <span class="cpp"><a href="RDS_BFM_PREMODEL.htm" title="А.2.4.10. RDS_BFM_PREMODEL &ndash; вызов модели перед тактом расчета">RDS_BFM_PREMODEL</a></span></span>
+  (см. <a href="pm_2_14_5.htm" title="&sect;2.14.5. Вызов модели блока перед тактом расчета">&sect;2.14.5</a>).</li>
+
+  <li>Для всех простых блоков, у которых переменная &laquo;<span class="rdsvar">Ready</span>&raquo; имеет значение 1, выполняется передача
+  данных по связям, подключенным к выходам (некоторые выходы блока могут быть
+  <a href="pm_2_5_8.htm" title="&sect;2.5.8. Использование выходов с управляющими переменными">запрещены</a>, в этом случае передача
+  данных этого выхода не производится). Таким образом, все сработавшие блоки передают свои данные. После передачи
+  значение &laquo;<span class="rdsvar">Ready</span>&raquo; сбрасывается в 0.</li>
+
+  <li>Начинается следующий <span class="term"><span id="light_ref4">такт расчета</span></span>:
+  снова вызываются все модели
+  простых блоков, передаются данные по связям, и т.д. до тех пор, пока пользователь или один из блоков не даст
+  команду остановить расчет.</li>
+</ul>
+
+<p class="noindent">Переменные
+<span class="cpp"><span id="ref5">Start</span></span> и
+<span class="cpp"><span id="ref6">Ready</span></span>
+(их названия можно изменить, главное, чтобы это были первая и вторая переменные блока) играют роль сигналов
+<span id="light_ref5">запуска</span> и <span id="light_ref6">готовности</span>. Модель может сама изменять
+значения этих переменных для управления работой блока. Например, если присвоить переменной
+<span class="cpp">Start</span> значение 1, модель блока будет снова запущена в следующем такте расчета, даже если связь,
+присоединенная к этой переменной, не сработает. Если же присвоить переменной <span class="cpp">Ready</span>
+значение 0,
+данные с выхода блока не будут переданы по связям, несмотря на то, что блок сработал в этом такте.</p>
+
+<p>В расчете участвуют только простые блоки. Ни
+<a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистемы</a>, ни внешние
+<a href="pm_1_2.htm#light_ref6" title="Внешний вход подсистемы">входы</a>/<a href="pm_1_2.htm#light_ref8" title="Внешний выход подсистемы">выходы</a>, ни
+<a href="pm_1_2.htm#light_ref9" title="Ввод шины">вводы шин</a> в расчете не участвуют, то есть их модели вообще никогда не
+вызываются в режиме <span class="cpp">RDS_BFM_MODEL</span> в такте расчета. Если, например, данные передаются от
+простого блока &laquo;<span class="rdsvar">Block1</span>&raquo; внутрь подсистемы &laquo;<span class="rdsvar">Sys1</span>&raquo; через внешний вход
+&laquo;<span class="rdsvar">Input1</span>&raquo; ко второму простому блоку &laquo;<span class="rdsvar">Block2</span>&raquo;
+(<a href="#pic1" title="В расчете участвуют только блоки 1 и 2">рис.&nbsp;4</a>),
+то ни модель подсистемы, ни модель внешнего входа вызвана не будет. Будут вызваны только модели первого и второго
+блоков, при этом после срабатывания первого блока данные его выхода y передадутся непосредственно на вход второго
+блока <span class="cpp">x</span>, на вход <span class="cpp">Input1</span> подсистемы &laquo;<span class="rdsvar">Sys1</span>&raquo; и на выход ее
+внешнего входа &laquo;<span class="rdsvar">Input1</span>&raquo;. Такой подход позволяет ускорить расчет за счет исключения промежуточных ступеней.
+Следует иметь в виду, что статические переменные подсистемы и внешнего входа все равно получат данные первого блока,
+хотя их модели и не вызываются. Это может оказаться полезным в тех случаях, когда подсистема или внешний вход имеют
+<a href="um_1_2.htm#light_ref22">векторную картинку</a>: если какие-либо элементы этой картинки связаны с переменными,
+изменившиеся значения этих переменных отразятся на внешнем виде блоков. Например, если добавить в векторную
+картинку подсистемы &laquo;<span class="rdsvar">Sys1</span>&raquo; строку текста и связать ее с входом <span class="cpp">Input1</span> этой
+подсистемы, в режимах расчета и моделирования на изображении подсистемы будет выводиться числовое значение входа
+<span class="cpp">Input1</span>, полученное по связи от блока &laquo;<span class="rdsvar">Block1</span>&raquo;.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/ExtInput.png" width="362" height="207" alt="В расчете участвуют только блоки 1 и 2" />
+<p id="light_pic1">Рис.&nbsp;4. В расчете участвуют только блоки 1 и 2</p>
+</div></div>
+
+
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_1_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_1_4.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_1_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

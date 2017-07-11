@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.7.13.4. Регистрация и поиск исполнителя функции</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_7">&sect;3.7. Принципы создания автокомпилируемых моделей блоков</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_7_12">&sect;3.7.13. Вызов функций блоков</a></p>
+<div class="level"><p>&sect;3.7.13.4. Регистрация и поиск исполнителя функции</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="um_3_7_12_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_7_12_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_12_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.7. Принципы создания автокомпилируемых моделей блоков</h3>
+<h4 class="off">&sect;3.7.13. Вызов функций блоков</h4>
+<h5>&sect;3.7.13.4. Регистрация и поиск исполнителя функции</h5>
+<p class="abstract">Описывается способ регистрации блока как исполнителя какой-либо функции, что позволит другим блокам легко находить его. Также описывается поиск блока-исполнителя для известной функции.</p>
+
+
+<p>Регистрация блока в качестве исполнителя
+<a href="um_1_6.htm#ref1" title="Коротко о функциях блоков">функции</a> позволяет другим блокам, расположенным в одной с ним
+<a href="um_1_2.htm#light_ref10" title="Подсистема">подсистеме</a> или в подсистемах внутри нее, находить этот блок в схеме и
+вызывать нужную им функцию непосредственно у него. Таких исполнителей может быть в схеме несколько
+&ndash; каждый из них будет обслуживать свою ветвь иерархии схемы, начиная с собственной подсистемы.
+Поиском исполнителей функции и слежением за их появлением и исчезновением занимается
+RDS. Любому блоку, модель которого запросила информацию об исполнителе, постоянно предоставляется информация
+о ближайшем исполнителе в иерархии &ndash; после первичного запроса, модели не нужно выполнять каких-либо
+действий для поддержания информации об исполнителе в актуальном состоянии. Так можно довольно просто
+добавлять в схему новые функции, доступные блокам независимо от их размещения: можно организовать ведение
+журналов событий, связь с внешними приложениями и т.п.</p>
+
+<p>Работа с блоками-исполнителями функций состоит из двух частей: регистрации, выполняемой блоком,
+у которого будет вызываться функция, и подписки на исполнителя, выполняемой блоком, который будет
+вызывать функцию. Модуль автокомпиляции автоматизирует обе части: для того, чтобы объявить блок
+исполнителем функции, достаточно просто включить одноименный флажок при
+<a href="um_3_6_5.htm" title="&sect;3.6.5. Функции блока">добавлении функции в модель</a>. Точно так же, флажком при
+добавлении функции в модель, включается и подписка блока на исполнителя функции. Для вызова функции у
+исполнителя, на который подписан блок, у объекта, созданного для этой функции, вызывается функция-член
+<span class="cpp"><a href="um_3_7_12_1.htm#light_ref6" title="Функция Call класса функции блока (у исполнителя)">Call</a></span>
+без указания идентификатора блока. Следует, однако, помнить, что такой вызов возможен только
+непосредственно из модели блока, то есть из функции, являющейся членом класса блока. Если вызов производится
+из функции, не принадлежащей классу блока (например, из функции обратного вызова, подобной функции
+<span class="cpp"><a href="um_3_7_12_3.htm#ref5" title="Функция обратного вызова ControlValChanged_Callback">ControlValChanged_Callback</a></span> из
+<a href="um_3_7_12_3.htm" title="&sect;3.7.13.3. Вызов функции у одного блока">&sect;3.7.13.3</a>, <span class="cpp">Call</span> без идентификатора
+блока будет недоступна. В этом случае нужно как-то передать в эту функцию идентификатор исполнителя,
+полученный через функцию-член
+<span class="cpp"><a href="um_3_7_12_1.htm#light_ref15" title="Функция Provider класса функции блока">Provider</a></span>
+(подробнее о технической реализации вызовов функций через объекты можно прочесть в
+<a href="um_3_7_12_5.htm" title="&sect;3.7.13.5. Объекты функций в автокомпилируемых моделях">&sect;3.7.13.5</a>).</p>
+
+<p>Рассмотрим простой пример: создадим блок, который, при вызове у него функции, будет выводить сообщение
+пользователю. В параметрах функции будет содержаться текст сообщения и его тип: информационное сообщение,
+предупреждение или сообщение об ошибке. Назовем эту функцию
+&laquo;<span class="rdsvar">UserManual.Message</span>&raquo;, а
+<a href="um_3_7_12_1.htm#ref1" title="Параметры функции блока">параметры</a>
+ее оформим в виде структуры, первым полем которой будет
+размер этой структуры. Структуру мы запишем в файл
+&laquo;<span class="file">UserMessage.h</span>&raquo;, который разместим в одной папке с файлом модели блока. Создадим этот
+файл &laquo;<span class="file">UserMessage.h</span>&raquo; (например, в &laquo;блокноте&raquo; Windows) и введем в него
+следующий текст:</p>
+
+<pre class="cpp">  struct TUserMessageFuncParam
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize; // Размер структуры
+    int Type;       // Тип сообщения
+    char *Message;  // Текст сообщения
+  };
+  // Типы сообщений
+  #define UMFP_TYPE_INF  0 // Информационное
+  #define UMFP_TYPE_WARN 1 // Предупреждение
+  #define UMFP_TYPE_ERR  2 // Ошибка</pre>
+
+<p>Первое поле структуры (<span class="cpp">servSize</span>) будет содержать ее собственный размер,
+чтобы вызванный блок мог сравнить его с действительным размером структуры и понять, правильно ли переданы
+параметры. В поле <span class="cpp">Type</span> будет храниться тип сообщения: 0 &ndash; информационное,
+1 &ndash; предупреждение, 2 &ndash; сообщение об ошибке. В поле <span class="cpp">Message</span> должен быть
+записан указатель на строку с текстом сообщения. Чтобы не запоминать, какое целое число соответствует какому
+типу сообщения, после описания структуры мы вводим <span class="cpp">define</span>-константы для каждого из
+перечисленных выше типов.</p>
+
+<p><a href="um_3_7_2_1.htm#light_ref6" title="Создание нового блока с моделью">Создадим</a> в схеме новый блок с автокомпилируемой моделью и
+сразу введем в эту модель команду для включения файла с описанной нами структурой: на вкладке
+&laquo;<span class="menu"><a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">события</a></span>&raquo; левой панели редактора раскроем раздел
+&laquo;<span class="menu">описания</span>&raquo;, дважды щелкнем на его пункте
+&laquo;<span class="menu">глобальные описания</span>&raquo; и на открывшейся справа пустой вкладке
+&laquo;<span class="menu">описания</span>&raquo; введем единственную строчку:</p>
+
+<pre class="cpp">  #include "UserMessage.h"</pre>
+
+<p>Теперь добавим в модель функцию &laquo;<span class="rdsvar">UserManual.Message</span>&raquo;. На вкладке
+&laquo;<span class="menu"><a href="um_3_6_5.htm" title="&sect;3.6.5. Функции блока">функции</a></span>&raquo; левой панели нажмем кнопку
+&laquo;<span class="menu">+</span>&raquo; и заполним открывшееся окно
+согласно <a href="#pic1" title="Добавление в модель блока функции UserManual.Message (рамкой выделен флажок, регистрирующий блок как исполнителя функции)">рис.&nbsp;473</a>.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/AC_Funcprov_FuncWin_Reg.png" width="567" height="411" alt="Добавление в модель блока функции UserManual.Message (рамкой выделен флажок, регистрирующий блок как исполнителя функции)" />
+<p id="light_pic1">Рис.&nbsp;473. Добавление в модель блока функции &laquo;<span class="rdsvar">UserManual.Message</span>&raquo;<br />(рамкой выделен флажок, регистрирующий блок как исполнителя функции)</p>
+</div></div>
+
+
+<p>На верхней панели окна выбран флажок &laquo;<span class="menu">произвольная функция</span>&raquo;
+&ndash; мы добавляем функцию, которую придумали сами. На панели
+&laquo;<span class="menu">имя функции в RDS</span>&raquo; введено название нашей функции. Поле
+&laquo;<span class="menu">объект для функции в программе</span>&raquo; можно оставить без изменений: хотя модуль автокомпиляции и
+предлагает, как обычно, слишком длинное имя для объекта, в этой модели мы не будем обращаться к этому объекту
+вручную, поэтому не важно, как он называется. В поле
+&laquo;<span class="menu">тип параметра функции</span>&raquo; введен тип указателя на описанную нами структуру
+<span class="cpp">TUserMessageFuncParam</span>, то есть
+&laquo;TUserMessageFuncParam*&raquo;. Наконец, на панели
+&laquo;<span class="menu">дополнительные действия</span>&raquo;, в отличие от предыдущих примеров, выбран флажок
+&laquo;<span class="menu">объявить блок исполнителем функции</span>&raquo;.</p>
+
+<p>После нажатия &laquo;<span class="menu">OK</span>&raquo; новая функция появится в списке функций на вкладке
+(<a href="#pic2" title="Список функций в редакторе модели после добавления UserManual.Message и регистрации блока как ее исполнителя">рис.&nbsp;474</a>).
+Можно заметить, что, кроме иконки с пустым листом (указывающей, что мы еще не ввели текст реакции на
+эту функцию), рядом с ее именем будет находиться знак &laquo;<span class="menu">+</span>&raquo; &ndash; так помечаются функции,
+исполнителем которых является блок. Теперь с момента подключения модели к блоку и до ее отключения
+(например, из-за удаления блока из схемы) наш блок будет считаться исполнителем функции
+&laquo;<span class="rdsvar">UserManual.Message</span>&raquo;.</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/AC_Funcprov_FuncPan_Reg.png" width="597" height="140" alt="Список функций в редакторе модели после добавления UserManual.Message и регистрации блока как ее исполнителя" />
+<p id="light_pic2">Рис.&nbsp;474. Список функций в редакторе модели после добавления &laquo;<span class="rdsvar">UserManual.Message</span>&raquo;<br />и регистрации блока как ее исполнителя</p>
+</div></div>
+
+
+<p>Функция добавлена в модель и блок зарегистрирован как ее исполнитель &ndash; теперь нужно ввести реакцию на
+эту функцию. Проще всего сделать это, выбрав функцию в списке на панели
+&laquo;<span class="menu">функции</span>&raquo; (она там единственная) и нажав кнопку с желтым листком в левой нижней части вкладки.
+На открывшейся справа вкладке с именем функции (&laquo;UserManual.Message&raquo;) введем следующий текст:</p>
+
+<pre class="cpp">  if(Param!=NULL &amp;&amp; // Параметр передан
+     Param-&gt;servSize&gt;=sizeof(TUserMessageFuncParam)) // Размер верен
+    { int icon;
+      char *msg;
+      // В зависимости от типа сообщения выбираем иконку для него
+      switch(Param-&gt;Type)
+        { case UMFP_TYPE_INF:  // Информация
+            icon=MB_ICONINFORMATION; break;
+          case UMFP_TYPE_WARN: // Предупреждение
+            icon=MB_ICONWARNING; break;
+          default:             // Ошибка
+            icon=MB_ICONERROR;
+        }
+      if(Param-&gt;Message) // Передан текст сообщения
+        msg=Param-&gt;Message;
+      else // Текст не передан
+        msg="Сообщение";
+      // Вывод сообщения пользователю
+      <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(msg,<a class="hidden" href="um_3_7_1.htm#ref26" title="Указатель на структуру данных блока">rdsbcppBlockData</a>-&gt;BlockName,icon|MB_OK);
+    }</pre>
+
+<p>Сначала, как и в предыдущих примерах, мы проверяем, переданы ли для функции правильные параметры.
+Параметр <span class="cpp">Param</span> должен указывать на структуру <span class="cpp">TUserMessageFuncParam</span>:
+если он равен <span class="cpp">NULL</span>, или если поле <span class="cpp">servSize</span>
+(оно в структуре первое) меньше размера этой структуры, значит, параметры переданы неверно, и блок не
+может ничего вывести. Если обе проверки прошли, то, в зависимости от поля <span class="cpp">Type</span> переданной
+структуры, мы присваиваем целой переменной <span class="cpp">icon</span> одну из стандартных констант Windows API:
+<span class="cpp">MB_ICONINFORMATION</span>, <span class="cpp">MB_ICONWARNING</span> или <span class="cpp">MB_ICONERROR</span>.
+Эти константы при выводе сообщения пользователю указывают иконку, изображаемую рядом с текстом сообщения.
+Затем в переменную <span class="cpp">msg</span> записывается либо указатель на текст сообщения, полученный
+из поля <span class="cpp">Message</span> структуры параметров функции, либо, если вместо текста почему-то
+передали <span class="cpp">NULL</span>, указатель на строку &laquo;сообщение&raquo;. После этого вызывается
+сервисная функция RDS <span class="cpp"><a href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a></span>, выводящая пользователю окно с
+сообщением <span class="cpp">msg</span>, иконкой <span class="cpp">icon</span> и единственной кнопкой
+&laquo;<span class="menu">OK</span>&raquo;. От стандартной функции Windows API <span class="cpp">MessageBox</span> она отличается
+только тем, что не блокирует выполнение расчета.</p>
+
+<p>После компиляции модели созданного блока все блоки в одной с ним подсистеме и подсистемах, вложенных в нее,
+получат возможность вызывать у него функцию &laquo;<span class="rdsvar">UserManual.Message</span>&raquo;. Создадим еще один блок,
+который будет выводить сообщение пользователю при превышении значением входа некоторого заданного уровня.
+У блока будет три вещественных входа: &laquo;<span class="rdsvar">x</span>&raquo;, &laquo;<span class="rdsvar">L</span>&raquo; и &laquo;<span class="rdsvar">delta</span>&raquo;.
+Как только &laquo;<span class="rdsvar">x</span>&raquo; превысит &laquo;<span class="rdsvar">L</span>&raquo; на &laquo;<span class="rdsvar">delta</span>&raquo;, блок выведет пользователю
+сообщение об этом, и будет &laquo;молчать&raquo;, пока &laquo;<span class="rdsvar">x</span>&raquo; не станет меньше
+&laquo;<span class="rdsvar">L</span>&raquo; минус &laquo;<span class="rdsvar">delta</span>&raquo;. Такой гистерезис мы вводим для того, чтобы небольшие колебания
+&laquo;<span class="rdsvar">x</span>&raquo; вокруг &laquo;<span class="rdsvar">L</span>&raquo; не приводили к каскаду сообщений, каждое из которых пользователь
+должен будет закрывать кнопкой &laquo;<span class="menu">OK</span>&raquo;. Для того, чтобы блок помнил, можно ли ему сейчас выводить
+сообщение или нет, мы введем в него внутреннюю логическую переменную &laquo;<span class="rdsvar">out</span>&raquo;: она будет получать
+значение 1, если &laquo;<span class="rdsvar">x</span>&raquo; превысит &laquo;<span class="rdsvar">L</span>&raquo;+&laquo;<span class="rdsvar">delta</span>&raquo; и сообщение будет
+выведено, и сбрасываться в 0, как только &laquo;<span class="rdsvar">x</span>&raquo; станет меньше &laquo;<span class="rdsvar">L</span>&raquo;&minus;&laquo;<span class="rdsvar">delta</span>&raquo;.
+Таким образом, наш блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="vcenter">x</td>
+<td class="center">double</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="vcenter">L</td>
+<td class="center">double</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="vcenter">out</td>
+<td class="center">Логический</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="vcenter">delta</td>
+<td class="center">double</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0.1</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p><a href="um_3_7_2_1.htm#light_ref6" title="Создание нового блока с моделью">Создадим</a> в схеме новый блок с автокомпилируемой моделью и
+<a href="um_3_6_2.htm" title="&sect;3.6.2. Статические переменные блока">зададим</a>
+для него указанную структуру переменных. Этот блок будет искать исполнителя функции
+&laquo;<span class="rdsvar">UserManual.Message</span>&raquo; и вызывать эту функцию для сообщения, поэтому в его модели нам
+потребуется описание структуры <span class="cpp">TUserMessageFuncParam</span>. Откроем вкладку глобальных
+описаний модели (вкладка
+&laquo;<span class="menu"><a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">события</a></span>&raquo; &ndash; раздел
+&laquo;<span class="menu">описания</span>&raquo; &ndash; двойной щелчок на пункте
+&laquo;<span class="menu">глобальные описания</span>&raquo;) и введем на ней команду включения файла
+&laquo;<span class="file">UserMessage.h</span>&raquo;, в котором описана эта структура:</p>
+
+<pre class="cpp">  #include "UserMessage.h"</pre>
+
+<p>Теперь добавим в модель функцию &laquo;<span class="rdsvar">UserManual.Message</span>&raquo; и укажем, что блок должен найти
+исполнителя этой функции. На вкладке &laquo;<span class="menu"><a href="um_3_6_5.htm" title="&sect;3.6.5. Функции блока">функции</a></span>&raquo;
+левой панели редактора нажмем кнопку &laquo;<span class="menu">+</span>&raquo; и заполним открывшееся окно
+согласно <a href="#pic3" title="Добавление в модель блока функции UserManual.Message (рамкой выделен флажок, включающий поиск исполнителя функции)">рис.&nbsp;475</a>.</p>
+
+<div class="pic"><div class="container" id="pic3">
+<img src="../img/AC_Funcprov_FuncWin_Sub.png" width="567" height="411" alt="Добавление в модель блока функции UserManual.Message (рамкой выделен флажок, включающий поиск исполнителя функции)" />
+<p id="light_pic3">Рис.&nbsp;475. Добавление в модель блока функции &laquo;<span class="rdsvar">UserManual.Message</span>&raquo;<br />(рамкой выделен флажок, включающий поиск исполнителя функции)</p>
+</div></div>
+
+
+<p>В целом, окно заполнено почти так же, как и у предыдущего блока
+(<a href="#pic1" title="Добавление в модель блока функции UserManual.Message (рамкой выделен флажок, регистрирующий блок как исполнителя функции)">рис.&nbsp;473</a>), за несколькими исключениями. На верхней панели
+окна опять выбран флажок &laquo;<span class="menu">произвольная функция</span>&raquo; &ndash; добавляемая функция не является
+стандартной. На панели &laquo;<span class="menu">имя функции в RDS</span>&raquo; снова введено название нашей функции. Поле
+&laquo;<span class="menu">объект для функции в программе</span>&raquo;, в отличие от предыдущей модели, мы меняем на
+&laquo;rdsfuncUM_Message&raquo;: этот блок вызывает функцию, поэтому имя объекта, который мы
+будем использовать для этого, сделаем покороче. В поле
+&laquo;<span class="menu">тип параметра функции</span>&raquo; введен уже знакомый нам тип указателя на структуру
+&laquo;TUserMessageFuncParam*&raquo;. А на панели
+&laquo;<span class="menu">дополнительные действия</span>&raquo; теперь выбран флажок
+&laquo;найти в схеме исполнителя функции&raquo;.</p>
+
+<p>Рядом с именем добавленной нами функции в списке функций
+(<a href="#pic4" title="Список функций в редакторе модели после добавления UserManual.Message и включения поиска ее исполнителя">рис.&nbsp;476</a>),
+помимо иконки с пустым листом (текст реакции на эту функцию не введен), будет находиться изображение
+лупы: оно указывает на то, что блок будет запрашивать у RDS поиск исполнителя этой функции, и,
+поэтому, ее можно вызывать без указания идентификатора вызываемого блока. Теперь, с момента подключения
+модели к блоку и до ее отключения, наш блок будет знать ближайшего по иерархии исполнителя функции
+&laquo;<span class="rdsvar">UserManual.Message</span>&raquo;, если, конечно, такой исполнитель существует в схеме.</p>
+
+<div class="pic"><div class="container" id="pic4">
+<img src="../img/AC_Funcprov_FuncPan_Sub.png" width="543" height="142" alt="Список функций в редакторе модели после добавления UserManual.Message и включения поиска ее исполнителя" />
+<p id="light_pic4">Рис.&nbsp;476. Список функций в редакторе модели после добавления &laquo;<span class="rdsvar">UserManual.Message</span>&raquo;<br />и включения поиска ее исполнителя</p>
+</div></div>
+
+
+<p>Теперь введем реакцию блока на
+<a href="um_1_3.htm#ref4" title="Такт расчета">такт расчета</a>, из которой мы и будем вызывать функцию.
+На вкладке &laquo;<span class="menu">события</span>&raquo; левой панели редактора раскроем раздел
+&laquo;<span class="menu">моделирование и режимы</span>&raquo;, дважды щелкнем на пункте
+&laquo;<span class="menu">модель</span>&raquo; и введем на открывшейся одноименной вкладке следующий текст:</p>
+
+<pre class="cpp">  if(x&gt;L+delta) // Вход выше уровня с запасом
+    { if(!out) // Сообщение об этом еще не выводилось
+        { TUserMessageFuncParam param; // Параметры функции
+          param.servSize=sizeof(param);// Размер структуры
+          param.Type=UMFP_TYPE_WARN;   // Предупреждение
+          // Формируем динамическую строку с текстом сообщения
+          param.Message=
+            <a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a>(<a class="hidden" href="um_3_7_1.htm#ref26" title="Указатель на структуру данных блока">rdsbcppBlockData</a>-&gt;BlockName,
+                         " - превышение уровня",FALSE);
+          // Вызываем функцию у исполнителя, кем бы он ни был
+          rdsfuncUM_Message.<a class="hidden" href="um_3_7_12_1.htm#light_ref6" title="Функция Call класса функции блока (у исполнителя)">Call</a>(&amp;param);
+          // Освобождаем динамическую строку
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(param.Message);
+          out=1; // Запоминаем факт вывода сообщения
+        }
+    }
+  else if(x&lt;L-delta) // Вход ниже уровня с запасом
+    out=0; // Теперь снова разрешаем вывод сообщения</pre>
+
+<p>Сначала мы проверяем, не превысило ли значение <span class="cpp">x</span> значение <span class="cpp">L</span>
+с запасом <span class="cpp">delta</span>. Если это так, и сообщение о превышении уровня еще не выводилось
+(то есть логический флаг <span class="cpp">out</span> не взведен), мы должны вывести пользователю сообщение
+через исполнителя функции &laquo;<span class="rdsvar">UserManual.Message</span>&raquo;. Для вызова функции нам потребуется структура
+типа <span class="cpp">TUserMessageFuncParam</span> &ndash; назовем объект этой структуры <span class="cpp">param</span>.
+В поле <span class="cpp">servSize</span> этой структуры мы записываем ее размер, полученный при помощи оператора
+<span class="cpp">sizeof</span>, а в поле <span class="cpp">Type</span> &ndash; константу
+<span class="cpp">UMFP_TYPE_WARN</span> из файла &laquo;<span class="file">UserMessage.h</span>&raquo; (он уже включен
+в глобальных описаниях), означающую предупреждающее сообщение. В поле
+<span class="cpp">Message</span> при помощи функции <span class="cpp"><a href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span> мы
+формируем динамическую строку, состоящую из имени данного блока и слов
+&laquo;превышение уровня&raquo;. Эту строку потом нужно будет освободить вызовом
+<span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p>Теперь все поля структуры параметров заполнены &ndash; можно вызывать функцию. Для этого мы используем
+функцию-член <span class="cpp"><a href="um_3_7_12_1.htm#light_ref6" title="Функция Call класса функции блока (у исполнителя)">Call</a></span> объекта
+<span class="cpp">rdsfuncUM_Message</span>, созданного для &laquo;<span class="rdsvar">UserManual.Message</span>&raquo;.
+В эту функцию-член мы передаем только указатель на структуру <span class="cpp">param</span>, идентификатор
+вызываемого блока не передается. Именно отсутствие идентификатора блока в вызове <span class="cpp">Call</span>
+говорит о том, что функция вызывается у ее найденного исполнителя, а не у какого-то другого блока.
+Вызвав функцию, мы освобождаем ранее созданную строку <span class="cpp">param.Message</span> при помощи
+<span class="cpp">rdsFree</span> и взводим флаг <span class="cpp">out</span>, чтобы не выводить сообщение
+повторно, пока <span class="cpp">x</span> не снизится.</p>
+
+<p>Если же значение <span class="cpp">x</span> оказалось ниже значения <span class="cpp">L</span> с запасом
+<span class="cpp">delta</span>, мы сбрасываем <span class="cpp">out</span>, чтобы при следующем превышении
+снова вывести сообщение.</p>
+
+<p>Для проверки работы созданных моделей можно собрать схему, изображенную
+на <a href="#pic5" title="Схема для тестирования исполнителя функции и выводимое сообщение: здесь Block1 &ndash; исполнитель, Block22 &ndash; блок проверки уровня">рис.&nbsp;477</a>.
+Если запустить расчет и дать <span class="cpp">x</span> значение, большее суммы
+<span class="cpp">L</span> и <span class="cpp">delta</span>, на экране появится сообщение о
+превышении уровня, выведенное блоком-исполнителем, с указанием имени блока, в котором это превышение возникло.
+Если создать подсистему и поместить туда блоки, проверяющие уровень (копии блока
+&laquo;<span class="rdsvar">Block22</span>&raquo; на рисунке), эти блоки будут выводить такие же сообщения, поскольку
+RDS будет предоставлять им доступ к блоку-исполнителю.</p>
+
+<div class="pic"><div class="container" id="pic5">
+<img src="../img/AC_Funcprov_Test.png" width="475" height="161" alt="Схема для тестирования исполнителя функции и выводимое сообщение: здесь Block1 &ndash; исполнитель, Block22 &ndash; блок проверки уровня" />
+<p id="light_pic5">Рис.&nbsp;477. Схема для тестирования исполнителя функции и выводимое сообщение:<br />здесь &laquo;<span class="rdsvar">Block1</span>&raquo; &ndash; исполнитель, &laquo;<span class="rdsvar">Block22</span>&raquo; &ndash; блок проверки уровня</p>
+</div></div>
+
+
+<p>Может показаться, что вывод сообщения было бы гораздо проще включить непосредственно в модель блока,
+проверяющего уровень. Это действительно так, но если в схеме будет много блоков с разными моделями,
+выводящими сообщения, и мы захотим что-то изменить в процедуре вывода, нам придется изменять все эти
+модели блоков. В данном же случае нам достаточно будет изменить модель блока-исполнителя или просто заменить его
+на другой.</p>
+
+<p><span id="ref1">Сделаем</span>
+новую модель блока-исполнителя той же самой функции &laquo;<span class="rdsvar">UserManual.Message</span>&raquo;,
+которая, вместо вывода сообщения на экран, будет
+<span id="light_ref1">записывать его в текстовый файл</span> с указанием времени его поступления.
+Проще всего будет не создавать новый блок с нуля, а сделать копию старого блока и его модели, а затем
+изменить эту модель. Заодно мы продемонстрируем влияние иерархии подсистем на доступность исполнителя
+&ndash; поместим копию блока в отдельной подсистеме, и посмотрим, какие блоки свяжутся с каким исполнителем.</p>
+
+<p>Создадим в той же подсистеме, в которой мы тестировали два недавно созданных блока
+(см. <a href="#pic5" title="Схема для тестирования исполнителя функции и выводимое сообщение: здесь Block1 &ndash; исполнитель, Block22 &ndash; блок проверки уровня">рис.&nbsp;477</a>), новую подсистему.
+Скопируем старый блок-исполнитель в буфер обмена (в
+<a href="um_1_3.htm#ref1" title="Режим редактирования">режиме редактирования</a>
+выделим его и нажмем <span class="keys">Ctrl</span>&nbsp;+&nbsp;<span class="keys">C</span>), а затем перейдем в созданную подсистему,
+нажмем в том месте ее рабочего поля, куда будет вставляться копия блока, правую кнопку мыши, и выберем в меню
+пункт &laquo;<span class="menu">вставить</span>&raquo;. Модуль автокомпиляции при этом
+спросит, хотим ли мы оставить у копии блока старую модель или нужно копировать и модель тоже
+(<a href="#pic6" title="Запрос модуля автокомпиляции на создание копии модели">рис.&nbsp;478</a>, см. также
+<a href="um_3_5.htm" title="&sect;3.5. Копирование блоков и схем с автокомпилируемыми моделями и совместное использование моделей">&sect;3.5</a>). Мы хотим сделать копию модели, поэтому следует
+выбрать варианты &laquo;<span class="menu">создать копию файла модели</span>&raquo; или
+&laquo;<span class="menu">создать копию файла модели, введя имя вручную</span>&raquo;.</p>
+
+<div class="pic"><div class="container" id="pic6">
+<img src="../img/AC_Funcprov_Copy.png" width="638" height="322" alt="Запрос модуля автокомпиляции на создание копии модели" />
+<p id="light_pic6">Рис.&nbsp;478. Запрос модуля автокомпиляции на создание копии модели</p>
+</div></div>
+
+
+<p>Откроем редактор модели скопированного блока и начнем исправлять ее. Прежде всего, для того, чтобы
+записывать сообщения в файл, нам потребуется как-то задавать имя этого файла. Кроме того, нужно предусмотреть
+возможность стирания этого файла в момент загрузки схемы (новый сеанс работы со схемой &ndash; новый журнал),
+поэтому мы введем в новую модель два настроечных параметра: строку
+&laquo;<span class="rdsvar">FileName</span>&raquo; с именем файла и логический параметр &laquo;<span class="rdsvar">ClearOnLoad</span>&raquo;, который будет
+управлять стиранием файла.</p>
+
+<p>Выберем на левой панели редактора вкладку &laquo;<span class="menu"><a href="um_3_6_6.htm" title="&sect;3.6.6. Настроечные параметры блока">настройки</a></span>&raquo;, нажмем в
+ее верхней части кнопку &laquo;<span class="menu">+</span>&raquo; (см. <a href="um_3_6_6.htm#pic1" title="Настроечные параметры блока">рис.&nbsp;341</a>)
+и заполним окно добавления настроечного параметра следующим образом:</p>
+
+<ul>
+  <li>на панели &laquo;<span class="menu">переменная</span>&raquo;:
+  <ul>
+    <li>&laquo;<span class="menu">имя</span>&raquo; &ndash; &laquo;FileName&raquo;;</li>
+    <li>&laquo;<span class="menu">тип</span>&raquo; &ndash; &laquo;<a href="um_3_7_2_5.htm#ref1" title="Класс rdsbcppString">rdsbcppString</a>&raquo; (это специальный класс для
+    хранения строк, создаваемый модулем автокомпиляции);</li>
+    <li>&laquo;<span class="menu">по умолчанию</span>&raquo; &ndash; оставлено пустым;</li>
+  </ul></li>
+  <li>на панели &laquo;<span class="menu">поле ввода</span>&raquo;:
+  <ul>
+    <li>&laquo;<span class="menu">добавить для этой переменной поле ввода</span>&raquo; &ndash; установлен флажок;</li>
+    <li>&laquo;<span class="menu">заголовок</span>&raquo; &ndash; &laquo;имя файла&raquo;;</li>
+    <li>&laquo;<span class="menu">ширина</span>&raquo; &ndash; 200;</li>
+    <li>&laquo;<span class="menu">тип</span>&raquo; &ndash; &laquo;сохранение файла&raquo;.</li>
+  </ul></li>
+</ul>
+
+<p class="noindent">После нажатия кнопки &laquo;<span class="menu">OK</span>&raquo; в модели блока появится настроечный параметр с именем
+&laquo;<span class="rdsvar">FileName</span>&raquo;, для которого, по желанию пользователя, будет открываться стандартный диалог сохранения
+файла Windows. Точно так же, еще раз нажав &laquo;<span class="menu">+</span>&raquo;, добавим второй настроечный параметр:</p>
+
+<ul>
+  <li>на панели &laquo;<span class="menu">переменная</span>&raquo;:
+  <ul>
+    <li>&laquo;<span class="menu">имя</span>&raquo; &ndash; &laquo;ClearOnLoad&raquo;;</li>
+    <li>&laquo;<span class="menu">тип</span>&raquo; &ndash; &laquo;<a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a>&raquo; (стандартный логический тип Windows);</li>
+    <li>&laquo;<span class="menu">по умолчанию</span>&raquo; &ndash; &laquo;TRUE&raquo;;</li>
+  </ul></li>
+  <li>на панели &laquo;<span class="menu">поле ввода</span>&raquo;:
+  <ul>
+    <li>&laquo;<span class="menu">добавить для этой переменной поле ввода</span>&raquo; &ndash; установлен флажок;</li>
+    <li>&laquo;<span class="menu">заголовок</span>&raquo; &ndash; &laquo;очищать при загрузке&raquo;;</li>
+    <li>&laquo;<span class="menu">ширина</span>&raquo; &ndash; не важно;</li>
+    <li>&laquo;<span class="menu">тип</span>&raquo; &ndash; &laquo;флаг&raquo;.</li>
+  </ul></li>
+</ul>
+
+<p class="noindent">Окно для ввода параметров и процедуры их загрузки и сохранения вместе со схемой будут
+добавлены в модель автоматически (см. <a href="um_3_6_6.htm" title="&sect;3.6.6. Настроечные параметры блока">&sect;3.6.6</a>).</p>
+
+<p>Дадим окну настройки заголовок &laquo;журнал&raquo; (для этого нужно вызвать панель параметров окна кнопкой
+&laquo;<span class="menu">размеры и параметры окна</span>&raquo; в правой верхней части нижней половины вкладки
+&laquo;<span class="menu">настройки</span>&raquo;
+(см. <a href="um_3_6_6.htm#pic7" title="Панель параметров окна настроек (над списком)">рис.&nbsp;347</a>).
+Теперь вкладка &laquo;<span class="menu">настройки</span>&raquo; должна выглядеть так, как
+на <a href="#pic7" title="Настроечные параметры нового блока-исполнителя">рис.&nbsp;479</a>.</p>
+
+<div class="pic"><div class="container" id="pic7">
+<img src="../img/AC_Funcprov_Params.png" width="328" height="380" alt="Настроечные параметры нового блока-исполнителя" />
+<p id="light_pic7">Рис.&nbsp;479. Настроечные параметры нового блока-исполнителя</p>
+</div></div>
+
+
+<p>Для того, чтобы добавлять к сообщению текущее время, нам потребуется стандартная функция
+<span class="cpp">sprintf</span>, а это значит, что нам нужно включить в модель файл
+&laquo;<span class="file">stdio.h</span>&raquo;. Откроем вкладку глобальных описаний
+(вкладка &laquo;<span class="menu"><a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">события</a></span>&raquo; &ndash; раздел
+&laquo;<span class="menu">описания</span>&raquo; &ndash; двойной щелчок на пункте
+&laquo;<span class="menu">глобальные описания</span>&raquo;) и добавим к уже имеющейся там команде включения файла
+&laquo;<span class="file">UserMessage.h</span>&raquo; новую (изменения выделены <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  #include "UserMessage.h"
+  <span class="changes">#include &lt;stdio.h&gt;</span></pre>
+
+<p>Мы решили дать пользователю возможность стирать текстовый файл с сообщениями в момент загрузки схемы,
+чтобы он не разрастался до бесконечности. В этом нам поможет реакция на событие
+<span class="cpp"><a href="RDS_BFM_AFTERLOAD.htm" title="А.2.5.1. RDS_BFM_AFTERLOAD &ndash; завершена загрузка схемы">RDS_BFM_AFTERLOAD</a></span>, возникающее у всех блоков немедленно после загрузки схемы из файла.
+Откроем ее вкладку: на вкладке &laquo;<span class="menu">события</span>&raquo; раскроем раздел
+&laquo;<span class="menu">загрузка и запись данных</span>&raquo; и дважды щелкнем на его пункте
+&laquo;<span class="menu">после загрузки схемы</span>&raquo;. Введем на этой вкладке следующий текст:</p>
+
+<pre class="cpp">  char *path; // Переменная для пути к файлу
+
+  if(!ClearOnLoad) // Не нужно стирать файл
+    return;
+  // Файл должен быть стерт
+
+  // Добавляем к имени файла путь, если его там нет
+  path=<a class="hidden" href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a>(FileName.<a class="hidden" href="um_3_7_2_5.htm#light_ref2" title="Функция c_str класса rdsbcppString">c_str</a>(),NULL,NULL);
+  if(path!=NULL) // Удачно
+    { DeleteFile(path); // Удаляем файл
+      <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(path); // Освобождаем память строки
+    }</pre>
+
+<p>Здесь мы сначала проверяем, нужно ли стирать файл. Если настроечный параметр
+<span class="cpp"></span> не равен <span class="cpp">TRUE</span>, стирать файл не нужно, мы немедленно
+завершаем реакцию. В противном случае мы вызываем функцию <span class="cpp"><a href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a></span>,
+которая преобразует сокращенный путь к файлу из настроечного параметра <span class="cpp">FileName</span> в
+полный (например, добавит к нему путь к файлу схемы, если в самом параметре путь отсутствует). Поскольку
+<span class="cpp">FileName</span> &ndash; это объект класса
+<span class="cpp"><a href="um_3_7_2_5.htm#ref1" title="Класс rdsbcppString">rdsbcppString</a></span>, а функция <span class="cpp">rdsGetFullFilePath</span> требует строки типа
+<span class="cpp">char*</span>, мы вызываем у <span class="cpp">FileName</span> функцию-член
+<span class="cpp"><a href="um_3_7_2_5.htm#light_ref2" title="Функция c_str класса rdsbcppString">c_str</a></span>, которая возвращает указатель на строку, хранящуюся в этом классе.
+Путь, который возвращает <span class="cpp">rdsGetFullFilePath</span>, это динамическая строка, поэтому
+нам нужно будет потом освободить ее при помощи <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p>Если переменная <span class="cpp">path</span>, которой мы присвоили результат вызова
+<span class="cpp">rdsGetFullFilePath</span>, не равна <span class="cpp">NULL</span> (то есть строку из
+<span class="cpp">FileName</span> удалось преобразовать в полный путь к файлу), мы удаляем файл по этому
+пути функцией Windows API <span class="cpp">DeleteFile</span> и освобождаем строку <span class="cpp">path</span> вызовом
+<span class="cpp">rdsFree</span>.</p>
+
+<p>Теперь изменим реакцию на вызов функции &laquo;<span class="rdsvar">UserManual.Message</span>&raquo; &ndash; фактически, ее нужно
+полностью переписать. Откроем вкладку этой реакции (вкладка &laquo;<span class="menu"><a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">события</a></span>&raquo;
+&ndash; раздел &laquo;<span class="menu">функции блока</span>&raquo; &ndash; двойной щелчок на пункте
+&laquo;<span class="rdsvar">UserManual.Message</span>&raquo;), и заменим текст, который там находится, на следующий:</p>
+
+<pre class="cpp">  // Локальные переменные
+  char *path,*msg,*stype,buf[100];
+  HANDLE h; // Дескриптор файла
+  <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> temp;
+  SYSTEMTIME time; // Дата и время из Windows
+
+  if(Param==NULL) // Параметр не передан
+    return;
+  if(Param-&gt;servSize&lt;sizeof(TUserMessageFuncParam))
+    return; // Размер параметра неверен
+
+  // Тип сообщения
+  switch(Param-&gt;Type)
+    { case UMFP_TYPE_INF:  stype="Информация"; break;
+      case UMFP_TYPE_WARN: stype="Предупреждение"; break;
+      default: stype="Ошибка";
+    }
+  // Текст сообщения
+  if(Param-&gt;Message)
+    msg=Param-&gt;Message;
+  else
+    msg="Сообщение";
+
+  // Получение полного пути к файлу
+  path=<a class="hidden" href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a>(FileName.<a class="hidden" href="um_3_7_2_5.htm#light_ref2" title="Функция c_str класса rdsbcppString">c_str</a>(),NULL,NULL);
+  if(path==NULL) // Не удалось сформировать путь
+    return;
+  // Открываем файл path на запись
+  h=CreateFile(path,GENERIC_WRITE,0,NULL,
+               OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
+  <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(path); // Строка path больше не нужна
+  if(h==INVALID_HANDLE_VALUE) // Ошибка открытия файла
+    return;
+  // Перемещаем указатель файла в конец
+  SetFilePointer(h,0,NULL,FILE_END);
+  // Получаем текущую дату и время
+  GetLocalTime(&amp;time);
+  // Формируем строку с датой и временем в buf
+  sprintf(buf,"%02d-%02d-%04d %02d:%02d:%02d ",
+          time.wDay,time.wMonth,time.wYear,
+          time.wHour,time.wMinute,time.wSecond);
+  // Записываем дату и время в файл
+  WriteFile(h,buf,strlen(buf),&amp;temp,NULL);
+  // Записываем тип сообщения
+  WriteFile(h,stype,strlen(stype),&amp;temp,NULL);
+  // Переводим строку и добавляем два пробела
+  WriteFile(h,"\r\n  ",4,&amp;temp,NULL);
+  // Выводим текст сообщения
+  WriteFile(h,msg,strlen(msg),&amp;temp,NULL);
+  // Переводим строку
+  WriteFile(h,"\r\n",2,&amp;temp,NULL);
+  // Закрываем файл
+  CloseHandle(h);</pre>
+
+<p>Реакция получилась довольно длинной, но большая ее часть состоит из команд записи в файл. В самом ее
+начале описано несколько вспомогательных переменных, которые будут использоваться для работы с файлом и
+получения текущего времени.</p>
+
+<p>Прежде всего мы проверяем, был ли передан параметр при вызове функции
+(<span class="cpp">Param==NULL</span> &ndash; не был передан) и достаточен ли размер переданной структуры
+для работы функции (<span class="cpp">Param-&gt;servSize</span> не меньше размера структуры
+<span class="cpp">TUserMessageFuncParam</span>). Если это не так, работа блока невозможна, и реакция
+немедленно завершается. В противном случае вспомогательной переменной <span class="cpp">stype</span>, в
+зависимости от константы из <span class="cpp">Param-&gt;Type</span>, присваивается указатель на строку
+&laquo;информация&raquo;, &laquo;предупреждение&raquo; или
+&laquo;ошибка&raquo;, а переменной <span class="cpp">msg</span> &ndash; указатель на текст сообщения из
+<span class="cpp">Param-&gt;Message</span> или на строку &laquo;сообщение&raquo;, если в
+<span class="cpp">Param-&gt;Message</span> находится <span class="cpp">NULL</span>.</p>
+
+<p>Теперь нужно открыть текстовый файл на запись. Сначала, как и в реакции на загрузку всей схемы,
+рассмотренной ранее, вызовом <span class="cpp"><a href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a></span> мы добавляем к имени файла из
+настроечного параметра <span class="cpp">FileName</span> путь к схеме, если в этом параметре отсутствует
+путь. Возвращенный указатель на созданную динамическую строку записывается в переменную <span class="cpp">path</span>,
+потом эту строку нужно будет удалить вызовом <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>. Затем мы открываем файл на запись
+при помощи функции Windows API <span class="cpp">CreateFile</span> с константой
+<span class="cpp">GENERIC_WRITE</span> и присваиваем дескриптор открытого файла переменной <span class="cpp">h</span>.
+Сразу после этого строка <span class="cpp">path</span> освобождается при помощи вызова <span class="cpp">rdsFree</span>
+&ndash; она больше не нужна. Если файл открыть не получилось, <span class="cpp">CreateFile</span> вернет
+вместо дескриптора константу <span class="cpp">INVALID_HANDLE_VALUE</span>, и, в этом случае,
+мы завершаем выполнение реакции.</p>
+
+<p>Ели файл открыт, мы перемещаем указатель записи в его конец вызовом функции Windows API
+<span class="cpp">SetFilePointer</span> &ndash; теперь мы должны дописать в него сообщение с текущей
+датой и временем. Дату и время мы записываем в структуру <span class="cpp">time</span> стандартного типа
+<span class="cpp">SYSTEMTIME</span> вызовом <span class="cpp">GetLocalTime</span>, а потом формируем
+во вспомогательном массиве <span class="cpp">buf</span> ее символьное представление в виде
+&laquo;<i>день</i>&ndash;<i>месяц</i>&ndash;<i>год</i>&nbsp;<i>час</i>:<i>минута</i>:<i>секунда</i>&raquo;
+функцией <span class="cpp">sprintf</span> (
+&laquo;<span class="file">stdio.h</span>&raquo;, в котором она описана, мы уже включили в модель). После этого,
+вызывая функцию Windows API <span class="cpp">WriteFile</span>, в открытый файл с дескриптором
+<span class="cpp">h</span> мы последовательно записываем:</p>
+
+<ul>
+  <li>дату и время из <span class="cpp">buf</span>;</li>
+  <li>тип сообщения из <span class="cpp">stype</span>;</li>
+  <li>перевод строки с возвратом каретки (&laquo;
+&raquo;) и два пробела;</li>
+  <li>текст сообщения из <span class="cpp">msg</span>;</li>
+  <li>перевод строки с возвратом каретки.</li>
+</ul>
+
+<p class="noindent">Закончив запись, мы закрываем файл функцией Windows API <span class="cpp">CloseHandle</span>.</p>
+
+<p>Может показаться, что открытие файла перед записью каждого сообщения и закрытие после нее &ndash;
+не самый лучший способ ведения журнала сообщений. Можно было бы открыть файл в момент поступления первого
+сообщения и не закрывать его до конца работы, однако, это привело бы к некоторым проблемам. Пока файл
+открыт, пользователь не смог бы получить к нему доступ &ndash; например, удалить его. Кроме того, если
+мы закрываем файл после записи сообщения, мы можем использовать этот файл в нескольких блоках одновременно,
+и они смогут дописывать свои сообщения в его конец, не мешая друг другу. Мы предполагаем, что сообщения в
+схеме будут возникать не очень часто (в противном случае стоит пересмотреть способ ведения журнала), и
+постоянные открытия-закрытия файла не будут существенно замедлять ее работу.</p>
+
+<div class="picright"><div class="container" id="pic8">
+<img src="../img/AC_Funcprov_SetupWin2.png" width="328" height="139" alt="Настройка блока записи сообщений в файл" />
+<p id="light_pic8">Рис.&nbsp;480. Настройка блока записи сообщений в файл</p>
+</div></div>
+
+
+<p>Модель закончена &ndash; перейдем к ее тестированию. Скомпилируем ее, закроем редактор, вызовем
+настройки блока (щелчок правой кнопкой мыши на нем &ndash; пункт меню
+&laquo;<span class="menu">настройка</span>&raquo;) и введем в поле имени файла
+&laquo;<span class="file">Log.txt</span>&raquo;
+(<a href="#pic8" title="Настройка блока записи сообщений в файл">рис.&nbsp;480</a>).
+Поскольку мы не указали путь, файл Log.txt будет размещен в той же папке, что и схема
+(а также и модели, если мы не указывали пути к файлам моделей при их создании), так что его будет легко
+найти. Теперь скопируем в созданную для этого блока подсистему еще и блок, проверяющий превышение уровня,
+со всеми подключенными к нему полями ввода
+(&laquo;<span class="rdsvar">Block22</span>&raquo; на <a href="#pic5" title="Схема для тестирования исполнителя функции и выводимое сообщение: здесь Block1 &ndash; исполнитель, Block22 &ndash; блок проверки уровня">рис.&nbsp;477</a>).
+Для этого выделим блок вместе с полями ввода, нажмем <span class="keys">Ctrl</span>&nbsp;+&nbsp;<span class="keys">C</span>, перейдем в подсистему,
+нажмем в том месте ее рабочего поля, куда будет вставляться копия блока, правую кнопку мыши, после
+чего выберем в меню пункт &laquo;<span class="menu">вставить</span>&raquo;. На запрос модуля автокомпиляции о том, нужно ли
+создать копию модели
+(см. <a href="#pic6" title="Запрос модуля автокомпиляции на создание копии модели">рис.&nbsp;478</a>),
+нужно ответить &laquo;<span class="menu">использовать тот же файл модели</span>&raquo;, чтобы обе копии блока имели одну модель.
+В результате всех этих действий схема станет
+похожа на <a href="#pic9" title="Тестирование второго блока-исполнителя">рис.&nbsp;481</a>.
+На нем &laquo;<span class="rdsvar">Block22</span>&raquo; и &laquo;<span class="rdsvar">Block2</span>&raquo; &ndash; блоки проверки уровня,
+&laquo;<span class="rdsvar">Sys1</span>&raquo; &ndash; подсистема, в которую мы поместили новый блок-исполнитель,
+&laquo;<span class="rdsvar">Block1</span>&raquo; &ndash; старый исполнитель, &laquo;<span class="rdsvar">Block11</span>&raquo; &ndash; новый исполнитель.</p>
+
+<div class="pic"><div class="container" id="pic9">
+<img src="../img/AC_Funcprov_Test2.png" width="474" height="221" alt="Тестирование второго блока-исполнителя" />
+<p id="light_pic9">Рис.&nbsp;481. Тестирование второго блока-исполнителя</p>
+</div></div>
+
+
+<p>Если теперь запустить расчет, превышения уровня в блоке &laquo;<span class="rdsvar">Block22</span>&raquo; будут, как и прежде,
+приводить к выводу сообщений на экран. Но если уровень будет превышен в блоке &laquo;<span class="rdsvar">Block2</span>&raquo;,
+сообщение об этом будет записано в файл &laquo;<span class="file">Log.txt</span>&raquo; в виде следующих двух строчек:</p>
+
+<pre class="cpp">  18-08-2013 15:11:44 Предупреждение
+    Block2 - превышение уровня</pre>
+
+<p>Модели блоков &laquo;<span class="rdsvar">Block2</span>&raquo; и &laquo;<span class="rdsvar">Block22</span>&raquo; одинаковы, каждая из них для вывода
+сообщения обращается к блоку-исполнителю функции &laquo;<span class="rdsvar">UserManual.Message</span>&raquo;. Но для
+&laquo;<span class="rdsvar">Block22</span>&raquo; этим исполнителем будет &laquo;<span class="rdsvar">Block1</span>&raquo;, а для
+&laquo;<span class="rdsvar">Block2</span>&raquo; &ndash; &laquo;<span class="rdsvar">Block11</span>&raquo;, поскольку он находится ближе в иерархии
+подсистем. Если удалить из схемы &laquo;<span class="rdsvar">Block11</span>&raquo;, превышение уровня в любом из блоков будет
+выводить сообщение на экран: для &laquo;<span class="rdsvar">Block22</span>&raquo; ничего не изменится, а для
+&laquo;<span class="rdsvar">Block2</span>&raquo; ближайшим в иерархии исполнителем функции станет
+&laquo;<span class="rdsvar">Block1</span>&raquo;. Если же удалить &laquo;<span class="rdsvar">Block1</span>&raquo;, &laquo;<span class="rdsvar">Block22</span>&raquo;
+вообще не сможет вывести сообщение, поскольку ни в его подсистеме, ни выше по иерархии исполнителей не
+осталось, а &laquo;<span class="rdsvar">Block2</span>&raquo; будет продолжать выводить сообщения в файл.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="um_3_7_12_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_7_12_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_12_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

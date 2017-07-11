@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.4.2. RDS_BLOCKDESCRIPTION &ndash; описание блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_4">А.4. Структуры RDS</a></p>
+<div class="level"><p>А.4.2. <span class="cpp">RDS_BLOCKDESCRIPTION</span> &ndash; описание блока</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_ARRAYACCESSDATA.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BLOCKDIMENSIONS.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BLOCKDESCRIPTION">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.4. Структуры RDS</h3>
+<h4>А.4.2. <span class="cpp">RDS_BLOCKDESCRIPTION</span> &ndash; описание блока</h4>
+
+
+<p><span id="ref1">Структура</span> <span id="ref2"><span class="cpp">RDS_BLOCKDESCRIPTION</span></span>
+используется для получения описания общих параметров блока. Для описания размеров и положения блока
+используется другая структура &ndash; <span class="cpp"><a href="RDS_BLOCKDIMENSIONS.htm" title="А.4.3. RDS_BLOCKDIMENSIONS &ndash; размеры и положение блока или связи">RDS_BLOCKDIMENSIONS</a></span>. Чаще всего для
+заполнения структуры <span class="cpp">RDS_BLOCKDESCRIPTION</span> вызывается функция
+<span class="cpp"><a href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a></span>, но и многие другие сервисные функции, возвращающие
+идентификаторы блоков, позволяют одновременно заполнить и структуру описания возвращаемого блока.</p>
+
+<pre class="cpp">  <span id="ref3"><span class="kw">typedef</span></span> <span class="kw">struct</span> {
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;       <span class="rem">// Размер этой структуры в байтах</span>
+    <span id="light_ref3"><a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></span> Block;    <span class="rem">// Идентификатор блока</span>
+    <span class="kw">int</span> BlockType;        <span class="rem">// Тип блока</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> BlockName;      <span class="rem">// Имя блока</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Parent;   <span class="rem">// Идентификатор родительской подсистемы</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> ParentName;     <span class="rem">// Имя родительской подсистемы</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> BlockComment;   <span class="rem">// Комментарий блока</span>
+    <span class="kw">int</span> LayerId;          <span class="rem">// Идентификатор слоя</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> DllFile;        <span class="rem">// Имя файла DLL или NULL</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> DllFunc;        <span class="rem">// Имя функции DLL или NULL</span>
+    <a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> Module;     <span class="rem">// Загруженный модуль DLL или NULL</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> ParentVar;      <span class="rem">// Имя переменной подсистемы, которая</span>
+                          <span class="rem">// соответствует этому блоку-входу или</span>
+                          <span class="rem">// выходу</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Selected;        <span class="rem">// Блок выделен в редакторе</span>
+    <span class="kw">int</span> NumberOfVars;     <span class="rem">// Число переменных блока</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags;          <span class="rem">// Флаги описания (RDS_BDF_*)</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> ExtId;          <span class="rem">// Внешний уникальный идентификатор</span>
+    <span class="kw">int</span> NamePos;          <span class="rem">// Положение имени блока (RDS_BDNP_*)</span>
+    <span class="kw">int</span> NameDx,           <span class="rem">// Смещение левого верхнего угла имени от</span>
+        NameDy;           <span class="rem">// точки привязки блока (в масштабе 100%)</span>
+    <span class="kw">int</span> AltNameAlignment; <span class="rem">// Выравнивание текста, выводимого</span>
+                          <span class="rem">// вместо имени (если он есть)</span>
+  } <span id="light_ref1">RDS_BLOCKDESCRIPTION</span>;
+  <span class="kw">typedef</span> RDS_BLOCKDESCRIPTION *<span id="light_ref2">RDS_PBLOCKDESCRIPTION</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">servSize</span>&emsp;(<span class="cpp"><i>DWORD</i></span>)</dt>
+  <dd>Размер этой структуры в байтах. Перед вызовом любой сервисной функции, работающей с этой
+  структурой, полю <span class="cpp">servSize</span> необходимо присвоить значение
+  <span class="cpp">sizeof(RDS_BLOCKDESCRIPTION)</span>.</dd>
+
+  <dt><span class="cpp">Block</span>&emsp;(<span class="cpp"><i>RDS_BHANDLE</i></span>)</dt>
+  <dd>Уникальный идентификатор блока (тип <span class="cpp"><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></span>).</dd>
+
+  <dt><span id="ref4"><span class="cpp">BlockType</span>&emsp;(<span class="cpp"><i>int</i></span>)</span></dt>
+    <dd>Тип блока &ndash; одна из <span id="light_ref4">констант
+    <span class="cpp">RDS_BT*</span></span> или <span class="cpp">RDS_TUNKNOWN</span>:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref5">RDS_TUNKNOWN</span></span></td>
+          <td>Неизвестно (при вызове функции, заполняющей эту структуру, возникла ошибка).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref6">RDS_BTSYSTEM</span></span></td>
+          <td><a href="pm_1_2.htm#light_ref4" title="Подсистема">Подсистема</a> (включая
+          <a href="pm_1_2.htm#ref5" title="Корневая подсистема">корневую</a>).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref7">RDS_BTSIMPLEBLOCK</span></span></td>
+          <td><a href="pm_1_2.htm#light_ref3" title="Простой блок">Простой блок</a>.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref8">RDS_BTINPUTBLOCK</span></span></td>
+          <td><a href="pm_1_2.htm#light_ref6" title="Внешний вход подсистемы">Внешний вход</a>.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref9">RDS_BTOUTPUTBLOCK</span></span></td>
+          <td><a href="pm_1_2.htm#light_ref8" title="Внешний выход подсистемы">Внешний выход</a>.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref10">RDS_BTBUSPORT</span></span></td>
+          <td><a href="pm_1_2.htm#light_ref9" title="Ввод шины">Ввод шины</a>.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref11">RDS_BTDLLBLOCK</span></span></td>
+          <td>Простой блок (синоним <span class="cpp">RDS_BTSIMPLEBLOCK</span>).</td>
+        </tr>
+      </table>
+    </div></div>
+    </dd>
+
+  <dt><span class="cpp">BlockName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку с именем блока в его
+  <a href="pm_1_2.htm#ref7" title="Родительская подсистема">родительской подсистеме</a>. Строка находится во внутренней памяти
+  RDS, ее нельзя изменять. Для переименования блоков используется сервисная функция
+  <span class="cpp"><a href="rdsRenameBlock.htm" title="А.5.6.42. rdsRenameBlock &ndash; переименовать блок">rdsRenameBlock</a></span>.</dd>
+
+  <dt><span class="cpp">Parent</span>&emsp;(<span class="cpp"><i>RDS_BHANDLE</i></span>)</dt>
+  <dd>Идентификатор подсистемы, родительской по отношению к данному блоку, то есть подсистемы,
+  непосредственно внутри которой находится данный блок. У корневой подсистемы, которая не имеет
+  родительской, в этом поле находится значение <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">ParentName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку с именем родительской подсистемы. Строка находится во внутренней памяти
+  RDS, ее нельзя изменять. У корневой подсистемы, которая не имеет родительской, это поле
+  указывает на пустую строку.</dd>
+
+  <dt><span class="cpp">BlockComment</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку с <a href="um_1_2.htm#ref20" title="Комментарий блока">комментарием блока</a>. Строка находится во
+  внутренней памяти RDS, ее нельзя изменять. Комментарий блока можно изменить функцией
+  <span class="cpp"><a href="rdsSetBlockComment.htm" title="А.5.6.45. rdsSetBlockComment &ndash; задать комментарий блока">rdsSetBlockComment</a></span>.</dd>
+
+  <dt><span class="cpp">LayerId</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Идентификатор <a href="um_1_2.htm#ref23" title="слои в подсистеме">слоя</a> подсистемы, на котором находится данный блок.
+  Для корневой подсистемы, которая не находится в какой-либо другой подсистеме, значение не
+  определено. Для перемещения блока на другой слой можно использовать функцию
+  <span class="cpp"><a href="rdsSetBlockLayer.htm" title="А.5.6.47. rdsSetBlockLayer &ndash; задать слой блока">rdsSetBlockLayer</a></span>.</dd>
+
+  <dt><span class="cpp">DllFile</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку с именем файла DLL, в котором находится
+  <a href="pm_1_2.htm#ref1" title="Модель блока">модель блока</a>, или
+  <span class="cpp">NULL</span>, если у блока нет модели. Строка находится во внутренней памяти
+  RDS, ее нельзя изменять. Для подключения к блоку другой модели следует использовать функцию
+  <span class="cpp"><a href="rdsSetBlockModel.htm" title="А.5.6.48. rdsSetBlockModel &ndash; подключить к блоку модель">rdsSetBlockModel</a></span>.</dd>
+
+  <dt><span class="cpp">DllFunc</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку с именем экспортированной из DLL функции модели блока, или
+  <span class="cpp">NULL</span>, если у блока нет модели. Строка находится во внутренней памяти
+  RDS, ее нельзя изменять. Для подключения к блоку другой модели следует использовать функцию
+  <span class="cpp">rdsSetBlockModel</span>.</dd>
+
+  <dt><span class="cpp">Module</span>&emsp;(<span class="cpp"><i>HINSTANCE</i></span>)</dt>
+  <dd>Дескриптор (<span class="cpp"><a href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a></span>) загруженного модуля DLL с моделью блока или
+  <span class="cpp">NULL</span>, если у блока нет модели.</dd>
+
+  <dt><span class="cpp">ParentVar</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Для внешних входов и выходов &ndash; указатель на строку с именем
+  <a href="um_2_11_4.htm#light_ref7" title="Переменные в окне параметров подсистемы">статической переменной родительской подсистемы</a>, которая
+  соответствует данному блоку. Для всех остальных типов блоков &ndash; <span class="cpp">NULL</span>.
+  Эта строка находится во внутренней памяти RDS, ее нельзя изменять.</dd>
+
+  <dt><span class="cpp">Selected</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если данный блок выделен в подсистеме (только в
+  <a href="pm_1_3.htm#ref1" title="Режим редактирования">режиме редактирования</a>). <span class="cpp">FALSE</span>, если блок не
+  выделен, или если RDS находится в режимах
+  <a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a> или
+  <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a> (выделение блоков при переходе в эти режимы сбрасывается),
+  или если окно подсистемы с этим блоком закрыто. Для программного выделения блока или для снятия
+  выделения можно использовать функцию <span class="cpp"><a href="rdsSelectBlock.htm" title="А.5.6.43. rdsSelectBlock &ndash; выделить блок в редакторе">rdsSelectBlock</a></span>.</dd>
+
+  <dt><span class="cpp">NumberOfVars</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Число <a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статических переменных</a> блока.</dd>
+
+  <dt><span class="cpp">Flags</span>&emsp;(<span class="cpp"><i>DWORD</i></span>)</dt>
+    <dd>Один или несколько объединенных битовым ИЛИ
+    <span id="light_ref12">флагов описания параметров блока</span>
+    (большая их часть задается различными флагами в
+    <a href="um_2_9_1.htm#ref2" title="окно параметров простого блока">окне параметров блока</a>):
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref13">RDS_BDF_ALLOWRESIZE</span></span></td>
+          <td>Пользователю разрешено изменение размеров блока путем
+          <a href="um_2_6.htm#ref9" title="Изменение размеров блока">перетаскивания мышью</a> одного из восьми маркеров выделения.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref14">RDS_BDF_FREEMOUSEMOVE</span></span></td>
+          <td>Функция модели блока вызывается при перемещении курсора мыши над изображением блока
+          (событие <span class="cpp"><a href="RDS_BFM_MOUSEMOVE.htm" title="А.2.6.10. RDS_BFM_MOUSEMOVE &ndash; перемещение курсора мыши">RDS_BFM_MOUSEMOVE</a></span>) даже тогда, когда ни одна из кнопок не нажата
+          (только при установленном флаге <span class="cpp">RDS_BDF_MOUSEEVENTS</span>).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref15">RDS_BDF_HASPICTURE</span></span></td>
+          <td>У блока есть <a href="pm_1_4.htm#light_ref4" title="Векторная картинка блока">векторная картинка</a>. Наличие этого флага
+          никак не связано со способом изображения внешнего вида блока &ndash; для блока может быть
+          задана векторная картинка, но изображаться он при этом может программно. Способ изображения
+          внешнего вида блока определятся флагами <span class="cpp">RDS_BDF_SELFDRAW</span> и
+          <span class="cpp">RDS_BDF_TEXTRECT</span>.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref16">RDS_BDF_KBDEVENTS</span></span></td>
+          <td>Функции блока разрешена реакция на клавиатуру (события <span class="cpp"><a href="RDS_BFM_KEYDOWN.htm" title="А.2.6.5. RDS_BFM_KEYDOWN &ndash; нажатие клавиши">RDS_BFM_KEYDOWN</a></span> и
+          <span class="cpp"><a href="RDS_BFM_KEYUP.htm" title="А.2.6.6. RDS_BFM_KEYUP &ndash; отпускание клавиши">RDS_BFM_KEYUP</a></span>).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref17">RDS_BDF_LOCKHEIGHT</span></span></td>
+          <td>При изменении размеров блока пользователем запрещено изменение его высоты (только
+          при установленном флаге <span class="cpp">RDS_BDF_ALLOWRESIZE</span>).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref18">RDS_BDF_LOCKWIDTH</span></span></td>
+          <td>При изменении размеров блока пользователем запрещено изменение его ширины (только при
+          установленном флаге <span class="cpp">RDS_BDF_ALLOWRESIZE</span>).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref19">RDS_BDF_MOUSEEVENTS</span></span></td>
+          <td>Функция блока вызывается при нажатии и отпускании кнопок мыши и перемещении курсора с нажатыми
+          кнопками, если курсор находится над изображением блока (события <span class="cpp"><a href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>,
+          <span class="cpp"><a href="RDS_BFM_MOUSEUP.htm" title="А.2.6.11. RDS_BFM_MOUSEUP &ndash; отпускание кнопки мыши">RDS_BFM_MOUSEUP</a></span>, <span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm" title="А.2.6.8. RDS_BFM_MOUSEDBLCLICK &ndash; двойной щелчок мыши">RDS_BFM_MOUSEDBLCLICK</a></span>,
+          <span class="cpp"><a href="RDS_BFM_MOUSEMOVE.htm" title="А.2.6.10. RDS_BFM_MOUSEMOVE &ndash; перемещение курсора мыши">RDS_BFM_MOUSEMOVE</a></span>).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref20">RDS_BDF_NAMEOFF</span></span></td>
+          <td>Изображение имени блока в окне подсистемы отключено. Если изображение имен блоков отключено
+          для всей подсистемы, они не будут изображаться независимо от состояния этого флага.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref21">RDS_BDF_POPUPHINT</span></span></td>
+          <td>Функция блока вызывается для вывода всплывающей подсказки (событие
+          <span class="cpp"><a href="RDS_BFM_POPUPHINT.htm" title="А.2.6.12. RDS_BFM_POPUPHINT &ndash; вывод всплывающей подсказки">RDS_BFM_POPUPHINT</a></span>).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref22">RDS_BDF_RUNEVERYCYCLE</span></span></td>
+          <td>Функция модели блока (событие <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>) вызывается в
+          <a href="pm_1_4.htm#ref6" title="Запуск модели каждый такт">каждом такте расчета</a> независимо от состояния
+          <a href="pm_2_5_2.htm#light_ref3" title="Сигналы запуска и готовности">сигнала запуска</a> (первого сигнального входа)
+          этого блока.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref23">RDS_BDF_SELFDRAW</span></span></td>
+          <td>Изображение блока рисуется его функцией модели при реакции на событие <span class="cpp"><a href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a></span>.
+          Этот флаг не может быть установлен одновременно с флагом <span class="cpp">RDS_BDF_TEXTRECT</span>.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref24">RDS_BDF_SETUPBYDCLICK</span></span></td>
+          <td>Двойной щелчок на изображении блока вызывает функцию его настройки (событие
+          <span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>). Если этот флаг сброшен, двойной щелчок будет обрабатываться
+          RDS и приводить к открытию либо окна параметров блока, либо редактора модели (для блоков с
+          <a href="um_1_8.htm" title="&sect;1.8. Автоматическая компиляция моделей блоков">автокомпилируемой моделью</a>).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref25">RDS_BDF_SETUPFUNC</span></span></td>
+          <td>У блока есть функция настройки (его функция может реагировать на событие
+          <span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref26">RDS_BDF_SHOWMAINPOINT</span></span></td>
+          <td>Для блока с векторной картинкой в окне подсистемы изображается
+          точка привязки (начало координат этой картинки). Если изображение точек привязки отключено для
+          всей подсистемы, они не будут изображаться независимо от состояния этого флага.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref27">RDS_BDF_TEXTRECT</span></span></td>
+          <td>Блок изображается прямоугольником с текстом. Этот флаг не может быть установлен одновременно с
+          флагом <span class="cpp">RDS_BDF_SELFDRAW</span>.</td>
+        </tr>
+      </table>
+    </div></div>
+    </dd>
+
+  <dt><span class="cpp">ExtId</span>&emsp;(<span class="cpp"><i>DWORD</i></span>)</dt>
+  <dd>Уникальный в пределах схемы целый идентификатор данного блока, не изменяющийся при
+  сохранении и последующей загрузке этой схемы. Такие идентификаторы используются при управлении RDS
+  из другого приложения (см. <a href="pm_3_5.htm" title="&sect;3.5. Вмешательство в загрузку и сохранение схемы">&sect;3.5 руководства программиста</a>).</dd>
+
+  <dt><span class="cpp">NamePos</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd><a href="um_2_6.htm#light_ref10" title="Положение имени блока">Положение имени блока</a>, если оно отображается в окне подсистемы (одна из констант
+  <span class="cpp">RDS_BDNP_*</span>):
+  <div class="tableleft"><div class="tcont">
+    <table class="list">
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref28">RDS_BDNP_BELOW</span></span></td>
+        <td>Имя изображается под блоком по центру.</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref29">RDS_BDNP_ABOVE</span></span></td>
+        <td>Имя изображается над блоком по центру.</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref30">RDS_BDNP_CUSTOM</span></span></td>
+        <td>Нестандартное положение имени &ndash; оно было перетащено пользователем вручную.</td>
+      </tr>
+    </table>
+  </div></div>
+  </dd>
+
+  <dt><span class="cpp">NameDx</span>,&nbsp;<span class="cpp">NameDy</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Горизонтальное (<span class="cpp">NameDx</span>) и вертикальное (<span class="cpp">NameDy</span>)
+  смещения левого верхнего угла отображаемого имени блока относительно точки привязки изображения этого
+  блока в масштабе 100%. Точкой привязки изображения блока считается начало координат его векторной
+  картинки, если он изображается картинкой, или левый верхний угол занимаемой им прямоугольной области во
+  всех остальных случаях. Горизонтальная ось координат направлена вправо, вертикальная &ndash; вниз,
+  начало координат &ndash; левый верхний угол рабочего поля.</dd>
+
+  <dt><span class="cpp">AltNameAlignment</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+    <dd><span id="light_ref31">Выравнивание текста</span>, выводимого вместо имени блока,
+    если он был задан вызовом функции <span class="cpp"><a href="rdsSetBlockAltNameText.htm" title="А.5.6.44. rdsSetBlockAltNameText &ndash; вывод текста вместо имени блока">rdsSetBlockAltNameText</a></span>:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref32">RDS_ALTBLKNAME_LEFT</span></span>
+           (&minus;1)</td>
+          <td>Выравнивание по левому краю.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref33">RDS_ALTBLKNAME_CENTER</span></span>
+          (0)</td>
+          <td>Выравнивание по центру.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref34">RDS_ALTBLKNAME_RIGHT</span></span>
+          (1)</td>
+          <td>Выравнивание по правому краю.</td>
+        </tr>
+      </table>
+    </div></div>
+    </dd>
+</dl>
+
+<p class="apphdr">Примеры</p>
+<p>Примеры использования этой структуры приведен в
+<a href="pm_2_6_3.htm" title="&sect;2.6.3. Создание и удаление динамической переменной">&sect;2.6.3</a>,
+<a href="pm_2_12_1.htm" title="&sect;2.12.1. Реакция на мышь">&sect;2.12.1 руководства программиста</a> и др.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a></span>,
+<span class="cpp"><a href="rdsRenameBlock.htm" title="А.5.6.42. rdsRenameBlock &ndash; переименовать блок">rdsRenameBlock</a></span>,
+<span class="cpp"><a href="rdsSetBlockComment.htm" title="А.5.6.45. rdsSetBlockComment &ndash; задать комментарий блока">rdsSetBlockComment</a></span>,
+<span class="cpp"><a href="rdsSetBlockLayer.htm" title="А.5.6.47. rdsSetBlockLayer &ndash; задать слой блока">rdsSetBlockLayer</a></span>,
+<span class="cpp"><a href="rdsSetBlockModel.htm" title="А.5.6.48. rdsSetBlockModel &ndash; подключить к блоку модель">rdsSetBlockModel</a></span>,
+<span class="cpp"><a href="rdsSelectBlock.htm" title="А.5.6.43. rdsSelectBlock &ndash; выделить блок в редакторе">rdsSelectBlock</a></span>,
+<span class="cpp"><a href="rdsSetBlockAltNameText.htm" title="А.5.6.44. rdsSetBlockAltNameText &ndash; вывод текста вместо имени блока">rdsSetBlockAltNameText</a></span>,
+<a href="app_index.htm#light_htm:app_a_2" title="А.2. События блока и связанные с ними описания">события блоков</a>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_ARRAYACCESSDATA.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BLOCKDIMENSIONS.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BLOCKDESCRIPTION">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

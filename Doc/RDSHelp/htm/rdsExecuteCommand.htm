@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.2.15. rdsExecuteCommand &ndash; выполнить общесистемную команду</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_2">А.5.2. Управление работой RDS и функции общего назначения</a></p>
+<div class="level"><p>А.5.2.15. <span class="cpp">rdsExecuteCommand</span> &ndash; выполнить общесистемную команду</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsEnableCommandQueue.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsFindCmdParam.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsExecuteCommand">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.2. Управление работой RDS и функции общего назначения</h4>
+<h5>А.5.2.15. <span class="cpp">rdsExecuteCommand</span> &ndash; выполнить общесистемную команду</h5>
+
+
+<p>Функция <span class="cpp">rdsExecuteCommand</span> ставит команду, указанную в ее параметрах,
+в очередь на исполнение.</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsExecuteCommand(
+      <span class="kw">int</span> Command,    <span class="rem">// Команда RDS_SYSCMD_*</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags,    <span class="rem">// Флаги</span>
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Param1,   <span class="rem">// Первый параметр команды</span>
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Param2    <span class="rem">// Второй параметр команды</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_VIDwSS</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Command</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Одна из констант <span class="cpp">RDS_SYSCMD_*</span> (см. ниже), указывающая на исполняемую
+  RDS команду.</dd>
+
+  <dt><span class="cpp">Flags</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</dt>
+  <dd>Битовые флаги команды (зависят от значения <span class="cpp">Command</span>).</dd>
+
+  <dt><span class="cpp">Param1</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на строку с первым параметром команды (зависит от значения <span class="cpp">Command</span>).</dd>
+
+  <dt><span class="cpp">Param2</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку со вторым параметром команды (зависит от значения <span class="cpp">Command</span>).</dd>
+</dl>
+
+<p class="apphdr">Примечания</p>
+<p>RDS поддерживает очередь команд, относящихся ко всей загруженной схеме и выполняемых строго
+последовательно. Если вызов <span class="cpp">rdsExecuteCommand</span>, поставивший в очередь команду А,
+предшествует вызову, поставившему в очередь команду Б, команда Б не начнет выполняться до тех пор, пока не
+завершится выполнение команды А. Таким образом можно, например, скомандовать RDS сохранить текущую
+загруженную схему, а затем загрузить новую: загрузка новой не начнется, пока не будет сохранена старая.</p>
+
+<p><span id="ref1">Выполняемая</span>
+команда задается в параметре <span class="cpp">Command</span> одной из следующих
+<span id="light_ref1">констант</span>:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th><span class="cpp">Command</span></th>
+    <th>Команда и ее параметры</th>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref2">RDS_SYSCMD_STARTCALC</span></span></td>
+    <td>Запустить <a href="um_1_3.htm#ref3" title="Режим расчета">расчет</a>. Параметры <span class="cpp">Flags</span>, <span class="cpp">Param1</span> и
+    <span class="cpp">Param2</span> не используются.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref3">RDS_SYSCMD_LOADFILE</span></span></td>
+    <td>Загрузить схему из файла. Параметр <span class="cpp">Flags</span> не используется. В параметре
+    <span class="cpp">Param1</span> передается указатель на строку, содержащую полный путь к файлу схемы.
+    В параметре <span class="cpp">Param2</span> передается либо указатель на строку, имитирующую дополнительные параметры
+    командной строки RDS, которые могут быть разобраны блоками загруженной схемы, либо <span class="cpp">NULL</span>.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref4">RDS_SYSCMD_SAVEFILE</span></span></td>
+    <td>Сохранить схему в файл. Параметры <span class="cpp">Flags</span> и <span class="cpp">Param2</span> не
+    используются. В параметре <span class="cpp"></span> передается указатель на строку, содержащую полный путь
+    к файлу схемы.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref5">RDS_SYSCMD_LOADTEMPLATE</span></span></td>
+    <td>Загрузить шаблон схемы из файла. Параметры <span class="cpp">Flags</span>, <span class="cpp">Param1</span> и
+    <span class="cpp">Param2</span> используются так же, как в команде <span class="cpp">RDS_SYSCMD_LOADFILE</span>.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref6">RDS_SYSCMD_MESSAGEBOX</span></span></td>
+    <td>Вывести сообщение пользователю. В параметре <span class="cpp">Flags</span> передаются флаги сообщения,
+    аналогичные функции Windows API <span class="cpp">MessageBox</span> и сервисной функции RDS
+    <span class="cpp"><a href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a></span>. В параметре <span class="cpp">Param1</span> передается указатель на строку
+    с текстом сообщения. В параметре <span class="cpp">Param2</span> передается указатель на строку с заголовком
+    окна сообщения. Этот вызов отличается от <span class="cpp">rdsMessageBox</span> только тем, что он не
+    выводит сообщение пользователю немедленно, а ставит его в очередь.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref7">RDS_SYSCMD_EDITMODE</span></span></td>
+    <td>Переводит RDS в режим <a href="um_1_3.htm#ref1" title="Режим редактирования">редактирования</a>. Параметры <span class="cpp">Flags</span>, <span class="cpp">Param1</span> и
+    <span class="cpp">Param2</span> не используются.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref8">RDS_SYSCMD_CALCMODE</span></span></td>
+    <td>Переводит RDS в режим <a href="um_1_3.htm#ref2" title="Режим моделирования">моделирования</a>. Параметры <span class="cpp">Flags</span>, <span class="cpp">Param1</span> и
+    <span class="cpp">Param2</span> не используются.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref9">RDS_SYSCMD_RESETCALC</span></span></td>
+    <td><a href="um_1_3.htm#ref9" title="Сброс расчета">Сбрасывает расчет</a> во всей схеме. Параметры <span class="cpp">Flags</span>, <span class="cpp">Param1</span> и
+    <span class="cpp">Param2</span> не используются.</td>
+  </tr>
+</table>
+</div></div>
+
+<p>Следует помнить, что при загрузке новой схемы очередь команд очищается, поэтому все команды, поставленные в
+очередь после <span class="cpp">RDS_SYSCMD_LOADFILE</span> и <span class="cpp">RDS_SYSCMD_LOADTEMPLATE</span>
+будут проигнорированы. Например, последовательность</p>
+
+<pre class="cpp">  rdsExecuteCommand(RDS_SYSCMD_LOADFILE,<span class="const">0</span>,<span class="str">"c:\\rds\\Scheme.rds"</span>,NULL);
+  rdsExecuteCommand(RDS_SYSCMD_STARTCALC,<span class="const">0</span>,NULL,NULL);</pre>
+
+<p class="noindent">не приведет к запуску расчета после загрузки новой схемы: сразу после загрузки очередь команд
+будет очищена, и команда <span class="cpp">RDS_SYSCMD_STARTCALC</span> не будет воспринята RDS.</p>
+
+<p>Технически, вызов <span class="cpp">rdsExecuteCommand</span> приводит к помещению команды и ее параметров в
+очередь сообщений Windows, обрабатываемых RDS, поэтому команды не будут выполняться до тех пор, пока
+RDS в очередной раз не войдет в цикл обработки сообщений. Если, например, модель какого-нибудь блока
+организует длительный цикл в главном потоке, команды не будут выполняться до завершения этого цикла.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsEnableCommandQueue.htm" title="А.5.2.14. rdsEnableCommandQueue &ndash; приостановить/продолжить выполнение очереди команд">rdsEnableCommandQueue</a></span>,
+<span class="cpp"><a href="rdsStartCalc.htm" title="А.5.2.41. rdsStartCalc &ndash; запуск расчета">rdsStartCalc</a></span>,
+<span class="cpp"><a href="rdsStopCalc.htm" title="А.5.2.42. rdsStopCalc &ndash; остановка расчета">rdsStopCalc</a></span>,
+<span class="cpp"><a href="rdsResetSystemState.htm" title="А.5.7.3. rdsResetSystemState &ndash; сбросить состояние блока или подсистемы">rdsResetSystemState</a></span>,
+<span class="cpp"><a href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsEnableCommandQueue.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsFindCmdParam.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsExecuteCommand">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

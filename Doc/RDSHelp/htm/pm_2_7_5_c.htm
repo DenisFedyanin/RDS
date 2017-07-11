@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.7.5. Открытие модальных окон средствами Windows API</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_7">&sect;2.7. Настройка параметров блока</a></p>
+<div class="level"><p>&sect;2.7.5. Открытие модальных окон средствами Windows API</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_7_4.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_6.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_7_5.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделью блока, открывающего
+модальное окно выбора цвета средствами Windows API.</p>
+
+<pre class="cpp">  <span class="rem">// Открытие модального окна средствами Windows</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;math.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+
+  <span class="rem">//============= Модель блока ==============</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> ModalWindowTest(<span class="kw">int</span> CallMode,
+                                <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                                <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define Color  (*((int *)(pStart+2)))</span>
+    <span class="rem">// Вспомогательная структура для работы с диалогом цвета</span>
+    CHOOSECOLOR cc;
+    <span class="rem">// Массив дополнительных цветов для диалога</span>
+    <span class="kw">static</span> <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> CustomColors[<span class="const">16</span>]=
+                    {<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>};
+    <span class="rem">// Возвращаемое функцией модели значение</span>
+    <span class="kw">int</span> result=<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+    <span class="rem">// Вспомогательная переменная – результат вызова диалога</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSI}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Функция настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="rem">// Установка параметров структуры для работы с диалогом</span>
+          memset(&amp;cc,<span class="const">0</span>,<span class="kw">sizeof</span>(cc));
+          cc.lStructSize=<span class="kw">sizeof</span>(cc);
+          cc.hwndOwner=<a class="hidden" href="rdsGetAppWindowHandle.htm" title="А.5.2.18. rdsGetAppWindowHandle &ndash; дескриптор главного окна RDS">rdsGetAppWindowHandle</a>();
+          cc.lpCustColors=CustomColors;
+          cc.rgbResult=Color;
+          cc.Flags=CC_RGBINIT;
+          <span class="rem">// Уведомление RDS об открытии модального окна</span>
+          <a class="hidden" href="rdsBlockModalWinOpen.htm" title="А.5.2.8. rdsBlockModalWinOpen &ndash; сообщение об открытии модального окна">rdsBlockModalWinOpen</a>(NULL);
+          <span class="rem">// Вызов диалога</span>
+          ok=ChooseColor(&amp;cc);
+          <span class="rem">// Уведомление RDS о закрытии модального окна</span>
+          <a class="hidden" href="rdsBlockModalWinClose.htm" title="А.5.2.7. rdsBlockModalWinClose &ndash; сообщение о закрытии модального окна">rdsBlockModalWinClose</a>(NULL);
+          <span class="kw">if</span>(ok) <span class="rem">// Пользователь выбрал цвет</span>
+            { <span class="rem">// Запись цвета в Color</span>
+              Color=cc.rgbResult;
+              <span class="rem">// Установка этого значения Color по умолчанию</span>
+              <span class="rem">// (2 – порядковый номер переменной Color в блоке)</span>
+              <a class="hidden" href="rdsSetBlockVarDefValueByCur.htm" title="А.5.14.16. rdsSetBlockVarDefValueByCur &ndash; сделать текущее значение переменной блока значением по умолчанию">rdsSetBlockVarDefValueByCur</a>(BlockData-&gt;Block,<span class="const">2</span>);
+              <span class="rem">// Возвращаемое значение должно сигнализировать</span>
+              <span class="rem">// о наличии изменений в схеме</span>
+              result=<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>;
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> result;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef Color</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_7_4.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_6.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

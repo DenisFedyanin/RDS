@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.7.4. Хранение настроечных параметров в переменных блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_7">&sect;2.7. Настройка параметров блока</a></p>
+<div class="level"><p>&sect;2.7.4. Хранение настроечных параметров в переменных блока</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_7_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_7_4_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.7. Настройка параметров блока</h3>
+<h4>&sect;2.7.4. Хранение настроечных параметров в переменных блока</h4>
+<p class="abstract">Описывается хранение настроечных параметров блока в значениях по умолчанию его
+                <a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статических переменных</a>. Этот способ не требует введения
+                в модель новых реакций, к тому же, он позволяет пользователю выбирать: задавать ли ему параметр вручную
+                в окне настроек блока или подключить к нему связь и передавать ему значение откуда-нибудь из схемы.
+                Приведен пример блока, вычисляющего y=K&times;x+C, где x &ndash; вход, а K и C могут либо задаваться
+                в окне настройки, либо получать свои значения по связям от других блоков.</p>
+
+
+<p><span id="ref1">В</span>
+предыдущих примерах (<a href="pm_2_7_1.htm" title="&sect;2.7.1. Функция настройки блока и открытие модальных окон">&sect;2.7.1</a> и далее)
+параметры, которые редактировались в
+функции настройки, были полями класса или структуры
+<a href="pm_1_4.htm#ref8" title="Личная область данных блока">личной области данных</a>
+блока. Это позволяет обращаться к ним по именам, и вообще оперировать ими, как обычными переменными в программе на
+C. Однако, при этом необходимо включать в функцию модели реакции на события
+загрузки и сохранения параметров блоков (они рассмотрены в
+<a href="pm_index.htm#light_htm:pm_2_8" title="&sect;2.8. Сохранение и загрузка параметров блока">&sect;2.8</a>), поскольку RDS не может самостоятельно сохранить личную область
+данных. Кроме того, при таком подходе приходится четко разделять параметры, задаваемые в функции настройки,
+и параметры, получаемые блоком по
+<a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связям</a>, так как к переменной внутри личной области данных не
+может быть подключена связь. Это не очень удобно, поскольку обычно нельзя заранее сказать, какие из параметров
+пользователь захочет вводить в функции настройки, а какие &ndash; подавать с полей ввода или других блоков.</p>
+
+<p>Чтобы не писать реакции на загрузку и сохранение параметров, а заодно дать пользователю возможность самому
+выбирать, какие параметры он будет вводить в функции настройки,
+<span id="light_ref1">можно хранить настроечные параметры в значениях по умолчанию статических входов блока</span>.
+Во-первых, значения переменных по умолчанию автоматически сохраняются при сохранении схемы. Во-вторых, если
+к такому входу не подключать связь, значение переменной останется равным значению по умолчанию, то есть значению,
+введенному в функции настройки, а если пользователь соединит этот вход с выходом другого блока, значение входа
+будет определяться сработавшей связью. Таким образом один и тот же параметр может и вводиться в функции настройки,
+и работать, как обычный вход блока. Нужно только отслеживать наличие соединенной с этим входом связи и
+не разрешать пользователю изменять параметр, если эта связь существует. Многие блоки из стандартной библиотеки
+&laquo;<span class="file">Common.dll</span>&raquo; устроены именно так.</p>
+
+<p><span id="light_ref2">Для примера создадим блок, вычисляющий значение выхода &laquo;<span class="rdsvar">y</span>&raquo; по формуле &laquo;y=K&times;x+C&raquo;</span>,
+где &laquo;<span class="rdsvar">x</span>&raquo; &ndash; обычный вход блока, а &laquo;<span class="rdsvar">K</span>&raquo; и &laquo;<span class="rdsvar">C</span>&raquo;
+&ndash; входы блока, которые также могут задаваться в функции настройки. Блок будет иметь следующую структуру
+переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">x</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">K</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">18</td>
+<td class="vcenter">C</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">26</td>
+<td class="vcenter">y</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p><span id="ref3">Перед</span>
+тем, как начать писать функцию модели блока и функцию настройки, создадим пару вспомогательных функций,
+которые будут в них использоваться. Первая функция,
+<span class="cpp" id="light_ref3">CheckBlockInputConnection</span>, будет получать описание входа блока с
+заданным номером и проверять, соединена ли с этим входом какая-нибудь связь:</p>
+
+<pre class="cpp">  <span class="rem">// Проверка наличия связи у входа блока</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> CheckBlockInputConnection(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,             <span class="rem">// Идентификатор блока</span>
+    <span class="kw">int</span> num,                       <span class="rem">// Номер входа</span>
+    <a class="hidden" href="RDS_VARDESCRIPTION.htm#ref2" title="Указатель на RDS_VARDESCRIPTION">RDS_PVARDESCRIPTION</a> pVarDescr) <span class="rem">// Указатель на структуру</span>
+                                   <span class="rem">// описания переменной</span>
+  { <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> c;                <span class="rem">// Идентификатор связи</span>
+    <span id="light_ref4"><a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">RDS_POINTDESCRIPTION</a></span> PtDescr; <span class="rem">// Структура описания точки связи</span>
+
+    <span class="rem">// Заполнение служебных полей структур их размерами</span>
+    PtDescr.servSize=<span class="kw">sizeof</span>(PtDescr);
+    pVarDescr-&gt;servSize=<span class="kw">sizeof</span>(<a class="hidden" href="RDS_VARDESCRIPTION.htm#ref1" title="Структура RDS_VARDESCRIPTION">RDS_VARDESCRIPTION</a>);
+
+    <span class="rem">// Получение описания переменной блока по номеру</span>
+    <span class="kw">if</span>(<span id="light_ref5"><a class="hidden" href="rdsGetBlockVar.htm" title="А.5.14.10. rdsGetBlockVar &ndash; переменная блока по номеру">rdsGetBlockVar</a></span>(Block,num,pVarDescr)==NULL)
+      <span class="kw">return</span> FALSE; <span class="rem">// Нет такой переменной</span>
+
+    <span class="rem">// Перебор всех связей, подключенных к этому блоку</span>
+    c=NULL;
+    <span class="kw">for</span>(;;)
+      { <span class="rem">// Найти связь, следующую за c, и заполнить структуру</span>
+        <span class="rem">// описания точки соединения PtDescr</span>
+        c=<span id="light_ref6"><a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a></span>(Block,c,TRUE,FALSE,&amp;PtDescr);
+        <span class="kw">if</span>(c==NULL) <span class="rem">// Больше нет связей</span>
+          <span class="kw">break</span>;
+        <span class="rem">// Найдена очередная связь – сравнение имени заданной</span>
+        <span class="rem">// переменной с именем переменной точки этой связи</span>
+        <span class="kw">if</span>(strcmp(PtDescr.VarName,pVarDescr-&gt;Name)==<span class="const">0</span>)
+          <span class="kw">return</span> TRUE; <span class="rem">// Имена совпали – есть связь, соединенная</span>
+                       <span class="rem">// с переменной блока</span>
+      }
+    <span class="rem">// Все подключенные связи перебраны, а связь, подключенная</span>
+    <span class="rem">// к заданной переменной так и не была найдена</span>
+    <span class="kw">return</span> FALSE;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Функция принимает три параметра: <a href="app_ids.htm#light_ref1" title="Идентификатор блока">идентификатор блока</a>,
+для переменной которого проверяется наличие связи
+(<span class="cpp">Block</span>), порядковый номер переменной в блоке (<span class="cpp">num</span>) и
+указатель на внешнюю
+<a href="RDS_VARDESCRIPTION.htm#ref1" title="Структура RDS_VARDESCRIPTION">структуру описания переменной</a> (<span class="cpp">pVarDescr</span>).
+Возвращаемое функцией значение должно сигнализировать о наличии (<span class="cpp">TRUE</span>) или отсутствии
+(<span class="cpp">FALSE</span>) связи, соединенной с указанной переменной. Кроме того, функция будет записывать
+описание этой переменной в структуру, указатель на которую передан в параметре
+<span class="cpp">pVarDescr</span> &ndash; из этой структуры можно будет считать имя переменной для
+формирования заголовка поля ввода.</p>
+
+<p>В начале функции описаны две вспомогательные переменные:
+<a href="app_ids.htm#light_ref2" title="Идентификатор связи">идентификатор связи</a> <span class="cpp">c</span> и
+<a href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">структура описания точки связи</a> <span class="cpp">PtDescr</span>.
+Идентификатор связи будет использоваться при поиске связей, соединенных с блоком
+<span class="cpp">Block</span>, а через структуру описания точки можно будет определить имя переменной блока,
+к которой присоединена найденная связь.</p>
+
+<p>Прежде чем можно будет вызывать сервисные функции RDS, заполняющие структуры описания переменной и
+точки связи, необходимо присвоить полю <span class="cpp">servSize</span> каждой из них размер соответствующей структуры
+&ndash; чтобы избежать конфликта версий, сервисные функции проверяют размер структур, с которыми они
+работают. Затем описание переменной с номером <span class="cpp">num</span> записывается в структуру по
+указателю <span class="cpp">pVarDescr</span> при помощи сервисной функции <span class="cpp"><a href="rdsGetBlockVar.htm" title="А.5.14.10. rdsGetBlockVar &ndash; переменная блока по номеру">rdsGetBlockVar</a></span>:</p>
+
+<pre class="cpp">  <span id="light_ref7"><a class="hidden" href="app_ids.htm#light_ref5" title="Идентификатор переменной">RDS_VHANDLE</a></span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsGetBlockVar.htm" title="А.5.14.10. rdsGetBlockVar &ndash; переменная блока по номеру">rdsGetBlockVar</a>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,           <span class="rem">// Блок</span>
+    <span class="kw">int</span> varnum,                  <span class="rem">// Номер переменной блока</span>
+    <span id="light_ref8"><a class="hidden" href="RDS_VARDESCRIPTION.htm#ref2" title="Указатель на RDS_VARDESCRIPTION">RDS_PVARDESCRIPTION</a></span> pDescr); <span class="rem">// Заполняемая структура описания переменной</span></pre>
+
+<p>В функцию передается идентификатор блока (параметр <span class="cpp">Block</span>) и порядковый номер переменной
+в этом блоке, начиная с нуля (параметр <span class="cpp">varnum</span>). Если переменная с таким номером существует
+в блоке, функция возвращает уникальный идентификатор этой переменной и заполняет ее описанием структуру, указатель
+на которую передан в параметре <span class="cpp">pDescr</span>. Если же такой переменной нет в блоке
+, функция возвращает <span class="cpp">NULL</span>.</p>
+
+<p>В этом примере функции <span class="cpp">CheckBlockInputConnection</span> не требуется уникальный
+идентификатор переменной &ndash; возвращенное функцией значение просто проверяется на <span class="cpp">NULL</span>.
+Если <span class="cpp">CheckBlockInputConnection</span> вернула <span class="cpp">NULL</span>, значит,
+переменной с номером <span class="cpp">num</span> нет в блоке <span class="cpp">Block</span>, и никакой связи у
+этой отсутствующей переменной быть не может &ndash; функция возвращает <span class="cpp">FALSE</span>. В противном
+случае переменная существует, и структура <span class="cpp">pVarDescr</span> (типа
+<span class="cpp"><a href="RDS_VARDESCRIPTION.htm" title="А.4.17. RDS_VARDESCRIPTION &ndash; описание переменной блока">RDS_VARDESCRIPTION</a></span>) заполнена ее описанием. Эта структура подробно описана
+в <a href="app_index.htm#light_htm:app_a" title="Приложение А. Функции, константы и структуры RDS">приложении А</a>, сейчас в ней нас будет интересовать единственное  поле
+<span class="cpp">Name</span> &ndash; указатель на строку с именем переменной.</p>
+
+<p>Теперь нужно перебрать все связи, подключенные ко входам блока, и попробовать найти ту, которая
+соединена с нужной переменной. Для перебора связей будет использоваться сервисная функция
+<span class="cpp"><a href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a></span>:</p>
+
+<pre class="cpp">  <span id="light_ref9"><a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,                  <span class="rem">// Идентификатор блока</span>
+    <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> Conn,                   <span class="rem">// Предыдущая связь</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Inputs,                        <span class="rem">// Искать соединенные со входами</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Outputs,                       <span class="rem">// Искать соединенные с выходами</span>
+    <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> pPointDescr); <span class="rem">// Заполняемая структура описания точки связи</span></pre>
+
+<p>Если параметр <span class="cpp">Conn</span> равен <span class="cpp">NULL</span>, функция ищет первую связь,
+соединенную с блоком <span class="cpp">Block</span>. Если <span class="cpp">Conn</span> не <span class="cpp">NULL</span>, функция
+ищет следующую после <span class="cpp">Conn</span> связь. Таким образом, последовательно вызывая
+<span class="cpp"><a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a></span> и передавая в параметре <span class="cpp">Conn</span> результат прошлого
+вызова, можно перебрать все связи, соединенные с блоком. Если в параметре <span class="cpp">Conn</span> передать
+идентификатор последней связи, функция вернет <span class="cpp">NULL</span>, сигнализируя о том, что больше
+у блока связей нет. Параметр <span class="cpp">Inputs</span> указывает на необходимость искать связи,
+соединенные со входами блока, <span class="cpp">Outputs</span> &ndash; на необходимость искать связи,
+соединенные с выходами. Хотя бы один из этих параметров должен быть истинным, иначе функция сразу вернет
+<span class="cpp">NULL</span> &ndash; бессмысленно искать связь блока, не соединенную ни с входом, ни с выходом.
+В параметре <span class="cpp">pPointDescr</span> передается указатель на структуру, которая заполняется
+описанием точки связи, соответствующей входу или выходу данного блока.</p>
+
+<p>Связи блока перебираются в цикле <span class="cpp">for</span>, перед которым вспомогательной переменной
+<span class="cpp">c</span> присваивается значение <span class="cpp">NULL</span>. В цикле вызывается
+<span class="cpp"><a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a></span>, в которую в качестве идентификатора предыдущей связи передается
+значение <span class="cpp">c</span> (сначала <span class="cpp">c</span> равно <span class="cpp">NULL</span>,
+поэтому при первом вызове функция найдет первую связь, соединенную с блоком). Поскольку мы проверяем наличие
+связей у входа блока, в параметре <span class="cpp">Inputs</span> передается <span class="cpp">TRUE</span>, а
+в параметре <span class="cpp">Outputs</span> &ndash; <span class="cpp">FALSE</span>. Функция должна вернуть
+идентификатор найденной связи (присваивается переменной <span class="cpp">c</span>) и заполнить структуру
+<span class="cpp">PtDescr</span> типа <span class="cpp"><a href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">RDS_POINTDESCRIPTION</a></span> описанием точки,
+которая соединяет эту связь с блоком. Обычно такая точка размещается на границе картинки блока и около
+нее отображается имя переменной, к которой подсоединена связь. Описание структуры
+<span class="cpp"><a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">RDS_POINTDESCRIPTION</a></span> приведено в <a href="app_index.htm#light_htm:app_a" title="Приложение А. Функции, константы и структуры RDS">приложении А</a>, нам
+потребуется только ее поле <span class="cpp">VarName</span>, в котором содержится указатель на строку
+с именем переменной блока, к которой присоединена связь.</p>
+
+<p>Если функция <span class="cpp"><a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a></span> не нашла очередной связи блока, значение переменной
+<span class="cpp">c</span> будет равно <span class="cpp">NULL</span> &ndash; в этом случае цикл будет прерван
+оператором <span class="cpp">break</span>. В противном случае имя переменной из структуры описания переменной блока
+<span class="cpp">pVarDescr</span> сравнивается с именем переменной из структуры описания точки связи
+<span class="cpp">PtDescr</span> при помощи стандартной функции сравнения строк <span class="cpp">strcmp</span>. При
+совпадении имен <span class="cpp">strcmp</span> вернет 0. Это означает, что найденная при помощи
+<span class="cpp"><a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a></span> связь соединена с заданной переменной. В этом случае возвращается
+<span class="cpp">TRUE</span> &ndash; мы проверяли, подключена ли связь к переменной блока с номером <span class="cpp">num</span>,
+и только что нашли такую связь. Если же имена не совпали, цикл продолжается, при этом в переменной
+<span class="cpp">c</span> содержится идентификатор найденной связи, и при следующем вызове
+<span class="cpp"><a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a></span> найдет следующую связь. Так будет продолжаться до тех пор, пока
+имя переменной в структуре <span class="cpp">PtDescr</span> не совпадет с именем заданной переменной и не выполнится
+команда &laquo;<span class="cpp">return TRUE</span>&raquo;, либо пока не будут перебраны все связи и цикл не будет прерван оператором
+<span class="cpp">break</span> &ndash; в этом случае возвращается <span class="cpp">FALSE</span>, поскольку все
+связи блока перебраны, и ни одна из них не соединяется с заданной переменной.</p>
+
+<p>Следует отметить, что функцию <span class="cpp">CheckBlockInputConnection</span> нельзя применять для проверки
+наличия связей у входов-<a href="pm_1_5.htm#light_ref16" title="тип переменной: структура">структур</a>
+и входов-<a href="pm_1_5.htm#light_ref13" title="тип переменной: массив">массивов</a> &ndash; она может работать только с простыми переменными.
+Дело в том, что у сложных переменных связь может быть присоединена не только ко всей переменной целиком, но и
+к ее части, например, к полю структуры или элементу массива. Например, если переменная &laquo;<span class="rdsvar">M</span>&raquo; &ndash;
+массив, то связь может быть присоединена к &laquo;<span class="rdsvar">M[0]</span>&raquo;, &laquo;<span class="rdsvar">M[1]</span>&raquo; и т.д. Внутри функции
+имя заданной переменной сравнивается с именем переменной, взятым из точки связи, и, поскольку строки
+&laquo;M&raquo; и &laquo;M[0]&raquo; не совпадают, связь, идущая к элементу массива не будет найдена. Однако,
+поскольку нам эта функция будет нужна для проверки наличия связи у хранящегося в переменной блока параметра, на это
+ограничение можно не обращать внимания &ndash; параметры обычно хранятся в простых переменных.</p>
+
+<p>Может возникнуть вопрос: почему в функцию <span class="cpp">CheckBlockInputConnection</span> передается номер
+переменной, если для поиска связей используется ее имя? Если бы в функцию сразу передавалось имя переменной,
+можно было бы не вызывать <span class="cpp"><a class="hidden" href="rdsGetBlockVar.htm" title="А.5.14.10. rdsGetBlockVar &ndash; переменная блока по номеру">rdsGetBlockVar</a></span>. Однако, в этом случае при изменении
+имени переменной пришлось бы переписывать модель блока, поскольку строка имени переменной была бы жестко
+&laquo;зашита&raquo; в вызов <span class="cpp">CheckBlockInputConnection</span>. Использование номеров переменных
+позволяет привязываться не к их именам, а к порядку их следования, изменять который в любом случае не следует
+&ndash; большинство моделей рассчитано на жесткую структуру статических переменных, проверяемую в вызове модели
+с параметром <span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>.</p>
+
+<p>Теперь напишем функцию, которая, в зависимости от наличия подключенной к вещественному (<span class="cpp">double</span>)
+входу связи, будет добавлять в окно настройки, созданное сервисной функцией
+<span class="cpp"><a href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a></span>
+(см. <a href="pm_2_7_2.htm" title="&sect;2.7.2. Использование объектов-окон RDS">&sect;2.7.2</a>), поле для ввода значения переменной (если связи нет)
+или поле для его индикации (если связь есть). Кроме того, при наличии связи к заголовку поля ввода будет
+добавляться текст &laquo;подключена связь&raquo;. Как и <span class="cpp">CheckBlockInputConnection</span>,
+эта функция будет возвращать логическое значение, соответствующее наличию или отсутствию связи у
+заданного входа.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <span id="light_ref10">AddWinEditOrDisplayDouble</span>(
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window, <span class="rem">// Идентификатор объекта-окна</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,  <span class="rem">// Блок</span>
+    <span class="kw">int</span> varnum,         <span class="rem">// Номер переменной в блоке</span>
+    <span class="kw">int</span> ctrlnum,        <span class="rem">// Идентификатор поля ввода в окне</span>
+    <span class="kw">char</span> *title)        <span class="rem">// Заголовок поля или NULL</span>
+  { <span class="rem">// Структура описания переменной блока</span>
+    <a class="hidden" href="RDS_VARDESCRIPTION.htm#ref1" title="Структура RDS_VARDESCRIPTION">RDS_VARDESCRIPTION</a> VarDescr;
+    <span class="rem">// Проверка наличия связи у переменной varnum в блоке Block</span>
+    <span class="rem">// и заполнение структуры VarDescr описанием переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> conn=CheckBlockInputConnection(Block,varnum,&amp;VarDescr);
+
+    <span class="kw">if</span>(conn) <span class="rem">// К переменной подключена связь</span>
+      { <span class="rem">// Вспомогательные переменные</span>
+        <span class="kw">char</span> *caption; <span class="rem">// Заголовок поля</span>
+        <span class="kw">double</span> *cur;   <span class="rem">// Указатель на данные переменной</span>
+        <span class="rem">// Заголовок поля формируется из имени переменной и</span>
+        <span class="rem">// текста “подключена связь"</span>
+        caption=<span id="light_ref11"><a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span>(title?title:VarDescr.Name,
+                             <span class="str">" (подключена связь)"</span>,
+                             FALSE);
+        <span class="rem">// Добавление поля для индикации текущего значения</span>
+        <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,ctrlnum,<span id="light_ref12"><a class="hidden" href="app_a_fields.htm#light_ref7" title="RDS_FORMCTRL_DISPLAY">RDS_FORMCTRL_DISPLAY</a></span>,
+                       caption,<span class="const">80</span>);
+        <span class="rem">// Освобождение динамически сформированной строки</span>
+        <span class="rem">// заголовка поля</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(caption);
+        <span class="rem">// Получение указателя на данные переменной</span>
+        cur=(<span class="kw">double</span>*)<span id="light_ref13"><a class="hidden" href="rdsGetBlockVarBase.htm" title="А.5.14.11. rdsGetBlockVarBase &ndash; базовый адрес переменной блока по ее номеру">rdsGetBlockVarBase</a></span>(Block,varnum,NULL);
+        <span class="rem">// Проверка – переменная должна существовать и иметь тип double</span>
+        <span class="kw">if</span>(cur!=NULL &amp;&amp; VarDescr.Type==<span class="str">'D'</span>)
+          <span class="rem">// Занесение текущего значения переменной в поле</span>
+          <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,ctrlnum,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,*cur);
+      }
+    <span class="kw">else</span> <span class="rem">// К переменной не подключена связь</span>
+      { <span class="rem">// Вспомогательная переменная для значения по умолчанию</span>
+        <span class="kw">char</span> *defval;
+        <span class="rem">// Получение строки со значением переменной по умолчанию</span>
+        <span class="rem">// (необходимо потом освободить при помощи rdsFree)</span>
+        defval=<span id="light_ref14"><a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a></span>(Block,varnum,NULL);
+        <span class="rem">// Добавление поля для ввода параметра</span>
+        <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,ctrlnum,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,
+                       title?title:VarDescr.Name,<span class="const">80</span>);
+        <span class="rem">// Занесение в поле ввода значения перменной по умолчанию</span>
+        <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,ctrlnum,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,defval);
+        <span class="rem">// Освобождение динамически сформированной строки</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(defval);
+      }
+    <span class="rem">// Возврат: TRUE – есть связь, FALSE – нет связи</span>
+    <span class="kw">return</span> conn;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Функция принимает пять параметров:
+идентификатор <a href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">объекта-окна</a>
+(<span class="cpp">window</span>), идентификатор блока, значение переменной которого будет
+редактироваться или отображаться (<span class="cpp">Block</span>), номер переменной в блоке (<span class="cpp">varnum</span>),
+идентификатор поля, которое должно быть добавлено в окно (<span class="cpp">ctrlnum</span>), и строка-заголовок поля
+ввода (<span class="cpp">title</span>), вместо которой может быть передано значение
+<span class="cpp">NULL</span> для использования в качестве заголовка имени переменной. В начале функции описывается
+структура <span class="cpp">VarDescr</span>, после чего вызывается ранее написанная функция
+<span class="cpp">CheckBlockInputConnection</span>, которая заносит в нее описание переменной с номером
+<span class="cpp">varnum</span> в блоке <span class="cpp">Block</span> и возвращает логическое значение,
+соответствующее наличию связи, присоединенной к этой переменной. Это значение присваивается вспомогательной переменной
+<span class="cpp">conn</span>.</p>
+
+<p>Если <span class="cpp">conn</span> истинно (<span class="cpp">TRUE</span>), у переменной есть связь,
+и ее значение нельзя редактировать. В этом случае надо добавить в окно <span class="cpp">window</span> поле
+для индикации текущего значения переменной и сформировать заголовок этого поля из параметра
+<span class="cpp">title</span> или имени переменной (его можно получить из поля
+<span class="cpp">Name</span> структуры <span class="cpp">VarDescr</span>) и текста
+&laquo;подключена связь&raquo;. Сначала при помощи функции <span class="cpp"><a href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span> в памяти
+формируется строка заголовка и указатель на нее присваивается вспомогательной переменной <span class="cpp">caption</span>
+&ndash; позже эту строку нужно будет освободить функцией <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>. В первых двух параметрах
+функции передаются объединяемые строки, в третьем &ndash; значение <span class="cpp">FALSE</span>, запрещающее
+функции возвращать <span class="cpp">NULL</span> вместо пустой строки (в данном случае можно было передать и
+<span class="cpp">TRUE</span>, поскольку второй параметр функции &ndash; не пустая строковая константа, и
+в результате объединения строк не может получиться пустая строка). Затем вызывается функция
+<span class="cpp"><a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a></span>, добавляющая в окно <span class="cpp">window</span> поле индикации
+(<span class="cpp"><a href="app_a_fields.htm#light_ref7" title="RDS_FORMCTRL_DISPLAY">RDS_FORMCTRL_DISPLAY</a></span>) с идентификатором <span class="cpp">ctrlnum</span> и шириной в 80
+точек экрана. В качестве заголовка поля передается динамически сформированная строка <span class="cpp">caption</span>.
+После вызова <span class="cpp"><a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a></span> строка <span class="cpp">caption</span> больше не нужна,
+и она освобождается при помощи <span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p>Теперь в добавленное поле необходимо занести текущее значение переменной. Раньше для доступа к
+переменным в моделях блоков использовались <a href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока">макросы</a>, вычислявшие
+начальный адрес переменной блока по начальному адресу дерева переменных из структуры данных блока
+(<span class="cpp"><a href="RDS_BLOCKDATA.htm#ref3" title="Структура RDS_BLOCKDATA">RDS_BLOCKDATA</a></span>) и фиксированному смещению. В эту функцию не передается указатель
+на структуру данных блока, поэтому макросы использовать нельзя &ndash; неоткуда получить начальный адрес дерева
+переменных. Для получения начального адреса переменной будет использоваться сервисная функция
+<span class="cpp"><a href="rdsGetBlockVarBase.htm" title="А.5.14.11. rdsGetBlockVarBase &ndash; базовый адрес переменной блока по ее номеру">rdsGetBlockVarBase</a></span> &ndash; это медленнее, чем обращение к переменной по фиксированному
+смещению, но при открытии окна настроек высокие скорости не нужны:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsGetBlockVarBase.htm" title="А.5.14.11. rdsGetBlockVarBase &ndash; базовый адрес переменной блока по ее номеру">rdsGetBlockVarBase</a>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,  <span class="rem">// Идентификатор блока</span>
+    <span class="kw">int</span> num,            <span class="rem">// Номер переменной</span>
+    <span class="kw">int</span> *pSize);        <span class="rem">// Возвращаемый размер переменной</span></pre>
+
+<p>В функцию передается идентификатор блока, номер переменной в нем, а также указатель на целую переменную,
+в которую нужно записать размер переменной блока в дереве. В данном случае нам не нужен размер переменной (мы
+знаем, что переменная должна иметь тип <span class="cpp">double</span> и ее размер должен равняться восьми байтам),
+поэтому в параметре <span class="cpp">pSize</span> передается <span class="cpp">NULL</span>. Возвращаемое функцией
+значение &ndash; начальный адрес переменной &ndash; приводится к типу
+&laquo;указатель на <span class="cpp">double</span>&raquo; и записывается во вспомогательную
+переменную <span class="cpp">cur</span>. Перед тем, как обращаться к переменной, нужно на всякий случай проверить,
+существует ли в блоке переменная с таким номером и имеет ли она тип <span class="cpp">double</span>. Для проверки
+наличия переменной значение <span class="cpp">cur</span> сравнивается с <span class="cpp">NULL</span>: если переменной
+с указанным номером нет в блоке, <span class="cpp"><a class="hidden" href="rdsGetBlockVarBase.htm" title="А.5.14.11. rdsGetBlockVarBase &ndash; базовый адрес переменной блока по ее номеру">rdsGetBlockVarBase</a></span> возвращает нулевое значение.
+Тип переменной можно считать из поля <span class="cpp">Type</span> структуры <span class="cpp">VarDescr</span> &ndash;
+как и везде в RDS, типу <span class="cpp">double</span> соответствует символ &laquo;D&raquo;.
+Если оба условия выполнены, текущее значение переменной заносится в поле индикации функцией
+<span class="cpp"><a href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a></span>.</p>
+
+<p>Если <span class="cpp">conn</span> имеет значение <span class="cpp">FALSE</span>, к переменной не присоединено
+ни одной связи, и пользователю можно разрешить редактировать ее значение по умолчанию. Для получения значения
+переменной по умолчанию (оно может отличаться от текущего значения переменной, если ранее к ней была подключена
+связь и схема некоторое время проработала в
+<a href="pm_1_3.htm#ref3" title="Режим расчета">режиме расчета</a>), будет использоваться функция
+<span class="cpp"><a href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a></span>:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block, <span class="rem">// Идентификатор блока</span>
+    <span class="kw">int</span> num,           <span class="rem">// Номер переменной</span>
+    <span class="kw">int</span> *pLength);     <span class="rem">// Возвращаемая длина строки</span></pre>
+
+<p>Как и многие другие функции для работы с переменными блока, эта функция принимает идентификатор блока
+и номер переменной в этом блоке. Независимо от типа переменной, функция возвращает ее значение по умолчанию
+в виде указателя на динамически сформированную в памяти строку (ее нужно будет освободить при помощи
+<span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>), при этом, если параметр <span class="cpp">pLength</span> не равен
+<span class="cpp">NULL</span>, в целую переменную, на которую указывает <span class="cpp">pLength</span>, записывается
+длина этой строки. В данном случае мы работаем с переменными блока типа <span class="cpp">double</span>, поэтому
+строка, возвращенная функцией, будет содержать символьное представление вещественного числа двойной точности
+(число знаков после запятой будет подобрано автоматически). Длина строки нас не интересует, поэтому в
+параметре <span class="cpp">pLength</span> передается <span class="cpp">NULL</span>. Указатель на строку,
+возвращенный функцией, записывается во вспомогательную переменную <span class="cpp">defval</span>.</p>
+
+<p>Теперь функцией <span class="cpp"><a href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a></span> в окно window добавляется поле ввода
+(<span class="cpp"><a href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a></span>) шириной в 80 точек экрана с идентификатором
+<span class="cpp">ctrlnum</span>. В качестве заголовка поля используется значение параметра
+<span class="cpp">title</span>, или, если оно равно <span class="cpp">NULL</span>, имя переменной блока из
+поля <span class="cpp">Name</span> структуры описания переменной. При помощи функции
+<span class="cpp"><a href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a></span> в поле ввода заносится строка со значением переменной по умолчанию
+<span class="cpp">defval</span>, после чего память, занятая этой строкой, освобождается при помощи
+<span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p>После того, как обе вспомогательные функции готовы, можно заняться моделью блока с функцией настройки:</p>
+
+<pre class="cpp">  <span class="rem">// Функция настройки K и C для модели блока y=Kx+C</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> TestKxCSetup(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block, <span class="rem">// Идентификатор блока</span>
+    <span class="kw">int</span> numK,          <span class="rem">// Номер переменной K в блоке</span>
+    <span class="kw">int</span> numC)          <span class="rem">// Номер переменной C в блоке</span>
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window; <span class="rem">// Идентификатор вспомогательного объекта</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;            <span class="rem">// Пользователь нажал "OK"</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> K_conn,C_conn; <span class="rem">// Флаги наличия связей у K и C</span>
+
+    <span class="rem">// Создание окна</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Kx+C"</span>);
+
+    <span class="rem">// Добавление полей для ввода или индикации K и C</span>
+    <span class="rem">// (в зависимости от наличия связей)</span>
+    K_conn=<span id="light_ref15">AddWinEditOrDisplayDouble</span>(window,Block,numK,<span class="const">1</span>,NULL);
+    C_conn=AddWinEditOrDisplayDouble(window,Block,numC,<span class="const">2</span>,NULL);
+
+    <span class="rem">// Открытие окна</span>
+    ok=<span id="light_ref16"><a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Нажата кнопка OK – запись параметров в блок</span>
+        <span class="kw">if</span>(!K_conn) <span class="rem">// У K нет связи</span>
+          { <span class="rem">// Получение строки из поля ввода</span>
+            <span class="kw">char</span> *str=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+            <span class="rem">// Установка значения переменной K по умолчанию</span>
+            <span id="light_ref17"><a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a></span>(Block,numK,str);
+          }
+        <span class="kw">if</span>(!C_conn) <span class="rem">// У С нет связи</span>
+          { <span class="rem">// Получение строки из поля ввода</span>
+            <span class="kw">char</span> *str=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+            <span class="rem">// Установка значения переменной C по умолчанию</span>
+            <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(Block,numC,str);
+          }
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="rem">// Возвращаемое значение – истина, если нажата “OK"</span>
+    <span class="kw">return</span> ok;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция модели блока</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestKxC(<span class="kw">int</span> CallMode,
+                        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start (*((char *)(pStart)))      </span><span class="rem">// 0</span>
+  <span class="preproc">#define Ready (*((char *)(pStart+1)))    </span><span class="rem">// 1</span>
+  <span class="preproc">#define x     (*((double *)(pStart+2)))  </span><span class="rem">// 2</span>
+  <span class="preproc">#define K     (*((double *)(pStart+10))) </span><span class="rem">// 3</span>
+  <span class="preproc">#define C     (*((double *)(pStart+18))) </span><span class="rem">// 4</span>
+  <span class="preproc">#define y     (*((double *)(pStart+26))) </span><span class="rem">// 5</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDDDD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Запуск расчета</span>
+        <span class="kw">case</span> <span id="light_ref18"><a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a></span>:
+          <span class="rem">// Если это запуск с начала, взвести Start</span>
+          <span class="kw">if</span>(((<span id="light_ref19"><a class="hidden" href="RDS_BFM_STARTCALC.htm#ref2" title="Указатель на RDS_STARTSTOPDATA">RDS_PSTARTSTOPDATA</a></span>)ExtParam)-&gt;FirstStart)
+            Start=<span class="const">1</span>; <span class="rem">// Модель запустится в первом же такте</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          y=K*x+C;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Функция настройки</span>
+        <span class="kw">case</span> <span id="light_ref20"><a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>:
+          <span class="kw">if</span>(TestKxCSetup(BlockData-&gt;Block,<span class="const">3</span>,<span class="const">4</span>))
+            { <span class="rem">// Нажата "OK"</span>
+              Start=<span class="const">1</span>; <span class="rem">// Запустить модель в следующем такте</span>
+              <span class="kw">return</span> <a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>;
+            }
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef C</span>
+  <span class="preproc">#undef K</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Для улучшения читаемости программы настройка параметров блока вынесена в отдельную функцию
+<span class="cpp">TestKxCSetup</span>. Она принимает три параметра: идентификатор блока
+(<span class="cpp">Block</span>) и порядковые номера переменных &laquo;<span class="rdsvar">K</span>&raquo; и &laquo;<span class="rdsvar">С</span>&raquo;
+(<span class="cpp"></span> и <span class="cpp">numС</span> соответственно). Внутри функции при помощи
+<span class="cpp"><a href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a></span> создается вспомогательный объект-окно, и его идентификатор присваивается
+вспомогательной переменной <span class="cpp">window</span>. Затем при помощи ранее созданной функции
+<span class="cpp">AddWinEditOrDisplayDouble</span> в это окно добавляются поля ввода или индикации для параметров
+&laquo;<span class="rdsvar">K</span>&raquo; и &laquo;<span class="rdsvar">C</span>&raquo; (в обоих вызовах мы будем использовать в качестве заголовка поля
+ввода имя соответствующей переменной, поэтому в последнем параметре функции передается значение
+<span class="cpp">NULL</span>). Для переменной &laquo;<span class="rdsvar">K</span>&raquo; добавляется поле с идентификатором 1,
+при этом вспомогательной логической переменной <span class="cpp">K_conn</span> присваивается
+<span class="cpp">TRUE</span>, если к переменной присоединена связь, и <span class="cpp">FALSE</span>
+в противном случае. Для переменной &laquo;<span class="rdsvar">C</span>&raquo; добавляется поле с идентификатором 2, факт наличия или
+отсутствия у нее связи заносится в <span class="cpp">C_conn</span>. Теперь можно открывать окно: вызывается
+функция &laquo;S&raquo;) и четыре переменных типа <span class="cpp">double</span>
+(&laquo;D&raquo;).</p>
+
+<p>Для того, чтобы в самом первом такте моделирования было вычислено значение выхода блока, соответствующее
+начальным значениям входа и параметров, в функцию модели введена реакция на запуск расчета
+(<span class="cpp"><a href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a></span>). При вызове модели в этом режиме в параметре <span class="cpp">ExtParam</span>
+передается указатель на структуру <span class="cpp"><a href="RDS_BFM_STARTCALC.htm#ref2" title="Указатель на RDS_STARTSTOPDATA">RDS_PSTARTSTOPDATA</a></span>. Она описана в
+&laquo;<span class="file">RdsDef.h</span>&raquo; следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> FirstStart; <span class="rem">// TRUE  - расчет запущен с начала</span>
+                     <span class="rem">// FALSE – расчет продолжен после остановки</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Loop;       <span class="rem">// TRUE  - запуск непрерывного расчета</span>
+                     <span class="rem">// FALSE – запуск расчета на один такт</span>
+  } <a class="hidden" href="RDS_BFM_STARTCALC.htm#ref1" title="Структура RDS_STARTSTOPDATA">RDS_STARTSTOPDATA</a>;
+  <span class="rem">// Указатель на структуру</span>
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_BFM_STARTCALC.htm#ref1" title="Структура RDS_STARTSTOPDATA">RDS_STARTSTOPDATA</a> *<a class="hidden" href="RDS_BFM_STARTCALC.htm#ref2" title="Указатель на RDS_STARTSTOPDATA">RDS_PSTARTSTOPDATA</a>;</pre>
+
+<p>Если поле <span class="cpp">FirstStart</span> этой структуры истинно, расчет запущен с самого начала.
+В этом случае взводится
+<a href="um_1_4.htm#ref25" title="Сигнал запуска блока">сигнал <span class="cpp">Start</span></a>, чтобы в первом же
+такте расчета модель сработала и вычислила значение выхода <span class="cpp">y</span>. Того же результата можно
+было добиться, установив для переменной <span class="cpp">Start</span> единичное значение по умолчанию, как
+в предыдущих примерах. Приведенный здесь способ принудительного запуска модели в первом такте расчета надежнее,
+поскольку пользователь не сможет вмешаться в работу модели, изменив значение <span class="cpp">Start</span>
+по умолчанию.</p>
+
+<p>В реакции на такт расчета (<span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>) модель вычисляет значение выхода
+<span class="cpp">y</span> по значениям входа <span class="cpp">x</span> и параметров
+<span class="cpp">K</span> и <span class="cpp">С</span>. При этом не важно, получает модель значения параметров
+по связям или они введены пользователем в функции настройки. В обоих случаях можно брать текущее значение
+соответствующей переменной.</p>
+
+<p>В режиме <span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span> модель вызывает функцию настройки
+<span class="cpp">TestKxCSetup</span>, передавая ей идентификатор данного блока из структуры
+<span class="cpp">BlockData</span> и порядковые номера переменных <span class="cpp">K</span> (3) и
+<span class="cpp">С</span> (4). Если функция вернула <span class="cpp">TRUE</span>, взводится сигнал
+<span class="cpp">Start</span>, чтобы в ближайшем такте расчета было вычислено новое значение выхода
+по изменившимся параметрам, после чего возвращается значение
+<span class="cpp"><a href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a></span>, информирующее RDS о наличии изменений в схеме.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/KxC_Setup.png" width="297" height="240" alt="Блок, хранящий настройки в значениях входов по умолчанию" />
+<p id="light_pic1">Рис.&nbsp;52. Блок, хранящий настройки в<br />значениях входов по умолчанию</p>
+</div></div>
+
+
+<p>Чтобы проверить работу этого блока, можно собрать схему, в которой только к одному из двух параметров будет
+подключено поле ввода &ndash; например, к параметру &laquo;<span class="rdsvar">K</span>&raquo;
+(<a href="#pic1" title="Блок, хранящий настройки в значениях входов по умолчанию">рис.&nbsp;52</a>). В окне параметров блока на
+<a href="pm_1_4.htm#pic3" title="Параметры блока &ndash; модель и реакции">вкладке &laquo;<span class="menu">DLL</span>&raquo;</a>
+нужно установить флаг &laquo;<span class="menu">блок имеет функцию настройки</span>&raquo;. Теперь при выборе соответствующего
+пункта контекстного меню блока (или по двойному щелчку, если на
+<a href="pm_1_4.htm#pic1" title="Параметры блока &ndash; общие">вкладке &laquo;<span class="menu">общие</span>&raquo;</a> установить флаг
+&laquo;<span class="menu">двойной щелчок в режиме редактирования вызывает функцию настройки</span>&raquo;) будет открываться окно для
+ввода значений &laquo;<span class="rdsvar">K</span>&raquo; и &laquo;<span class="rdsvar">С</span>&raquo;. В этом окне будут заблокированы значения параметров,
+к которым подключены связи.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_7_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

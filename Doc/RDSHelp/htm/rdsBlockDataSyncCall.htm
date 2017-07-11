@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.3.1. rdsBlockDataSyncCall &ndash; вызвать функцию с блокировкой данных</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_3">А.5.3. Синхронизация потоков RDS</a></p>
+<div class="level"><p>А.5.3.1. <span class="cpp">rdsBlockDataSyncCall</span> &ndash; вызвать функцию с блокировкой данных</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsUpdateExtIdsRange.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsCallerThreadType.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsBlockDataSyncCall">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4>А.5.3. Синхронизация потоков RDS</h4>
+<p class="abstract">Описываются функции, предотвращающие одновременное обращение к данным блоков из двух одновременное работающих потоков RDS: главного потока и потока расчета.</p>
+<h5>А.5.3.1. <span class="cpp">rdsBlockDataSyncCall</span> &ndash; вызвать функцию с блокировкой данных</h5>
+
+
+<p>Функция <span class="cpp">rdsBlockDataSyncCall</span> вызывает пользовательскую функцию, указатель на
+которую передается в ее первом параметре, блокируя доступ ко всем данным RDS на время этого вызова.</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsBlockDataSyncCall(
+      RDS_IpV Func,    <span class="rem">// Функция пользователя</span>
+      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Param     <span class="rem">// Параметр функции пользователя</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_ICb4pV</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Func</span>&emsp;(<span class="cpp"><i>RDS_IpV</i></span>)</dt>
+  <dd>Указатель на пользовательскую функцию, которую нужно вызвать с блокировкой данных. Пользовательская
+  функция должна иметь следующий вид:<br />
+  <pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции</i>(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> param);</pre>
+  Тип этого параметра <span class="cpp">RDS_IpV</span> описан в &laquo;<span class="file">RdsDef.h</span>&raquo; как указатель на такую функцию:<br />
+  <pre class="cpp">  <span class="kw">typedef</span> <span class="kw">int</span> (<a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> *RDS_IpV)(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a>);</pre>
+  </dd>
+
+  <dt><span class="cpp">Param</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></i></span>)</dt>
+  <dd>Параметр типа <span class="cpp">void*</span>, передаваемый в пользовательскую функцию при вызове.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Целое число, возвращенное вызванной функцией пользователя.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Функция <span class="cpp">rdsBlockDataSyncCall</span> обычно используется для выполнения каких-либо
+действий с данными блоков (например, вызова других сервисных функций RDS или обращения к
+<a href="pm_2_5_1.htm" title="&sect;2.5.1. Доступ к статическим переменным и работа в режиме расчета">статическим переменным</a>
+блока) не из функции модели или функции модуля автокомпиляции, то есть в те моменты, когда данные
+не заблокированы RDS автоматически. Чаще всего такая ситуация возникает при открытии
+немодальных окон в модели блока
+(см. <a href="pm_1_8.htm" title="&sect;1.8. Открытие окон в модели блока">&sect;1.8 руководства программиста</a>), процедуры которых вызываются Windows без
+синхронизации с RDS. Если процедура окна обратится к данным блока одновременно с потоком расчета
+RDS, могут возникнуть серьезные ошибки, поэтому такие обращения необходимо синхронизировать.
+При обращении к данным блока из функции модели или модуля автокомпиляции за синхронизацией следит
+RDS, поэтому в вызове специальных функций нет необходимости.</p>
+
+<p>При вызове <span class="cpp">rdsBlockDataSyncCall</span> RDS выполняет следующие действия:</p>
+
+<ol>
+  <li>Данные блокируются, как при вызове <span class="cpp"><a href="rdsLockBlockData.htm" title="А.5.3.3. rdsLockBlockData &ndash; включение блокировки данных">rdsLockBlockData</a></span>.</li>
+  <li>Вызывается функция, указатель на которую передан в параметре <span class="cpp">Func</span>, с
+  параметром, переданным в параметре <span class="cpp">Param</span>. Возвращенное функцией целое
+  число запоминается.</li>
+  <li>Блокировка данных снимается, как при вызове <span class="cpp"><a href="rdsUnlockBlockData.htm" title="А.5.3.5. rdsUnlockBlockData &ndash; выключение блокировки данных">rdsUnlockBlockData</a></span>.</li>
+  <li>Запомненный результат возврата вызванной функции возвращается вызвавшей программе.</li>
+</ol>
+
+<p class="noindent">Параметр <span class="cpp">Param</span>, имеющий тип
+<span class="cpp"><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></span> (произвольный указатель), передается в вызываемую функцию пользователя без
+изменений. Это единственный способ передать ей какие-либо данные: например, можно передать указатель на
+какую-либо структуру, а внутри пользовательской функции привести его к нужному типу и обращаться к
+полям этой структуры.</p>
+
+<p>Фактически, вызов <span class="cpp">rdsBlockDataSyncCall</span> всегда можно заменить парой вызовов
+<span class="cpp">rdsLockBlockData</span> и <span class="cpp">rdsUnlockBlockData</span>, между
+которыми вызывается пользовательская функция. Использование
+<span class="cpp">rdsBlockDataSyncCall</span> с ее внутренней блокировкой данных позволяет уменьшить
+вероятность ошибки программиста: если при блокировке данных вручную забыть вызвать
+<span class="cpp">rdsUnlockBlockData</span>, данные останутся заблокированными, что приведет к остановке
+потока расчета RDS.</p>
+
+<p class="apphdr">Пример</p>
+<p>В этом примере в качестве действий, требующих блокировки данных и выполняемых в пользовательской функции,
+используется вызов функции <span class="cpp"><a href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a></span>, выводящей сообщение пользователю.</p>
+
+<pre class="cpp">  <span class="rem">// Функция пользователя</span>
+  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> MySyncFunc(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> param)
+  { <span class="kw">char</span> *text=(<span class="kw">char</span>*)param;
+    <span class="kw">return</span> <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(text,<span class="str">"Сообщение"</span>,MB_YESNO);
+  }
+    ...
+  <span class="rem">// Вызов функциии с синхронизацией</span>
+  <span class="kw">int</span> ret=rdsBlockDataSyncCall(MySyncFunc,<span class="str">"Выполнить действие?"</span>);</pre>
+
+<p>Этот пример можно было бы переписать без использования <span class="cpp">rdsBlockDataSyncCall</span>
+следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Действия с синхронизацией</span>
+  <span class="kw">int</span> ret;
+  <span class="rem">// Блокировка данных</span>
+  <a class="hidden" href="rdsLockBlockData.htm" title="А.5.3.3. rdsLockBlockData &ndash; включение блокировки данных">rdsLockBlockData</a>();
+  <span class="rem">// Выполнение действий</span>
+  ret=<a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(<span class="str">"Выполнить действие?"</span>,<span class="str">"Сообщение"</span>,MB_YESNO);
+  <span class="rem">// Снятие блокировки</span>
+  <a class="hidden" href="rdsUnlockBlockData.htm" title="А.5.3.5. rdsUnlockBlockData &ndash; выключение блокировки данных">rdsUnlockBlockData</a>();</pre>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsLockBlockData.htm" title="А.5.3.3. rdsLockBlockData &ndash; включение блокировки данных">rdsLockBlockData</a></span>,
+<span class="cpp"><a href="rdsUnlockBlockData.htm" title="А.5.3.5. rdsUnlockBlockData &ndash; выключение блокировки данных">rdsUnlockBlockData</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsUpdateExtIdsRange.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsCallerThreadType.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsBlockDataSyncCall">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

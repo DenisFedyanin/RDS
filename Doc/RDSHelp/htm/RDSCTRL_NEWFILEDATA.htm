@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>Б.1.4. RDSCTRL_NEWFILEDATA &ndash; описание события смены загруженной схемы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b_1">Б.1. Структуры библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p>Б.1.4. <span class="cpp">RDSCTRL_NEWFILEDATA</span> &ndash; описание события смены загруженной схемы</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDSCTRL_MSGEVENTDATA.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDSCTRL_PROGRESSDATA.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDSCTRL_NEWFILEDATA">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</h2>
+<h3 class="off">Б.1. Структуры библиотеки RdsCtrl.dll</h3>
+<h4>Б.1.4. <span class="cpp">RDSCTRL_NEWFILEDATA</span> &ndash; описание события смены загруженной схемы</h4>
+
+
+<p><span id="ref1">В структуре</span> <span id="ref2"><span class="cpp">RDSCTRL_NEWFILEDATA</span></span>
+передаются параметры сообщения RDS о смене текущей рабочей схемы
+<span class="cpp"><a href="RDSCTRLEVENT_NEWFILE.htm" title="Б.2.9. RDSCTRLEVENT_NEWFILE &ndash; загрузка или создание схемы">RDSCTRLEVENT_NEWFILE</a></span>.</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span> {
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;    <span class="rem">// Размер этой структуры</span>
+    <span class="kw">int</span> Reason;        <span class="rem">// Причина события (RDSCTRLEVENT_NEWFILE_*)</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> FileName;    <span class="rem">// Имя файла</span>
+  } <span id="light_ref1">RDSCTRL_NEWFILEDATA</span>;
+  <span class="kw">typedef</span> RDSCTRL_NEWFILEDATA *<span id="light_ref2">RDSCTRL_PNEWFILEDATA</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">servSize</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</dt>
+  <dd>Размер этой структуры в байтах. В это поле автоматически заносится значение
+  <span class="cpp">sizeof(RDSCTRL_NEWFILEDATA)</span>. Управляющая программа может использовать
+  это поле для проверки соответствия размера переданной структуры собственным ожиданиям.</dd>
+
+  <dt><span class="cpp">Reason</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Одна из констант <span class="cpp">RDSCTRLEVENT_NEWFILE_*</span>, указывающая на причину
+  смены текущего файла схемы, с которым работает управляемая копия RDS:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref3">RDSCTRLEVENT_NEWFILE_NEW</span></span></td>
+          <td>Создана новая пустая схема.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref4">RDSCTRLEVENT_NEWFILE_TEMPLATE</span></span></td>
+          <td>Новая схема создана по файлу <a href="um_2_4.htm#ref2" title="Создание схемы по шаблону">шаблона</a>.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref5">RDSCTRLEVENT_NEWFILE_LOAD</span></span></td>
+          <td>Загружен файл схемы.</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp">FileName</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на строку с именем загруженного файла схемы или файла шаблона, по которому создана
+  новая схема. Если событие произошло из-за создания новой пустой схемы, в этом поле записан указатель
+  на пустую строку.</dd>
+</dl>
+
+<p class="apphdr">Примечания</p>
+<p>Указатель на эту структуру передается управляющей программе двумя способами:</p>
+
+<ul>
+  <li>Если для реакции используется функция обратного вызова, зарегистрированная при помощи функции
+  <span class="cpp"><a href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a></span>, то указатель на <span class="cpp">RDSCTRL_NEWFILEDATA</span>
+  передается в третьем параметре функции обратного вызова.</li>
+
+  <li>Если для реакции используется сообщение окну управляющей программы, зарегистрированному функцией
+  <span class="cpp"><a href="rdsctrlRegisterEventMessage.htm" title="Б.3.6.3. rdsctrlRegisterEventMessage &ndash; регистрация оконного сообщения для реакции на событие">rdsctrlRegisterEventMessage</a></span>, то указатель на
+  <span class="cpp">RDSCTRL_NEWFILEDATA</span> передается в поле <span class="cpp">Data</span> структуры
+  <span class="cpp"><a href="RDSCTRL_MSGEVENTDATA.htm#ref1" title="Структура RDSCTRL_MSGEVENTDATA">RDSCTRL_MSGEVENTDATA</a></span>, указатель на которую, в свою очередь, передается в параметре
+  <span class="cpp">LPARAM</span> оконного сообщения.</li>
+</ul>
+
+<p>Структура <span class="cpp">RDSCTRL_NEWFILEDATA</span> и строка, на которую указывает ее поле
+<span class="cpp">FileName</span>, существуют только во время выполнения реакции управляющего приложения на
+событие, то есть до завершения функции обратного вызова или реакции на оконное сообщение.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDSCTRLEVENT_NEWFILE.htm" title="Б.2.9. RDSCTRLEVENT_NEWFILE &ndash; загрузка или создание схемы">RDSCTRLEVENT_NEWFILE</a></span>,
+<span class="cpp"><a href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a></span>,
+<span class="cpp"><a href="rdsctrlRegisterEventMessage.htm" title="Б.3.6.3. rdsctrlRegisterEventMessage &ndash; регистрация оконного сообщения для реакции на событие">rdsctrlRegisterEventMessage</a></span>,
+<span class="cpp"><a href="RDSCTRL_MSGEVENTDATA.htm#ref1" title="Структура RDSCTRL_MSGEVENTDATA">RDSCTRL_MSGEVENTDATA</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDSCTRL_MSGEVENTDATA.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDSCTRL_PROGRESSDATA.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDSCTRL_NEWFILEDATA">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

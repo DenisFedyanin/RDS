@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.12.5. Реакция окон подсистем на мышь и клавиатуру</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_12">&sect;2.12. Реакция блоков на действия пользователя</a></p>
+<div class="level"><p>&sect;2.12.5. Реакция окон подсистем на мышь и клавиатуру</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_12_4.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_6.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_12_5.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделью подсистемы,
+которая при щелчке правой кнопкой мыши на рабочем поле
+переключает масштаб со 100% на 400% и обратно, а при нажатии курсорных клавиш одновременно с клавишей
+<span class="keys">Shift</span> перемещает свое окно в направлении нажатой клавиши на
+5 точек экрана.</p>
+
+<pre class="cpp">  <span class="rem">// Реакция окон подсистем на мышь и клавиатуру</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+  <span class="rem">// Модель подсистемы с реакцией на мышь и клавиатуру</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> SystemReaction(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Вспомогательные переменные</span>
+    <a class="hidden" href="RDS_EDITORPARAMETERS.htm#ref1" title="Структура RDS_EDITORPARAMETERS">RDS_EDITORPARAMETERS</a> win;
+    <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse;
+    <a class="hidden" href="RDS_BFM_KEYDOWN.htm#ref3" title="Указатель на RDS_KEYDATA">RDS_PKEYDATA</a> key;
+    <span class="kw">int</span> x,y;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Нажатие кнопки мыши в окне подсистемы</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_WINDOWMOUSEDOWN.htm" title="А.2.6.17. RDS_BFM_WINDOWMOUSEDOWN &ndash; реакция подсистемы на нажатие кнопки мыши в своем окне">RDS_BFM_WINDOWMOUSEDOWN</a>:
+          <span class="rem">// Приведение ExtParam к нужному типу</span>
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam;
+          <span class="kw">if</span>(mouse-&gt;Button!=<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref5" title="RDS_MRIGHTBUTTON">RDS_MRIGHTBUTTON</a>)
+            <span class="kw">break</span>; <span class="rem">// Не правая кнопка - выходим</span>
+          <span class="rem">// Вычисляем координаты щелчка в масштабе 100%</span>
+          x=mouse-&gt;x/mouse-&gt;DoubleZoom;
+          y=mouse-&gt;y/mouse-&gt;DoubleZoom;
+          <span class="rem">// Установка нового масштаба подсистемы</span>
+          <a class="hidden" href="rdsSetZoomPercent.htm" title="А.5.8.22. rdsSetZoomPercent &ndash; задать масштаб окна подсистемы">rdsSetZoomPercent</a>(BlockData-&gt;Block,
+                            mouse-&gt;IntZoom&gt;<span class="const">100</span>?<span class="const">100</span>:<span class="const">400</span>,x,y);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Нажатие клавиши в окне подсистемы</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_WINDOWKEYDOWN.htm" title="А.2.6.14. RDS_BFM_WINDOWKEYDOWN &ndash; реакция подсистемы на нажатие клавиши в своем окне">RDS_BFM_WINDOWKEYDOWN</a>:
+          <span class="rem">// Приведение ExtParam к нужному типу</span>
+          key=(<a class="hidden" href="RDS_BFM_KEYDOWN.htm#ref3" title="Указатель на RDS_KEYDATA">RDS_PKEYDATA</a>)ExtParam;
+          <span class="rem">// Проверяем, нажата ли Shift</span>
+          <span class="kw">if</span>(key-&gt;Shift!=<a class="hidden" href="RDS_BFM_KEYDOWN.htm#light_ref8" title="RDS_KSHIFT">RDS_KSHIFT</a>)
+            <span class="kw">break</span>; <span class="rem">// Не нажата - выходим</span>
+          <span class="rem">// Получаем текущее положение окна подсистемы</span>
+          win.servSize=<span class="kw">sizeof</span>(win);
+          <span class="kw">if</span>(!<a class="hidden" href="rdsGetEditorParameters.htm" title="А.5.8.6. rdsGetEditorParameters &ndash; получить описание окна подсистемы">rdsGetEditorParameters</a>(BlockData-&gt;Block,&amp;win))
+            <span class="kw">break</span>;
+          <span class="rem">// Если окно свернуто или развернуто, перемещать не надо</span>
+          <span class="kw">if</span>(win.WinMaximized || win.WinMinimized)
+            <span class="kw">break</span>;
+          <span class="rem">//В зависимости от нажатой клавиши, вычисляем</span>
+          <span class="rem">// перемещение окна (x,y)</span>
+          x=y=<span class="const">0</span>;
+          <span class="kw">switch</span>(key-&gt;KeyCode)
+            { <span class="kw">case</span> VK_LEFT:  x=-<span class="const">5</span>; <span class="kw">break</span>; <span class="rem">// Влево</span>
+              <span class="kw">case</span> VK_RIGHT: x=<span class="const">5</span>;  <span class="kw">break</span>; <span class="rem">// Вправо</span>
+              <span class="kw">case</span> VK_UP:    y=-<span class="const">5</span>; <span class="kw">break</span>; <span class="rem">// Вверх</span>
+              <span class="kw">case</span> VK_DOWN:  y=<span class="const">5</span>;  <span class="kw">break</span>; <span class="rem">// Вниз</span>
+            }
+          <span class="rem">// Если x или y не нулевые - перемещаем окно</span>
+          <span class="kw">if</span>(x||y)
+            <a class="hidden" href="rdsSetSystemWindowBounds.htm" title="А.5.8.19. rdsSetSystemWindowBounds &ndash; задать границы окна подсистемы">rdsSetSystemWindowBounds</a>(BlockData-&gt;Block,FALSE,
+                                     win.WinLeft+x,win.WinTop+y,
+                                     win.WinWidth,win.WinHeight);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_12_4.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_6.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

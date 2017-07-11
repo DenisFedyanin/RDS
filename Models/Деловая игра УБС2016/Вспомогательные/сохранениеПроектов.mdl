@@ -1,0 +1,54 @@
+$BC55MODEL 0.0.0 2016.10.6.14.53.3 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$VARS
+  signal name "Start" in menu run default 0
+  signal name "Ready" out menu default 0
+  int name "period" in menu default 0
+  matrix int name "Projects" in menu run default "[ ] 0"
+  int name "RPrincipal" in menu default 0
+  string name "workdir" in menu default ""
+  string name "filename" out menu default ""
+$ENDDECL
+$MODEL
+char fileName[20] = "";
+sprintf(fileName, "period%d.knapsack", (int)period);
+filename = workdir + fileName;
+
+FILE *f = fopen(filename.c_str(), "w");
+
+fprintf(f, "%d\n", (int)RPrincipal);
+
+int Rows = Projects.Rows();
+fprintf(f, "%d\n", Rows);
+
+for ( int i = 0 ; i < Rows ; i++ ){
+  fprintf(f, "%d ",Projects[i][0]);
+}
+fputs("\n", f);
+for ( int i = 0 ; i < Rows ; i++ ){
+  fprintf(f, "%d ",Projects[i][1]);
+}
+
+fclose(f);
+
+sprintf(fileName, "period%d", (int)period);
+filename = fileName;
+$GLOBAL
+#include <stdio.h>
+$OPTIONS
+  tabs $MODEL
+  window pos 166 190 size 1199 568 hdiv 337 vdiv 220 fdiv 208
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 1
+  ignorewarnings 0
+  customerrmsg 0
+  autoreadonlyeditor 0
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

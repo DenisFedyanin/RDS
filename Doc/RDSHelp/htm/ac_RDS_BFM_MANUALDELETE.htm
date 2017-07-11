@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.8.2.4. Удаление блока пользователем</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8_2">&sect;3.8.2. Создание и уничтожение блока</a></p>
+<div class="level"><p>&sect;3.8.2.4. Удаление блока пользователем</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_MANUALINSERT.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_UNLOADSYSTEM.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_MANUALDELETE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</h3>
+<h4 class="off">&sect;3.8.2. Создание и уничтожение блока</h4>
+<h5>&sect;3.8.2.4. Удаление блока пользователем</h5>
+
+
+<p>Это событие возникает непосредственно перед удалением блока из схемы в результате действий пользователя:
+если пользователь в режиме редактирования удаляет данный блок, группу выделенных блоков, в которую входит данный,
+или подсистему, внутри которой данный блок находится. При удалении блока не из-за действий пользователя
+(например, если память очищается перед загрузкой новой схемы) событие не возникает. Реакция на это событие
+может использоваться, например, для информирования пользователя о возможных последствиях удаления важных для
+работы блоков. Отменить удаление блока при помощи этой реакции нельзя.</p>
+
+<p><span id="ref1">Реакция</span>
+на событие удаления блока вводится
+на вкладке &laquo;<span class="menu"><a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">события</a></span>&raquo; левой панели редактора модели: раздел
+&laquo;<span class="menu">создание и уничтожение</span>&raquo;, подраздел
+&laquo;<span class="menu">удаление блока пользователем</span>&raquo;. В классе блока для нее создается функция с именем
+<span class="cpp" id="light_ref1">rdsbcppManualDelete</span> с введенным пользователем текстом
+программы внутри:</p>
+
+<pre class="cpp">  // Действия перед удалением блока пользователем
+  void rdsbcppBlockClass::rdsbcppManualDelete(<a class="hidden" href="RDS_BFM_MANUALDELETE.htm#ref2" title="Указатель на RDS_MANUALDELETEDATA">RDS_PMANUALDELETEDATA</a> DeleteData)
+  {
+    <span class="changes"><i>&nbsp;&hellip; пользовательский текст реакции &hellip;&nbsp;</i></span>
+  }</pre>
+
+<p>В функцию передается параметр <span class="cpp">DeleteData</span>, представляющий собой указатель на структуру
+описания события <span class="cpp"><a href="RDS_BFM_MANUALDELETE.htm#ref1" title="Структура RDS_MANUALDELETEDATA">RDS_MANUALDELETEDATA</a></span>:</p>
+
+<pre class="cpp">  typedef struct {
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Single;   // Удаляется один блок
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> WithSys;  // Удаляется блок внутри удаляемой подсистемы
+  } <a class="hidden" href="RDS_BFM_MANUALDELETE.htm#ref1" title="Структура RDS_MANUALDELETEDATA">RDS_MANUALDELETEDATA</a>;
+  typedef <a class="hidden" href="RDS_BFM_MANUALDELETE.htm#ref1" title="Структура RDS_MANUALDELETEDATA">RDS_MANUALDELETEDATA</a> *<a class="hidden" href="RDS_BFM_MANUALDELETE.htm#ref2" title="Указатель на RDS_MANUALDELETEDATA">RDS_PMANUALDELETEDATA</a>;</pre>
+
+<p>Поля структуры имеют следующий смысл:</p>
+<dl>
+  <dt><span class="cpp">Single</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если данный блок &ndash; единственный удаляемый, и
+  <span class="cpp">FALSE</span>, если удаляется группа выделенных блоков, в которую входит данный.</dd>
+
+  <dt><span class="cpp">WithSys</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если пользователь удаляет подсистему, внутри которой (на любом
+  уровне вложенности) находится этот блок, и <span class="cpp">FALSE</span>, если этот блок
+  непосредственно входит в удаляемую группу выделенных блоков.</dd>
+</dl>
+
+<p class="noindent">При написании моделей блоков без использования модуля автокомпиляции событию удаления блока пользователем соответствует
+константа RDS <span class="cpp"><a href="RDS_BFM_MANUALDELETE.htm" title="А.2.7.1. RDS_BFM_MANUALDELETE &ndash; удаление блока пользователем">RDS_BFM_MANUALDELETE</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_MANUALINSERT.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_UNLOADSYSTEM.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_MANUALDELETE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

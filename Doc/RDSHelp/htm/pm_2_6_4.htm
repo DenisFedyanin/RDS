@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.6.4. Работа с несколькими динамическими переменными</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_6">&sect;2.6. Динамические переменные</a></p>
+<div class="level"><p>&sect;2.6.4. Работа с несколькими динамическими переменными</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_6_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_6_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_6_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_6_4_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.6. Динамические переменные</h3>
+<h4>&sect;2.6.4. Работа с несколькими динамическими переменными</h4>
+<p class="abstract">Рассматриваются особенности работы модели блока с несколькими динамическими переменными одновременно.
+                Приводится пример, в котором блок перемещается в окне подсистемы с заданной скоростью и в заданном направлении,
+                при этом скорость и направление он берет из динамических переменных, созданных в подсистеме другим
+                рассматриваемым в примере блоком, а время &ndash; из динамической переменной &laquo;<span class="rdsvar">DynTime</span>&raquo;
+                стандартного библиотечного блока-<a href="pm_2_6_1.htm#ref10" title="Блок управления динамическим расчетом (планировщик)">планировщика</a>.</p>
+
+
+<p>Во всех приведенных примерах (<a href="pm_2_6_2.htm" title="&sect;2.6.2. Подписка на динамическую переменную">&sect;2.6.2</a>,
+<a href="pm_2_6_3.htm" title="&sect;2.6.3. Создание и удаление динамической переменной">&sect;2.6.3</a>) каждый блок работал только с одной
+<a href="pm_1_6.htm#ref1" title="Динамическая переменная">динамической переменной</a>. При работе с несколькими переменными
+одновременно необходимо запоминать указатель на
+<a href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">структуру подписки</a> для каждой из них,
+и здесь уже не обойтись без отведения дополнительной памяти под личную область данных блока.</p>
+
+<p><span id="light_ref1">Рассмотрим модель блока, изображение которого должно перемещаться</span>
+в окне <a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистемы</a> с заданной скоростью в заданном направлении.
+Значения скорости и направления блок будет получать через динамические переменные, созданные в
+его родительской подсистеме другим блоком &ndash; блоком управления, который записывает в
+эти переменные значения своих входов. Для перемещения блока также необходимо значение времени,
+которое блок будет получать из динамической переменной &laquo;<span class="rdsvar">DynTime</span>&raquo;, обслуживаемой
+<a href="pm_2_6_1.htm#ref10" title="Блок управления динамическим расчетом (планировщик)">планировщиком</a> динамического расчета из библиотеки
+&laquo;<span class="file">Common.dll</span>&raquo; &ndash; без значения времени невозможно будет вычислить величину
+перемещения блока по его скорости. Можно было бы получать значение времени у операционной системы
+(например, с помощью функции Windows API <span class="cpp">GetTickCount</span>), но, в данном случае,
+удобнее работать с блоком-планировщиком, поскольку в его параметрах можно настроить шаг изменения значения времени,
+а также ускорить или замедлить его, если это будет необходимо.</p>
+
+<p>Для того, чтобы изображение блока перемещалось в окне подсистемы, необходимо связать его горизонтальную
+и вертикальную координаты с какими-нибудь
+<a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статическими переменными</a>, значения которых в режимах
+<a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a> и <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a>
+будут определять смещение блока от заданной в режиме
+<a href="pm_1_3.htm#ref1" title="Режим редактирования">редактирования</a> позиции. Например, если блок установлен в точку
+(10,20), а переменные горизонтального и вертикального смещения равны 5 и 7 соответственно, в режиме
+редактирования блок будет по-прежнему изображаться в точке (10,20), а в режимах моделирования и расчета
+&ndash; в точке (15,27).</p>
+
+<p>Будем считать, что нулевое значение угла направления соответствует движению блока вдоль горизонтальной
+оси вправо, а значение 90&deg; &ndash; движению блока вдоль вертикальной оси вверх (увеличение угла
+направления будет соответствовать повороту блока против часовой стрелки). В окне подсистемы, как и
+в любом другом окне Windows, используется система координат с перевернутой вертикальной осью. Это означает,
+что увеличение вертикальной координаты соответствует перемещению блока вниз, а не вверх &ndash; нужно будет
+учитывать это при вычислении вертикального смещения блока.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/PmMoveVector.png" width="255" height="212" alt="Перемещение блока за промежуток времени &Delta; t" />
+<p id="light_pic1">Рис.&nbsp;42. Перемещение блока за<br />промежуток времени &Delta;<i>t</i></p>
+</div></div>
+
+
+<p>Если в какой-либо момент времени блок изображается в точке
+(<i>x</i><sub>0</sub>,<i>y</i><sub>0</sub>) и двигается со скоростью <i>v</i> в направлении
+&alpha; (<a href="#pic1" title="Перемещение блока за промежуток времени &Delta; t">рис.&nbsp;42</a>), его координаты через промежуток времени
+&Delta;<i>t</i> можно вычислить следующим образом:</p>
+
+<p class="center"><img class="formula" src="../img/Form_pm_move.png" width="265" height="95" alt="x1=x0+&Delta;t v t cos &alpha;; y1=y0-&Delta;t v t sin &alpha;" /></p>
+
+<p>Смещение блока по вертикали вычитается из текущего значения вертикальной координаты, поскольку ось Y
+в окне подсистемы направлена вниз, и при положительном синусе угла направления &alpha;, когда блок двигается
+вверх, его вертикальная координата должна уменьшаться.</p>
+
+<p>Начнем с создания модели блока управления, на вещественные входы &laquo;<span class="rdsvar">Speed</span>&raquo; и
+&laquo;<span class="rdsvar">Angle</span>&raquo; которого поступают значения скорости и направления движения соответственно, а
+он, в свою очередь, передает эти значения перемещающемуся блоку через динамические переменные подсистемы.
+Для простоты имена динамических переменных будут жестко заданы в моделях обоих блоков: переменная для
+передачи скорости будет называться &laquo;<span class="rdsvar">BlkMove_Speed</span>&raquo;, переменная для передачи направления
+&ndash; &laquo;<span class="rdsvar">BlkMove_Angle</span>&raquo;. Хотя жесткое задание имен переменных ограничивает функциональность
+модели, не позволяя поместить в одну подсистему несколько независимо управляемых перемещающихся блоков, для
+данного примера этот вариант вполне подходит. Можно было бы, как в
+<a href="pm_2_6_3.htm#light_ref8" title="Пример передачи данных через динамическую переменную">предыдущем примере</a>, хранить имена переменных в
+<a href="um_1_2.htm#ref20" title="Комментарий блока">комментарии</a> блока,
+однако теперь каждому блоку необходимо две переменных, и их имена либо пришлось бы извлекать из
+разных строк комментария, либо формировать динамически, добавляя к тексту комментария блока суффиксы
+&laquo;_Speed&raquo; и &laquo;_Angle&raquo;. И то, и другое неоправданно усложнило бы пример,
+целью которого является демонстрация работы с несколькими динамическими переменными, а не
+операций со строками.</p>
+
+<p>Блок управления будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">Speed</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">Angle</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>В параметрах блока следует <a href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">отключить</a> запуск каждый такт,
+чтобы его модель вызывалась только при срабатывании одного из входов с установленным
+<a href="pm_1_5.htm#ref18" title="Флаг запуска у входа блока">флагом &laquo;<span class="menu">пуск</span>&raquo;</a>.</p>
+
+<p>Модель блока управления будет в целом похожа на модель блока-передатчика из прошлого примера.
+Однако, блок-передатчик создавал единственную динамическую переменную, поэтому указатель на ее
+структуру подписки можно было запомнить в поле <span class="cpp">BlockData</span> структуры
+<span class="cpp"><a href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a></span>, предназначенном для хранения указателя на личную область данных блока.
+Новый же блок создает две переменных, поэтому ему необходимо хранить два указателя на структуры подписки.
+Проще всего будет описать структуру, содержащую два поля <span class="cpp"><a href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a></span> для хранения
+этих указателей, и использовать такую структуру в качестве личной области данных,
+динамически отводя под нее память при инициализации и освобождая эту память при очистке данных блока.</p>
+
+<p><span id="ref2">Запишем</span>
+модель блока управления вместе с описанием структуры личной области данных:</p>
+
+<pre class="cpp">  <span class="rem">// Структура личной области данных блока</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="rem">// Указатель на структуру подписки на скорость</span>
+    <span id="light_ref2"><a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a></span> VLink;
+    <span class="rem">// Указатель на структуру подписки на направление</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> ALink;
+  } TestBlkMoveSetterData;
+
+  <span class="rem">// Модель блока управления</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestBlkMoveSetter(<span class="kw">int</span> CallMode,
+                                  <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                                  <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define Speed   (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define Angle   (*((double *)(pStart+10)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на личную область</span>
+    <span class="rem">// данных блока, приведенный к правильному типу</span>
+    TestBlkMoveSetterData *privdata;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Отведение памяти под личную область данных</span>
+          privdata=(TestBlkMoveSetterData*)
+                    malloc(<span class="kw">sizeof</span>(TestBlkMoveSetterData));
+          BlockData-&gt;BlockData=privdata;
+          <span class="rem">// Создание переменной для передачи скорости</span>
+          privdata-&gt;VLink=<a class="hidden" href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a>(
+                            <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,    <span class="rem">// В родительской</span>
+                            <span class="str">"BlkMove_Speed"</span>, <span class="rem">// Имя переменной</span>
+                            <span class="str">"D"</span>,             <span class="rem">// Тип double</span>
+                            TRUE,            <span class="rem">// Запрет удаления</span>
+                            NULL);           <span class="rem">// Без нач.значения</span>
+          <span class="rem">// Создание переменной для передачи направления</span>
+          privdata-&gt;ALink=<a class="hidden" href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a>(
+                            <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,
+                            <span class="str">"BlkMove_Angle"</span>,
+                            <span class="str">"D"</span>,
+                            TRUE,
+                            NULL);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка данных блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Приведение указателя на личную область данных к правильному типу</span>
+          privdata=(TestBlkMoveSetterData*)(BlockData-&gt;BlockData);
+          <span class="rem">// Удаление динамических переменных</span>
+          <a class="hidden" href="rdsDeleteDVByLink.htm" title="А.5.16.3. rdsDeleteDVByLink &ndash; удалить динамическую переменную и прекратить подписку на нее">rdsDeleteDVByLink</a>(privdata-&gt;VLink);
+          <a class="hidden" href="rdsDeleteDVByLink.htm" title="А.5.16.3. rdsDeleteDVByLink &ndash; удалить динамическую переменную и прекратить подписку на нее">rdsDeleteDVByLink</a>(privdata-&gt;ALink);
+          <span class="rem">// Освобождение отведенной памяти</span>
+          free(privdata);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="rem">// Приведение указателя на личную область данных к правильному типу</span>
+          privdata=(TestBlkMoveSetterData*)(BlockData-&gt;BlockData);
+          <span class="rem">// Проверка существования переменной направления</span>
+          <span class="kw">if</span>(privdata-&gt;ALink!=NULL &amp;&amp; privdata-&gt;ALink-&gt;Data!=NULL)
+            { <span class="rem">// Переменная существует – привести к типу double*</span>
+              <span class="kw">double</span> *pa=(<span class="kw">double</span>*)privdata-&gt;ALink-&gt;Data;
+              <span class="kw">if</span>(*pa!=Angle) <span class="rem">// Значение направления изменилось</span>
+                { <span class="rem">// Записать значение в динамическую переменную</span>
+                  *pa=Angle;
+                  <span class="rem">// Уведомить всех подписчиков об изменении</span>
+                  <span id="light_ref3"><a class="hidden" href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a></span>(privdata-&gt;ALink);
+                }
+            }
+          <span class="rem">// Проверка существования переменной скорости</span>
+          <span class="kw">if</span>(privdata-&gt;VLink!=NULL &amp;&amp; privdata-&gt;VLink-&gt;Data!=NULL)
+            { <span class="rem">// Переменная существует – привести к типу double*</span>
+              <span class="kw">double</span> *pv=(<span class="kw">double</span>*)privdata-&gt;VLink-&gt;Data;
+              <span class="kw">if</span>(*pv!=Speed)
+                { <span class="rem">// Записать значение в динамическую переменную</span>
+                  *pv=Speed;
+                  <span class="rem">// Уведомить всех подписчиков об изменении</span>
+                  <a class="hidden" href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a>(privdata-&gt;VLink);
+                }
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef Angle</span>
+  <span class="preproc">#undef Speed</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Перед текстом модели блока описана структура <span class="cpp">TestBlkMoveSetterData</span>, которая
+будет использоваться в качестве личной области данных блока. Структура содержит два поля типа
+<span class="cpp"><a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a></span> &ndash; указатели на структуры подписки на динамические переменные
+скорости <span class="cpp">VLink</span> и направления <span class="cpp">ALink</span>. При вызове модели с
+параметром <span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span> под эту структуру динамически отводится память при помощи
+стандартной функции <span class="cpp">malloc</span> (описанной в
+&laquo;<span class="file">stdlib.h</span>&raquo;), в которую передается размер структуры, полученный при помощи оператора
+<span class="cpp">sizeof</span>. Возвращенный функцией <span class="cpp">malloc</span> указатель на отведенную
+область памяти записывается во вспомогательную переменную <span class="cpp">privdata</span> и в поле
+<span class="cpp">BlockData</span> структуры данных блока, в которой он будет храниться до тех пор, пока
+модель блока не освободит отведенную память.</p>
+
+<p>В отличие от блока-передатчика из прошлого примера, в котором пользователь мог ввести новое имя переменной
+в комментарии блока, в этом примере пользователь не имеет возможности задавать имена динамических переменных.
+Это сильно упрощает написание модели, поскольку здесь не нужно проверять изменения текста комментария при запуске
+расчета и создавать новые переменные &ndash; их можно создавать один раз при инициализации блока. После
+того, как личная область данных создана, модель создает в родительской подсистеме динамические переменные
+&laquo;<span class="rdsvar">BlkMove_Speed</span>&raquo; и &laquo;<span class="rdsvar">BlkMove_Angle</span>&raquo; при помощи сервисной функции
+<span class="cpp"><a href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a></span> и записывает полученные указатели на структуры подписки в поля
+<span class="cpp">VLink</span> и <span class="cpp">ALink</span> личной области данных.</p>
+
+<p>При вызове модели с параметром <span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span> модель приводит запомненный в
+<span class="cpp">BlockData-&gt;BlockData</span> указатель на личную область данных к типу
+&laquo;<span class="cpp">TestBlkMoveSetterData*</span>&raquo; и присваивает его вспомогательной переменной
+<span class="cpp">privdata</span>, чтобы к личной области данных было удобнее обращаться. Затем при
+помощи сервисной функции <span class="cpp"><a href="rdsDeleteDVByLink.htm" title="А.5.16.3. rdsDeleteDVByLink &ndash; удалить динамическую переменную и прекратить подписку на нее">rdsDeleteDVByLink</a></span> модель удаляет обе динамические переменные
+и освобождает отведенную под личную область память стандартной функцией <span class="cpp">free</span>.</p>
+
+<p>При выполнении такта моделирования (параметр <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>) модель блока должна
+переписать значения изменившихся входов в динамические переменные и уведомить другие блоки, подписанные
+на эти переменные, об их возможном изменении. Эта часть модели практически не отличается от такта
+моделирования в блоке-передатчике: для каждого из двух входов проверяется наличие соответствующей динамической
+переменной, и, если она существует и не равна входу, в нее записывается новое значение и об этом информируются
+все блоки-подписчики.</p>
+
+<p>Теперь рассмотрим модель блока, который будет перемещаться в окне подсистемы. В этом блоке должно быть по
+крайней мере две вещественных статических переменных (&laquo;<span class="rdsvar">x</span>&raquo; и &laquo;<span class="rdsvar">y</span>&raquo;), чтобы было с
+чем связать координаты его изображения на
+вкладке &laquo;<span class="menu">внешний вид</span>&raquo;
+окна параметров блока (<a href="#pic2" title="Привязка координат подвижного блока к переменным x , y и a">рис.&nbsp;43</a>). Для наглядности добавим еще одну вещественную переменную &laquo;<span class="rdsvar">a</span>&raquo;, с которой
+свяжем угол поворота изображения блока. В эту переменную модель блока будет записывать значение угла
+направления в радианах. Таким образом, если блок будет иметь векторную картинку со стрелкой, указывающей вправо
+(что соответствует нулевому углу направления), в режиме расчета эта стрелка будет указывать направление движения
+блока.</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/DynVars_MoveBlk2.png" width="534" height="463" alt="Привязка координат подвижного блока к переменным x , y и a" />
+<p id="light_pic2">Рис.&nbsp;43. Привязка координат подвижного блока к переменным &laquo;<span class="rdsvar">x</span>&raquo;, &laquo;<span class="rdsvar">y</span>&raquo; и &laquo;<span class="rdsvar">a</span>&raquo;</p>
+</div></div>
+
+
+<p><span id="ref4">Координаты</span>
+изображения блока &laquo;<span class="rdsvar">x</span>&raquo; и &laquo;<span class="rdsvar">y</span>&raquo; будут вычисляться по приведенным выше
+рекуррентным формулам для перемещения блока за интервал времени &Delta;<i>t</i>
+(<a href="#pic1" title="Перемещение блока за промежуток времени &Delta; t">рис.&nbsp;42</a>). Из динамической переменной &laquo;<span class="rdsvar">DynTime</span>&raquo;
+можно получить только текущее значение времени, поэтому интервал, прошедший с момента последнего вычисления
+координат, модель должна будет вычислять самостоятельно. Для этого придется добавить к статическим переменным блока
+дополнительную переменную &laquo;<span class="rdsvar">t0</span>&raquo;, в которой будет
+<span id="light_ref4">запоминаться предыдущее значение времени</span>, а интервал &Delta;<i>t</i>
+будет вычисляться как разность &laquo;<span class="rdsvar">DynTime</span>&raquo; и &laquo;<span class="rdsvar">t0</span>&raquo;.
+Чтобы первый интервал времени был вычислен правильно,
+начальное значение переменной &laquo;<span class="rdsvar">t0</span>&raquo; должно быть нулевым.</p>
+
+<p>Таким образом, перемещающийся блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">x</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">y</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">18</td>
+<td class="vcenter">a</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">26</td>
+<td class="vcenter">t0</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Этот блок не будет реагировать на событие <span class="cpp"><a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span> (все действия
+будут производиться в реакции на изменение динамических переменных <span class="cpp"><a class="hidden" href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a></span>),
+поэтому в его параметрах имеет смысл
+<a href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">выключить</a> запуск каждый такт. В личной области данных блока необходимо
+запоминать три указателя на структуры подписки: для переменных
+&laquo;<span class="rdsvar">BlkMove_Speed</span>&raquo;, &laquo;<span class="rdsvar">BlkMove_Angle</span>&raquo; и &laquo;<span class="rdsvar">DynTime</span>&raquo;. Кроме того,
+в структуре личной области данных будут два дополнительных вещественных поля
+<span class="cpp">SinA</span> и <span class="cpp">CosA</span>, в которых будут храниться значения
+синуса и косинуса угла &laquo;<span class="rdsvar">a</span>&raquo;. Наличие этих полей позволит вычислять синус и косинус не
+при каждом перемещении блока, а только при изменении направления движения, что уменьшит нагрузку на систему.
+В данном случае это уменьшение будет практически незаметным, но при сложных вычислениях часто имеет смысл
+хранить промежуточные результаты.</p>
+
+<p>Модель блока вместе с описанием структуры личной области данных будет выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Структура личной области данных блока</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="rem">// Указатель на структуру подписки на скорость</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> VLink;
+    <span class="rem">// Указатель на структуру подписки на направление</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> ALink;
+    <span class="rem">// Указатель на структуру подписки на время</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> Time;
+
+    <span class="rem">// Дополнительные поля для хранения значений синуса</span>
+    <span class="rem">// и косинуса направления движения блока</span>
+    <span class="kw">double</span> SinA;
+    <span class="kw">double</span> CosA;
+  } TestBlkMoveObjectData;
+
+  <span class="rem">// Модель перемещающегося блока</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestBlkMoveObject(<span class="kw">int</span> CallMode,
+                                  <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                                  <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x       (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define y       (*((double *)(pStart+10)))</span>
+  <span class="preproc">#define a       (*((double *)(pStart+18)))</span>
+  <span class="preproc">#define t0      (*((double *)(pStart+26)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на личную область</span>
+    <span class="rem">// данных блока, приведенный к правильному типу</span>
+    TestBlkMoveObjectData *privdata;
+    <span class="rem">// Вспомогательные переменные для скорости и времени</span>
+    <span class="kw">double</span> v,time;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Отведение памяти под личную область данных</span>
+          privdata=(TestBlkMoveObjectData*)
+                    malloc(<span class="kw">sizeof</span>(TestBlkMoveObjectData));
+          BlockData-&gt;BlockData=privdata;
+          <span class="rem">// Подписка на переменную скорости</span>
+          privdata-&gt;VLink=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(
+                          <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,    <span class="rem">// В родительской</span>
+                          <span class="str">"BlkMove_Speed"</span>, <span class="rem">// Имя переменной</span>
+                          <span class="str">"D"</span>,             <span class="rem">// Тип double</span>
+                          FALSE);          <span class="rem">// Без поиска</span>
+          <span class="rem">// Подписка на переменную направления</span>
+          privdata-&gt;ALink=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(
+                          <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,    <span class="rem">// В родительской</span>
+                          <span class="str">"BlkMove_Angle"</span>, <span class="rem">// Имя переменной</span>
+                          <span class="str">"D"</span>,             <span class="rem">// Тип double</span>
+                          FALSE);          <span class="rem">// Без поиска</span>
+          <span class="rem">// Подписка на переменную времени</span>
+          privdata-&gt;Time=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(
+                          <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,    <span class="rem">// В родительской</span>
+                          <span class="str">"DynTime"</span>,       <span class="rem">// Имя переменной</span>
+                          <span class="str">"D"</span>,             <span class="rem">// Тип double</span>
+                          TRUE);           <span class="rem">// Поиск в иерархии</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка данных блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Приведение указателя на личную область данных к</span>
+          <span class="rem">// правильному типу</span>
+          privdata=(TestBlkMoveObjectData*)(BlockData-&gt;BlockData);
+          <span class="rem">// Прекращение подписки на все динамические переменные</span>
+          <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(privdata-&gt;VLink);
+          <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(privdata-&gt;ALink);
+          <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(privdata-&gt;Time);
+          <span class="rem">// Освобождение отведенной памяти</span>
+          free(privdata);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDDDD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Реакция на изменение динамической переменной</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a>:
+          <span class="rem">// Приведение указателя на личную область данных к</span>
+          <span class="rem">// правильному типу</span>
+          privdata=(TestBlkMoveObjectData*)(BlockData-&gt;BlockData);
+          <span class="rem">// Проверка – удалось ли подписаться на все переменные</span>
+          <span class="rem">// (если хотя бы один указатель – NULL, значит, не удалось)</span>
+          <span class="kw">if</span>(privdata-&gt;VLink==NULL || <span class="rem">// Скорость</span>
+             privdata-&gt;ALink==NULL || <span class="rem">// Направление</span>
+             privdata-&gt;Time==NULL)    <span class="rem">// Время</span>
+            <span class="kw">break</span>;
+          <span class="rem">// Проверка – существуют ли все переменные</span>
+          <span class="rem">// (если хотя бы один указатель – NULL, значит, не удалось)</span>
+          <span class="kw">if</span>(privdata-&gt;VLink-&gt;Data==NULL || <span class="rem">// Скорость</span>
+             privdata-&gt;ALink-&gt;Data==NULL || <span class="rem">// Направление</span>
+             privdata-&gt;Time-&gt;Data==NULL)    <span class="rem">// Время</span>
+            <span class="kw">break</span>;
+          <span class="rem">// Если изменилась переменная направления, нужно вычислить</span>
+          <span class="rem">// и запомнить новые значения синуса и косинуса угла</span>
+          <span class="kw">if</span>(ExtParam==(<span class="kw">void</span>*)(privdata-&gt;ALink))
+            { <span class="rem">// Изменилось направление – привести к типу double*</span>
+              <span class="kw">double</span> *pa=(<span class="kw">double</span>*)privdata-&gt;ALink-&gt;Data;
+              <span class="rem">// Значение угла в радианах</span>
+              a=(*pa)*M_PI/<span class="const">180.0</span>;
+              <span class="rem">// Значения синуса и косинуса</span>
+              privdata-&gt;SinA=sin(a);
+              privdata-&gt;CosA=cos(a);
+            }
+          <span class="rem">// Записать во вспомогательные переменные v и time значения</span>
+          <span class="rem">// скорости и времени</span>
+          v=*(<span class="kw">double</span>*)privdata-&gt;VLink-&gt;Data;
+          time=*(<span class="kw">double</span>*)privdata-&gt;Time-&gt;Data;
+          <span class="rem">// Вычислить новое смещение изображения блока</span>
+          x+=v*(time-t0)*privdata-&gt;CosA;
+          y-=v*(time-t0)*privdata-&gt;SinA;
+          <span class="rem">// Запомнить значение времени, для которого вычислены новые координаты</span>
+          t0=time;
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef t0</span>
+  <span class="preproc">#undef a</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Структура личной области данных блока <span class="cpp">TestBlkMoveObjectData</span> содержит три
+указателя на структуры подписки (<span class="cpp">VLink</span> для динамической переменной скорости,
+<span class="cpp">ALink</span> для направления и <span class="cpp">Time</span> для времени) и два
+вещественных поля для хранения значений синуса и косинуса направления. Как и в модели блока управления,
+при вызове этой модели с параметром <span class="cpp"><a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span> под эту структуру отводится
+память функцией <span class="cpp">malloc</span>, и полученный указатель записывается во вспомогательную
+переменную <span class="cpp">privdata</span> и в поле
+<span class="cpp">BlockData-&gt;BlockData</span>. Затем модель подписывается на три
+динамических переменные и записывает указатели на созданные структуры подписки в соответствующие поля
+личной области данных. Следует обратить внимание, что переменные
+&laquo;<span class="rdsvar">BlkMove_Speed</span>&raquo; и &laquo;<span class="rdsvar">BlkMove_Angle</span>&raquo; ищутся только в родительской подсистеме
+(параметр <span class="cpp">Search</span> функции <span class="cpp"><a href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a></span> равен
+<span class="cpp">FALSE</span>), а переменная &laquo;<span class="rdsvar">DynTime</span>&raquo; &ndash; во всех подсистемах вверх
+по иерархии, начиная с родительской. Это позволяет данному блоку получить доступ к переменной
+&laquo;<span class="rdsvar">DynTime</span>&raquo;, созданной ближайшим к нему планировщиком в цепочке родительских подсистем.
+При вызове модели с параметром <span class="cpp"><a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span> подписка на все
+динамические переменные прекращается, и память, занятая личной областью данных блока, освобождается функцией
+<span class="cpp">free</span>.</p>
+
+<p>Как только блок управления изменит направление или скорость, или блок-планировщик изменит значение времени,
+функция модели данного блока будет вызвана с параметром <span class="cpp"><a href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a></span>, при этом в
+параметре <span class="cpp">ExtParam</span> в нее будет передан указатель на структуру подписки изменившейся
+переменной. Сравнив <span class="cpp">ExtParam</span> с полями <span class="cpp">VLink</span>,
+<span class="cpp">ALink</span> и <span class="cpp">Time</span> личной области данных, можно понять,
+какая из динамических переменных изменилась. Но сначала модель должна проверить, есть ли у нее доступ к
+динамическим переменным. Если хотя бы один указатель на структуру подписки, хранящийся в личной области данных,
+равен <span class="cpp">NULL</span>, значит, модели не удалось подписаться на одну из переменных. В
+данном случае это маловероятно, поскольку выбранные имена переменных отвечают требованиям RDS, и функция
+<span class="cpp"><a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a></span> может вернуть значение <span class="cpp">NULL</span>,
+сигнализирующее о невозможности подписки, только при каком-либо системном сбое (например, при нехватке памяти).
+Однако, проверить успешность подписки все-таки следует. Если один из указателей будет равен
+<span class="cpp">NULL</span>, работа модели будет немедленно завершена &ndash; для работы этого блока необходимы
+все три переменные.</p>
+
+<p>Если модели удалось подписаться на все переменные, это еще не значит, что у нее есть доступ к ним.
+Успешность подписки говорит только о том, что RDS теперь следит за тем, чтобы в поле <span class="cpp">Data</span>
+структуры подписки находился указатель на область данных запрошенной переменной. Если такой переменной не
+существует, это поле будет иметь значение <span class="cpp">NULL</span>. Поскольку блоку нужны все три
+динамические переменные, необходимо проверить все три указателя:
+<span class="cpp">VLink-&gt;Data</span>, <span class="cpp">ALink-&gt;Data</span> и
+<span class="cpp">Time-&gt;Data</span>. Если хотя бы один из них равен <span class="cpp">NULL</span>, работа модели
+будет немедленно завершена.</p>
+
+<p>После того, как модель убедилась, что в данный момент у нее есть доступ ко всем трем динамическим переменным,
+она сравнивает указатель на структуру подписки изменившейся переменной, переданный в <span class="cpp">ExtParam</span>,
+с указателем переменной направления <span class="cpp">ALink</span>, предварительно приведенным к типу
+универсального указателя (<span class="cpp">void*</span>). Если два этих указателя равны, значит, изменилось
+направление движения блока. В этом случае переданное через динамическую переменную значение направления в
+градусах переводится в радианы и присваивается статической переменной <span class="cpp">a</span>, чтобы векторная
+картинка блока, угол поворота которой связан с этой переменной, повернулась в направлении движения блока.
+Затем вычисляются косинус и синус <span class="cpp">a</span> и запоминаются в полях
+<span class="cpp">SinA</span> и <span class="cpp">CosA</span> личной области данных блока для дальнейшего вычисления
+перемещения.</p>
+
+<p>Затем, уже независимо от того, какая из трех переменных изменилась, вычисляются новые значения горизонтального
+<span class="cpp">x</span> и вертикального <span class="cpp">y</span> смещений изображения блока по приведенным
+ранее формулам. Интервал времени &Delta;<i>t</i>, прошедший с момента последнего расчета, вычисляется как
+разность значения времени из динамической переменной &laquo;<span class="rdsvar">DynTime</span>&raquo; (присвоенного вспомогательной
+переменной <span class="cpp">time</span>) и запомненного значения времени <span class="cpp">t0</span>. После этого
+<span class="cpp">t0</span> присваивается текущее значение времени, чтобы при следующем изменении переменных
+использовать его как значение времени предыдущего расчета.</p>
+
+<div class="picright"><div class="container" id="pic3">
+<img src="../img/DynVars_MoveBlk1.png" width="261" height="150" alt="Управление подвижным блоком" />
+<p id="light_pic3">Рис.&nbsp;44. Управление подвижным блоком</p>
+</div></div>
+
+
+<p>Чтобы убедиться в работоспособности созданной модели, необходимо поместить в одну
+подсистему блок управления, перемещающийся блок и планировщик (планировщик может также находиться выше
+по иерархии, например, в родительской подсистеме данной подсистемы), задать для перемещающегося блока
+какую-нибудь векторную картинку и подключить поля ввода ко входам
+&laquo;<span class="rdsvar">Speed</span>&raquo; и &laquo;<span class="rdsvar">Angle</span>&raquo; блока управления
+(<a href="#pic3" title="Управление подвижным блоком">рис.&nbsp;44</a>). После
+<a href="um_2_1.htm#ref13" title="Запуск расчета">запуска расчета</a>
+и ввода каких-либо значений в поля ввода блок должен начать двигаться в заданном направлении с указанной (в точках экрана
+в секунду) скоростью.</p>
+
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_6_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_6_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_6_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

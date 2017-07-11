@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.1. Доступ к сервисным функциям RDS</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p>А.5.1. Доступ к сервисным функциям RDS</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_VARDESCRIPTION.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_GETFLAG.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:app_a_5_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3>А.5. Сервисные функции RDS</h3>
+<p class="abstract">Описываются функции, экспортированные из главного модуля RDS (&laquo;<span class="file">rds.exe</span>&raquo;), которые могут вызываться моделями блоков для взаимодействия с RDS и между собой.</p>
+<h4>А.5.1. Доступ к сервисным функциям RDS</h4>
+
+
+<p><span id="ref1">Сервисные</span>
+функции RDS &ndash; это функции, экспортированные из программы
+&laquo;<span class="file">rds.exe</span>&raquo;. Все они имеют тип <span class="cpp"><a href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a></span>: аргументы функции передаются
+в стеке справа налево, стек освобождается вызванной функцией. Для доступа к сервисной функции
+следует получить указатель на нее при помощи функции Windows API
+<span class="cpp" id="light_ref1">GetProcAddress</span>, привести этот указатель к правильному типу,
+учитывающему типы параметров и возвращаемого значения этой функции (тип указателя на каждую функцию приводится
+в описании этой функции в данном приложении), после чего можно будет вызывать эту функцию непосредственно
+по указателю на нее. Поскольку получить указатели на сервисные функции достаточно один раз в момент
+загрузки DLL с моделью блока, удобнее всего сделать это в
+<a href="DllEntryPoint.htm" title="А.2.2. Главная функция DLL">главной функции</a> этой DLL.</p>
+
+<p><span id="ref2">Чтобы</span>
+<span id="ref3">не</span>
+получать вручную все указатели на все сервисные функции, можно воспользоваться файлом
+&laquo;<span class="file"><span id="light_ref2">RdsFunc.h</span></span>&raquo;.
+Для этого следует включить в исходный текст программы следующий фрагмент:</p>
+
+<pre class="cpp">  <span class="preproc">#define </span><span id="light_ref3"><span class="preproc">RDS_SERV_FUNC_BODY</span></span><span class="preproc"> </span><span class="changes"><i><span class="preproc">имя_функции</span></i></span>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span></pre>
+
+<p>В результате в это место текста будет вставлен полный набор глобальных переменных-указателей на сервисные
+функции, одноименных этим функциям, а также дополнительная функция с именем
+<span class="changes"><i>имя_функции</i></span> для заполнения всех этих переменных. Останется только вызвать
+эту дополнительную функцию из главной функции DLL, после чего все сервисные функции можно будет вызывать
+непосредственно по их именам. Имена глобальных переменных совпадают с именами сервисных функций, поэтому запись
+вида</p>
+
+<pre class="cpp">  <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(<span class="str">"Сообщение"</span>,<span class="str">"Заголовок"</span>,MB_OK);</pre>
+
+<p class="noindent">будет означать, что функция, указатель на которую находится в глобальной переменной
+<span class="cpp"><a href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a></span>, вызывается с параметрами &laquo;Сообщение&raquo;,
+&laquo;Заголовок&raquo; и <span class="cpp">MB_OK</span>. Поскольку переменная с именем
+<span class="cpp">rdsMessageBox</span> имеет правильный тип указателя на функцию с нужными типами
+параметров, ее можно использовать вместо имени функции без всякого приведения типов.</p>
+
+<p>Если перед включением файла &laquo;<span class="file">RdsFunc.h</span>&raquo; не будет определен макрос
+<span class="cpp">RDS_SERV_FUNC_BODY</span>, все описания глобальных переменных будут включены с
+ключевым словом <span class="cpp">extern</span>, то есть они будут описаны как внешние, находящиеся
+в другом модуле. Таким образом, если проект DLL состоит из нескольких модулей, в каждом из них нужно включить
+файл &laquo;<span class="file">RdsFunc.h</span>&raquo;, и <span class="emph">в одном и только одном</span> из них (обычно в том, в котором находится главная
+функция DLL) перед этим включением определить макрос <span class="cpp">RDS_SERV_FUNC_BODY</span>. В
+результате в одном модуле будут описаны глобальные переменные-указатели на функции и функция их заполнения,
+а во всех остальных эти же переменные будут описаны как внешние. Это даст возможность вызывать сервисные функции
+по имени в любом из модулей проекта.</p>
+
+<p><span id="ref4">Для</span>
+<span id="ref5">управления</span>
+описаниями в файле &laquo;<span class="file">RdsFunc.h</span>&raquo; можно использовать еще две дополнительных
+константы. Если перед включением этого файла объявить <span class="cpp">define</span>-константу
+<span class="cpp" id="light_ref4">RDS_NOEXTERNFUNCPTRS</span> (константа может не иметь значения, важен
+сам факт описания), внешние описания глобальных переменных-указателей на функции с ключевым словом
+<span class="cpp">extern</span> не будут включены в исходный текст модуля. Если перед включением файла описать
+константу <span class="cpp" id="light_ref5">RDS_NOHOBJMACROS</span>, не будут определены макросы работы со
+вспомогательными объектами, описанные в <a href="app_index.htm#light_htm:app_a_5_23" title="А.5.23. Вспомогательный объект для изменения связей и шин">приложении А.5.23</a> и далее. Эти
+две константы позволяют исключать из программы описания, которые по каким-либо причинам не нужны
+разработчику моделей.</p>
+
+<p>Примеры доступа к сервисным функциям RDS приведены
+в <a href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков">&sect;2.2 руководства программиста</a>
+и <a href="DllEntryPoint.htm" title="А.2.2. Главная функция DLL">А.2.2 приложений</a>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_VARDESCRIPTION.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_GETFLAG.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:app_a_5_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.8.2. Сохранение параметров в двоичном формате</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_8">&sect;2.8. Сохранение и загрузка параметров блока</a></p>
+<div class="level"><p>&sect;2.8.2. Сохранение параметров в двоичном формате</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_8_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_8_3.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_8_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_8_2_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.8. Сохранение и загрузка параметров блока</h3>
+<h4>&sect;2.8.2. Сохранение параметров в двоичном формате</h4>
+<p class="abstract">Рассматривается сохранение и загрузка личных данных блока в двоичном формате, описываются
+                соответствующие реакции модели (<span class="cpp"><a href="RDS_BFM_SAVEBIN.htm" title="А.2.5.6. RDS_BFM_SAVEBIN &ndash; запись данных блока в двоичном формате">RDS_BFM_SAVEBIN</a></span> и <span class="cpp"><a href="RDS_BFM_LOADBIN.htm" title="А.2.5.4. RDS_BFM_LOADBIN &ndash; загрузка данных блока в двоичном формате">RDS_BFM_LOADBIN</a></span>
+                соответственно). В один из ранее описанных примеров добавляется сохранение и загрузка
+                параметров в двоичном формате.</p>
+
+
+<p>В качестве самого простого примера рассмотрим
+<span id="light_ref1">сохранение и загрузку параметров блока в двоичном формате</span>
+для модели
+<span class="cpp"><a href="pm_2_7_2.htm#ref2" title="Простой пример окна настроек">Test1</a></span>. Ранее мы уже добавили в эту
+модель функцию настройки параметров, теперь сделаем так, чтобы значения этих параметров сохранялись вместе с
+блоком. Теперь функция модели будет выглядеть следующим образом (изменения выделены
+<span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">//============= Модель блока ==============</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> Test1(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { TTest1Data *data;
+    <span class="kw">switch</span>(CallMode)
+      { <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>: <span class="rem">// Инициализация</span>
+          BlockData-&gt;BlockData=<span class="kw">new</span> TTest1Data();
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:<span class="rem">// Очистка</span>
+          data=(TTest1Data*)(BlockData-&gt;BlockData);
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>: <span class="rem">// Функция настройки</span>
+          data=(TTest1Data*)(BlockData-&gt;BlockData);
+          <span class="kw">return</span> data-&gt;Setup();
+        <span class="changes"><span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVEBIN.htm" title="А.2.5.6. RDS_BFM_SAVEBIN &ndash; запись данных блока в двоичном формате">RDS_BFM_SAVEBIN</a>:</span>
+        <span class="changes">  <span class="rem">// Сохранение параметров в двоичном формате </span></span>
+        <span class="changes">  data=(TTest1Data*)(BlockData-&gt;BlockData);</span>
+        <span class="changes">  <span id="light_ref2"><a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a></span>(&amp;(data-&gt;IParam),<span class="kw">sizeof</span>(data-&gt;IParam));</span>
+        <span class="changes">  <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;(data-&gt;DParam),<span class="kw">sizeof</span>(data-&gt;DParam));</span>
+        <span class="changes">  <span class="kw">break</span>;</span>
+        <span class="changes"><span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADBIN.htm" title="А.2.5.4. RDS_BFM_LOADBIN &ndash; загрузка данных блока в двоичном формате">RDS_BFM_LOADBIN</a>:</span>
+        <span class="changes">  <span class="rem">// Загрузка параметров в двоичном формате </span></span>
+        <span class="changes">  data=(TTest1Data*)(BlockData-&gt;BlockData);</span>
+        <span class="changes">  <span id="light_ref3"><a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a></span>(&amp;(data-&gt;IParam),<span class="kw">sizeof</span>(data-&gt;IParam));</span>
+        <span class="changes">  <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;(data-&gt;DParam),<span class="kw">sizeof</span>(data-&gt;DParam));</span>
+        <span class="changes">  <span class="kw">break</span>;</span>
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Как уже отмечалось, основное достоинство двоичного формата &ndash; простота реализации. Для каждого
+из параметров потребовалось всего два вызова функций: один &ndash; для сохранения, другой &ndash; для загрузки.</p>
+
+<p>При сохранении схемы, записи блока в библиотеку или копировании его в буфер обмена модель будет вызвана
+с параметром <span class="cpp"><span id="light_ref4"><a href="RDS_BFM_SAVEBIN.htm" title="А.2.5.6. RDS_BFM_SAVEBIN &ndash; запись данных блока в двоичном формате">RDS_BFM_SAVEBIN</a></span></span> для сохранения данных в двоичном формате. Точнее,
+при сохранении схемы или записи блока в библиотеку модель сначала будет вызвана для сохранения данных в
+текстовом формате с параметром <span class="cpp"><a href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a></span>, но, поскольку реакция на это событие
+отсутствует, ничего не будет сохранено, и RDS вызовет модель еще раз с параметром
+<span class="cpp"><a class="hidden" href="RDS_BFM_SAVEBIN.htm" title="А.2.5.6. RDS_BFM_SAVEBIN &ndash; запись данных блока в двоичном формате">RDS_BFM_SAVEBIN</a></span>. Как и в реакциях на другие события в этой модели,
+указатель на личную область данных блока, хранящийся в
+<span class="cpp">BlockData-&gt;BlockData</span>, будет приведен к типу
+&laquo;указатель на <span class="cpp">TTest1Data</span>&raquo; и присвоен вспомогательной
+переменной <span class="cpp">data</span>. В личной области данных блока хранятся два параметра: целый
+<span class="cpp">IParam</span> и вещественный <span class="cpp">DParam</span>. Каждый из них сохраняется
+при помощи сервисной функции <span class="cpp"><a href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a></span>. Эта функция принимает два параметра:
+указатель на начало области памяти, которую нужно сохранить, и размер этой области в байтах. Для каждого
+из двух параметров передается указатель на него и размер этого параметра, полученный при помощи оператора
+<span class="cpp">sizeof</span>. В результате двух последовательных вызовов этой функции в
+RDS будет передано 12 байтов: 4 байта займет целое число <span class="cpp">IParam</span>, и 8 байтов займет
+вещественное число с двойной точностью (<span class="cpp">double</span>) <span class="cpp">DParam</span>. Если блок
+копировался в буфер обмена, эти 12 байтов попадут туда вместе с остальными данными этого блока. Если же
+запись производилась в текстовом формате, они будут преобразованы в 24 шестнадцатеричных символа и добавлены
+к тексту параметров блока отдельной строкой, начинающейся с &laquo;dlldata data 12&raquo;.</p>
+
+<p>При загрузке схемы или добавлении в нее блока из библиотеки или буфера обмена модель будет вызвана с
+параметром <span class="cpp"><span id="light_ref5"><a href="RDS_BFM_LOADBIN.htm" title="А.2.5.4. RDS_BFM_LOADBIN &ndash; загрузка данных блока в двоичном формате">RDS_BFM_LOADBIN</a></span></span>, поскольку данные блока были сохранены в двоичном
+формате. Параметры <span class="cpp">IParam</span> и <span class="cpp">DParam</span> загружаются двумя последовательными
+вызовами функции <span class="cpp"><a href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a></span>, в том же порядке, в котором они сохранялись. Как и
+парная ей функция <span class="cpp"><a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a></span>, <span class="cpp"><a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a></span>
+принимает два параметра &ndash; указатель на начало загружаемой области и размер этой области.</p>
+
+<p>Теперь измененные параметры блока не будут теряться при сохранении и последующей загрузке схемы.
+Для этого потребовалось всего четыре вызова &ndash; по два на каждый параметр. Следует, однако, помнить,
+что любое изменение типа или последовательности сохраняемых параметров приведет к тому, что старые схемы
+с этим блоком будут загружаться с ошибками.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_8_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_8_3.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_8_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

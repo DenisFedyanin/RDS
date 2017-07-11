@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.16.1. Изменение структуры переменных блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_16">&sect;2.16. Программное изменение схемы</a></p>
+<div class="level"><p>&sect;2.16.1. Изменение структуры переменных блока</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_15_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_16_2.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_16_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_16_1_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3>&sect;2.16. Программное изменение схемы</h3>
+<p class="abstract">Рассматриваются способы программной модификации схемы. Приводятся примеры блоков, 
+            изменяющих свою структуру переменных, а также добавляющих в схему и 
+            удаляющих из нее другие блоки и связи.</p>
+<h4>&sect;2.16.1. Изменение структуры переменных блока</h4>
+<p class="abstract">Рассматриваются функции для программного изменения структуры статических переменных 
+                блока из его модели. Модель одного из ранее рассмотренных блоков изменяется так, чтобы она сама 
+                корректировала переменные, если они ей не подходят. Описывается модель блока, предоставляющего пользователю 
+                интерфейс для ограниченного редактирования своих переменных.</p>
+
+
+<p>Структура <a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статических переменных</a>
+<a href="pm_1_2.htm#light_ref3" title="Простой блок">простого блока</a>
+обычно задается один раз при создании этого блока, а модель только проверяет допустимость этой структуры
+в вызове <span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> и запрещает работу блока, если структура его переменных
+не соответствует ожиданиям модели (см. <a href="pm_2_5_1.htm" title="&sect;2.5.1. Доступ к статическим переменным и работа в режиме расчета">&sect;2.5.1</a>). Тем не менее,
+RDS позволяет модели, при необходимости, изменять структуру переменных блока или параметры
+этих переменных.</p>
+
+<p>Одним из самых простых <a href="pm_2_5_1.htm#light_ref8" title="Пример блока вычитания">примеров</a>
+из рассмотренных ранее был блок с моделью <span class="cpp">TestSub</span>, выдававший на выход
+разность двух своих вещественных входов. В режиме <span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> его модель
+проверяла наличие двух обязательных сигналов &laquo;<span class="rdsvar"><a href="um_1_4.htm#ref25" title="Сигнал запуска блока">Start</a></span>&raquo; и
+&laquo;<span class="rdsvar"><a href="um_1_4.htm#ref27" title="Сигнал готовности блока">Ready</a></span>&raquo; и трех вещественных переменных, возвращая константу
+<span class="cpp"><a href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a></span>, если переданная ей
+<a href="pm_1_5.htm#ref19" title="Строка типа переменных блока">строка типа</a>
+отличалась от &laquo;{SSDDD}&raquo;. Таким образом, для того, чтобы этот блок мог работать,
+пользователь после подключения к новому блоку модели <span class="cpp">TestSub</span> обязательно должен вручную
+задать ему правильную структуру переменных. Изменим модель так, чтобы при подключении к блоку
+с неподходящими переменными она автоматически меняла их на нужные ей. На самом деле, большой
+практической ценности этот пример иметь не будет: как правило, после создания блока его
+сразу записывают в библиотеку, откуда он добавляется в новые схемы уже с правильной структурой переменных.
+Однако, модель к блоку может быть подключена не только пользователем, но и, например, другим блоком при вызове
+сервисной функции <span class="cpp"><a href="rdsSetBlockModel.htm" title="А.5.6.48. rdsSetBlockModel &ndash; подключить к блоку модель">rdsSetBlockModel</a></span> &ndash; в этом случае автоматическое создание правильной
+структуры переменных может оказаться полезным.</p>
+
+<p>Сначала напишем функцию, которая устанавливает нужную структуру переменных блока, а именно:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">x1</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">x2</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">18</td>
+<td class="vcenter">y</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p><span id="ref1">Мы</span>
+будем вызывать эту функцию из модели в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> , чтобы
+установить правильную структуру переменных, если это необходимо.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <span id="light_ref1">CreateVarStruct_x1x2y</span>(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block)
+  { <span class="rem">// Строка описания структуры переменных</span>
+    <span class="kw">static</span> <span class="kw">char</span> str[]=
+      <span class="str">"struct\nbegin\n"</span>
+      <span class="str">"signal name \"Start\" in run default 1\n"</span>
+      <span class="str">"signal name \"Ready\" out default 0\n"</span>
+      <span class="str">"double name \"x1\" in menu run default 0\n"</span>
+      <span class="str">"double name \"x2\" in menu run default 0\n"</span>
+      <span class="str">"double name \"y\" out menu default 0\n"</span>
+      <span class="str">"end"</span>;
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> dv; <span class="rem">// Вспомогательный объект</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;
+    <span class="rem">// Создаем объект для работы со структурой переменных</span>
+    dv=<span id="light_ref2"><a class="hidden" href="rdsVSCreateEditor.htm" title="А.5.25.1. rdsVSCreateEditor &ndash; создать объект-редактор переменных">rdsVSCreateEditor</a></span>();
+    <span class="rem">// Создаем в объекте набор переменных по строке описания</span>
+    ok=<span id="light_ref3"><a class="hidden" href="rdsVSCreateByDescr.htm" title="А.5.25.9. rdsVSCreateByDescr &ndash; заполнить набор переменных по тексту описания">rdsVSCreateByDescr</a></span>(dv,str);
+    <span class="kw">if</span>(ok) <span class="rem">// Переписываем структуру переменных из объекта в блок</span>
+      ok=<span id="light_ref4"><a class="hidden" href="rdsVSApplyToBlock.htm" title="А.5.25.8. rdsVSApplyToBlock &ndash; создать структуру переменных блока">rdsVSApplyToBlock</a></span>(dv,Block,NULL);
+    <span class="rem">// Удаляем вспомогательный объект</span>
+    <span id="light_ref5"><a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>(dv);
+    <span class="rem">// Возвращаем успешность операции</span>
+    <span class="kw">return</span> ok;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Большая часть операций над структурой переменных блока в RDS осуществляется через вспомогательный объект,
+который создается сервисной функцией <span class="cpp"><a href="rdsVSCreateEditor.htm" title="А.5.25.1. rdsVSCreateEditor &ndash; создать объект-редактор переменных">rdsVSCreateEditor</a></span>. Сначала в таком объекте
+подготавливается нужная структура, а затем вызовом функции <span class="cpp"><a href="rdsVSApplyToBlock.htm" title="А.5.25.8. rdsVSApplyToBlock &ndash; создать структуру переменных блока">rdsVSApplyToBlock</a></span> эта структура
+записывается в конкретный блок. В данном случае идентификатор блока, которому нужно установить новую
+структуру переменных, передается в параметре нашей функции <span class="cpp">CreateVarStruct_x1x2y</span>. Эта
+функция будет возвращать <span class="cpp">TRUE</span>, если изменение структуры удалось, и
+<span class="cpp">FALSE</span> в противном случае &ndash; мы не сможем установить такую структуру переменных,
+например, во <a href="pm_1_2.htm#light_ref6" title="Внешний вход подсистемы">внешнем входе</a> или <a href="pm_1_2.htm#light_ref8" title="Внешний выход подсистемы">выходе</a>,
+у которого может быть только одна переменная, или в блоке, модель которого требует другой структуры.</p>
+
+<p>В самом начале функции вводится статическая переменная <span class="cpp">str</span>, которой присваивается строка
+описания нашей структуры переменных в том же виде, в каком описываются переменные при сохранении блока или схемы
+в текстовом формате. В этой строке перечислены все имена и типы переменных, включая обязательные для простого
+блока сигналы &laquo;<span class="rdsvar">Start</span>&raquo; и &laquo;<span class="rdsvar">Ready</span>&raquo;. Такую строку описания для любой структуры переменных
+получить достаточно просто: нужно создать новую схему, добавить в нее единственный блок с нужной структурой переменных,
+сохранить этот блок в файл, а затем открыть этот файл в любом текстовом редакторе, найти в нем описание переменных
+блока, начинающееся со слова &laquo;vars&raquo;, и скопировать это описание вплоть до ближайшего слова
+&laquo;end&raquo;, заменив слово &laquo;vars&raquo; на слово &laquo;struct&raquo; (пример текста,
+получающегося при сохранении блока, приведен в <a href="pm_2_8_3.htm#ref6" title="Вид текста, сохраняемого для блока в файле схемы">&sect;2.8.3</a>).</p>
+
+<p>Для того, чтобы создать структуру переменных по этой строке описания, мы сначала вызовом
+<span class="cpp"><a class="hidden" href="rdsVSCreateEditor.htm" title="А.5.25.1. rdsVSCreateEditor &ndash; создать объект-редактор переменных">rdsVSCreateEditor</a></span> создаем объект для манипуляций с переменными, и присваиваем
+его идентификатор переменной <span class="cpp">dv</span> типа <span class="cpp"><a href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a></span> (идентификаторы
+всех вспомогательных объектов RDS имеют этот тип). Затем при помощи функции
+<span class="cpp"><a href="rdsVSCreateByDescr.htm" title="А.5.25.9. rdsVSCreateByDescr &ndash; заполнить набор переменных по тексту описания">rdsVSCreateByDescr</a></span> мы создаем в этом объекте структуру переменных, соответствующую строке
+<span class="cpp">str</span>. Логическое значение, возвращенное функцией, записывается в переменную
+<span class="cpp">ok</span>: если по какой-либо причине создать структуру не удастся (например, в строке описания
+будет синтаксическая ошибка), функция вернет <span class="cpp">FALSE</span>. В случае успешного создания структуры
+мы копируем переменные из объекта в блок, идентификатор которого передан в параметре нашей функции, при помощи
+сервисной функции <span class="cpp"><a class="hidden" href="rdsVSApplyToBlock.htm" title="А.5.25.8. rdsVSApplyToBlock &ndash; создать структуру переменных блока">rdsVSApplyToBlock</a></span>. Эта функция тоже возвращает логическое значение,
+свидетельствующее об успешности копирования &ndash; не всякому блоку можно назначить любую структуру переменных.
+В последнем параметре <span class="cpp"><a class="hidden" href="rdsVSApplyToBlock.htm" title="А.5.25.8. rdsVSApplyToBlock &ndash; создать структуру переменных блока">rdsVSApplyToBlock</a></span> можно передать указатель на целую
+переменную, в которую функция запишет код ошибки, но нам это не нужно, поэтому мы передаем в нем <span class="cpp">NULL</span>.</p>
+
+<p>После того, как структура переменных установлена (или, в случае ошибок, ее установка не удалась), мы удаляем
+объект <span class="cpp">dv</span> и возвращаем значение <span class="cpp">ok</span>: если какая-то
+из вызванных сервисных функций вернула <span class="cpp">FALSE</span>, <span class="cpp">ok</span> тоже будет
+содержать <span class="cpp">FALSE</span>.</p>
+
+<p>Теперь нужно вставить вызов этой функции в модель блока <span class="cpp">TestSub</span> в реакцию на вызов
+в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>. Может возникнуть соблазн написать такую реакцию:</p>
+
+<pre class="cpp">        <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>: <span class="rem">// ОШИБКА!</span>
+          <span class="kw">return</span> <a class="hidden" href="#ref1" title="Функция установки структуры из трех переменных double">CreateVarStruct_x1x2y</a>(BlockData-&gt;Block)?
+            <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>:<a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;</pre>
+
+<p>Однако, ни к чему хорошему такая запись не приведет. Рассмотрим работу такой модели подробнее.
+Допустим, модель <span class="cpp">TestSub</span> подключается к только что созданному блоку. После
+инициализации она будет вызвана в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>, что приведет к
+вызову функции <span class="cpp"><a class="hidden" href="#ref1" title="Функция установки структуры из трех переменных double">CreateVarStruct_x1x2y</a></span>, которая изменит структуру переменных блока
+функцией <span class="cpp"><a class="hidden" href="rdsVSApplyToBlock.htm" title="А.5.25.8. rdsVSApplyToBlock &ndash; создать структуру переменных блока">rdsVSApplyToBlock</a></span>. Функция <span class="cpp"><a class="hidden" href="rdsVSApplyToBlock.htm" title="А.5.25.8. rdsVSApplyToBlock &ndash; создать структуру переменных блока">rdsVSApplyToBlock</a></span>
+опять вызовет модель в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> для проверки правильности новой
+структуры, что опять приведет к новому вызову <span class="cpp"><a class="hidden" href="rdsVSApplyToBlock.htm" title="А.5.25.8. rdsVSApplyToBlock &ndash; создать структуру переменных блока">rdsVSApplyToBlock</a></span> и новому вызову
+модели в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>, и т.д. &ndash; эта последовательность вызовов будет
+продолжаться, пока не переполнится стек, после чего RDS завершится с сообщением об ошибке.</p>
+
+<p>Чтобы не допустить возникновения этого бесконечного цикла, изменять структуру переменных нужно
+только тогда, когда текущая структура не подходит модели. В этом случае второй вызов модели в режиме
+<span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> не приведет к новому вызову
+<span class="cpp"><a class="hidden" href="rdsVSApplyToBlock.htm" title="А.5.25.8. rdsVSApplyToBlock &ndash; создать структуру переменных блока">rdsVSApplyToBlock</a></span>, поскольку структура переменных в этот момент уже правильная. Таким
+образом, цикл не возникнет, и реакция модели благополучно завершится.</p>
+
+<p>Изменим реакцию модели, вернув в нее удаленную ранее проверку строки типа переменных:</p>
+
+<pre class="cpp">        <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDDD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>; <span class="rem">// Тип правильный</span>
+          <span class="rem">// Тип неверный – меняем структуру (ОШИБКА!)</span>
+          <span class="kw">return</span> <a class="hidden" href="#ref1" title="Функция установки структуры из трех переменных double">CreateVarStruct_x1x2y</a>(BlockData-&gt;Block)?
+            <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>:<a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;</pre>
+
+<p>Однако, тут нас подстерегает еще одна опасность: что произойдет, если, по каким-либо причинам,
+функции <span class="cpp"><a class="hidden" href="rdsVSApplyToBlock.htm" title="А.5.25.8. rdsVSApplyToBlock &ndash; создать структуру переменных блока">rdsVSApplyToBlock</a></span> не удастся установить нужную нам структуру переменных,
+или если строка описания переменных, используемая в функции <span class="cpp"><a class="hidden" href="#ref1" title="Функция установки структуры из трех переменных double">CreateVarStruct_x1x2y</a></span>,
+не будет соответствовать строке типа &laquo;{SSDDD}&raquo; из-за ошибки в исходном тексте программы? В
+этом случае проверка строки типа функцией <span class="cpp">strcmp</span>, которую мы вернули в модель,
+укажет на несовпадение, и функция <span class="cpp"><a class="hidden" href="#ref1" title="Функция установки структуры из трех переменных double">CreateVarStruct_x1x2y</a></span> будет вызвана снова,
+что, как и в предыдущем варианте, приведет к бесконечной рекурсии. Чтобы избежать этого, нам нужно каким-то
+образом отличать вызовы модели в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> из-за ее собственной
+попытки изменить структуру переменных блока от всех прочих ее вызовов в том же режиме. Если модель вызвана из-за
+того, что она сама меняет структуру переменных блока, и при этом структура переменных оказывается неверной,
+модель не должна снова пытаться изменить структуру &ndash; она только что уже попробовала, и это не
+дало результата. В этом случае модель должна просто завершиться, вернув константу
+<span class="cpp"><a href="RDS_BFM_VARCHECK.htm#light_ref2" title="Возврат RDS_BFR_ERROR">RDS_BFR_ERROR</a></span>, сигнализирующую об ошибке. В данном случае логично использовать
+<span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref2" title="Возврат RDS_BFR_ERROR">RDS_BFR_ERROR</a></span> вместо <span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a></span>, поскольку
+нам не нужно выводить сообщение о неверной структуре переменных: нам нужно просто сообщить вызвавшей модель
+функции <span class="cpp"><a class="hidden" href="rdsVSApplyToBlock.htm" title="А.5.25.8. rdsVSApplyToBlock &ndash; создать структуру переменных блока">rdsVSApplyToBlock</a></span> о том, что структура неправильная.</p>
+
+<p><span id="ref6">Чтобы</span>
+отличить вызов модели при программном изменении структуры переменных от других вызовов, нужно
+использовать какой-либо флаг: перед вызовом функции <span class="cpp"><a class="hidden" href="#ref1" title="Функция установки структуры из трех переменных double">CreateVarStruct_x1x2y</a></span> мы будем взводить его,
+после возвращения из нее &ndash; сбрасывать. Таким образом, если при вызове модели в режиме
+<span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> флаг взведен, значит, мы попали сюда из-за программного
+изменения переменных, если сброшен &ndash; по какой-то другой причине. В качестве флага можно использовать
+целое поле <span class="cpp" id="light_ref6">Tag</span> структуры данных
+блока <span class="cpp"><a href="RDS_BLOCKDATA.htm#ref3" title="Структура RDS_BLOCKDATA">RDS_BLOCKDATA</a></span>. Это поле никак
+не используется RDS и предназначено для хранения пользовательских данных. Конечно, нам придется добавить в
+модель инициализацию этого поля нулем при вызове модели в режиме <span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span>, поскольку
+RDS его инициализировать не будет, а в исходном состоянии наш флаг должен быть сброшен. Таким образом,
+новая модель блока будет выглядеть так (изменения выделены <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestSub(<span class="kw">int</span> CallMode,
+                        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x1     (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define x2     (*((double *)(pStart+10)))</span>
+  <span class="preproc">#define y      (*((double *)(pStart+18)))</span>
+<div class="changes">    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;</div>
+    <span class="kw">switch</span>(CallMode)
+      {
+<div class="changes">        <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          BlockData-&gt;Tag=<span class="const">0</span>; <span class="rem">// Сброс флага</span>
+          <span class="kw">break</span>;</div>
+<div class="changes">        <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <span id="light_ref7"><a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDDD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>; <span class="rem">// Тип переменных правильный</span>
+          <span class="rem">// Тип переменных неправильный</span>
+          <span class="kw">if</span>(BlockData-&gt;Tag) <span class="rem">// Флаг взведен – программное изменение</span>
+            <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref2" title="Возврат RDS_BFR_ERROR">RDS_BFR_ERROR</a>; <span class="rem">// Ошибка</span>
+          <span class="rem">// Модель вызвана не из-за программного изменения</span>
+          <span class="rem">// структуры переменных</span>
+          <span class="rem">// Взводим флаг на время программного изменения структуры</span>
+          BlockData-&gt;Tag=<span class="const">1</span>;
+          <span class="rem">// Пытаемся изменить структуру переменных блока</span>
+          ok=<a class="hidden" href="#ref1" title="Функция установки структуры из трех переменных double">CreateVarStruct_x1x2y</a>(BlockData-&gt;Block);
+          <span class="rem">// Сбрасываем флаг обратно</span>
+          BlockData-&gt;Tag=<span class="const">0</span>;
+          <span class="rem">// Возвращаем результат попытки изменения</span>
+          <span class="kw">return</span> ok?<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>:<a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;</div>
+        <span class="rem">// Выполнение такта расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="rem">// Вычисление значения выхода</span>
+          <span class="kw">if</span>(x1==<a class="hidden" href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">DoubleErrorValue</a> || x2==<a class="hidden" href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">DoubleErrorValue</a>)
+            y=<a class="hidden" href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">DoubleErrorValue</a>;
+          <span class="kw">else</span>
+            y=x1-x2;
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef x2</span>
+  <span class="preproc">#undef x1</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Эта модель защищена от бесконечной рекурсии, она будет менять структуру переменных блока только в том
+случае, если эта структура не соответствует строке типа &laquo;{SSDDD}&raquo;. Кроме решения технической
+проблемы с рекурсией, эта проверка позволяет пользователю переименовывать переменные блока, как
+ему вздумается &ndash; строка типа при этом не изменится, и модель не будет пытаться вернуть блоку жестко
+прописанную в функции <span class="cpp"><a class="hidden" href="#ref1" title="Функция установки структуры из трех переменных double">CreateVarStruct_x1x2y</a></span> структуру переменных с именами
+&laquo;<span class="rdsvar">x1</span>&raquo;, &laquo;<span class="rdsvar">x2</span>&raquo; и &laquo;<span class="rdsvar">y</span>&raquo;.</p>
+
+<p>В рассмотренном примере модель устанавливала в блоке жесткую, заранее заданную структуру переменных.
+Иногда блоку необходимо менять свою структуру переменных в зависимости от каких-либо других параметров, или
+даже из-за действий пользователя. В <a href="pm_2_15_2.htm#ref4" title="Пример моделей блоков, обменивающихся данными по сети">&sect;2.15.2</a>
+мы создали блоки, способные передавать по сети вещественные числа и массивы вещественных чисел. Передача
+массивов позволяет снизить нагрузку на сеть, однако для пользователя это может оказаться не слишком удобным:
+ему нужно помнить, что передается в каждом элементе массива. Например, если в схеме на одной машине он подаст
+на пятый элемент &laquo;<span class="rdsvar">X[4]</span>&raquo; входного массива передающего блока значение скорости какого-либо
+объекта, на другой машине он будет получать его на выходе &laquo;<span class="rdsvar">Y[4]</span>&raquo; принимающего блока. Было
+бы гораздо удобнее, если бы пользователь мог назвать этот вход и соответствующий ему выход
+&laquo;<span class="rdsvar">Speed</span>&raquo;, тогда у него не возникло бы вопросов, с какого выхода принимающего блока снимать
+сигнал.</p>
+
+<p>Сделать это достаточно просто: нужно создать блок, который будет передавать по сети всю свою
+структуру переменных, причем этот блок должен уметь делать свои переменные входами, если он передает данные,
+и выходами, если принимает. В настройках блока необходимо предусмотреть отдельный интерфейс, чтобы пользователь
+мог задавать имена и типы переменных блока. Конечно, можно воспользоваться встроенным в RDS
+редактором переменных, который можно вызвать из окна параметров любого простого блока, однако, в
+этом случае пользователь сможет указывать, какая переменная будет входом, а какая &ndash; выходом. Поскольку
+блок будет сам определять роли своих переменных, лучше не давать пользователю вмешиваться в этот процесс.</p>
+
+<p>Для создания нового блока мы в очередной раз изменим класс <span class="cpp">TNetSendRcvData</span>, используемый
+в примере в качестве <a href="pm_1_4.htm#ref8" title="Личная область данных блока">личной области данных</a> блока, добавив в него
+новое поле и пару новых функций (выделены <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">// Личная область данных блоков приема и передачи по сети</span>
+  <span class="kw">class</span> TNetSendRcvData
+  { <span class="kw">public</span>:
+      <span class="kw">int</span> Mode;	<span class="rem">// Режим данного блока: прием или передача</span>
+        <span class="preproc">#define NETSRMODE_SENDER    0 </span><span class="rem">// Передатчик</span>
+        <span class="preproc">#define NETSRMODE_RECEIVER  1 </span><span class="rem">// Приемник</span>
+      <span class="kw">char</span> *ChannelName; <span class="rem">// Имя канала</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> LimitSpeed;   <span class="rem">// Задан минимальный интервал передачи</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Delay;       <span class="rem">// Минимальный интервал в мс</span>
+<div class="changes">      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> StructInOut;  <span class="rem">// Этот блок передает или принимает структуру</span></div>
+      <span class="kw">int</span> ConnId; <span class="rem">// Идентификатор соединения</span>
+
+      <span class="rem">// Переменные состояния блока-передатчика</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Connected;      <span class="rem">// Соединение установлено</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> DataWaiting;    <span class="rem">// Передача данных отложена</span>
+      <a class="hidden" href="app_ids.htm#light_ref3" title="Идентификатор таймера">RDS_TIMERID</a> Timer;   <span class="rem">// Таймер для отсчета интервала</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> WaitingForTimer;<span class="rem">// Таймер запущен - ждем</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> LastSendTime;  <span class="rem">// Время последней отправки</span>
+
+      <span class="rem">// Функции класса</span>
+      <span class="kw">void</span> Connect(<span class="kw">void</span>);   <span class="rem">// Установить соединение</span>
+      <span class="kw">void</span> Disconnect(<span class="kw">void</span>);<span class="rem">// Разорвать соединение</span>
+
+      <span class="kw">void</span> SendValue(<span class="kw">double</span> value); <span class="rem">// Передать число в канал</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ReceiveValue(<a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a> *rcv,<span class="rem">// Реакция на</span>
+                        <span class="kw">double</span> *pOut);           <span class="rem">// пришедшие данные</span>
+      <span class="kw">void</span> SendArray(<span class="kw">void</span> *input); <span class="rem">// Передать массив в канал</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ReceiveArray(<a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a> *rcv, <span class="rem">// Реакция на</span>
+                        <span class="kw">void</span> *output);            <span class="rem">// пришедшие данные</span>
+<div class="changes">      <span class="kw">void</span> SendStruct(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block); <span class="rem">// Передать структуру</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ReceiveStruct(<a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a> *rcv,<span class="rem">// Реакция на</span>
+                         <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block);      <span class="rem">// пришедшую структуру</span></div>
+      <span class="kw">void</span> CreateTimer(<span class="kw">void</span>); <span class="rem">// Создать таймер</span>
+      <span class="kw">void</span> DeleteTimer(<span class="kw">void</span>); <span class="rem">// Удалить таймер</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> CheckSendTimer(<span class="kw">void</span>);<span class="rem">// Проверить, можно ли передавать,</span>
+                                <span class="rem">// и запустить таймер, если нельзя</span>
+
+      <span class="kw">int</span> Setup(<span class="kw">char</span> *title); <span class="rem">// Функция настройки блока</span>
+      <span class="kw">void</span> SaveText(<span class="kw">void</span>);    <span class="rem">// Сохранить параметры</span>
+      <span class="kw">void</span> LoadText(<span class="kw">char</span> *text);<span class="rem">// Загрузить параметры</span>
+
+      <span class="rem">// Конструктор класса</span>
+      TNetSendRcvData(<span class="kw">int</span> mode)
+        { ConnId=-<span class="const">1</span>; <span class="rem">// Нет соединения</span>
+          Connected=DataWaiting=FALSE;
+          LimitSpeed=WaitingForTimer=FALSE;Timer=NULL;Delay=<span class="const">100</span>;
+          ChannelName=NULL; <span class="changes">StructInOut=FALSE;</span>
+          Mode=mode;<span class="rem">// Режим передается в параметре конструктора</span>
+        };
+      <span class="rem">// Деструктор класса</span>
+      ~TNetSendRcvData()
+        { Disconnect(); <span class="rem">// Разорвать соединение</span>
+          DeleteTimer();<span class="rem">// Удалить таймер</span>
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(ChannelName);<span class="rem">// Освободить строку имени канала</span>
+        };
+  };
+  <span class="rem">//=========================================</span></pre>
+
+<p>Логическое поле <span class="cpp">StructInOut</span> будет иметь значение <span class="cpp">TRUE</span> только
+в том случае, если эта личная область данных принадлежит блоку, который передает или принимает по сети всю
+свою структуру переменных. В конструкторе класса этому полю присваивается <span class="cpp">FALSE</span>,
+поэтому все написанные ранее модели, использующие этот класс, будут работать по-старому. Даже если мы изменим
+некоторые функции класса, введя в них какие-либо действия при истинном
+<span class="cpp">StructInOut</span>, в этих блоках значение этого поля будет ложным, и новые действия
+выполняться не будут.</p>
+
+<p>Для передачи и приема структуры мы включили в класс две новых функции:
+<span class="cpp">SendStruct</span> и <span class="cpp">ReceiveStruct</span>. При наличии в блоке
+сложных переменных (матриц, строк и т.п.) в структуре будут содержаться указатели на другие области памяти,
+поэтому, в общем случае, структура переменных блока не является набором последовательных байтов. Для
+того, чтобы можно было передать ее по сети единым блоком, воспользуемся сервисной функцией
+<span class="cpp"><span id="light_ref8"><a href="rdsBlockVarToMem.htm" title="А.5.14.2. rdsBlockVarToMem &ndash; записать значение переменной блока в буфер в памяти">rdsBlockVarToMem</a></span></span>, которая записывает все дерево переменных блока в
+последовательный динамически отведенный буфер и возвращает указатель на него и его длину. Кроме того,
+эта функция может добавить к этому буферу строку типа переменных блока, что пригодится нам при приеме:
+успешно принять структуру переменных мы сможем только в том случае, если их типы в точности соответствуют типам
+переменных блока-приемника, поэтому, приняв из канала двоичные данные, блок-приемник должен будет проверить,
+соответствуют ли они его структуре переменных.</p>
+
+<p>Начнем с функции <span class="cpp">SendStruct</span> &ndash; в ее параметре мы будем передавать
+идентификатор блока, переменные которого нужно передать по сети:</p>
+
+<pre class="cpp">  <span class="rem">// Передать структуру переменных блока</span>
+  <span class="kw">void</span> TNetSendRcvData::SendStruct(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block)
+  { <span class="kw">void</span> *buf;
+    <span class="kw">int</span> len;
+
+    <span class="rem">// Является ли данный блок передатчиком?</span>
+    <span class="kw">if</span>(Mode!=NETSRMODE_SENDER)
+      <span class="kw">return</span>; <span class="rem">// Не является – это ошибка</span>
+
+    <span class="kw">if</span>(!Connected) <span class="rem">// Нет связи с сервером</span>
+      { <span class="rem">// Взводим флаг наличия данных, ожидающих передачи</span>
+        DataWaiting=TRUE;
+        <span class="kw">return</span>;
+      }
+    <span class="rem">// Связь с сервером есть</span>
+
+    <span class="rem">// Формируем буфер со всеми переменными блока</span>
+    buf=<a class="hidden" href="rdsBlockVarToMem.htm" title="А.5.14.2. rdsBlockVarToMem &ndash; записать значение переменной блока в буфер в памяти">rdsBlockVarToMem</a>(Block,-<span class="const">1</span>,TRUE,&amp;len);
+    <span class="kw">if</span>(buf==NULL) <span class="kw">return</span>; <span class="rem">// Не удалось сформировать буфер</span>
+
+    <span class="rem">// Передаем по сети сформированных буфер</span>
+    <span id="light_ref9"><a class="hidden" href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span>(ConnId,
+                        <a class="hidden" href="rdsNetBroadcastData.htm#light_ref6" title="RDS_NETSEND_UPDATE">RDS_NETSEND_UPDATE</a>|<a class="hidden" href="rdsNetBroadcastData.htm#light_ref4" title="RDS_NETSEND_UDP">RDS_NETSEND_UDP</a>,
+                        <span class="const">0</span>,NULL,
+                        buf,len);
+    <span class="rem">// Освобождаем буфер – он уже передан</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(buf);
+    <span class="rem">// Сбрасываем флаг ожидания – мы только что передали данные</span>
+    DataWaiting=FALSE;
+    <span class="rem">// Запоминаем время последней передачи</span>
+    LastSendTime=GetTickCount();
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Эта функция очень похожа на функции <span class="cpp">SendValue</span> и <span class="cpp">SendArray</span>,
+которые уже есть в этом классе. У нее только два отличия: во-первых, в самом ее начале значение поля
+<span class="cpp">Mode</span> сравнивается с константой <span class="cpp">NETSRMODE_SENDER</span>, чтобы проверить,
+является ли блок, для которого вызвана функция, передатчиком. Раньше у нас были отдельные модели блоков для
+приемника и передатчика, теперь же мы делаем универсальный блок, который будет принимать и передавать данные в
+зависимости от настроек. Если блок используется как приемник, важно не дать ему передать данные, если,
+например, пользователь зачем-то подаст единицу на его сигнальный вход <span class="cpp">Start</span>, из-за чего
+модель блока вызовется в такте <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a> (до сих пор мы передавали данные
+именно в такте расчета, при срабатывании какой-либо подключенной ко входу связи). Проще всего заблокировать
+передачу непосредственно внутри функции <span class="cpp">SendStruct</span>, прервав ее выполнение, если,
+согласно настройкам, блок не является передатчиком.</p>
+
+<p>Во-вторых, данные для передачи теперь подготавливаются во вспомогательном буфере при помощи функции
+<span class="cpp"><a class="hidden" href="rdsBlockVarToMem.htm" title="А.5.14.2. rdsBlockVarToMem &ndash; записать значение переменной блока в буфер в памяти">rdsBlockVarToMem</a></span>. В первом ее параметре передается идентификатор блока,
+переменные которого нужно записать в буфер, во втором &ndash; номер переменной в блоке (значение &minus;1
+указывает на запись всех переменных блока как единой структуры). Значение <span class="cpp">TRUE</span> в третьем
+параметре заставит функцию записать в буфер не только значения переменных, но и строку типа, чтобы блок-приемник
+смог проверить совместимость принятых данных со своей структурой переменных. Наконец, в последнем параметре
+передается указатель на целую переменную, в которую функция запишет длину получившегося буфера. После того, как
+содержимое буфера будет передано в канал функцией <span class="cpp"><a href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span>, он будет освобожден
+функцией <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p>Функция приема структуры <span class="cpp">ReceiveStruct</span> будет выглядеть так:</p>
+
+<pre class="cpp">  <span class="rem">// Принять структуру переменных</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> TNetSendRcvData::ReceiveStruct(<a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a> *rcv,
+              <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block)
+  {
+    <span class="rem">// Проверяем первый параметр и является ли блок приемником</span>
+    <span class="kw">if</span>(rcv==NULL || Mode!=NETSRMODE_RECEIVER)
+      <span class="kw">return</span> FALSE;
+    <span class="rem">// Есть ли среди принятых данных двоичные?</span>
+    <span class="kw">if</span>(rcv-&gt;Buffer==NULL)
+      <span class="kw">return</span> FALSE;
+    <span class="rem">// Пытаемся записать принятые данные в структуру переменных блока</span>
+    <span class="kw">return</span> <span id="light_ref10"><a class="hidden" href="rdsBlockVarFromMem.htm" title="А.5.14.1. rdsBlockVarFromMem &ndash; считать значение переменной блока из буфера в памяти">rdsBlockVarFromMem</a></span>(Block,-<span class="const">1</span>,rcv-&gt;Buffer,rcv-&gt;BufferSize);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции тоже сначала проверяется, может ли этот блок принимать данные (поле
+<span class="cpp">Mode</span> должно содержать константу <span class="cpp">NETSRMODE_RECEIVER</span>). Если это
+не так, значит, объект класса принадлежит блоку-передатчику, и принятые данные нужно игнорировать. Затем функция
+обрабатывает принятые двоичные данные, если они есть, функцией <span class="cpp"><a href="rdsBlockVarFromMem.htm" title="А.5.14.1. rdsBlockVarFromMem &ndash; считать значение переменной блока из буфера в памяти">rdsBlockVarFromMem</a></span>. Эта
+функция &ndash; обратная к <span class="cpp"><a class="hidden" href="rdsBlockVarToMem.htm" title="А.5.14.2. rdsBlockVarToMem &ndash; записать значение переменной блока в буфер в памяти">rdsBlockVarToMem</a></span>, она переписывает данные из буфера
+в памяти в структуру переменных блока согласно ее формату. Если в этом буфере, кроме значений переменных,
+записана и строка типа, функция сама проверит соответствие этой строки типам переменных блока и вернет
+<span class="cpp">FALSE</span>, если они не совпадут. В первом параметре функции передается идентификатор
+блока, в переменные которого будут записаны значения, во втором &ndash; номер переменной в блоке (мы передаем
+&minus;1, чтобы считалась вся структура переменных), в третьем и четвертом &ndash; указатель на буфер и
+его размер соответственно.</p>
+
+<p><span id="ref11">Теперь</span>, в очередной раз, нам нужно переписать функцию настройки
+блока <span class="cpp">Setup</span>. В нее необходимо внести возможности переключения блока на
+прием или передачу и <span id="light_ref11">задания структуры переменных блока пользователем</span>. Причем
+обе этих возможности должны присутствовать только в настройках блока, принимающего и передающего структуры &ndash;
+в настройках старых блоков, которые используют этот же класс, их быть не должно.</p>
+
+<p>Для вызова редактора переменных из окна настроек мы будем использовать специальную кнопку, а для
+реакции на нажатие этой кнопки нам придется использовать функцию обратного вызова с расширенными возможностями
+(см. <a href="pm_2_7_3.htm" title="&sect;2.7.3. Расширенные возможности функции обратного вызова">&sect;2.7.3</a>). Сначала мы напишем прототип этой функции,
+ее тело напишем позже, после самой функции <span class="cpp">Setup</span>:</p>
+
+<pre class="cpp">  <span class="rem">// Функция обратного вызова окна настройки блока (прототип)</span>
+  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TNetSendRcvData_Setup_Check(
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window,          <span class="rem">// Объект-окно</span>
+    <a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#ref2" title="Указатель на RDS_FORMSERVFUNCDATA">RDS_PFORMSERVFUNCDATA</a> data); <span class="rem">// Описание события</span></pre>
+
+<p>В самой функции настройки мы не имеем права менять структуру переменных блока до тех пор, пока пользователь
+не нажмет кнопку &laquo;<span class="menu">OK</span>&raquo;. Значит, нам нужно куда-нибудь скопировать текущую структуру переменных,
+и дать пользователю редактировать эту копию. Эта копия будет переписана в блок только при нажатии
+&laquo;<span class="menu">OK</span>&raquo;. Чтобы не создавать никаких дополнительных объектов, указатели на которые достаточно
+затруднительно передавать в функцию обратного вызова, вызываемую при нажатии на кнопку редактирования переменных,
+воспользуемся специальным невидимым полем ввода объекта-окна: <span class="cpp"><span id="light_ref12"><a href="app_a_fields.htm#light_ref14" title="RDS_FORMCTRL_NONVISUAL">RDS_FORMCTRL_NONVISUAL</a></span></span>.
+Это поле ввода предназначено для временного хранения параметров, для которых не предусмотрен пользовательский
+интерфейс, к его содержимому легко получить доступ как из функции настройки, так и из функции обратного вызова.
+Перед открытием окна мы запишем в это поле текст, описывающий все переменные блока. При нажатии кнопки редактирования
+переменных в функции обратного вызова мы будем восстанавливать переменные по этому тексту и предоставлять
+их пользователю для редактирования. Когда он закроет редактор, мы снова будем записывать в это поле текстовое
+описание отредактированных переменных. Наконец, когда пользователь нажмет &laquo;<span class="menu">OK</span>&raquo;, мы снова восстановим
+переменные по тексту и запишем их в блок.</p>
+
+<p>Таким образом, в функцию Setup нужно внести следующие <span class="changes">дополнения</span>:</p>
+
+<pre class="cpp">  <span class="rem">// Функция настройки блока</span>
+  <span class="kw">int</span> TNetSendRcvData::Setup(<span class="kw">char</span> *title)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> win; <span class="rem">// Вспомогательный объект-окно</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;         <span class="rem">// Пользователь нажал "OK"</span>
+<div class="changes">    <span class="kw">char</span> *str;</div>
+    <span class="rem">// Создаем окно</span>
+    win=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,title);
+
+<div class="changes">    <span class="kw">if</span>(StructInOut) <span class="rem">// Блок работает со структурами</span>
+      { <span class="rem">// Выпадающий список "прием/передача"</span>
+        <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(win,<span class="const">0</span>,<span class="const">10</span>,<span id="light_ref13"><a class="hidden" href="app_a_fields.htm#light_ref5" title="RDS_FORMCTRL_COMBOLIST">RDS_FORMCTRL_COMBOLIST</a></span>,
+            <span class="str">"Действие:"</span>,<span class="const">150</span>);
+        <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(win,<span class="const">10</span>,<a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a>,
+            <span class="str">"Передача данных\nПрием данных"</span>);
+        <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(win,<span class="const">10</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,
+            (Mode==NETSRMODE_RECEIVER)?<span class="const">1</span>:<span class="const">0</span>);
+
+        <span class="rem">// Получение строки описания переменных блока</span>
+        str=<span id="light_ref14"><a class="hidden" href="rdsCreateVarDescriptionString.htm" title="А.5.14.6. rdsCreateVarDescriptionString &ndash; текстовое описание переменной">rdsCreateVarDescriptionString</a></span>(
+                <span id="light_ref15"><a class="hidden" href="rdsGetBlockVar.htm" title="А.5.14.10. rdsGetBlockVar &ndash; переменная блока по номеру">rdsGetBlockVar</a></span>(NULL,-<span class="const">1</span>,NULL),TRUE,<span class="const">0</span>,NULL);
+        <span class="rem">// Установка этой строки как невидимого поля ввода 1000</span>
+        <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(win,<span class="const">0</span>,<span class="const">1000</span>,<a class="hidden" href="app_a_fields.htm#light_ref14" title="RDS_FORMCTRL_NONVISUAL">RDS_FORMCTRL_NONVISUAL</a>,NULL,<span class="const">0</span>);
+        <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(win,<span class="const">1000</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,str);
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(str); <span class="rem">// Строка больше не нужна</span>
+
+        <span class="rem">// Кнопка редактирования переменных</span>
+        <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(win,<span class="const">0</span>,<span class="const">11</span>,
+            <span id="light_ref16"><a class="hidden" href="app_a_fields.htm#light_ref1" title="RDS_FORMCTRL_BUTTON">RDS_FORMCTRL_BUTTON</a></span> | <a class="hidden" href="app_a_fields.htm#light_ref25" title="RDS_FORMFLAG_LINE">RDS_FORMFLAG_LINE</a>,
+            <span class="str">"Переменные:"</span>,<span class="const">150</span>);
+        <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(win,<span class="const">11</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,<span class="str">"Изменить..."</span>);
+      }</div>
+    <span class="rem">// Поле ввода имени канала</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(win,<span class="const">0</span>,<span class="const">1</span>,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,
+                   <span class="str">"Имя канала:"</span>,<span class="const">200</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(win,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,ChannelName);
+
+    <span class="kw">if</span>(Mode==NETSRMODE_SENDER<span class="changes"> || StructInOut</span>)
+      { <span class="rem">// Для передатчика – ввод интервала</span>
+        <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(win,<span class="const">0</span>,<span class="const">2</span>,
+            <a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a> | <a class="hidden" href="app_a_fields.htm#light_ref21" title="RDS_FORMFLAG_CHECK">RDS_FORMFLAG_CHECK</a>,
+            <span class="str">"Интервал передачи, мс:"</span>,<span class="const">80</span>);
+        <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(win,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Delay);
+        <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(win,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_CHECK.htm" title="А.5.28.14. Команда RDS_FORMVAL_CHECK &ndash; управление разрешающим флагом поля ввода">RDS_FORMVAL_CHECK</a>,LimitSpeed);
+      }
+
+<div class="changes">    <span class="rem">// Открытие окна</span>
+    ok=<span id="light_ref17"><a class="hidden" href="rdsFORMShowModalServ.htm" title="А.5.28.7. rdsFORMShowModalServ &ndash; открыть окно с расширенной функцией обратного вызова">rdsFORMShowModalServ</a></span>(win,TNetSendRcvData_Setup_Check);</div>
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Пользователь нажал OK – запись параметров в блок</span>
+        <span class="kw">char</span> *NewName=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(win,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <span class="kw">if</span>(ChannelName==NULL || strcmp(NewName,ChannelName)!=<span class="const">0</span>)
+          { <span class="rem">// Имя канала изменилось – запоминаем новое</span>
+            <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(ChannelName);
+            ChannelName=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(NewName);
+          }
+        <span class="rem">// Флаг ограничения интервала и сам интервал</span>
+        LimitSpeed=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(win,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_CHECK.htm" title="А.5.28.14. Команда RDS_FORMVAL_CHECK &ndash; управление разрешающим флагом поля ввода">RDS_FORMVAL_CHECK</a>)!=<span class="const">0</span>;
+        Delay=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(win,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+
+<div class="changes">        <span class="kw">if</span>(StructInOut) <span class="rem">// Блок работает со структурами</span>
+          { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> dv; <span class="rem">// Объект для работы с переменными</span>
+            <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> flags,mask;
+            <span id="light_ref18"><a class="hidden" href="RDS_VARDESCRIPTION.htm#ref1" title="Структура RDS_VARDESCRIPTION">RDS_VARDESCRIPTION</a></span> vdescr;
+            <span class="rem">// Прием или передача</span>
+            Mode=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(win,<span class="const">10</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>)?
+                     NETSRMODE_RECEIVER:NETSRMODE_SENDER;
+            <span class="rem">// Чтение строки описания переменных из невидимого поля</span>
+            str=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(win,<span class="const">1000</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+            <span class="rem">// Создаем объект для работы с переменными</span>
+            dv=<a class="hidden" href="rdsVSCreateEditor.htm" title="А.5.25.1. rdsVSCreateEditor &ndash; создать объект-редактор переменных">rdsVSCreateEditor</a>();
+            <span class="rem">// Создаем структуру переменных по строке описания</span>
+            <span class="kw">if</span>(<a class="hidden" href="rdsVSCreateByDescr.htm" title="А.5.25.9. rdsVSCreateByDescr &ndash; заполнить набор переменных по тексту описания">rdsVSCreateByDescr</a>(dv,str))
+              { <span class="rem">// Установка флагов переменных – входы или выходы</span>
+                <span class="kw">if</span>(Mode==NETSRMODE_SENDER) <span class="rem">// Передатчик (входы)</span>
+                  flags=<span id="light_ref19"><a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref5" title="RDS_VARFLAG_INPUT">RDS_VARFLAG_INPUT</a></span>|<span id="light_ref20"><a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref7" title="RDS_VARFLAG_RUN">RDS_VARFLAG_RUN</a></span>|
+                        <span id="light_ref21"><a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref8" title="RDS_VARFLAG_MENU">RDS_VARFLAG_MENU</a></span>|<span id="light_ref22"><a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref9" title="RDS_VARFLAG_SHOWNAME">RDS_VARFLAG_SHOWNAME</a></span>;
+                <span class="kw">else</span> <span class="rem">// Приемник (выходы)</span>
+                  flags=<span id="light_ref23"><a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref6" title="RDS_VARFLAG_OUTPUT">RDS_VARFLAG_OUTPUT</a></span>|<a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref8" title="RDS_VARFLAG_MENU">RDS_VARFLAG_MENU</a>|
+                        <a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref9" title="RDS_VARFLAG_SHOWNAME">RDS_VARFLAG_SHOWNAME</a>;
+                <span class="rem">// Маска изменяемых флагов</span>
+                mask=<a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref5" title="RDS_VARFLAG_INPUT">RDS_VARFLAG_INPUT</a>|<a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref6" title="RDS_VARFLAG_OUTPUT">RDS_VARFLAG_OUTPUT</a>|
+                     <a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref7" title="RDS_VARFLAG_RUN">RDS_VARFLAG_RUN</a>|<a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref8" title="RDS_VARFLAG_MENU">RDS_VARFLAG_MENU</a>|
+                     <a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref9" title="RDS_VARFLAG_SHOWNAME">RDS_VARFLAG_SHOWNAME</a>;
+                <span class="rem">// Получение числа переменных в объекте dv</span>
+                vdescr.servSize=<span class="kw">sizeof</span>(vdescr);
+                <span id="light_ref24"><a class="hidden" href="rdsVSGetVarDescription.htm" title="А.5.25.14. rdsVSGetVarDescription &ndash; получить описание переменной">rdsVSGetVarDescription</a></span>(dv,-<span class="const">1</span>,&amp;vdescr);
+                <span class="rem">// Установка флагов начиная со второй переменной</span>
+                <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">2</span>;i&lt;vdescr.StructFields;i++)
+                  <span id="light_ref25"><a class="hidden" href="rdsVSSetVarFlags.htm" title="А.5.25.16. rdsVSSetVarFlags &ndash; установить флаги переменной">rdsVSSetVarFlags</a></span>(dv,i,flags,mask);
+                <span class="rem">// Запись переменных из объекта в блок</span>
+                <span class="kw">if</span>(!<a class="hidden" href="rdsVSApplyToBlock.htm" title="А.5.25.8. rdsVSApplyToBlock &ndash; создать структуру переменных блока">rdsVSApplyToBlock</a>(dv,NULL,NULL))
+                  <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(<span class="str">"Невозможно установить переменные "</span>
+                    <span class="str">"блока"</span>,<span class="str">"Ошибка"</span>,<a class="hidden" href="rdsMessageBox.htm#light_ref7" title="MB_OK">MB_OK</a> | <a class="hidden" href="rdsMessageBox.htm#light_ref5" title="MB_ICONWARNING">MB_ICONWARNING</a>);
+              }
+            <span class="rem">// Удаление вспомогательного объекта</span>
+            <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(dv);
+          }</div>
+        Disconnect();
+        Connect();
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(win);
+    <span class="rem">// Возвращаемое значение</span>
+    <span class="kw">return</span> ok?<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Дополнительные поля вводятся в окно настроек, только если <span class="cpp">StructInOut</span> имеет значение
+<span class="cpp">TRUE</span>, то есть только для новых блоков. Прежде всего, вводится выпадающий список
+(<span class="cpp"><a href="app_a_fields.htm#light_ref5" title="RDS_FORMCTRL_COMBOLIST">RDS_FORMCTRL_COMBOLIST</a></span>) с идентификатором 10. В нем доступно для выбора
+всего два варианта: &laquo;Передача данных&raquo; и &laquo;Прием данных&raquo;. Текущий вариант устанавливается
+по значению поля класса <span class="cpp">Mode</span>. Затем вызывается сервисная функция
+<span class="cpp"><a href="rdsCreateVarDescriptionString.htm" title="А.5.14.6. rdsCreateVarDescriptionString &ndash; текстовое описание переменной">rdsCreateVarDescriptionString</a></span>, которая формирует в динамически отведенной области памяти
+текст с описанием переменных блока, аналогичный тексту в функции <span class="cpp"><a href="#ref1" title="Функция установки структуры из трех переменных double">CreateVarStruct_x1x2y</a></span>,
+рассмотренной в предыдущем примере. Эта функция принимает четыре параметра:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsCreateVarDescriptionString.htm" title="А.5.14.6. rdsCreateVarDescriptionString &ndash; текстовое описание переменной">rdsCreateVarDescriptionString</a>(
+    <span id="light_ref26"><a class="hidden" href="app_ids.htm#light_ref5" title="Идентификатор переменной">RDS_VHANDLE</a></span> Var,   <span class="rem">// Идентификатор переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> StructFields, <span class="rem">// Раскрывать поля структуры</span>
+    <span class="kw">int</span> Indent,        <span class="rem">// Число пробелов перед каждой строкой</span>
+    <span class="kw">int</span> *pLength);     <span class="rem">// Возвращаемая длина строки</span></pre>
+
+<p>В первом параметре передается идентификатор переменной, текстовое описание которой нужно получить.
+Мы передаем в нем идентификатор всей структуры переменных блока, возвращаемый функцией
+<span class="cpp"><a href="rdsGetBlockVar.htm" title="А.5.14.10. rdsGetBlockVar &ndash; переменная блока по номеру">rdsGetBlockVar</a></span> (ее мы рассмотрим ниже). Второй параметр управляет описанием структур:
+при передаче <span class="cpp">TRUE</span> каждое поле структуры будет описано на отдельной строке текста,
+при передаче <span class="cpp">FALSE</span> описание структуры будет состоять из одной строки с указанием
+имени типа этой структуры. Мы описываем структуру переменных блока, которая не имеет имени типа, поэтому
+во втором параметре мы передаем <span class="cpp">TRUE</span>. В третьем параметре указывается число пробелов,
+которое необходимо добавить в начале каждой строки (нам это не нужно &ndash; передаем 0), и в четвертом
+&ndash; указатель на целую переменную, в которую нужно записать длину сформированного текста (нам
+эта длина не нужна, поэтому передаем <span class="cpp">NULL</span>). Функция возвращает указатель на сформированный
+текст, который записывается во вспомогательную переменную <span class="cpp">str</span>.</p>
+
+<p>Для получения идентификатора структуры переменных блока мы использовали сервисную функцию
+<span class="cpp"><a class="hidden" href="rdsGetBlockVar.htm" title="А.5.14.10. rdsGetBlockVar &ndash; переменная блока по номеру">rdsGetBlockVar</a></span>. Она принимает три параметра:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref5" title="Идентификатор переменной">RDS_VHANDLE</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsGetBlockVar.htm" title="А.5.14.10. rdsGetBlockVar &ndash; переменная блока по номеру">rdsGetBlockVar</a>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,         <span class="rem">// Идентификатор блока или NULL</span>
+    <span class="kw">int</span> num,                   <span class="rem">// Номер переменной или -1</span>
+    <a class="hidden" href="RDS_VARDESCRIPTION.htm#ref2" title="Указатель на RDS_VARDESCRIPTION">RDS_PVARDESCRIPTION</a> descr);<span class="rem">// Указатель на структуру описания</span></pre>
+
+<p>В первом параметре функции передается идентификатор блока, переменные которого нас интересуют. Мы передаем
+<span class="cpp">NULL</span>, что означает, что нам нужна переменная блока, модель которого выполняется в данный
+момент. Во втором параметре передается номер переменной в блоке &ndash; мы передаем &minus;1, поскольку нас
+интересует не какая-то конкретная переменная, а вся структура переменных блока как единое целое. И, наконец,
+в третьем параметре можно передать указатель на структуру описания переменной, которую функция должна заполнить.
+Нам это описание не нужно &ndash; мы передаем в последнем параметре <span class="cpp">NULL</span>.</p>
+
+<p>Теперь, когда у нас есть текст, описывающий все переменные блока, мы создаем в объекте-окне
+<span class="cpp">win</span> для его хранения
+<a href="app_a_fields.htm#light_ref14" title="RDS_FORMCTRL_NONVISUAL">невидимое поле</a> с идентификатором 1000 и записываем в него
+значение переменной <span class="cpp">str</span>. Теперь функция обратного вызова
+<span class="cpp">TNetSendRcvData_Setup_Check</span>, прототип которой мы описали ранее, сможет считать
+этот текст, создать по нему структуру переменных и открыть отдельное окно для их редактирования, а потом
+записать измененный текст обратно в невидимое поле. Как она будет это делать &ndash; пока не важно, мы разберемся
+с этим, когда приступим к ее написанию. После того, как значение <span class="cpp"></span> записано в поле,
+эта динамически отведенная строка больше не нужна, и она освобождается вызовом <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/NetStruct_Setup.png" width="332" height="203" alt="Окно настроек блока приема/передачи структуры" />
+<p id="light_pic1">Рис.&nbsp;115. Окно настроек блока<br />приема/передачи структуры</p>
+</div></div>
+
+
+<p>Кроме невидимого поля, в котором хранится текстовое описание переменных, нам нужна кнопка, которая будет
+вызывать их редактор. Кнопка &ndash; это поле ввода типа <span class="cpp"><a href="app_a_fields.htm#light_ref1" title="RDS_FORMCTRL_BUTTON">RDS_FORMCTRL_BUTTON</a></span>. У этого
+поля нет значения как такового: функции установки значения задают надпись на кнопке. Нажатие кнопки передается
+в функцию обратного вызова, а она уже выполняет соответствующие действия. Созданная нами кнопка будет иметь
+идентификатор 11 и, поскольку она создана с флагом <span class="cpp"><a href="app_a_fields.htm#light_ref25" title="RDS_FORMFLAG_LINE">RDS_FORMFLAG_LINE</a></span>, от остальной части
+окна она будет отделяться горизонтальной линией
+(<a href="#pic1" title="Окно настроек блока приема/передачи структуры">рис.&nbsp;115</a>).</p>
+
+<p>Все остальные поля ввода мы оставили без изменения: как и раньше, в окне будет поля ввода для имени
+канала и интервала передачи. Единственное изменение, внесенное в эту часть, связано с тем, что раньше блок у
+нас был или приемником, или передатчиком, поэтому поле ввода интервала передачи создавалось только для
+передатчика. Теперь у нас единая модель, которая будет приемником или передатчиком по желанию пользователя,
+поэтому при истинном <span class="cpp">StructInOut</span> это поле ввода создается в любом случае, независимо от
+значения <span class="cpp">Mode</span>. Мы будем запрещать работу этого поля в функции обратного вызова,
+если пользователь выберет в выпадающем списке пункт &laquo;прием данных&raquo;, и разрешать ее при
+выборе пункта &laquo;передача данных&raquo;, таким образом, пользователь получит визуальное подтверждение своих
+действий.</p>
+
+<p>Поскольку для реакции на нажатие кнопки нам нужна функция обратного вызова с расширенными возможностями, окно
+теперь открывается не функцией <span class="cpp"><a href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span>, а функцией
+<span class="cpp"><a href="rdsFORMShowModalServ.htm" title="А.5.28.7. rdsFORMShowModalServ &ndash; открыть окно с расширенной функцией обратного вызова">rdsFORMShowModalServ</a></span>, в которую передается указатель на функцию
+<span class="cpp">TNetSendRcvData_Setup_Check</span> (нам еще предстоит ее написать, пока мы описали только
+ее прототип). После закрытия окна кнопкой &laquo;<span class="menu">OK</span>&raquo; мы сначала, как и раньше, считываем из полей
+ввода новое имя канала <span class="cpp">ChannelName</span>, флаг ограничения интервала передачи
+<span class="cpp">LimitSpeed</span> и значение этого интервала <span class="cpp">Delay</span>. Затем, если
+значение <span class="cpp">StructInOut</span> истинно (то есть если этот объект принадлежит блоку, принимающему и
+передающему структуры), мы должны считать из окна настроек режим работы блока <span class="cpp">Mode</span> и измененную
+пользователем структуру переменных. Режим работы считывается из выпадающего списка: если в нем выбран вариант с
+индексом 0 (&laquo;прием данных&raquo;), в <span class="cpp">Mode</span> записывается константа
+<span class="cpp">NETSRMODE_RECEIVER</span>, если вариант с индексом 1 (&laquo;передача данных&raquo;) &ndash;
+константа <span class="cpp">NETSRMODE_SENDER</span>. Структура переменных (возможно, измененная пользователем)
+хранится в виде текстового описания в невидимом поле с идентификатором 1000. Прежде всего, мы, как обычно, получаем
+указатель на строку с этим текстовым описанием в памяти объекта-окна при помощи вызова
+<span class="cpp"><a href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a></span> и записываем его в переменную <span class="cpp">str</span> (это не
+динамическая строка, ее не нужно будет потом освобождать). Функцией <span class="cpp"><a href="rdsVSCreateEditor.htm" title="А.5.25.1. rdsVSCreateEditor &ndash; создать объект-редактор переменных">rdsVSCreateEditor</a></span> мы
+создаем вспомогательный объект для работы с переменными и записываем его идентификатор в переменную <span class="cpp">dv</span>.
+Затем мы, точно так же, как и в <a href="#ref1" title="Функция установки структуры из трех переменных double">предыдущем примере</a>
+с программным изменением структуры переменных, создаем в этом объекте структуру переменных по текстовому
+описанию при помощи функции <span class="cpp"><a href="rdsVSCreateByDescr.htm" title="А.5.25.9. rdsVSCreateByDescr &ndash; заполнить набор переменных по тексту описания">rdsVSCreateByDescr</a></span>. Теперь в объекте есть структура, однако
+ее еще рано записывать в блок: нужно сделать переменные входами, если блок будет передавать структуру по
+сети, и выходами, если он будет ее принимать. При этом мы не имеем права трогать первые две переменных: это
+обязательные сигналы &laquo;<span class="rdsvar">Start</span>&raquo; и &laquo;<span class="rdsvar">Ready</span>&raquo;, первый из них обязательно должен быть
+входом, а второй &ndash; выходом.</p>
+
+<p>В зависимости от значения поля <span class="cpp">Mode</span> (оно уже получило свое значение из
+выпадающего списка в окне) в переменную <span class="cpp">flags</span> записываются флаги переменных, которые
+будут установлены для каждой переменной в объекте <span class="cpp">dv</span>, за исключением первых двух.
+Если блок передает структуру (<span class="cpp"></span> равно <span class="cpp">NETSRMODE_SENDER</span>), переменная
+получит сочетание флагов <span class="cpp"><a href="RDS_VARDESCRIPTION.htm#light_ref5" title="RDS_VARFLAG_INPUT">RDS_VARFLAG_INPUT</a></span> (вход),
+<span class="cpp"><a href="RDS_VARDESCRIPTION.htm#light_ref7" title="RDS_VARFLAG_RUN">RDS_VARFLAG_RUN</a></span> (запускать модель при срабатывании связи),
+<span class="cpp"><a href="RDS_VARDESCRIPTION.htm#light_ref8" title="RDS_VARFLAG_MENU">RDS_VARFLAG_MENU</a></span> (имя переменной присутствует в меню соединений) и
+<span class="cpp"><a href="RDS_VARDESCRIPTION.htm#light_ref9" title="RDS_VARFLAG_SHOWNAME">RDS_VARFLAG_SHOWNAME</a></span> (показывать имя переменной рядом с точкой подключения связи).
+Если же блок будет принимать структуру, у переменной будут установлены флаги
+<span class="cpp"><a href="RDS_VARDESCRIPTION.htm#light_ref6" title="RDS_VARFLAG_OUTPUT">RDS_VARFLAG_OUTPUT</a></span> (выход), <span class="cpp"><a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref8" title="RDS_VARFLAG_MENU">RDS_VARFLAG_MENU</a></span> и
+<span class="cpp"><a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref9" title="RDS_VARFLAG_SHOWNAME">RDS_VARFLAG_SHOWNAME</a></span>. В переменную <span class="cpp">mask</span> записывается
+маска флагов, которые мы будем изменять у переменной, то есть объединение битовым ИЛИ всех перечисленных выше
+флагов (в маске должны быть взведены биты, соответствующие флагам, которые мы меняем, и обнулены биты флагов,
+которые мы не трогаем). Чтобы определить общее число переменных в объекте, мы вызываем функцию
+<span class="cpp"><a href="rdsVSGetVarDescription.htm" title="А.5.25.14. rdsVSGetVarDescription &ndash; получить описание переменной">rdsVSGetVarDescription</a></span>, которая заполняет структуру <span class="cpp">vdescr</span> описанием
+структуры переменных объекта (вместо номера переменной во втором параметре функции передается &minus;1,
+чтобы получить описание структуры переменных как единого целого). Предварительно, как обычно, в поле
+<span class="cpp">servSize</span> структуры <span class="cpp">vdescr</span> мы записываем размер этой
+структуры, чтобы функция смогла проверить правильность переданного параметра. После этого вызова в поле
+<span class="cpp">StructFields</span> будет содержаться общее число переменных в объекте <span class="cpp">dv</span>.
+Теперь мы можем в цикле установить всем переменным объекта, начиная с третьей (то есть с индекса 2, поскольку
+переменные нумеруются начиная с нуля), флаги из переменной <span class="cpp">flags</span> при помощи функции
+<span class="cpp"><a href="rdsVSSetVarFlags.htm" title="А.5.25.16. rdsVSSetVarFlags &ndash; установить флаги переменной">rdsVSSetVarFlags</a></span>. В эту функцию передается идентификатор объекта <span class="cpp">dv</span>, индекс
+переменной <span class="cpp">i</span>, битовые флаги переменной <span class="cpp">flags</span> и битовая
+маска устанавливаемых флагов <span class="cpp">mask</span>. После того, как флаги установлены, мы копируем
+структуру переменных из объекта в блок при помощи уже рассматривавшейся ранее функции
+<span class="cpp"><a class="hidden" href="rdsVSApplyToBlock.htm" title="А.5.25.8. rdsVSApplyToBlock &ndash; создать структуру переменных блока">rdsVSApplyToBlock</a></span>. Если копирование не удалось, выводится сообщение об ошибке.
+В самом конце объект <span class="cpp">dv</span> уничтожается вызовом <span class="cpp"><a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>.</p>
+
+<p>В конце функции настройки у нас записаны последовательные вызовы функций <span class="cpp">Disconnect</span> и
+<span class="cpp">Connect</span>, поэтому какую-либо дополнительную реакцию на изменение режима работы
+блока <span class="cpp">Mode</span>, который раньше не менялся на протяжении всего существования блока, писать
+не нужно. Если пользователь изменит режим работы, это будет учтено функцией <span class="cpp">Connect</span>, которая
+проверяет <span class="cpp">Mode</span> при соединении с сервером.</p>
+
+<p><span id="ref27">Теперь</span>
+нужно написать функцию обратного вызова, которая будет делать две вещи:
+<span id="light_ref27">открывать окно редактора переменных</span> при нажатии кнопки
+&laquo;<span class="menu">Изменить&hellip;</span>&raquo; и управлять разрешенностью поля ввода интервала передачи в зависимости
+от выбранного пользователем режима работы:</p>
+
+<pre class="cpp">  <span class="rem">// Функция обратного вызова окна настройки</span>
+  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TNetSendRcvData_Setup_Check(<a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window,
+            <a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#ref2" title="Указатель на RDS_FORMSERVFUNCDATA">RDS_PFORMSERVFUNCDATA</a> data)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> dv=NULL;
+    <span class="kw">char</span> *descr;
+    <a class="hidden" href="RDS_VARDESCRIPTION.htm#ref1" title="Структура RDS_VARDESCRIPTION">RDS_VARDESCRIPTION</a> vdescr;
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> sender;
+
+    <span class="rem">// Реагируем на событие, из-за которого вызвана функция</span>
+    <span class="kw">switch</span>(data-&gt;Event)
+      { <span class="kw">case</span> <span id="light_ref28"><a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#light_ref5" title="RDS_FORMSERVEVENT_CLICK">RDS_FORMSERVEVENT_CLICK</a></span>: <span class="rem">// Нажатие кнопки</span>
+          <span class="kw">if</span>(data-&gt;CtrlId!=<span class="const">11</span>) <span class="rem">// Это не кнопка "Изменить"</span>
+            <span class="kw">break</span>;
+          <span class="rem">// Создаем объект для манипуляций с переменными</span>
+          dv=<a class="hidden" href="rdsVSCreateEditor.htm" title="А.5.25.1. rdsVSCreateEditor &ndash; создать объект-редактор переменных">rdsVSCreateEditor</a>();
+          <span class="rem">// Считываем текст описания переменных из поля 1000</span>
+          descr=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">1000</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+          <span class="rem">// Заполняем объект dv описанием переменных descr</span>
+          <span class="kw">if</span>(!<a class="hidden" href="rdsVSCreateByDescr.htm" title="А.5.25.9. rdsVSCreateByDescr &ndash; заполнить набор переменных по тексту описания">rdsVSCreateByDescr</a>(dv,descr))
+            <span class="kw">break</span>;
+          <span class="rem">// Удаляем из объекта две первых переменных</span>
+          <span id="light_ref29"><a class="hidden" href="rdsVSDeleteVar.htm" title="А.5.25.37. Макрос rdsVSDeleteVar &ndash; удалить переменную">rdsVSDeleteVar</a></span>(dv,<span class="const">0</span>); <span class="rem">// Start</span>
+          <a class="hidden" href="rdsVSDeleteVar.htm" title="А.5.25.37. Макрос rdsVSDeleteVar &ndash; удалить переменную">rdsVSDeleteVar</a>(dv,<span class="const">0</span>); <span class="rem">// Ready</span>
+          <span class="rem">// Открываем окно редактора переменных</span>
+          <span class="kw">if</span>(!<span id="light_ref30"><a class="hidden" href="rdsVSExecuteEditor.htm" title="А.5.25.11. rdsVSExecuteEditor &ndash; открыть окно редактора переменных">rdsVSExecuteEditor</a></span>(dv,FALSE,<span id="light_ref31"><a class="hidden" href="rdsListVarTypes.htm#light_ref14" title="RDS_HVAR_FALLNS">RDS_HVAR_FALLNS</a></span>|
+                <span id="light_ref32"><a class="hidden" href="rdsVSExecuteEditor.htm#light_ref10" title="RDS_HVAR_FNOSTRUCTNAME">RDS_HVAR_FNOSTRUCTNAME</a></span>|<span id="light_ref33"><a class="hidden" href="rdsVSExecuteEditor.htm#light_ref9" title="RDS_HVAR_FNOOFFSET">RDS_HVAR_FNOOFFSET</a></span>,-<span class="const">1</span>,
+                <span class="str">"Переменные"</span>))
+            <span class="kw">break</span>; <span class="rem">// Пользователь нажал кнопку "Отмена"</span>
+          <span class="rem">// Добавляем сигналы Start и Ready</span>
+          <span class="rem">// Ready</span>
+          <span id="light_ref34"><a class="hidden" href="rdsVSAddVar.htm" title="А.5.25.4. rdsVSAddVar &ndash; добавить переменную">rdsVSAddVar</a></span>(dv,<span class="const">0</span>,<span class="str">"Ready"</span>,<span id="light_ref35"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref6" title="RDS_VARTYPE_SIGNAL">RDS_VARTYPE_SIGNAL</a></span>,NULL,
+              <a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref6" title="RDS_VARFLAG_OUTPUT">RDS_VARFLAG_OUTPUT</a>|<a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref9" title="RDS_VARFLAG_SHOWNAME">RDS_VARFLAG_SHOWNAME</a>|
+              <span id="light_ref36"><a class="hidden" href="rdsVSAddVar.htm#ref1" title="RDS_VARFLAG_EXT_CHGNAME">RDS_VARFLAG_EXT_CHGNAME</a></span>,<span class="const">0</span>,<span class="str">"0"</span>);
+          <span class="rem">// Start</span>
+          <a class="hidden" href="rdsVSAddVar.htm" title="А.5.25.4. rdsVSAddVar &ndash; добавить переменную">rdsVSAddVar</a>(dv,<span class="const">0</span>,<span class="str">"Start"</span>,<a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref6" title="RDS_VARTYPE_SIGNAL">RDS_VARTYPE_SIGNAL</a>,NULL,
+              <a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref5" title="RDS_VARFLAG_INPUT">RDS_VARFLAG_INPUT</a>|<a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref7" title="RDS_VARFLAG_RUN">RDS_VARFLAG_RUN</a>|
+              <a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref9" title="RDS_VARFLAG_SHOWNAME">RDS_VARFLAG_SHOWNAME</a>|<a class="hidden" href="rdsVSAddVar.htm#ref1" title="RDS_VARFLAG_EXT_CHGNAME">RDS_VARFLAG_EXT_CHGNAME</a>,<span class="const">0</span>,<span class="str">"0"</span>);
+          <span class="rem">// Формируем текст описания получившихся переменных</span>
+          vdescr.servSize=<span class="kw">sizeof</span>(vdescr);
+          <span class="kw">if</span>(!<a class="hidden" href="rdsVSGetVarDescription.htm" title="А.5.25.14. rdsVSGetVarDescription &ndash; получить описание переменной">rdsVSGetVarDescription</a>(dv,-<span class="const">1</span>,&amp;vdescr))
+            <span class="kw">break</span>;
+          descr=<a class="hidden" href="rdsCreateVarDescriptionString.htm" title="А.5.14.6. rdsCreateVarDescriptionString &ndash; текстовое описание переменной">rdsCreateVarDescriptionString</a>(vdescr.Var,TRUE,<span class="const">0</span>,NULL);
+          <span class="kw">if</span>(descr)
+            { <span class="rem">// Записываем новый текст в невидимое поле</span>
+              <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(win,<span class="const">1000</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,descr);
+              <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(descr);
+            }
+          <span class="kw">break</span>;
+
+        <span class="kw">case</span> <span id="light_ref37"><a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#light_ref3" title="RDS_FORMSERVEVENT_CHANGE">RDS_FORMSERVEVENT_CHANGE</a></span>: <span class="rem">// Изменилось поле</span>
+          <span class="rem">// Считываем режим работы блока из выпадающего списка</span>
+          sender=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">10</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>)==<span class="const">0</span>;
+          <span class="rem">// sender истинно, если блок - передатчик</span>
+          <span class="rem">// Ограничение интервала разрешено только для передатчика</span>
+          <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">2</span>,<span id="light_ref38"><a class="hidden" href="RDS_FORMVAL_ENABLED.htm" title="А.5.28.15. Команда RDS_FORMVAL_ENABLED &ndash; разрешение и запрещение всего поля ввода">RDS_FORMVAL_ENABLED</a></span>,sender);
+          <span class="kw">break</span>;
+      }
+
+    <span class="rem">// Если в процессе работы функции был создан объект, удаляем его</span>
+    <span class="kw">if</span>(dv)
+      <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(dv);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В параметре <span class="cpp">window</span> в эту функцию передается идентификатор объекта-окна,
+для которого она вызвана, в параметре <span class="cpp">data</span> &ndash; указатель на структуру,
+описывающую произошедшее событие. Нас интересуют два события: нажатие кнопки и изменение поля ввода,
+которые анализируются в операторе <span class="cpp"></span>.</p>
+
+<p>При нажатии какой-либо кнопки поле <span class="cpp">Event</span> структуры описания события принимает значение
+<span class="cpp"><a href="RDS_FORMSERVFUNCDATA.htm#light_ref5" title="RDS_FORMSERVEVENT_CLICK">RDS_FORMSERVEVENT_CLICK</a></span>. При этом мы проверяем идентификатор поля ввода, выдавшего
+сообщение: он должен быть равен 11, поскольку такой идентификатор мы дали кнопке &laquo;<span class="menu">Изменить</span>&raquo;.
+Если нажата наша кнопка, вызовом <span class="cpp"><a class="hidden" href="rdsVSCreateEditor.htm" title="А.5.25.1. rdsVSCreateEditor &ndash; создать объект-редактор переменных">rdsVSCreateEditor</a></span> создается уже знакомый нам объект
+для работы с переменными, в который записывается текстовое описание переменных блока из невидимого поля с
+идентификатором 1000. Теперь нужно удалить из объекта две первых переменных: это сигналы
+&laquo;<span class="rdsvar">Start</span>&raquo; и &laquo;<span class="rdsvar">Ready</span>&raquo;, мы не будем показывать их пользователю в редакторе переменных.
+Для этого мы два раза вызываем функцию <span class="cpp"><a href="rdsVSDeleteVar.htm" title="А.5.25.37. Макрос rdsVSDeleteVar &ndash; удалить переменную">rdsVSDeleteVar</a></span> с нулевым номером переменной &ndash;
+после этого в объекте останутся только те переменные, которые можно изменять пользователю. Теперь можно открыть
+окно редактора переменных функцией <span class="cpp"><a href="rdsVSExecuteEditor.htm" title="А.5.25.11. rdsVSExecuteEditor &ndash; открыть окно редактора переменных">rdsVSExecuteEditor</a></span>. Она принимает следующие параметры:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsVSExecuteEditor.htm" title="А.5.25.11. rdsVSExecuteEditor &ndash; открыть окно редактора переменных">rdsVSExecuteEditor</a>(
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> Object, <span class="rem">// Объект с переменными</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Extended,      <span class="rem">// Редактор в обычном (FALSE) или</span>
+                        <span class="rem">// расширенном (TRUE) режиме</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags,        <span class="rem">// Флаги, управляющие редактором</span>
+    <span class="kw">int</span> MaxDepth,       <span class="rem">// Максимальная вложенность матриц</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Caption);     <span class="rem">// Заголовок окна</span></pre>
+
+<p>Окно редактора может быть открыто в обычном или расширенном режиме, за это отвечает параметр
+<span class="cpp">Extended</span>. В обычном режиме (в RDS он используется при
+<a href="um_2_14.htm" title="&sect;2.14. Создание и изменение структур">редактировании полей структур</a>) пользователь может задавать для каждой
+переменной только имя, тип и значение по умолчанию. В расширенном он также может сделать ее входом, выходом или
+внутренней, включить запуск модели при срабатывании связи, соединенной с входом и т.п.
+(в RDS этот режим используется при задании переменных простых блоков, см. <a href="pm_1_5.htm#pic2" title="Редактор переменных">рис.&nbsp;9</a>).
+Нам не нужен расширенный режим, поэтому мы передаем в этом параметре <span class="cpp">FALSE</span>.</p>
+
+<p>В параметре <span class="cpp">Flags</span> передается набор битовых флагов, управляющих поведением и
+внешним видом редактора. Полный список этих флагов приведен в
+<a href="rdsVSExecuteEditor.htm" title="А.5.25.11. rdsVSExecuteEditor &ndash; открыть окно редактора переменных">описании функции</a>, нам же нужны три из них:
+<span class="cpp"><a href="rdsListVarTypes.htm#light_ref14" title="RDS_HVAR_FALLNS">RDS_HVAR_FALLNS</a></span> (пользователь может давать переменным все типы, кроме сигналов),
+<span class="cpp"><a href="rdsVSExecuteEditor.htm#light_ref10" title="RDS_HVAR_FNOSTRUCTNAME">RDS_HVAR_FNOSTRUCTNAME</a></span> (имя редактируемой структуры не отображается &ndash; в нашем
+случае его просто нет) и <span class="cpp"><a href="rdsVSExecuteEditor.htm#light_ref9" title="RDS_HVAR_FNOOFFSET">RDS_HVAR_FNOOFFSET</a></span> (колонка смещения переменной от начала дерева
+не выводится &ndash; пользователю она, в данном случае, не нужна). Параметр <span class="cpp">MaxDepth</span>
+определяет максимально возможную вложенность матриц: при значении 1 пользователь может задать матрицу, при
+значении 2 &ndash; матрицу матриц и т.д. Значение &minus;1, передаваемое нами, указывает на максимально возможную
+вложенность (в RDS она равна пяти). Наконец, в параметре <span class="cpp">Caption</span>
+передается заголовок открываемого окна редактора. При указанных параметрах функции
+<span class="cpp"><a class="hidden" href="rdsVSExecuteEditor.htm" title="А.5.25.11. rdsVSExecuteEditor &ndash; открыть окно редактора переменных">rdsVSExecuteEditor</a></span> окно редактора будет выглядеть как
+на <a href="#pic2" title="Окно редактора переменных блока приема/передачи структуры">рис.&nbsp;116</a>.</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/NetStruct_VarEditor.png" width="600" height="276" alt="Окно редактора переменных блока приема/передачи структуры" />
+<p id="light_pic2">Рис.&nbsp;116. Окно редактора переменных блока приема/передачи структуры</p>
+</div></div>
+
+
+<p>Если пользователь закроет окно редактора кнопкой &laquo;<span class="menu">Отмена</span>&raquo;, функция
+<span class="cpp"><a class="hidden" href="rdsVSExecuteEditor.htm" title="А.5.25.11. rdsVSExecuteEditor &ndash; открыть окно редактора переменных">rdsVSExecuteEditor</a></span> вернет значение <span class="cpp">FALSE</span>, и выполнение
+оператора <span class="cpp">switch</span> прервется оператором <span class="cpp">break</span>. В противном
+случае мы добавляем в объект, переменные которого только что изменены пользователем, сигналы
+&laquo;<span class="rdsvar">Start</span>&raquo; и &laquo;<span class="rdsvar">Ready</span>&raquo;, которые мы стерли из него перед вызовом редактора. Для
+добавления переменных в объект мы используем функцию <span class="cpp"><a href="rdsVSAddVar.htm" title="А.5.25.4. rdsVSAddVar &ndash; добавить переменную">rdsVSAddVar</a></span>:</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsVSAddVar.htm" title="А.5.25.4. rdsVSAddVar &ndash; добавить переменную">rdsVSAddVar</a>(
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> Object, <span class="rem">// Объект с переменными</span>
+    <span class="kw">int</span> Index,          <span class="rem">// Номер добавляемой переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> VarName,      <span class="rem">// Имя переменной</span>
+    <span class="kw">char</span> BaseVarType,   <span class="rem">// Базовый тип переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> StructType,   <span class="rem">// Имя структуры (если это структура)</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags,        <span class="rem">// Флаги переменной</span>
+    <span class="kw">int</span> ArrayDepth,     <span class="rem">// Вложенность матриц (если есть)</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> DefVal);      <span class="rem">// Значение по умолчанию</span></pre>
+
+В качестве номера переменной мы оба раза передаем 0, поэтому обе добавляемые переменные вставляются в
+начало списка. Сначала мы добавляем сигнал &laquo;<span class="rdsvar">Ready</span>&raquo;, и он становится самой первой
+переменной в структуре. Затем мы добавляем &laquo;<span class="rdsvar">Start</span>&raquo;, из-за чего &laquo;<span class="rdsvar">Ready</span>&raquo; сдвигается
+на одну позицию вниз и становится вторым сигналом, а &laquo;<span class="rdsvar">Start</span>&raquo; &ndash; первым, то есть оба
+сигнала теперь занимают правильное положение в списке. Параметр <span class="cpp">VarName</span> указывает имя
+добавляемой переменной, а сочетание параметров <span class="cpp">BaseVarType</span>,
+<span class="cpp">StructType</span> и <span class="cpp">ArrayDepth</span> &ndash; ее тип. В параметре
+<span class="cpp">BaseVarType</span> передается символ из строки типа, соответствующий типу этой переменной или
+элемента матрицы, если это матрица или массив (все эти символы описаны в &laquo;<span class="file">RdsDef.h</span>&raquo; как
+константы <span class="cpp"><a href="RDS_BFM_VARCHECK.htm#ref4" title="Константы типов переменных блока">RDS_VARTYPE_*</a></span>). В параметре
+<span class="cpp">StructType</span> передается имя структуры из общего списка структур, если добавляемая
+переменная &ndash; структура, а в параметре <span class="cpp">ArrayDepth</span> &ndash; глубина вложенности матриц,
+или 0, если добавляемая переменная &ndash; не матрица. Использование этих параметров может показаться несколько
+запутанным, поэтому приведем несколько примеров:
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Тип переменной</th>
+    <th><span class="cpp">BaseVarType</span></th>
+    <th><span class="cpp">StructType</span></th>
+    <th><span class="cpp">ArrayDepth</span></th>
+  </tr>
+  <tr>
+    <td>double</td>
+    <td>&laquo;D&raquo; (<span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref12" title="RDS_VARTYPE_DOUBLE">RDS_VARTYPE_DOUBLE</a></span>)</td>
+    <td class="center"><span class="cpp">NULL</span></td>
+    <td class="center"><span class="cpp">0</span></td>
+  </tr>
+  <tr>
+    <td>Матрица double</td>
+    <td>&laquo;D&raquo; (<span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref12" title="RDS_VARTYPE_DOUBLE">RDS_VARTYPE_DOUBLE</a></span>)</td>
+    <td class="center"><span class="cpp">NULL</span></td>
+    <td class="center"><span class="cpp">1</span></td>
+  </tr>
+  <tr>
+    <td>Логический</td>
+    <td>&laquo;L&raquo; (<span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref7" title="RDS_VARTYPE_LOGICAL">RDS_VARTYPE_LOGICAL</a></span>)</td>
+    <td class="center"><span class="cpp">NULL</span></td>
+    <td class="center"><span class="cpp">0</span></td>
+  </tr>
+  <tr>
+    <td>Матрица матриц double</td>
+    <td>&laquo;D&raquo; (<span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref12" title="RDS_VARTYPE_DOUBLE">RDS_VARTYPE_DOUBLE</a></span>)</td>
+    <td class="center"><span class="cpp">NULL</span></td>
+    <td class="center"><span class="cpp">2</span></td>
+  </tr>
+  <tr>
+    <td>Структура &laquo;Complex&raquo;</td>
+    <td>&laquo;{&raquo; (<span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref17" title="RDS_VARTYPE_STRUCT">RDS_VARTYPE_STRUCT</a></span>)</td>
+    <td class="center"><span class="cpp">"Complex"</span></td>
+    <td class="center"><span class="cpp">0</span></td>
+  </tr>
+  <tr>
+    <td>Матрица структур &laquo;Complex&raquo;</td>
+    <td>&laquo;{&raquo; (<span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref17" title="RDS_VARTYPE_STRUCT">RDS_VARTYPE_STRUCT</a></span>)</td>
+    <td class="center"><span class="cpp">"Complex"</span></td>
+    <td class="center"><span class="cpp">1</span></td>
+  </tr>
+</table>
+</div></div>
+
+<p>Мы добавляем одиночные сигналы, поэтому в параметре <span class="cpp">BaseVarType</span> мы в обоих случаях
+передаем константу <span class="cpp"><a href="RDS_BFM_VARCHECK.htm#light_ref6" title="RDS_VARTYPE_SIGNAL">RDS_VARTYPE_SIGNAL</a></span> (она имеет привычное нам значение
+&laquo;S&raquo;), в параметре <span class="cpp">StructType</span> &ndash; <span class="cpp">NULL</span>, а в
+параметре <span class="cpp">ArrayDepth</span> &ndash; 0.</p>
+
+<p>В параметре <span class="cpp">Flags</span> в функцию <span class="cpp"><a class="hidden" href="rdsVSAddVar.htm" title="А.5.25.4. rdsVSAddVar &ndash; добавить переменную">rdsVSAddVar</a></span> передаются уже
+знакомые нам по приведенной выше функции настройки флаги переменной: &laquo;<span class="rdsvar">Start</span>&raquo; должен быть входом
+(<span class="cpp"><a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref5" title="RDS_VARFLAG_INPUT">RDS_VARFLAG_INPUT</a></span>), &laquo;<span class="rdsvar">Ready</span>&raquo; &ndash; выходом
+(<span class="cpp"><a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref6" title="RDS_VARFLAG_OUTPUT">RDS_VARFLAG_OUTPUT</a></span>). Эти флаги объединены с флагом
+<span class="cpp"><a class="hidden" href="RDS_VARDESCRIPTION.htm#light_ref9" title="RDS_VARFLAG_SHOWNAME">RDS_VARFLAG_SHOWNAME</a></span> (показывать имя переменной) и новым флагом
+<span class="cpp"><a href="rdsVSAddVar.htm#ref1" title="RDS_VARFLAG_EXT_CHGNAME">RDS_VARFLAG_EXT_CHGNAME</a></span>, который указывает на то, что добавляемую переменную нужно
+переименовать, если переменная с таким именем уже есть в объекте. Если среди добавленных пользователем переменных
+будет, например, переменная с именем &laquo;<span class="rdsvar">Start</span>&raquo;, добавляемый нами сигнал будет автоматически
+переименован в &laquo;<span class="rdsvar">Start1</span>&raquo; &ndash; модели блока все равно, как называется ее сигнал запуска, главное,
+чтобы это была первая переменная в структуре.</p>
+
+<p>После того, как в объект добавлены два обязательных для простого блока сигнала, мы заполняем
+описанием его переменных структуру <span class="cpp">vdescr</span> &ndash; нам нужно ее поле
+<span class="cpp">Var</span>, в котором содержится уникальный идентификатор переменной, в данном случае
+&ndash; структуры переменных объекта <span class="cpp">dv</span> как единого целого. Этот идентификатор мы
+передаем в уже знакомую нам функцию <span class="cpp"><a class="hidden" href="rdsCreateVarDescriptionString.htm" title="А.5.14.6. rdsCreateVarDescriptionString &ndash; текстовое описание переменной">rdsCreateVarDescriptionString</a></span>, чтобы получить
+новый текст описания структуры переменных и записать его обратно в невидимое поле 1000. На этом реакция на
+нажатие кнопки &laquo;<span class="menu">Изменить&hellip;</span>&raquo; завершается: мы преобразовали текст из невидимого поля
+в набор переменных в объекте, дали пользователю отредактировать эти переменные, наложив на редактор некоторые
+ограничения, и записали текст описания новых переменных обратно в невидимое поле.</p>
+
+<p>Вторая задача, решаемая функцией обратного вызова <span class="cpp">TNetSendRcvData_Setup_Check</span> &ndash;
+управление разрешенностью поля ввода интервала передачи. Это поле должно быть разрешено только в том случае,
+когда в выпадающем списке режима работы блока выбран пункт &laquo;передача данных&raquo;.</p>
+
+<p>При открытии окна, а также при изменении пользователем любого поля ввода, в поле
+<span class="cpp">Event</span> структуры описания события <span class="cpp">data</span> будет находиться константа
+<span class="cpp"><a href="RDS_FORMSERVFUNCDATA.htm#light_ref3" title="RDS_FORMSERVEVENT_CHANGE">RDS_FORMSERVEVENT_CHANGE</a></span>. В данном случае мы не проверяем идентификатор изменившегося поля
+ввода &ndash; при открытии окна он не передается, а нам в этот момент тоже нужно установить разрешенность поля
+интервала. Мы будем управлять этим полем при любом изменении в окне &ndash; так функция получится проще, а
+задержки из-за лишних вызовов здесь не важны. Сначала мы считываем значение поля ввода с идентификатором 10
+(это выпадающий список режимов) и сравниваем его с нулем &ndash; если они равны, значит, блок
+настроен на передачу данных. Результат сравнения записывается в логическую переменную <span class="cpp">sender</span>
+и используется для установки разрешенности поля с идентификатором 2 (это поле ввода интервала передачи) при
+вызове <span class="cpp"><a href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a></span> с константой <span class="cpp"><a href="RDS_FORMVAL_ENABLED.htm" title="А.5.28.15. Команда RDS_FORMVAL_ENABLED &ndash; разрешение и запрещение всего поля ввода">RDS_FORMVAL_ENABLED</a></span>. Если
+<span class="cpp">sender</span> истинно, поле интервала будет разрешено, если ложно &ndash; запрещено.</p>
+
+<p>Осталось внести еще пару небольших <span class="changes">изменений</span> в другие функции класса. Поскольку у блоков, работающих со
+структурами, режим работы может изменяться пользователем, нам необходимо добавить сохранение и загрузку этого
+параметра в функции <span class="cpp">SaveText</span> и <span class="cpp">LoadText</span> соответственно:</p>
+
+<pre class="cpp">  <span class="rem">// Сохранение параметров блока</span>
+  <span class="kw">void</span> TNetSendRcvData::SaveText(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini; <span class="rem">// Вспомогательный объект</span>
+    <span class="rem">// Создаем вспомогательный объект</span>
+    ini=<a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a>(TRUE);
+    <span class="rem">// Создаем в объекте секцию "[General]"</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a>,<span class="const">0</span>,<span class="str">"General"</span>);
+    <span class="rem">// Записываем в эту секцию имя канала</span>
+    <a class="hidden" href="rdsINIWriteString.htm" title="А.5.27.9. rdsINIWriteString &ndash; установить текстовое значение параметра">rdsINIWriteString</a>(ini,<span class="str">"Channel"</span>,ChannelName);
+
+<div class="changes">    <span class="rem">// Записываем режим для приемопередатчика структур</span>
+    <span class="kw">if</span>(StructInOut)
+      <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"Mode"</span>,Mode);</div>
+    <span class="kw">if</span>(Mode==NETSRMODE_SENDER) <span class="rem">// Передатчик</span>
+      { <span class="rem">// Создаем новую секцию</span>
+        <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a>,<span class="const">0</span>,<span class="str">"Timer"</span>);
+        <span class="rem">// Записываем параметры</span>
+        <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"On"</span>,LimitSpeed);
+        <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"Delay"</span>,Delay);
+      }
+    <span class="rem">// Сохраняем текст, сформированный объектом, как параметры блока</span>
+    <a class="hidden" href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a>(ini,<a class="hidden" href="RDS_HINI_SAVEBLOCKTEXT.htm" title="А.5.27.16. Команда RDS_HINI_SAVEBLOCKTEXT &ndash; передать текст параметров блока в RDS">RDS_HINI_SAVEBLOCKTEXT</a>);
+    <span class="rem">// Удаляем вспомогательный объект</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(ini);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Загрузка параметров блока</span>
+  <span class="kw">void</span> TNetSendRcvData::LoadText(<span class="kw">char</span> *text)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini; <span class="rem">// Вспомогательный объект</span>
+    <span class="kw">char</span> *str;
+    <span class="rem">// Создаем вспомогательный объект</span>
+    ini=<a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a>(TRUE);
+    <span class="rem">// Записываем в объект полученный текст с параметрами блока</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_SETTEXT.htm" title="А.5.27.18. Команда RDS_HINI_SETTEXT &ndash; занести текст в объект">RDS_HINI_SETTEXT</a>,<span class="const">0</span>,text);
+    <span class="rem">// Начинаем чтение секции "[General]", если она есть</span>
+    <span class="kw">if</span>(<a class="hidden" href="rdsINIOpenSection.htm" title="А.5.27.2. rdsINIOpenSection &ndash; установить текущую секцию">rdsINIOpenSection</a>(ini,<span class="str">"General"</span>)) <span class="rem">// Секция есть</span>
+      { <span class="rem">// Освобождаем старое имя канала</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(ChannelName);
+        ChannelName=NULL;
+        <span class="rem">// Получаем у объекта указатель на строку с именем</span>
+        str=<a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a>(ini,<span class="str">"Channel"</span>,<span class="str">""</span>,NULL);
+        <span class="rem">// Если такая строка есть в тексте, копируем ее в ChannelName</span>
+        <span class="kw">if</span>(str)
+          ChannelName=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(str);
+
+<div class="changes">        <span class="rem">// Считываем режим для приемопередатчика структур</span>
+        <span class="kw">if</span>(StructInOut)
+          Mode=<a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"Mode"</span>,Mode);</div>
+      }
+    <span class="kw">if</span>(Mode==NETSRMODE_SENDER &amp;&amp; <span class="rem">// Передатчик</span>
+       <a class="hidden" href="rdsINIOpenSection.htm" title="А.5.27.2. rdsINIOpenSection &ndash; установить текущую секцию">rdsINIOpenSection</a>(ini,<span class="str">"Timer"</span>)) <span class="rem">// Есть секция "[Timer]"</span>
+      { LimitSpeed=<a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"On"</span>,LimitSpeed)!=<span class="const">0</span>;
+        Delay=<a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"Delay"</span>,Delay);
+      }
+    <span class="rem">// Удаляем вспомогательный объект</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(ini);
+    <span class="rem">// Поскольку имя канала </span><span class="changes"><span class="rem">и режим работы</span></span><span class="rem"> могли измениться,</span>
+    <span class="rem">// соединяемся с сервером заново</span>
+    Disconnect(); <span class="rem">// Разрываем старое соединение</span>
+    Connect();    <span class="rem">// Создаем новое</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Параметр <span class="cpp">Mode</span> в этих функциях записывается и считывается только при истинном
+<span class="cpp">StructInOut</span>, то есть только для блоков, принимающих и передающих структуры.</p>
+
+<p>Теперь мы, наконец, можем написать модель нашего нового блока, передающего и принимающего структуры:</p>
+
+<pre class="cpp">  <span class="rem">// Прием/передача структуры</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> NetSendRcvStruct(<span class="kw">int</span> CallMode,
+        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { TNetSendRcvData *data=(TNetSendRcvData*)(BlockData-&gt;BlockData);
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения</span></a><span class="rem"> для первых двух переменных блока</span>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready (*((char *)(pStart+1)))</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          BlockData-&gt;BlockData=data=
+              <span class="kw">new</span> TNetSendRcvData(NETSRMODE_SENDER);
+          <span class="rem">// Взводим флаг работы со структурами</span>
+          data-&gt;StructInOut=TRUE;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Установлено соединение с сервером</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_NETCONNECT.htm" title="А.2.8.1. RDS_BFM_NETCONNECT &ndash; установка соединения">RDS_BFM_NETCONNECT</a>:
+          data-&gt;Connected=TRUE;
+          <span class="rem">// Если были данные, ожидающие передачи – передаем их</span>
+          <span class="kw">if</span>(data-&gt;DataWaiting)
+            data-&gt;SendStruct(BlockData-&gt;Block);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Соединение разорвано</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_NETDISCONNECT.htm" title="А.2.8.4. RDS_BFM_NETDISCONNECT &ndash; разрыв соединения">RDS_BFM_NETDISCONNECT</a>:
+          data-&gt;Connected=FALSE;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Запуск расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a>:
+          <span class="rem">// При первом запуске передаем данные</span>
+          <span class="kw">if</span>(((<a class="hidden" href="RDS_BFM_STARTCALC.htm#ref2" title="Указатель на RDS_STARTSTOPDATA">RDS_PSTARTSTOPDATA</a>)ExtParam)-&gt;FirstStart)
+            data-&gt;SendStruct(BlockData-&gt;Block);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Срабатывание таймера</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a>:
+          data-&gt;WaitingForTimer=FALSE;
+          <span class="rem">// Передаем данные</span>
+          data-&gt;SendStruct(BlockData-&gt;Block);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">if</span>(data-&gt;CheckSendTimer())
+            data-&gt;SendStruct(BlockData-&gt;Block);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов функции настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="kw">return</span> data-&gt;Setup(<span class="str">"Прием/передача структуры"</span>);
+
+       <span class="rem">// Сохранение параметров</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a>:
+          data-&gt;SaveText();
+          <span class="kw">break</span>;
+
+       <span class="rem">// Загрузка параметров</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a>:
+          data-&gt;LoadText((<span class="kw">char</span>*)ExtParam);
+          <span class="kw">break</span>;
+
+        <span class="rem">// По сети получены данные</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">RDS_BFM_NETDATARECEIVED</a>:
+          <span class="rem">// Если данные совместимы с блоком – принимаем и</span>
+          <span class="rem">// взводим сигнал готовности</span>
+          Ready=data-&gt;ReceiveStruct((<a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a>*)ExtParam,
+            BlockData-&gt;Block)?<span class="const">1</span>:<span class="const">0</span>;
+          <span class="rem">// Сбрасываем сигнал запуска</span>
+          Start=<span class="const">0</span>;
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Фактически, эта модель является объединением моделей приемника и передатчика с небольшими отличиями.
+Прежде всего, в ней используются макроопределения только для двух обязательных сигналов
+<span class="cpp">Start</span> и <span class="cpp">Ready</span> &ndash; структура переменных этого блока
+произвольно задается пользователем, поэтому мы не можем ввести никаких макросов (на самом деле,
+в этой модели они нам и не нужны). По этой же причине в модели нет проверки типов переменных &ndash;
+блок будет работать с любой их структурой, и эта проверка не нужна.</p>
+
+<p>При <a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">инициализации</a>, как и в других
+моделях сетевых блоков, создается объект класса
+<span class="cpp">TNetSendRcvData</span>, и указатель на него записывается в личную область
+данных блока. В параметре конструктора класса передается константа
+<span class="cpp">NETSRMODE_SENDER</span>, поэтому исходно, при подключении модели, блок будет передатчиком.
+Позже, при загрузке параметров блока или при вызове функции настройки, его роль может измениться. После
+создания объекта полю <span class="cpp">StructInOut</span> присваивается значение <span class="cpp">TRUE</span>,
+чтобы функции класса знали, что этот блок передает и принимает всю свою структуру переменных. Все
+остальные реакции блока, кроме <span class="cpp"><a href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">RDS_BFM_NETDATARECEIVED</a></span>, отличаются от рассмотренных
+ранее моделей блоков-передатчиков только тем, что для передачи данных используется новая функция
+<span class="cpp">SendStruct</span>. Эта функция сама проверит, настроен ли блок на передачу данных, и,
+если она по какой-либо причине будет вызвана для блока, настроенного на прием, она не выполнит никаких
+действий.</p>
+
+<p>При получении данных по сети в реакции <span class="cpp"><a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">RDS_BFM_NETDATARECEIVED</a></span> вызывается
+функция <span class="cpp">ReceiveStruct</span>, которая вернет значение <span class="cpp">TRUE</span>, если
+принятые данные совместимы со структурой переменных блока. Эта функция тоже проверяет текущие настройки блока,
+и, если сейчас он является передатчиком, принятые данные будут проигнорированы, и функция вернет
+<span class="cpp">FALSE</span>. По результатам работы функции устанавливается сигнал готовности блока
+<span class="cpp">Ready</span>: если данные успешно приняты, он будет взведен, и связи, подключенные к
+его выходам, сработают в ближайшем такте расчета. Сигнал <span class="cpp">Start</span> при приеме данных
+сбрасывается &ndash; дело в том, что блок считывает из принятых данных значения всех своих переменных,
+включая и этот сигнал. Независимо от того, какое значение было передано по сети, запускать этот блок
+в следующем такте расчета не нужно (в режиме приемника блок вообще не работает в тактах расчета), поэтому этот
+сигнал принудительно обнуляется.</p>
+
+<p>Теперь можно поместить в схемы на двух соединенных сетью машинах такие блоки, включить один из них
+в режим приема, а другой &ndash; в режим передачи, и задать им одинаковые структуры переменных. В режиме
+расчета данные, поступившие на входы блока-передатчика, будут появляться на одноименных выходах блока-приемника
+(<a href="#pic3" title="Передача структуры по сети: передающая (а) и приемная (б) схемы">рис.&nbsp;117</a>).
+Единственная сложность в сборке таких схем &ndash; задать в блоках на двух разных машинах одинаковую структуру
+переменных и ничего при этом не перепутать. Проще всего сначала создать блок в одной схеме и задать ему
+нужную структуру переменных, а затем сохранить его в отдельный файл, перенести на другую машину и там загрузить
+в схему, после чего установить одному из блоков режим передачи, а другому &ndash; режим приема.</p>
+
+<div class="pic"><div class="container" id="pic3">
+<div class="multi" id="pic3_0"><img src="../img/NetStruct2.png" width="202" height="204" alt="Передача структуры по сети: передающая (а) и приемная (б) схемы 1" /><p id="light_pic3_0">(а)</p></div><div class="multi" id="pic3_1"><img src="../img/NetStruct1.png" width="202" height="204" alt="Передача структуры по сети: передающая (а) и приемная (б) схемы 2" /><p id="light_pic3_1">(б)</p></div><p id="light_pic3">Рис.&nbsp;117. Передача структуры по сети: передающая (а) и приемная (б) схемы</p>
+</div></div>
+
+
+<p>Модель блока можно было бы улучшить, добавив в нее возможность дистанционной установки структуры переменных
+по сети, чтобы изменение структуры переменных в одном блоке приводило бы к автоматическому изменению переменных во
+всех блоках, подключенных к тому же каналу передачи данных. Желающие могут проделать это самостоятельно
+&ndash; все функции, необходимые для такой операции, уже описаны.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_15_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_16_2.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_16_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

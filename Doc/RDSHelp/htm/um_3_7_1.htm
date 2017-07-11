@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.7.1. Устройство формируемой модулем программы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_7">&sect;3.7. Принципы создания автокомпилируемых моделей блоков</a></p>
+<div class="level"><p>&sect;3.7.1. Устройство формируемой модулем программы</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="um_3_6_8.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_7_2_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3>&sect;3.7. Принципы создания автокомпилируемых моделей блоков</h3>
+<p class="abstract">Рассматривается задание поведения блока при помощи включения различных реакций на события в его автокомпилируемую модель. Приводятся примеры моделей, выполняющих различные действия.</p>
+<h4>&sect;3.7.1. Устройство формируемой модулем программы</h4>
+<p class="abstract">Описывается общая структура автоматически формируемого текста программы модели блока с точки зрения программиста C++. Пользователям, мало знакомым с программированием, можно бегло просмотреть этот параграф для лучшего понимания устройства создаваемых ими моделей.</p>
+
+
+<p>При каждом изменении модели модуль автоматической компиляции на основе введенных пользователем фрагментов программ,
+описаний и настроечных параметров формирует общий текст программы, который передается компилятору для сборки файла
+динамической библиотеки (DLL). Затем функция модели из созданной компилятором библиотеки подключается к обслуживаемым
+блокам. Разработчикам моделей имеет смысл представлять себе, как устроен формируемый текст программы &ndash;
+это позволит лучше понять, что можно и что нельзя использовать в фрагментах программы, вводимых в редакторе модели.
+При создании простейших моделей это не так важно &ndash; достаточно просто понимать, что
+<a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">реакция блока</a>
+на любое событие оформляется модулем как функция, поэтому внутри вводимого фрагмента программы можно использовать
+любые конструкции языка C, оператором <span class="cpp">return</span> можно немедленно прервать выполнение реакции,
+а все переменные, объявленные внутри фрагмента программы, будут локальными для этой автоматически сформированной
+функции. Свои функции внутри реакций на события описывать нельзя (в языке C запрещено описание функции внутри
+другой функции) &ndash; для этого служат глобальные описания. Описания (глобальные, внутри и после класса блока,
+см. <a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">&sect;3.6.4</a>) как функции не оформляются, поэтому все переменные, объявленные в
+них, становятся глобальными для данной модели, и, естественно, оператор <span class="cpp">return</span>, как и другие
+исполняемые операторы C, в этих описаниях использовать невозможно (зато можно описывать свои функции). Разработчики
+моделей, не собирающиеся пользоваться расширенными возможностями, предоставляемыми сервисными функциями RDS,
+могут пропустить этот параграф &ndash; все сведения, необходимые для добавления в модель реакций на стандартные
+события, приведены начиная с <a href="um_3_7_2_1.htm" title="&sect;3.7.2.1. Модели с простыми статическими переменными">&sect;3.7.2.1</a>. Список всех реакций и их параметров
+приводится в <a href="um_index.htm#light_htm:um_3_8" title="&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события">&sect;3.8</a>.</p>
+
+<p>В <a href="um_3_3.htm" title="&sect;3.3. Создание нового блока с автокомпилируемой моделью">&sect;3.3</a> рассмотрена одна из простейших моделей: модель сумматора,
+выдающего на вещественный выход &laquo;<span class="rdsvar">y</span>&raquo; сумму вещественных входов &laquo;<span class="rdsvar">x1</span>&raquo; и
+&laquo;<span class="rdsvar">x2</span>&raquo;.
+Для ее создания достаточно было задать структуру переменных блока и ввести единственный оператор присваивания в
+реакцию на <a href="um_1_3.htm#ref4" title="Такт расчета">такт расчета</a>.
+<span id="ref1">Теперь</span>
+внимательно рассмотрим <span id="light_ref1">текст программы</span>, которую модуль автокомпиляции сформировал для
+этой модели (его можно просмотреть в отдельной вкладке редактора модели, выбрав в
+<a href="um_3_6_1.htm" title="&sect;3.6.1. Элементы и меню окна редактора модели">меню редактора</a> пункт
+&laquo;<span class="menu">модель | показать текст C++</span>&raquo;). Предполагается, что
+<a href="um_3_6_7.htm" title="&sect;3.6.7. Параметры модели">настройки модели</a> не изменялись пользователем и остались в состоянии
+по умолчанию. В приведенном тексте подсветка синтаксиса добавлена для большей наглядности: на самом деле,
+редактор модели такой подсветки не имеет.</p>
+
+<pre class="cpp">  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="rem">// Автоматически сформированный текст для модели "new_model.mdl"</span>
+  <span class="rem">// Исходный файл модели: C:\Rds\Models\new_model.mdl</span>
+  <span class="rem">// Модуль автокомпиляции: Borland C++ 5.5</span>
+  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="preproc">#line 7 "*-1"</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;stdlib.h&gt;</span>
+  <span class="preproc">#include &lt;math.h&gt;</span>
+  <span class="preproc">#include &lt;float.h&gt;</span>
+
+  <span class="preproc">#define RDSBCPP_MODELNAME "new_model.mdl"</span>
+
+  <span class="preproc">#define </span><a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций"><span class="preproc">RDSCALL</span></a><span class="preproc"> CALLBACK</span>
+  <span class="preproc">#include &lt;</span><span id="light_ref2"><span class="preproc">RdsDef.h</span></span><span class="preproc">&gt;</span>
+  <span class="preproc">#define RDS_SERV_FUNC_BODY rdsbcppGetService</span>
+  <span class="preproc">#include &lt;</span><span id="light_ref3"><span class="preproc">RdsFunc.h</span></span><span class="preproc">&gt;</span>
+  <span class="preproc">#include &lt;</span><span id="light_ref4"><span class="preproc">CommonBl.h</span></span><span class="preproc">&gt;</span>
+  <span class="preproc">#include &lt;</span><span id="light_ref5"><span class="preproc">CommonAC.hpp</span></span><span class="preproc">&gt;</span>
+
+  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="rem">// Макросы обработки исключений</span>
+  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="rem">// Обработка исключений включена</span>
+  <span class="preproc">#define RDSBCPP_EXCEPTIONS</span>
+  <span class="rem">// Оператор try</span>
+  <span class="preproc">#define RDSBCPP_TRY __try</span>
+  <span class="rem">// Оператор catch</span>
+  <span class="preproc">#define RDSBCPP_CATCHALL __except(EXCEPTION_EXECUTE_HANDLER)</span>
+  <span class="rem">//--------------------------------------------------------------</span>
+
+  <span class="rem">// </span><span id="ref6"><span class="rem">Ошибка математических функций</span></span>
+  <span class="kw">double</span> <span id="light_ref6">rdsbcppHugeDouble</span>;
+
+  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="rem">// </span><span id="ref7"><span class="rem">Перехват ошибок математики</span></span>
+  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="kw">int</span> <span id="light_ref7">_matherr</span>(<span class="kw">struct</span> _exception *a)
+  { a-&gt;retval=(a-&gt;type==UNDERFLOW)?<span class="const">0</span>.<span class="const">0</span>:rdsbcppHugeDouble;
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//--------------------------------------------------------------</span>
+
+  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="rem">// Точка входа DLL</span>
+  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="preproc">#pragma argsused</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="DllEntryPoint.htm" title="А.2.2. Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> hinst,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,<span class="kw">void</span> *lpReserved)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH)
+      { <span class="kw">if</span>(!RDS_SERV_FUNC_BODY())
+          { MessageBox(NULL,
+              <span class="str">"Невозможно получить доступ к сервисным функциям RDS"</span>,
+                RDSBCPP_MODELNAME,MB_OK | MB_ICONERROR);
+            <span class="kw">return</span> <span class="const">0</span>;
+          }
+        <span class="kw">else</span> <span class="rem">// Есть доступ к сервисным функциям</span>
+          { <a class="hidden" href="rdsGetHugeDouble.htm" title="А.5.2.22. rdsGetHugeDouble &ndash; получение значения-индикатора математической ошибки">rdsGetHugeDouble</a>(&amp;rdsbcppHugeDouble);
+          }
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//--------------------------------------------------------------</span>
+
+  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="rem">// Описания классов переменных блока</span>
+  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="rem">// Переменная double ("D")</span>
+  RDSBCPP_STATICPLAINCLASS(rdsbcstDouble,<span class="kw">double</span>);
+  <span class="rem">// Переменная char ("S")</span>
+  RDSBCPP_STATICPLAINCLASS(rdsbcstSignal,<span class="kw">char</span>);
+  <span class="rem">//--------------------------------------------------------------</span>
+
+  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="rem">// </span><span id="ref8"><span class="rem">Класс блока</span></span>
+  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="kw">class</span> <span id="light_ref8">rdsbcppBlockClass</span>
+  { <span class="kw">public</span>:
+      <span class="rem">// Структура данных блока</span>
+      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> rdsbcppBlockData;
+      <span class="rem">// Статические переменные</span>
+      rdsbcstSignal Start;
+      rdsbcstSignal Ready;
+      rdsbcstDouble x1;
+      rdsbcstDouble x2;
+      rdsbcstDouble y;
+
+      <span class="rem">// Инициализация переменных блока</span>
+      <span class="kw">void</span> rdsbcppInitVars(<span class="kw">void</span> *base)
+      { <span class="rem">// Статические переменные</span>
+        Start.Init(base,<span class="const">0</span>);
+        Ready.Init(base,<span class="const">1</span>);
+        x1.Init(base,<span class="const">2</span>);
+        x2.Init(base,<span class="const">10</span>);
+        y.Init(base,<span class="const">18</span>);
+      };
+
+      <span class="rem">// </span><span id="ref9"><span class="rem">Проверка существования динамических переменных</span></span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <span id="light_ref9">rdsbcppDynVarsOk</span>(<span class="kw">void</span>)
+      { <span class="kw">return</span> TRUE; };
+
+      <span class="rem">// Функции реакции на события</span>
+      <span class="kw">void</span> rdsbcppModel(RDS_PINITIALCALCDATA InitialCalc);
+
+      <span class="rem">// Конструктор</span>
+      rdsbcppBlockClass(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> data);
+      <span class="rem">// Деструктор</span>
+      ~rdsbcppBlockClass();
+  }; <span class="rem">// class rdsbcppBlockClass</span>
+  <span class="rem">//--------------------------------------------------------------</span>
+
+  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="rem">// </span><span id="ref10"><span class="rem">Функция блока</span></span>
+  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="preproc">#pragma argsused</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <span id="light_ref10">rdsbcppBlockEntryPoint</span>(
+      <span class="kw">int</span> CallMode,             <span class="rem">// Режим вызова (сообщение RDS_BFM_*)</span>
+      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData, <span class="rem">// Данные блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam           <span class="rem">// Дополнительные данные</span>
+  )
+  { <span class="kw">int</span> result=<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;  <span class="rem">// Код возврата</span>
+    <span class="rem">// Объект класса блока (хранится в личной области данных)</span>
+    rdsbcppBlockClass *data=
+              (rdsbcppBlockClass*)(BlockData-&gt;BlockData);
+
+    <span class="rem">// </span><span id="ref11"><span class="rem">Перехват</span></span><span class="rem"> ошибок математики – начало</span>
+    <span class="kw">volatile</span> <span class="kw">unsigned</span> <span class="kw">int</span> FPMask=<span id="light_ref11">_control87</span>(<span class="const">0</span>,<span class="const">0</span>);
+    _control87(MCW_EM,MCW_EM);
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>: <span class="rem">// Инициализация блока</span>
+          BlockData-&gt;BlockData=
+                  (data=<span class="kw">new</span> rdsbcppBlockClass(BlockData));
+          <span class="kw">break</span>;
+
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>: <span class="rem">// Очистка (вызывается перед удалением)</span>
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="rem">// Проверка допустимости структуры переменных</span>
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDDD}"</span>)!=<span class="const">0</span>)
+            <span class="kw">return</span> RDS_BFR_BADVARSMSG;
+          <span class="kw">break</span>;
+
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>: <span class="rem">// Один такт моделирования</span>
+          data-&gt;rdsbcppInitVars(BlockData-&gt;VarData);
+          data-&gt;rdsbcppModel((RDS_PINITIALCALCDATA)ExtParam);
+          BlockData-&gt;BlockData=data;
+          <span class="rem">// Предохраняет от случайного изменения пользователем</span>
+          <span class="kw">break</span>;
+      } <span class="rem">// switch(CallMode)</span>
+
+    <span class="rem">// </span><span id="ref12"><span class="rem">Перехват</span></span><span class="rem"> ошибок математики – конец</span>
+    <span id="light_ref12">_clear87</span>();
+    _control87(FPMask,MCW_EM);
+
+    <span class="kw">return</span> result;
+  }
+  <span class="rem">//--------------------------------------------------------------</span>
+
+  <span class="rem">// Конструктор класса блока</span>
+  rdsbcppBlockClass::rdsbcppBlockClass(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> data)
+  { <span class="rem">// Сохранение адреса структуры данных блока</span>
+    rdsbcppBlockData=data;
+  }
+  <span class="rem">//--------------------------------------------------------------</span>
+
+  <span class="rem">// Деструктор класса блока</span>
+  rdsbcppBlockClass::~rdsbcppBlockClass()
+  { }
+  <span class="rem">//--------------------------------------------------------------</span>
+
+  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="rem">// Функции реакции на события</span>
+  <span class="rem">//--------------------------------------------------------------</span>
+  <span class="rem">// Один такт моделирования</span>
+  <span class="kw">void</span> rdsbcppBlockClass::rdsbcppModel(RDS_PINITIALCALCDATA InitialCalc)
+  {
+  <span class="preproc">#line 1 "*0" </span><span class="rem">// Со следующей строки - текст пользователя</span>
+
+  y=x1+x2;
+
+  <span class="rem">/* Служебный комментарий, предохраняющий от незавершенного комментария в тексте пользователя */</span>
+  <span class="preproc">#line 167 "*-1" </span><span class="rem">// Со следующей строки - генерируемый текст</span>
+  } <span class="rem">// rdsbcppBlockClass::rdsbcppModel</span>
+  <span class="rem">//--------------------------------------------------------------</span></pre>
+
+<p><span id="ref13">Можно</span>
+видеть, что, несмотря на простоту модели, текст получился довольно объемным. В него включены все
+необходимые для компиляции описания, для данных блока сформирован класс с названием
+<span class="cpp" id="light_ref13">rdsbcppBlockClass</span>, добавлена
+<a href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков">главная функция</a>
+(точка входа) DLL и т.п. Начинается текст программы с директив
+&laquo;<span class="cpp">#include</span>&raquo; для включения в текст программы стандартных файлов заголовков, в которых содержатся
+описания, необходимые для программ Windows и для использования функций стандартных библиотек языка C. Директива
+&laquo;<span class="cpp">#line</span>&raquo;, предваряющая их, используется модулем автокомпиляции для разбора сообщений об ошибках,
+выдаваемых компилятором &ndash; она будет неоднократно встречаться в этом тексте и на нее можно не обращать
+внимания. Далее идут директивы &laquo;<span class="cpp">#define</span>&raquo;, описывающие некоторые специфичные для RDS константы,
+и директивы включения файлов заголовков RDS, в которых описаны необходимые для работы модели структуры и
+сервисные функции. Мы не будем подробно останавливаться на этих описаниях, желающие могут изучить
+<a href="pm_index.htm" title="Руководство программиста">руководство программиста</a>. За ними следуют макросы обработки исключений, взятые из
+<a href="um_3_9_10.htm" title="&sect;3.9.10. Настройка обработки исключений и ошибок">параметров модуля автокомпиляции</a> &ndash; они будут использоваться в
+функции модели, если в
+<a href="um_3_6_7.htm" title="&sect;3.6.7. Параметры модели">параметрах</a>
+этой модели будет установлен флажок &laquo;<span class="menu">перехватывать все исключения, возникшие в модели</span>&raquo;.
+Все перечисленные выше описания и директивы добавляются в каждую модель, независимо от ее параметров и состава
+ее реакций, и пользователь не может на них повлиять, не меняя настроек всего модуля: они находятся там, где и должны
+быть, и пользователь, чаще всего, не использует их напрямую, хотя и может пользоваться всеми типами и функциями из
+включенных файлов заголовков.</p>
+
+<p><span id="ref14">Далее</span>
+<span id="ref15">в</span>
+тексте программы находится объявление вещественной глобальной переменной следующего вида:</p>
+
+<pre class="cpp">  <span class="kw">double</span> <span id="light_ref15">rdsbcppHugeDouble</span>;</pre>
+
+<p>Это весьма важная переменная, которую разработчикам моделей приходится использовать достаточно часто. В ней
+всегда хранится специальная константа <span class="cpp" id="light_ref14">HUGE_VAL</span> из стандартных
+описаний языка C, обозначающая ошибку выполнения математической операции. Это значение может поступить на вход
+модели вместо вещественного числа, если блок, соединенный с этим входом, не смог выполнить какое-либо действие
+(например, в нем возникло переполнение или деление на ноль). Как правило, перед выполнением заложенных в них
+вычислений, модели проверяют значения на своих входах, сравнивая их со значением переменной
+<span class="cpp">rdsbcppHugeDouble</span>. Если, например, вход модели &ndash; вещественная переменная
+<span class="cpp">x</span>, то, обычно, реакция на такт расчета в модели выглядит следующим образом:</p>
+
+<pre class="cpp">  if(x==rdsbcppHugeDouble)
+    { // Действия при ошибке
+    }
+  else
+    { // Обычные действия
+    }</pre>
+
+<p>Можно, конечно, сравнивать входы не с глобальной переменной, а с самой константой <span class="cpp">HUGE_VAL</span>,
+но, поскольку переменная <span class="cpp">rdsbcppHugeDouble</span> получает свое значение непосредственно из
+RDS, сравнение с ней гарантирует, что во всех моделях блоков в качестве признака ошибки будет использоваться
+одно и то же значение, независимо от того, какие версии описаний в них использовались и на каких языках
+программирования они написаны. В рассматриваемой нами модели нет такой проверки &ndash; в простейших моделях она
+не обязательна. Тем не менее, для иллюстрации обработки ошибок входов проверка будет добавлена в эту модель в
+<a href="um_3_7_2_1.htm" title="&sect;3.7.2.1. Модели с простыми статическими переменными">&sect;3.7.2.1</a>.</p>
+
+<p>Следует обратить внимание на то, что имя описанной выше глобальной переменной имеет префикс &laquo;rds&raquo;.
+Этот префикс имеют все формируемые модулем автокомпиляции имена переменных, функций и типов, поэтому разработчику
+модели не следует начинать с этих символов свои идентификаторы, чтобы не пересечься со служебными именами.
+Лучше всего вообще не начинать никакие идентификаторы с символов &laquo;rds&raquo; и &laquo;RDS&raquo; &ndash;
+это гарантирует отсутствие конфликтов не только с именами, созданными модулем автокомпиляции, но и со всеми
+именами типов, констант и функций, описанных в файлах заголовков RDS.</p>
+
+<p><span id="ref16">Далее</span>, поскольку в
+<a href="um_3_6_7.htm" title="&sect;3.6.7. Параметры модели">параметрах модели</a> по умолчанию установлен флажок
+&laquo;<span class="menu">перехватывать ошибки математических функций</span>&raquo;, в текст программы вставлена функция обработки
+математических ошибок <span class="cpp" id="light_ref16">_matherr</span>:</p>
+
+<pre class="cpp">  <span class="kw">int</span> _matherr(<span class="kw">struct</span> _exception *a)
+  { a-&gt;retval=(a-&gt;type==UNDERFLOW)?<span class="const">0</span>.<span class="const">0</span>:rdsbcppHugeDouble;
+    <span class="kw">return</span> <span class="const">1</span>;
+  }</pre>
+
+<p>Эта функция будет автоматически вызываться при возникновении ошибок в функциях математической библиотеки,
+ее вид задается в
+<a href="um_3_9_10.htm" title="&sect;3.9.10. Настройка обработки исключений и ошибок">настройках модуля автокомпиляции</a>. В данном случае она устроена очень
+просто: при потере точности результат считается нулем, а при всех прочих ошибках в качестве результата операции
+возвращается значение-индикатор ошибки из глобальной переменной <span class="cpp">rdsbcppHugeDouble</span>.
+Сама функция возвращает ненулевое значение, сигнализируя о том, что ошибка обработана. Подробнее о перехвате
+ошибок в математических функциях можно прочесть в описании используемого компилятора.</p>
+
+<p><span id="ref17">После</span>
+<span id="ref18">функции</span>
+перехвата математических ошибок располагается автоматически формируемая функция
+<span class="cpp" id="light_ref17">DllEntryPoint</span> &ndash;
+<span id="light_ref18">главная функция DLL</span>, которую должна иметь каждая динамическая библиотека Windows.
+Имя и описание этой функции задается в
+<a href="um_3_9_9.htm" title="&sect;3.9.9. Параметры формирования исходного текста">параметрах модуля автокомпиляции</a>. Структура и особенности
+главной функции DLL подробно описаны в
+<a href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков">&sect;2.2 руководства программиста</a>, здесь мы не будем рассматривать ее в деталях.
+<span id="ref19">Отметим</span>
+только,
+что эта функция, в частности, вызывается при загрузке DLL в память RDS (при этом в ее параметре
+<span class="cpp">reason</span> передается значение <span class="cpp" id="light_ref19">DLL_PROCESS_ATTACH</span>).
+Текст функции сформирован модулем автокомпиляции так, чтобы в этот момент вызывалась другая, тоже автоматически
+сформированная, функция, служащая для получения доступа к сервисным функциям RDS (имя этой функции присвоено
+константе <span class="cpp">RDS_SERV_FUNC_BODY</span>).
+<span id="ref20">Если</span>
+доступ получен (он будет успешно получен в том
+случае, если DLL загружается в память RDS, и версия RDS соответствует описаниям из файлов заголовков,
+автоматически включенных в модель), будет вызвана сервисная функция
+<span class="cpp" id="light_ref20"><a href="rdsGetHugeDouble.htm" title="А.5.2.22. rdsGetHugeDouble &ndash; получение значения-индикатора математической ошибки">rdsGetHugeDouble</a></span>, которая запишет в уже описанную глобальную переменную
+<span class="cpp">rdsbcppHugeDouble</span> значение <span class="cpp">HUGE_VAL</span>, используемое блоками для
+сигнализации об ошибке математики. Если бы в параметрах модели была включена
+<a href="um_3_6_7.htm#pic4" title="Окно параметров модели &ndash; описание и версия">информация о версии</a>, здесь же была бы вызвана функция,
+передающая в RDS номер версии модели.</p>
+
+<p><span id="ref21">Сразу</span>
+за главной функцией DLL следуют <span id="light_ref21">макросы</span>
+вида <span class="cpp">RDSBCPP_*CLASS</span>, разворачивающиеся в
+описания классов для доступа к
+<a href="um_3_6_2.htm" title="&sect;3.6.2. Статические переменные блока">статическим</a>
+и
+<a href="um_3_6_3.htm" title="&sect;3.6.3. Динамические переменные блока">динамическим</a>
+переменным, использованным в модели блока.
+<span id="ref22">Эти</span> макросы описываются в файле
+&laquo;<span class="file"><span id="light_ref22">CommonAC.hpp</span></span>&raquo;, в котором, для желающих разобраться в
+них, содержатся подробные комментарии. Структура переменных нашего блока включает только статические переменные
+типов &laquo;double&raquo; и &laquo;сигнал&raquo;, поэтому модуль включит в текст программы только два
+вызова макроса <span class="cpp">RDSBCPP_STATICPLAINCLASS</span>: один для вещественного типа
+&laquo;double&raquo;, и один для сигнала. Если проанализировать эти макросы, то можно увидеть, что, например,
+макрос для вещественного типа</p>
+
+<pre class="cpp">  RDSBCPP_STATICPLAINCLASS(rdsbcstDouble,<span class="kw">double</span>);</pre>
+
+<p class="noindent"><span id="ref23">разворачивается</span>
+в описание класса следующего вида:</p>
+
+<pre class="cpp">  <span class="kw">class</span> <span id="light_ref23">rdsbcstDouble</span> : <span class="kw">public</span> rdsbcppVarAncestor
+  { <span class="kw">protected</span>:
+      <span class="kw">double</span> *Ptr;
+    <span class="kw">public</span>:
+      <span class="kw">inline</span> <span class="kw">void</span> Init(<span class="kw">void</span> *base,<span class="kw">int</span> offset)
+        {Ptr=(<span class="kw">double</span>*)(((<span class="kw">unsigned</span> <span class="kw">char</span>*)base)+offset);};
+      <span class="kw">inline</span> <span class="kw">operator</span> <span class="kw">double</span>() <span class="kw">const</span> {<span class="kw">return</span> *Ptr;};
+      <span class="kw">inline</span> <span class="kw">double</span> * GetPtr(<span class="kw">void</span>) <span class="kw">const</span> {<span class="kw">return</span> Ptr;};
+      <span class="kw">inline</span> <span class="kw">double</span> <span class="kw">operator</span>=(rdsbcstDouble &amp;v)
+        {*Ptr=(<span class="kw">double</span>)v; <span class="kw">return</span> *Ptr; };
+      <span class="kw">inline</span> <span class="kw">double</span> <span class="kw">operator</span>=(<span class="kw">double</span> v){*Ptr=v; <span class="kw">return</span> *Ptr;};
+      <span class="kw">inline</span> <span class="kw">double</span> <span class="kw">operator</span>+=(<span class="kw">double</span> v){(*Ptr)+=v; <span class="kw">return</span> *Ptr;};
+      <span class="kw">inline</span> <span class="kw">double</span> <span class="kw">operator</span>-=(<span class="kw">double</span> v){(*Ptr)-=v; <span class="kw">return</span> *Ptr;};
+      <span class="kw">inline</span> <span class="kw">double</span> <span class="kw">operator</span>*=(<span class="kw">double</span> v){(*Ptr)*=v; <span class="kw">return</span> *Ptr;};
+      <span class="kw">inline</span> <span class="kw">double</span> <span class="kw">operator</span>/=(<span class="kw">double</span> v){(*Ptr)/=v; <span class="kw">return</span> *Ptr;};
+      <span class="kw">inline</span> <span class="kw">double</span> <span class="kw">operator</span>++(){++(*Ptr); <span class="kw">return</span> *Ptr;};
+      <span class="kw">inline</span> <span class="kw">double</span> <span class="kw">operator</span>++(<span class="kw">int</span>)
+        {<span class="kw">double</span> tmp=*Ptr; (*Ptr)++; <span class="kw">return</span> tmp;};
+      <span class="kw">inline</span> <span class="kw">double</span> <span class="kw">operator</span>--(){--(*Ptr); <span class="kw">return</span> *Ptr;};
+      <span class="kw">inline</span> <span class="kw">double</span> <span class="kw">operator</span>--(<span class="kw">int</span>)
+        {<span class="kw">double</span> tmp=*Ptr; (*Ptr)--; <span class="kw">return</span> tmp; };
+      rdsbcstDouble(<span class="kw">void</span>):rdsbcppVarAncestor(){};
+    };</pre>
+
+<p>Можно заметить, что в этом классе все математические операторы и оператор преобразования к типу
+<span class="cpp">double</span> переопределены таким образом, чтобы работать с областью памяти, на которую
+указывает скрытое поле класса <span class="cpp">Ptr</span>. Таким образом, если при помощи вызова функции-члена
+<span class="cpp">Init</span> записать в поле <span class="cpp">Ptr</span> указатель на какую-либо вещественную
+переменную в структуре переменных блока, объект этого класса можно будет использовать во всех математических
+выражениях и вызовах функций, в которых требуется число типа <span class="cpp">double</span>. При этом объект будет
+автоматически выполнять все операции, в которых он участвует, с числом, на которое указывает <span class="cpp">Ptr</span>.
+На этом принципе основан доступ к переменным блока из фрагментов программ, вводимых пользователем: в классе блока
+создаются объекты специальных классов с именами, соответствующими переменным блока, а пользователь использует эти
+объекты в математических выражениях, как будто это сами переменные привычных ему типов.
+<span id="ref24">В</span>
+большинстве случаев пользователь может не задумываться о том, что переменная &laquo;<span class="rdsvar">x1</span>&raquo;, которую он
+использует в модели, на самом деле имеет не тип <span class="cpp">double</span>, а тип
+<span class="cpp">rdsbcstDouble</span>. Это будет работать до тех пор, пока ему для какой-либо цели не
+понадобится <span id="light_ref24">указатель на переменную блока</span>: запись
+&laquo;<span class="cpp">&amp;x1</span>&raquo; будет иметь тип не &laquo;указатель на <span class="cpp">double</span>&raquo;,
+как может ожидать пользователь, а &laquo;указатель на <span class="cpp">rdsbcstDouble</span>&raquo;.
+<span id="ref25">Чтобы</span>
+получить настоящий указатель на переменную блока, скрытую за объектом класса (например, для использования в
+функциях типа <span class="cpp">sscanf</span>), необходимо вызвать функцию-член класса
+<span class="cpp" id="light_ref25">GetPtr</span>: вместо &laquo;<span class="cpp">&amp;x1</span>&raquo; нужно использовать
+&laquo;<span class="cpp">x1.GetPtr()</span>&raquo;.</p>
+
+<p>Следует учитывать, что, в некоторых, достаточно редких, случаях, компилятор не может сам выполнить операцию
+преобразования типов. Пусть, например, &laquo;<span class="rdsvar">x1</span>&raquo; &ndash; вещественная переменная блока, для которой
+автоматически создан объект <span class="cpp">x1</span> типа <span class="cpp">rdsbcstDouble</span>. Если необходимо
+сформировать строку с текстовым представлением вещественного числа (например, для вывода сообщения), может
+показаться логичным включить в программу модели следующий фрагмент:</p>
+
+<pre class="cpp">  char buf[100]; // Вспомогательный буфер
+  sprintf(buf,"x1=%.2lf",x1);</pre>
+
+<p>Здесь вызывается функция <span class="cpp">sprintf</span> из стандартной библиотеки C, выполняющая
+форматированный вывод во вспомогательный массив <span class="cpp">buf</span>. Этот фрагмент программы будет
+скомпилирован без ошибок, однако, работать он не будет (значение переменной блока не запишется в массив). Дело в
+том, что в функции <span class="cpp">sprintf</span> может быть произвольное число параметров разных типов,
+поэтому компилятор не поймет, что, в данном случае, объект <span class="cpp">x1</span>, указанный в третьем
+параметре функции, необходимо привести к типу <span class="cpp">double</span>. В таких случаях необходимо указать
+приведение типа явно:</p>
+
+<pre class="cpp">  char buf[100]; // Вспомогательный буфер
+  sprintf(buf,"x1=%.2lf",(double)x1);</pre>
+
+<p>В этом фрагменте перед <span class="cpp">x1</span> стоит оператор приведения типа
+&laquo;<span class="cpp">(double)</span>&raquo;, и разночтений в типе параметра уже не возникнет.</p>
+
+<p>За исключением получения указателя на переменную и явного приведения типа, пользователю практически никогда не
+потребуется вызов функций-членов классов простых
+<a href="um_1_4.htm" title="&sect;1.4. Статические переменные блоков">статических</a>
+переменных, вроде приведенного выше класса
+<span class="cpp">rdsbcstDouble</span>. В
+<a href="um_1_5.htm" title="&sect;1.5. Динамические переменные">динамических</a> переменных и в сложных статических
+(массивах, матрицах и т.п.) функции-члены, напротив, используются довольно часто: в динамических переменных с
+их помощью производится проверка существования переменной и уведомление других блоков о ее изменении
+(см. <a href="um_index.htm#light_htm:um_3_7_3" title="&sect;3.7.3. Работа с динамическими переменными">&sect;3.7.3</a>), в массивах и матрицах &ndash; изменение размерности
+(см. <a href="um_3_7_2_2.htm" title="&sect;3.7.2.2. Модели с матрицами">&sect;3.7.2.2</a> и
+<a href="um_3_7_2_3.htm" title="&sect;3.7.2.3. Модели с массивами">&sect;3.7.2.3</a>).</p>
+
+<p>Если бы в нашей модели были глобальные
+<a href="um_3_8_1.htm" title="&sect;3.8.1. Дополнительные описания, вводимые в модель">описания</a> пользователя, они разместились бы сразу за макросами классов
+переменных блока. Поскольку таких описаний в модели нет, за ними располагается описание самого класса блока
+с именем <span class="cpp">rdsbcppBlockClass</span> (это имя жестко встроено в модуль автокомпиляции, его
+используют все модели). Объект этого класса будет создаваться для каждого блока с данной моделью в момент
+подключения модели (при загрузке схемы в память, загрузке блока из библиотеки или при первом подключении модели
+вручную) и будет существовать до тех пор, пока модель не будет отключена. Фактически, объект этого класса будет
+представлять собой личную область данных блока, рассматриваемую в
+<a href="pm_2_4.htm" title="&sect;2.4. Инициализация и очистка данных блока">&sect;2.4 руководства программиста</a>. Все реакции блока на события будут оформляться как
+функции-члены этого класса, все статические и динамические переменные блока (точнее, объекты для работы с
+этими переменными) и
+<a href="um_3_6_6.htm" title="&sect;3.6.6. Настроечные параметры блока">настроечные параметры</a>
+будут полями этого класса. Команды создания и уничтожения объекта класса блока добавляются в модели
+автоматически, пользователю не нужно об этом заботиться.</p>
+
+<p><span id="ref26">Первое</span>
+же поле в секции <span class="cpp">public</span> этого класса (других секций у него нет) &ndash;
+это указатель на структуру данных, создаваемую в RDS для каждого блока:</p>
+
+<pre class="cpp">  <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> <span id="light_ref26">rdsbcppBlockData</span>;</pre>
+
+<p><span class="cpp"><span id="ref27">RDS_PBLOCKDATA</span></span> &ndash;
+это указатель на структуру
+<span id="light_ref27"><span class="cpp"><a href="RDS_BLOCKDATA.htm#ref3" title="Структура RDS_BLOCKDATA">RDS_BLOCKDATA</a></span></span>, описанную в файле &laquo;<span class="file">RdsDef.h</span>&raquo;. Эта структура и ее поля
+подробно рассматриваются в <a href="pm_2_3.htm" title="&sect;2.3. Структура функции модели блока">&sect;2.3 руководства программиста</a>
+и <a href="RDS_BLOCKDATA.htm" title="А.2.3. RDS_BLOCKDATA &ndash; структура данных блока">А.2.3 приложений</a>. Мы не будем разбирать ее подробно, приведем
+только ее описание и рассмотрим некоторые, самые важные поля.</p>
+
+<pre class="cpp">  <span id="ref28"><span class="kw">typedef</span></span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> VarData;     <span class="rem">// Начало дерева переменных</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> BlockData;   <span class="rem">// Указатель на личные данные</span>
+    <span id="light_ref28"><a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></span> Block;  <span class="rem">// Идентификатор блока</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> BlockName;    <span class="rem">// Имя блока</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Parent; <span class="rem">// Идентификатор подсистемы</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags;        <span class="rem">// Флаги</span>
+    <span class="kw">int</span> Width,Height;   <span class="rem">// Размеры блока</span>
+    <span class="kw">int</span> Tag;            <span class="rem">// Пользовательское поле</span>
+  } RDS_BLOCKDATA;
+  <span class="kw">typedef</span> RDS_BLOCKDATA *RDS_PBLOCKDATA; <span class="rem">// Указатель на структуру</span></pre>
+
+<p>Чаще всего в этой структуре используется поле <span class="cpp">Block</span> &ndash; это
+<a href="app_ids.htm#light_ref1" title="Идентификатор блока">уникальный идентификатор</a>
+данного блока, который нужен для вызова некоторых функций RDS. Например, чтобы перебрать все
+блоки, соединенные связями с данным блоком (пример задачи, где это может потребоваться, приведен в
+<a href="um_3_7_12_3.htm" title="&sect;3.7.13.3. Вызов функции у одного блока">&sect;3.7.13.3</a>), необходимо вызвать функцию
+<span class="cpp"><a href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span>, в которую первым параметром передается идентификатор данного блока.
+Внутри какой-либо реакции на событие, вводимой в редакторе модели, это можно сделать следующим образом:</p>
+
+<pre class="cpp">  <a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a>(rdsbcppBlockData-&gt;Block,&hellip;);</pre>
+
+<p>Поскольку указатель на структуру данных блока записан в поле <span class="cpp">rdsbcppBlockData</span>, а все
+реакции на события оформляются модулем автокомпиляции как функции-члены того же класса, во всех них поле класса
+<span class="cpp">rdsbcppBlockData</span> доступно просто по имени, и идентификатор данного блока можно получить при
+помощи выражения <span class="cpp">rdsbcppBlockData-&gt;Block</span>.</p>
+
+<p>В поле <span class="cpp">Parent</span> структуры данных блока хранится идентификатор
+<a href="um_1_2.htm#ref13" title="Родительская подсистема">родительской подсистемы</a> данного блока. Он может понадобиться в функциях,
+выполняющих какие-либо операции с подсистемой. Например, чтобы программно открыть окно подсистемы, в которой
+находится данный блок, в его модели следует сделать вызов</p>
+
+<pre class="cpp">  <a class="hidden" href="rdsOpenSystemWindow.htm" title="А.5.8.12. rdsOpenSystemWindow &ndash; открыть окно подсистемы">rdsOpenSystemWindow</a>(rdsbcppBlockData-&gt;Parent);</pre>
+
+<p>Поле <span class="cpp">BlockName</span> содержит указатель на строку с именем блока, ее можно использовать,
+например, в сообщениях об ошибках. Поле <span class="cpp">Flags</span> &ndash; одно из немногих полей в
+структуре данных блока, которое можно не только считывать, но и изменять внутри модели. Оно содержит набор
+<a href="RDS_BLOCKDATA.htm#light_ref6" title="Битовые флаги структуры данных блока">битовых флагов</a>,
+определяющих поведение блока. Например, в реакции на нажатие кнопки мыши блок может
+<a href="um_3_7_10.htm#ref18" title="Пример модели с захватом мыши">&laquo;захватить&raquo; мышь</a>, взведя в этом поле флаг
+<span class="cpp"><a href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a></span> &ndash; после этого
+при любом перемещении курсора мыши будет вызываться реакция этого блока, даже если курсор покинет его
+изображение (см. пример блока-рукоятки в
+<a href="um_3_7_10.htm" title="&sect;3.7.11. Реакция блока на мышь">&sect;3.7.11</a>).
+Остальные поля структуры используются реже. В большинстве случаев, при создании простых моделей структура
+<span class="cpp">RDS_BLOCKDATA</span> вообще не используется, но, если она вдруг понадобится, следует иметь в
+виду, что доступ к ней можно получить через поле <span class="cpp">rdsbcppBlockData</span>.</p>
+
+<p>За полем <span class="cpp">rdsbcppBlockData</span> в классе блока следуют автоматически добавляемые модулем
+автокомпиляции поля для
+<a href="um_3_6_2.htm" title="&sect;3.6.2. Статические переменные блока">статических</a>
+и <a href="um_3_6_3.htm" title="&sect;3.6.3. Динамические переменные блока">динамических</a> переменных блока и его
+<a href="um_3_6_6.htm" title="&sect;3.6.6. Настроечные параметры блока">настроечных параметров</a>. В нашей модели всего пять статических переменных:
+два обязательных сигнала &laquo;<span class="rdsvar">Start</span>&raquo; и &laquo;<span class="rdsvar">Ready</span>&raquo; и вещественные переменные
+&laquo;<span class="rdsvar">x1</span>&raquo;, &laquo;<span class="rdsvar">x2</span>&raquo; и &laquo;<span class="rdsvar">y</span>&raquo;. Для них будут созданы объекты двух классов,
+описания которых сформированы уже рассмотренными
+<a href="#ref21" title="Макросы классов переменных">выше</a> макросами: два объекта класса <span class="cpp">rdsbcstSignal</span>
+(сигнальные переменные) и три объекта типа <span class="cpp">rdsbcstDouble</span> (вещественные). Затем в
+класс блока автоматически вставляется функция, инициализирующая объекты доступа к переменным, в которой эти
+объекты настраиваются на конкретные переменные блока. Для нашей модели она выглядит так:</p>
+
+<pre class="cpp">  <span class="kw">void</span> rdsbcppInitVars(<span class="kw">void</span> *base)
+    { <span class="rem">// Статические переменные</span>
+      Start.Init(base,<span class="const">0</span>);
+      Ready.Init(base,<span class="const">1</span>);
+      x1.Init(base,<span class="const">2</span>);
+      x2.Init(base,<span class="const">10</span>);
+      y.Init(base,<span class="const">18</span>);
+    };</pre>
+
+<p>Вызов этой функции автоматически добавляется модулем перед вызовом функций реакции блока на любое событие,
+поэтому внутри реакций на события (за исключением событий
+<a href="ac_RDS_BFM_INIT.htm" title="&sect;3.8.2.1. Инициализация блока">инициализации</a> и
+<a href="ac_RDS_BFM_CLEANUP.htm" title="&sect;3.8.2.2. Очистка данных блока">очистки данных</a>
+блока, в которых к статическим переменным обращаться запрещено) все объекты уже настроены на работу с
+переменными блока. Внутри функции для каждой статической переменной блока (динамических в нашей модели нет) у
+соответствующего объекта вызывается функция-член <span class="cpp">Init</span>, в которую передается базовый
+адрес всех переменных блока и смещение к конкретной переменной (эти же смещения можно увидеть и в
+окне редактора переменных, см. колонку &laquo;<span class="menu">начало</span>&raquo; на
+<a href="um_3_3.htm#pic10" title="Окно редактора переменных для простейшего сумматора">рис.&nbsp;323</a>).
+<span id="ref29">После</span>
+функции инициализации внутри класса
+обычно располагается функция проверки наличия динамических переменных
+<span class="cpp" id="light_ref29">rdsbcppDynVarsOk</span> &ndash; в нашей модели динамических переменных нет,
+поэтому эта функция всегда возвращает <span class="cpp">TRUE</span>. И <span class="cpp">rdsbcppInitVars</span>, и
+<span class="cpp">rdsbcppDynVarsOk</span> создаются модулем автокомпиляции без всякого участия пользователя, и
+их вызовы тоже вставляются в нужные места формируемой функции модели автоматически, поэтому пользователю можно
+не задумываться об их существовании &ndash; вызывать их вручную ему не придется. Есть единственный случай, в
+котором пользователю может понадобиться функция проверки динамических переменных <span class="cpp">rdsbcppDynVarsOk</span>:
+если в
+<a href="um_3_6_7.htm" title="&sect;3.6.7. Параметры модели">параметрах модели</a>
+отключен флажок &laquo;<span class="menu">не реагировать на события без динамических переменных</span>&raquo;, перед использованием
+таких переменных необходимо проверить их наличие, а для этого можно вызвать
+<span class="cpp">rdsbcppDynVarsOk</span> и, если она вернет <span class="cpp">FALSE</span>, как-то среагировать
+на отсутствие динамических переменных (например, взять данные из другого источника).</p>
+
+<p>Далее в класс блока добавляются описания всех функций-членов для введенных пользователем
+<a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">реакций на события</a>. Наша модель реагирует на единственное событие
+&ndash; <a href="ac_RDS_BFM_MODEL.htm" title="&sect;3.8.3.1. Выполнение такта расчета">такт расчета</a>, поэтому такая функция будет единственной
+(ее параметр сейчас не важен):</p>
+
+<pre class="cpp">  <span class="kw">void</span> rdsbcppModel(RDS_PINITIALCALCDATA InitialCalc);</pre>
+
+<p>Внутрь класса вставляется только описание функции, ее тело будет добавлено в конец формируемого текста.
+За функциями реакции следуют автоматически формируемые описания конструктора и деструктора класса блока
+(сами эти функции располагаются в тексте дальше), а также описания пользователя внутри класса, если он их ввел
+(см. также <a href="um_3_8_1.htm" title="&sect;3.8.1. Дополнительные описания, вводимые в модель">&sect;3.8.1</a>). В нашей модели таких описаний нет, поэтому класс на
+этом завершается. После его закрывающей фигурной скобки добавляются описания пользователя после класса блока
+(в нашей модели таких тоже нет).</p>
+
+<p><span id="ref30">Далее</span>
+в тексте программы размещается экспортированная функция модели с именем
+<span class="cpp" id="light_ref30">rdsbcppBlockEntryPoint</span> (общая структура любой функции модели блока
+описана в <a href="pm_2_3.htm" title="&sect;2.3. Структура функции модели блока">&sect;2.3 руководства программиста</a>), заголовок которой, необходимый
+для ее экспорта, задается в
+<a href="um_3_9_9.htm" title="&sect;3.9.9. Параметры формирования исходного текста">параметрах модуля автокомпиляции</a>. Эта функция формируется
+полностью автоматически и, фактически, представляет собой один большой оператор <span class="cpp">switch</span>, в
+метки <span class="cpp">case</span> которого модуль автокомпиляции вставляет вызовы функций реакций на события,
+сформированных для каждого введенного пользователем фрагмента программы. Кроме того, реакции на некоторые события
+добавляются автоматически &ndash; например, реакция на событие проверки структуры переменных
+<span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>, в которой модель сравнивает структуру статических переменных блока,
+к которому ее подключают, с введенной пользователем, и выдает сообщение об ошибке, если они не совпадают. Команды
+создания и уничтожения объекта класса блока <span class="cpp">rdsbcppBlockClass</span> тоже вставляются в функцию
+автоматически &ndash; в реакции на события инициализации <span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span> и очистки
+<span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span> соответственно. Если в
+<a href="um_3_6_7.htm" title="&sect;3.6.7. Параметры модели">параметрах модели</a> включен перехват ошибок математических функций,
+в начало и в конец функции <span class="cpp">rdsbcppBlockEntryPoint</span> будут добавлены фрагменты,
+заданные в <a href="um_3_9_10.htm" title="&sect;3.9.10. Настройка обработки исключений и ошибок">настройках модуля автокомпиляции</a>. В тексте,
+приведенном выше, они присутствуют &ndash; их легко узнать по комментариям.</p>
+
+<p>Следует обратить особое внимание на то, что указатель на создаваемый в реакции на инициализацию блока
+(событие <span class="cpp">RDS_BFM_INIT</span>) объект класса <span class="cpp">rdsbcppBlockClass</span>
+записывается не только во вспомогательную переменную <span class="cpp">data</span>, но и в поле
+<span class="cpp">BlockData</span> структуры <span class="cpp"><a href="#ref27" title="Структура RDS_BLOCKDATA">RDS_BLOCKDATA</a></span>:</p>
+
+<pre class="cpp">  <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>: <span class="rem">// Инициализация блока</span>
+    BlockData-&gt;BlockData=(data=<span class="kw">new</span> rdsbcppBlockClass(BlockData));
+    <span class="kw">break</span>;</pre>
+
+<p>В этом поле указатель на созданный объект будет храниться на всем протяжении жизни блока, поэтому
+использовать поле <span class="cpp">BlockData-&gt;BlockData</span> для других целей нельзя. Даже если
+внутри реакции на какое-либо событие присвоить ему другое значение, прежнее значение будет восстановлено при
+завершении функции модели, как будет показано ниже. В начале функции модели значение этого поля приводится к
+нужному типу и переписывается во вспомогательную переменную <span class="cpp">data</span>, поэтому везде внутри
+этой функции обращения к классу блока выглядят как &laquo;<span class="cpp">data-&gt;&hellip;</span>&raquo;.</p>
+
+<p>Наша модель имеет единственную введенную пользователем реакцию на событие &ndash; выполнение такта расчета,
+которой внутри оператора <span class="cpp">switch</span> будет соответствовать следующий, автоматически вставленный,
+<span class="cpp">case</span>:</p>
+
+<pre class="cpp">  <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>: <span class="rem">// Один такт моделирования</span>
+    data-&gt;rdsbcppInitVars(BlockData-&gt;VarData);
+    data-&gt;rdsbcppModel((RDS_PINITIALCALCDATA)ExtParam);
+    BlockData-&gt;BlockData=data; <span class="rem">// Предохраняет от случайного изменения пользователем</span>
+    <span class="kw">break</span>;</pre>
+
+<p>Здесь сначала у созданного для данного конкретного блока объекта класса <span class="cpp">rdsbcppBlockClass</span>
+(указатель на него записан в переменную <span class="cpp">data</span> в самом начале функции модели) вызывается
+описанная выше функция инициализации переменных <span class="cpp">rdsbcppInitVars</span> &ndash; теперь объекты
+<span class="cpp">Start</span>, <span class="cpp">Ready</span>, <span class="cpp">x1</span>, <span class="cpp">x2</span>
+и <span class="cpp">y</span> ссылаются на настоящие статические переменные блока и их можно использовать в
+математических выражениях. Если бы в нашей модели были динамические переменные и в ее
+<a href="um_3_6_7.htm" title="&sect;3.6.7. Параметры модели">параметрах</a> был включен флажок
+&laquo;<span class="menu">не реагировать на события без динамических переменных</span>&raquo;, далее была бы вызвана функция
+<span class="cpp">rdsbcppDynVarsOk</span>, и, в случае возврата ей <span class="cpp">FALSE</span>, выполнение
+реакции на событие было бы немедленно прервано оператором <span class="cpp">break</span>. В нашей модели есть
+только статические переменные, поэтому после их инициализации сразу вызывается автоматически сформированная функция
+<span class="cpp">rdsbcppModel</span>, внутрь которой будет вставлена введенная пользователем реакция на такт
+расчета (сама эта функция находится далее по тексту).
+В параметре функции передается указатель на структуру, используемую при инициализационном
+(предварительном) расчете, который в данной модели не используется.
+При реакции на такт расчета возвращенное моделью значение не анализируется RDS, поэтому функция
+<span class="cpp">rdsbcppModel</span> ничего не возвращает.
+После ее вызова полю
+<span class="cpp">BlockData</span> структуры <span class="cpp">BlockData</span> присваивается указатель на
+объект класса блока из переменной <span class="cpp">data</span>. Казалось бы, этот указатель и так должен
+находиться в этом поле: во-первых, он был записан туда при создании объекта в реакции на событие
+<span class="cpp">RDS_BFM_INIT</span>, и, во-вторых, в переменную <span class="cpp">data</span> он попал из
+этого самого поля. Однако, во введенном пользователем тексте программы, который находится внутри вызванной функции
+<span class="cpp">rdsbcppModel</span>, может оказаться оператор, присваивающий полю <span class="cpp">BlockData</span>
+какое-либо другое значение (структура данных блока, содержащая это поле, доступна во всех функциях-членах класса,
+включая пользовательские реакции на события, через поле <span class="cpp">rdsbcppBlockData</span>). В этом
+операторе не может быть никакого смысла, поскольку в автокомпилируемых моделях нельзя использовать поле
+<span class="cpp">BlockData</span> структуры данных блока, однако, нельзя гарантировать, что пользователь по
+ошибке не попытается его изменить. От такого изменения и предохраняет оператор присваивания, находящийся непосредственно
+перед оператором <span class="cpp">break</span>.</p>
+
+<p>В конце функции модели располагается оператор &laquo;<span class="cpp">return result;</span>&raquo;, возвращающий в RDS
+код завершения из переменной <span class="cpp">result</span>. В самом начале функции модели этой переменной была
+присвоена константа <span class="cpp"><a href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a></span>, означающая нормальное завершение модели. Единственная
+реакция в нашей модели ничего не возвращает, поэтому значение переменной <span class="cpp">result</span>
+останется неизменным.</p>
+
+<p>После функции модели записаны автоматически сформированные конструктор и деструктор класса блока, и, в
+самом конце, функция <span class="cpp">rdsbcppModel</span>, внутрь которой вставлена пользовательская реакция на
+событие:</p>
+
+<pre class="cpp">  <span class="rem">// Один такт моделирования</span>
+  <span class="kw">void</span> rdsbcppBlockClass::rdsbcppModel(RDS_PINITIALCALCDATA InitialCalc)
+  {
+  <span class="preproc">#line 1 "*0" </span><span class="rem">// Со следующей строки - текст пользователя</span>
+
+  y=x1+x2;
+
+  <span class="rem">/* Служебный комментарий, предохраняющий от незавершенного комментария в тексте пользователя */</span>
+  <span class="preproc">#line 167 "*-1" </span><span class="rem">// Со следующей строки - генерируемый текст</span>
+  } <span class="rem">// rdsbcppBlockClass::rdsbcppModel</span></pre>
+
+<p>Если не обращать внимания на директиву &laquo;<span class="cpp">#line</span>&raquo;, необходимую модулю автокомпиляции для
+обработки сообщений компилятора об ошибках, и на служебные комментарии, можно увидеть, что все тело функции
+представляет собой введенный пользователем фрагмент, а именно оператор &laquo;<span class="cpp">y=x1+x2;</span>&raquo;.
+Так же устроены и любые другие реакции на события &ndash; весь введенный пользователем фрагмент программы
+вставляется внутрь некоторой функции-члена класса <span class="cpp">rdsbcppBlockClass</span>, поэтому все
+описанные в этом фрагменте переменные будут локальными для данной функции и уничтожатся при ее завершении
+(если, конечно, они описаны без модификатора <span class="cpp">static</span>).
+Многие функции реакций имеют параметры, через которые внутрь них передается информация о событии,
+на которое нужно среагировать (например, координаты курсора мыши или код нажатой клавиши), а наружу
+&ndash; результат обработки (например, среагировал ли блок на нажатие кнопки мыши).
+У функции <span class="cpp">rdsbcppModel</span> тоже есть параметр, указывающий на проведение
+предварительного расчета, но в данном примере он не используется.
+Независимо от наличия параметров, все функции реакции имеют тип возврата <span class="cpp">void</span>,
+поэтому их выполнение в любой момент можно прервать оператором <span class="cpp">return</span> без параметра.
+Если функция что-то возвращает, возвращаемое значение будет передаваться через один из ее параметров, имеющий тип
+&laquo;ссылка на значение&raquo;. Параметры различных реакций на события будут описаны далее в примерах.
+Заголовок конкретной функции, в которую будет вставлен вводимый пользователем текст, всегда можно увидеть в
+верхней части вкладки редактора, на которой этот текст вводится
+(см. <a href="um_3_6_1.htm#pic1" title="Элементы окна редактора модели">рис.&nbsp;329</a> и
+<a href="um_3_6_4.htm#pic2" title="Заголовок функции реакции на событие">рис.&nbsp;337</a>).</p>
+
+<p>Пользователю, создающему автокомпилируемые модели, можно и не разбираться в том, как из вводимых им
+фрагментов собирается полноценный текст программы. Однако, при
+<a href="um_3_9_3.htm" title="&sect;3.9.3. Подключение универсальных модулей и настройка путей">настройке модуля на нестандартный компилятор</a> эта информация может
+оказаться полезной. Кроме того, знание структуры этого текста может пригодиться при поиске ошибок в модели.
+Хотя модуль автокомпиляции, в большинстве случаев, может сам определить, к какому введенному пользователем
+фрагменту программы относится обнаруженная компилятором ошибка (при этом по двойному щелчку на сообщении об
+ошибке он автоматически откроет вкладку с нужным фрагментом), иногда ошибка может проявиться далеко от места
+своего возникновения. В этом случае модуль покажет весь автоматически сформированный текст, и пользователю
+желательно быть готовым к поиску своей ошибки внутри этого текста.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="um_3_6_8.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_7_2_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

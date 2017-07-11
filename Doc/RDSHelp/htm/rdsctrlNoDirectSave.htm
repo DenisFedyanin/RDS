@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>Б.3.5.11. rdsctrlNoDirectSave &ndash; запрет сохранения схемы пользователем</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b_3">Б.3. Б.3 Функции библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b_3_5">Б.3.5. Функции загрузки и сохранения схемы</a></p>
+<div class="level"><p>Б.3.5.11. <span class="cpp">rdsctrlNoDirectSave</span> &ndash; запрет сохранения схемы пользователем</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsctrlNoDirectLoad.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsctrlSaveSystemTagged.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsctrlNoDirectSave">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</h2>
+<h3 class="off">Б.3. Б.3 Функции библиотеки RdsCtrl.dll</h3>
+<h4 class="off">Б.3.5. Функции загрузки и сохранения схемы</h4>
+<h5>Б.3.5.11. <span class="cpp">rdsctrlNoDirectSave</span> &ndash; запрет сохранения схемы пользователем</h5>
+
+
+<p>Функция <span class="cpp">rdsctrlNoDirectSave</span> разрешает или запрещает пользователю сохранять схемы.</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsctrlNoDirectSave(
+    <span class="kw">int</span> Link,      <span class="rem">// Идентификатор связи</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> NoSave    <span class="rem">// Запрет сохранения</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDSCTRL_VIB</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Link</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Идентификатор связи с RDS, присвоенный ей при создании функцией
+  <span class="cpp"><a href="rdsctrlCreateLink.htm" title="Б.3.2.3. rdsctrlCreateLink &ndash; создать связь с RDS">rdsctrlCreateLink</a></span>.</dd>
+
+  <dt><span class="cpp">NoSave</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span> &ndash; сохранение схемы пользователем заблокировано,
+  <span class="cpp">FALSE</span> &ndash; сохранение разрешено.</dd>
+</dl>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция запрещает (при <span class="cpp">NoSave==TRUE</span>) или разрешает (при
+<span class="cpp">NoSave==FALSE</span>) пользователю самостоятельно сохранять схемы из копии
+RDS, управляемой через связь <span class="cpp">Link</span>. По умолчанию сохранение схем разрешено,
+и пользователь может сохранять схемы в файлы через меню RDS. Если сохранение схем запрещено, при
+выборе пользователем пункта меню RDS &laquo;<span class="menu">файл | сохранить</span>&raquo; или нажатии соответствующей этому
+пункту кнопки RDS сразу пошлет управляющему приложению событие
+<span class="cpp"><a href="RDSCTRLEVENT_SAVEFILE.htm" title="Б.2.11. RDSCTRLEVENT_SAVEFILE &ndash; сохранение схемы">RDSCTRLEVENT_SAVEFILE</a></span>, не сохраняя при этом схему. Реагируя на это событие,
+приложение должно самостоятельно сохранить схему при помощи одной из описанных в данном разделе функций.
+Это дает управляющему приложению возможность перехватывать попытки пользователя сохранить схему и самостоятельно
+организовать ее хранение, например, в базе данных.</p>
+
+<p>Разрешение сохранения схемы запоминается в параметрах связи <span class="cpp">Link</span>, его не нужно
+устанавливать заново при повторном запуске RDS через эту связь. Можно, например, вызвать
+<span class="cpp">rdsctrlNoDirectSave(Link,TRUE)</span> сразу после создания связи, когда еще нет
+работающей копии RDS. При этом после вызова <span class="cpp"><a href="rdsctrlConnect.htm" title="Б.3.2.2. rdsctrlConnect &ndash; запустить RDS">rdsctrlConnect</a></span> RDS
+запустится уже с заблокированным сохранением схем.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции <span class="cpp">rdsctrlNoDirectSave</span> приведен в
+<a href="pm_3_5.htm" title="&sect;3.5. Вмешательство в загрузку и сохранение схемы">&sect;3.5 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsctrlCreateLink.htm" title="Б.3.2.3. rdsctrlCreateLink &ndash; создать связь с RDS">rdsctrlCreateLink</a></span>,
+<span class="cpp"><a href="RDSCTRLEVENT_SAVEFILE.htm" title="Б.2.11. RDSCTRLEVENT_SAVEFILE &ndash; сохранение схемы">RDSCTRLEVENT_SAVEFILE</a></span>,
+<span class="cpp"><a href="rdsctrlNoDirectLoad.htm" title="Б.3.5.10. rdsctrlNoDirectLoad &ndash; запрет загрузки схемы пользователем">rdsctrlNoDirectLoad</a></span>,
+<span class="cpp"><a href="rdsctrlConnect.htm" title="Б.3.2.2. rdsctrlConnect &ndash; запустить RDS">rdsctrlConnect</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsctrlNoDirectLoad.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsctrlSaveSystemTagged.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsctrlNoDirectSave">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

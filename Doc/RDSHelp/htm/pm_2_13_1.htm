@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.13.1. Общие принципы вызова функций блоков</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_13">&sect;2.13. Вызов функций блоков</a></p>
+<div class="level"><p>&sect;2.13.1. Общие принципы вызова функций блоков</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_12_8.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_2.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_13_1_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3>&sect;2.13. Вызов функций блоков</h3>
+<p class="abstract">Рассматриваются различные способы вызова функций блоков, то есть вызова модели какого-либо
+            блока из модели другого блока. Приводятся примеры использования этого механизма для организации сложного
+            взаимодействия между блоками схемы.</p>
+<h4>&sect;2.13.1. Общие принципы вызова функций блоков</h4>
+<p class="abstract">Рассматриваются общие принципы вызова функций блоков. Описывается регистрация функций блоков в
+                RDS, необходимая для их работы, простейший способ вызова функций, а также включение в модель
+                блока реакции на вызов такой функции.</p>
+
+
+<p>Рассматривавшиеся ранее способы взаимодействия блоков между собой &ndash; передача данных по
+<a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связям</a>
+и через <a href="pm_2_6_1.htm" title="&sect;2.6.1. Использование динамических переменных">динамические переменные</a>
+&ndash; имеют один существенный недостаток: они позволяют передавать от блока к блоку только данные
+<a href="pm_1_5.htm#ref2" title="Типы переменных блока">стандартных типов</a>, предусмотренных в RDS. Таким образом нельзя передать,
+например, дескриптор файла, или указатель на какие-либо данные в памяти. Кроме того, передача данных по
+связям требует активного участия пользователя (он должен провести эти связи), а обмен через динамические переменные
+будет слишком сложен при большом количестве блоков. Если блоки обмениваются данными независимо, то для каждой
+пары связанных таким образом блоков необходима своя, постоянно существующая динамическая переменная, которой
+нужно дать какое-то уникальное имя, причем такое, чтобы оба связанных блока знали его. При этом нет никакой
+гарантии, что в обмен данными не вмешается третий блок, тоже подписавшийся на эту переменную.</p>
+
+<p>Чтобы упростить (а в некоторых случаях и ускорить) передачу произвольных данных от блока к блоку, в
+RDS введен механизм вызова функций блоков, то есть вызова модели одного блока из модели другого.
+Этот механизм имеет несколько разновидностей: может вызываться модель одного блока или всех блоков
+<a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистемы</a>, модель может вызываться немедленно (и возвращенное ей
+значение будет передано вызвавшему блоку) или после завершения модели вызвавшего блока, модель может
+просто поддерживать выполнение какой-либо функции, или объявить свой блок ее исполнителем, чтобы другие
+заинтересованные блоки схемы знали это &ndash; в любом случае, механизм вызова реализуется через сервисные функции
+RDS и требует соблюдения некоторых правил. Рассмотрим их подробнее.</p>
+
+<p>Каждая функция блока, доступная для вызова, должна иметь имя. Имя функции блока в данном случае &ndash;
+это не имя функции его модели, это просто некоторая строка, однозначно определяющая для всех моделей вызываемых
+и вызывающих блоков во всех библиотеках эту функцию и тип данных, который передается при ее вызове.
+Эту строку придумывает разработчик, который решил добавить в создаваемую им модель поддержку какой-либо
+новой функции, вызываемой другими блоками. Он обычно включает имя функции и описание передаваемых при ее
+вызове данных в документацию к блоку, чтобы разработчики других моделей могли ее вызывать или добавить
+ее поддержку в свои блоки. Нет никаких специальных правил, которым должна соответствовать эта строка &ndash;
+она просто должна быть уникальной. По этой причине имя функции обычно делают достаточно длинным и,
+для ясности, отражающим смысл выполняемых ей действий. Кроме того, обычно в нем не используют символы
+национальных алфавитов, чтобы избежать возможных проблем с кодировкой &ndash; для того, чтобы разные
+программисты могли правильно прочесть имя функции и вставить его в свои программы, лучше всего использовать
+в нем только латинские символы, цифры и знаки препинания. Часто в имя функции включают имя библиотеки,
+в блоке которой впервые появилась поддержка этой функции, имя разработчика и т.п. &ndash; все, что угодно,
+чтобы точно такое же имя не пришло в голову разработчику какой-либо другой модели, решившему придумать
+свою функцию. Имена вроде &laquo;функция1&raquo;, &laquo;Установка значения&raquo; или
+&laquo;SetValue&raquo; использовать не стоит. А вот строка
+&laquo;InstituteOfControlSciences.Lab49.GeneralGraphics.SetValue&raquo;, например, достаточно длинная и
+сложная, чтобы ее можно было относительно спокойно использовать в качестве имени новой функции.</p>
+
+<p><span id="ref1">Прежде</span>
+<span id="ref2">чем</span>
+модель сможет вызвать функцию другого блока или сама среагировать на такой вызов,
+функция должна быть <span id="light_ref1">зарегистрирована</span> в RDS. Для этого необходимо вызвать
+сервисную функцию <span id="light_ref2" class="cpp"><a href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a></span>,
+передав в ее параметре строку с именем регистрируемой функции. Она вернет уникальный целый идентификатор,
+присвоенный этой функции. Вся дальнейшая работа с функцией будет вестись не по имени, а по этому
+целому идентификатору. Функцию <span class="cpp"><a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a></span> для какого-либо конкретного
+имени функции блока можно вызывать сколько угодно раз, для одного и того же имени она будет возвращать один
+и тот же идентификатор, до тех пор, пока вся схема не будет выгружена из памяти при завершении работы с
+RDS или при загрузке другой схемы. Важно помнить, что идентификатор, присвоенный функции,
+действует только до тех пор, пока схема находится в памяти: при следующей загрузке той же самой схемы и
+регистрации той же самой функции RDS может присвоить ей другой целый идентификатор.</p>
+
+<p>Регистрация имени функции никак не привязана к какому-либо блоку, поэтому ее можно производить не только
+в функции модели, но и, например, в
+<a href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков">главной функции библиотеки</a> в момент загрузки DLL. Обычно для
+каждой функции, используемой в моделях блоков, находящихся в данной DLL, описывают глобальную целую переменную,
+которой присваивают результат вызова <span class="cpp"><a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a></span>. При этом, поскольку
+переменная глобальная, с момента регистрации все модели блоков в библиотеке получают доступ к целому
+идентификатору функции. Чтобы не вызывать <span class="cpp"><a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a></span> лишний раз (это
+безопасно, но вызывает лишние задержки из-за того, что RDS будет искать переданную строку в таблице
+уже зарегистрированных функций), можно пользоваться тем фактом, что RDS никогда не присваивает функциям
+нулевой идентификатор. Таким образом, дав глобальной переменной нулевое начальное значение, можно регистрировать
+функцию только в том случае, если значение переменной на данный момент осталось нулевым, то есть функция еще
+не зарегистрирована.</p>
+
+<p>Как регистрировать функции блоков &ndash; все сразу в момент загрузки DLL, или по необходимости при
+<a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">инициализации</a>
+моделей, в которых они нужны &ndash; решать программисту. Оба способа не имеют каких-либо явных
+преимуществ друг перед другом.</p>
+
+<p>Допустим, в какой-либо библиотеке находятся модели <span class="cpp">Model1</span> и
+<span class="cpp">Model2</span>. В модели <span class="cpp">Model1</span> используется функция
+&laquo;ProgrammersManual.Function1&raquo;, а в модели <span class="cpp">Model2</span> &ndash; эта же функция,
+и, кроме нее, еще и &laquo;ProgrammersManual.Function2&raquo;. Не важно, что это за модели, и что делают
+указанные функции &ndash; они нужны нам просто для примера. Если программист решит регистрировать функции при
+инициализации моделей блоков, ему нужно будет написать примерно следующее (фрагменты, относящиеся к регистрации
+функций, выделены <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+<div class="changes">  <span class="rem">// Глобальные переменные для хранения идентификаторов функций</span>
+  <span class="kw">int</span> Function1Id=<span class="const">0</span>,Function2Id=<span class="const">0</span>;</div>
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+  <span class="rem">// Модель 1</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> Model1(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="kw">switch</span>(CallMode)
+      { <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>: <span class="rem">// Инициализация</span>
+<div class="changes">          <span class="rem">// Регистрация функции</span>
+          <span class="kw">if</span>(!Function1Id)
+            Function1Id=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(<span class="str">"ProgrammersManual.Function1"</span>);</div>
+    <span class="rem">// &hellip;</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Модель 2</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> Model2(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="kw">switch</span>(CallMode)
+      { <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>: <span class="rem">// Инициализация</span>
+<div class="changes">          <span class="rem">// Регистрация функций</span>
+          <span class="kw">if</span>(!Function1Id)
+            Function1Id=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(<span class="str">"ProgrammersManual.Function1"</span>);
+          <span class="kw">if</span>(!Function2Id)
+            Function2Id=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(<span class="str">"ProgrammersManual.Function2"</span>);</div>
+    <span class="rem">// &hellip;</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В приведенном примере видно, что при таком способе каждая модель регистрирует только те
+функции, которые нужны именно ей, причем только в том случае, если значение глобальной переменной
+нулевое, то есть эти функции не были зарегистрированы ранее другой функцией модели или этой же,
+но присоединенной к другому блоку.</p>
+
+<p><span id="ref3">Если</span>
+программист решит регистрировать функции в момент загрузки DLL, пример будет выглядеть так:</p>
+
+<pre class="cpp">  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+<div class="changes">  <span class="rem">// Глобальные переменные для хранения идентификаторов функций</span>
+  <span class="kw">int</span> Function1Id,Function2Id;</div>
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <span id="light_ref3"><a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a></span>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+<div class="changes">        <span class="kw">else</span>
+          { <span class="rem">// Регистрация функций блоков</span>
+            Function1Id=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(<span class="str">"ProgrammersManual.Function1"</span>);
+            Function2Id=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(<span class="str">"ProgrammersManual.Function2"</span>);
+          }</div>
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+<div class="changes">  <span class="rem">// В функциях моделей никакие действия по регистрации функций</span>
+  <span class="rem">// не производятся</span></div></pre>
+
+<p>В этом примере регистрация функций производится один раз за все время существования DLL в памяти
+процесса, поэтому глобальным переменным не нужны нулевые значения по умолчанию и при регистрации не
+нужны какие-либо проверки.</p>
+
+<p>После того, как функция зарегистрирована, ее целый идентификатор можно использовать для вызова
+функций и для реакций на них в моделях. Если необходимо вызвать функцию какого-либо конкретного блока,
+необходимо знать его уникальный идентификатор (<span class="cpp"><span id="light_ref4"><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></span></span>). Этот идентификатор модель
+может получить разными способами: перебрав все блоки подсистемы и найдя в ней блок, удовлетворяющий какому-либо
+критерию; обнаружив блок на другом конце связи, соединенной с данным блоком, при ее анализе, и т.п.
+В любом случае, модель, вызывающая функцию другого блока, должна знать, к какому именно блоку схемы она
+обращается. Для прямого, то есть немедленного, вызова функции конкретного блока (отложенный вызов мы рассмотрим
+позже) используется сервисная функция <span class="cpp"><span id="light_ref5"><a href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a></span></span>, принимающая три параметра:
+идентификатор вызываемого блока, целый идентификатор вызываемой в этом блоке функции и указатель произвольного типа
+(<span class="cpp">void*</span>) на область памяти, в которой содержатся параметры этой функции (это
+может быть массив, структура, или просто набор байтов &ndash; RDS передает этот указатель в
+модель вызываемого блока без какой-либо обработки). Результат возврата
+<span class="cpp"><a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a></span> &ndash; целое число, которое
+<a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">вернула</a>
+функция модели вызванного блока.</p>
+
+<p>Допустим, параметром приведенной в примере выше функции &laquo;ProgrammersManual.Function1&raquo;
+является одно вещественное число двойной точности (<span class="cpp">double</span>). Тогда вызов этой функции
+(с учетом того, что ее идентификатор уже записан в глобальную переменную <span class="cpp">Function1Id</span>)
+будет выглядеть следующим образом:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block=&hellip; <span class="rem">// Здесь должен быть идентификатор</span>
+                      <span class="rem">// вызываемого блока</span>
+  <span class="kw">double</span> val=<span class="const">10.0</span>;    <span class="rem">// Это число будет параметром функции</span>
+  <span class="kw">int</span> result;         <span class="rem">// Сюда запишем возвращенное значение</span>
+  <span class="rem">// Вызов функции</span>
+  result=<a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(block,Function1Id,&amp;val);</pre>
+
+<p>В момент вызова <span class="cpp"><a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a></span> модель блока <span class="cpp">block</span>
+вызывается в режиме <span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span>, при этом в параметре <span class="cpp">ExtParam</span>
+передается указатель на структуру <span class="cpp"><span id="light_ref6"><a href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span></span>, в которой содержится
+идентификатор вызванной функции, указатель на переданные параметры, идентификатор вызвавшего блока,
+а также другая информация, связанная с вызовом функции:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="kw">int</span> Function;       <span class="rem">// Идентификатор функции</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Data;        <span class="rem">// Указатель на параметры функции</span>
+    <span class="kw">int</span> Reserved;       <span class="rem">// Зарезервировано</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Caller; <span class="rem">// Вызвавший блок</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Broadcast;     <span class="rem">// TRUE - вызов функции сразу у нескольких</span>
+                        <span class="rem">// блоков, FALSE - только у одного</span>
+    <span class="kw">int</span> BroadcastCnt;   <span class="rem">// При Broadcast==TRUE - порядковый номер</span>
+                        <span class="rem">// вызванного блока, начиная с 0</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Stop;          <span class="rem">// При Broadcast==TRUE и соответствующих</span>
+                        <span class="rem">// параметрах вызова - остановить перебор</span>
+                        <span class="rem">// блоков</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Delayed;       <span class="rem">// TRUE - отложенный вызов,</span>
+                        <span class="rem">// FALSE - прямой (немедленный)</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> DataBufSize;  <span class="rem">// При отложенном вызове - размер параметров</span>
+  } <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a> *<a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a>;</pre>
+
+<p>Модель, вызванная в этом режиме, должна сравнить поле <span class="cpp">Function</span> переданной структуры с
+идентификаторами поддерживаемых ей функций, и, при совпадении с одним из них, выполнить заданные действия.
+Если полученный идентификатор не совпал ни с одним из поддерживаемых, модель должна завершиться, чтобы
+вызов не поддерживаемой блоком функции был безопасен и не приводил к каким-либо неожиданным последствиям.</p>
+
+<p>Реакция на вызов функции &laquo;ProgrammersManual.Function1&raquo; будет выглядеть примерно
+следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Модель 1</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> Model1(<span class="kw">int</span> CallMode,
+          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a> func; <span class="rem">// Вспомогательная переменная</span>
+    <span class="kw">switch</span>(CallMode)
+      {
+        <span class="rem">// &hellip;</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a>:	<span class="rem">// Вызов функции</span>
+          func=(<a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a>)ExtParam;
+          <span class="kw">if</span>(func-&gt;Function==Function1Id)
+            { <span class="rem">// Приведение указателя на параметры функции</span>
+              <span class="rem">// к указателю на double</span>
+              <span class="kw">double</span> *pVal=(<span class="kw">double</span>*)(func-&gt;Data);
+              <span class="rem">// &hellip; можно выполнять какие-либо действия</span>
+              <span class="rem">// со значением *pVal &hellip;</span>
+            }
+          <span class="kw">break</span>;
+        <span class="rem">// &hellip;</span>
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Очевидно, что для сравнения идентификатора вызванной функции с идентификаторами поддерживаемых
+нельзя использовать оператор <span class="cpp">switch</span>, вместо него приходится использовать конструкции
+<span class="cpp">if(&hellip;) else if(&hellip;) &hellip;</span> Идентификаторы функций &ndash;
+не константы, они каждый раз заново генерируются RDS при регистрации и, в данном случае,
+хранятся в глобальных переменных <span class="cpp">Function1Id</span> и <span class="cpp">Function2Id</span>,
+поэтому они не могут использоваться в метках <span class="cpp">case</span>, где допустимы только
+выражения с константами.</p>
+
+<p>Приведенный пример имеет один существенный недостаток. Мы договорились, что параметром функции
+&laquo;ProgrammersManual.Function1&raquo; будет одно число <span class="cpp">double</span>. Но что
+произойдет, если из-за ошибки программиста при вызове этой функции вместо указателя на вещественное число
+двойной точности будет передан указатель, например, на тридцатидвухбитное целое? RDS никак не обрабатывает
+переданный при вызове указатель на параметры, он просто копирует его в поле <span class="cpp">Data</span> структуры
+<span class="cpp"><a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span>. Если вызванный блок попытается считать 8 байтов
+(размер числа <span class="cpp">double</span>) по этому адресу, это вызовет ошибку общей защиты, поскольку
+размер целого &ndash; всего 4 байта. Чтобы избежать этого, имеет смысл включить размер параметров функции в
+сами параметры. Для этого проще всего оформлять параметры функции как структуру, в самом первом поле
+которой размещать ее собственный размер. Большинство сервисных функций RDS, в параметрах которых
+передаются указатели на структуры, проверяют правильность параметров именно так.</p>
+
+<p>Если мы хотим передавать одно вещественное число двойной точности, структура параметров функции
+может выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize; <span class="rem">// Сюда будет записан размер структуры</span>
+    <span class="kw">double</span> Val;     <span class="rem">// Собственно параметр функции</span>
+  } TFunction1Params;</pre>
+
+<p>Вызывать эту функцию нужно будет так:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block=&hellip;      <span class="rem">// Здесь должен быть идентификатор</span>
+                           <span class="rem">// вызываемого блока</span>
+  TFunction1Params params; <span class="rem">// Структура параметров функции</span>
+  params.servSize=<span class="kw">sizeof</span>(params); <span class="rem">// Присваиваем размер структуры</span>
+  params.Val=<span class="const">10.0</span>;         <span class="rem">// Это число будет параметром функции</span>
+  <span class="kw">int</span> result;              <span class="rem">// Сюда запишем возвращенное значение</span>
+  <span class="rem">// Вызов функции</span>
+  result=<a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(block,Function1Id,&amp;params);</pre>
+
+<p>Полю <span class="cpp">servSize</span> введенной нами структуры параметров функции присваивается размер
+этой структуры, полученный оператором <span class="cpp">sizeof</span>. Теперь в реакцию на
+вызов этой функции можно вставить проверку этого размера:</p>
+
+<pre class="cpp">        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a>: <span class="rem">// Вызов функции</span>
+          func=(<a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a>)ExtParam;
+          <span class="kw">if</span>(func-&gt;Function==Function1Id)
+            { <span class="rem">// Приведение указателя на параметры функции</span>
+              <span class="rem">// к указателю на структуру</span>
+              TFunction1Params *par=(TFunction1Params*)(func-&gt;Data);
+              <span class="rem">// Проверка размера параметров</span>
+              <span class="kw">if</span>(par-&gt;servSize&gt;=<span class="kw">sizeof</span>(TFunction1Params))
+                { <span class="rem">// &hellip; можно выполнять какие-либо действия</span>
+                  <span class="rem">// со значением par-&gt;Val &hellip;</span>
+                }
+            }
+          <span class="kw">break</span>;</pre>
+
+<p>Можно заметить, что проверка размеров построена так, чтобы размер переданной при
+вызове структуры параметров <span class="cpp">par-&gt;servSize</span> был не меньше ее ожидаемого размера
+<span class="cpp">sizeof(TFunction1Params)</span>. Почему бы не проверять их точное совпадение оператором
+&laquo;<span class="cpp">==</span>&raquo;? Представим себе, что разработанная нами функция оказалась весьма полезной, и мы
+(а, может быть, и другие разработчики тоже) используем ее в большом количестве моделей. Затем мы решили
+добавить в параметры этой функции новые поля, которые будут использоваться в нескольких новых моделях,
+но никак не влияют на уже отлаженные старые. Если бы в проверке размеров стоял оператор
+&laquo;<span class="cpp">==</span>&raquo;, все ранее написанные и скомпилированные модели, которые не пользуются этими
+дополнительными полями, перестали бы работать, поскольку размер структуры изменился, и точное равенство
+перестало выполняться. Нам пришлось бы компилировать заново все модели, использующие эту функцию,
+а также заставить сделать это всех остальных разработчиков. Использование оператора
+&laquo;<span class="cpp">&gt;=</span>&raquo; позволяет не делать этого, поскольку он проверяет только достаточность размеров
+переданной структуры: если размер структуры окажется больше ожидаемого, мы можем спокойно продолжать работу,
+поскольку нужные нам поля в ней присутствуют. Разумеется, дополнительные поля в этом случае можно добавлять
+только в конец структуры, иначе старые модели, работающие с ее началом, считают неправильные данные. По
+этой же причине служебное поле, содержащее размер структуры, нужно делать самым первым.</p>
+
+<p>Конечно, такая проверка не дает полной гарантии правильности переданных параметров: у двух структур,
+совершенно разных по составу полей, может оказаться одинаковый размер. Кроме того, если среди полей
+структуры есть указатели, типы данных, на которые они ссылаются, нужно проверять отдельно (например,
+включив в них точно такое же служебное поле размера). Тем не менее, такая проверка существенно повышает надежность
+работы модели и защищает от многих ошибок программиста.</p>
+
+<p><span id="ref7">RDS</span>
+<span id="ref8">позволяет</span>
+вызвать не только функцию конкретного блока, но и, например,
+<span id="light_ref7">функции всех блоков схемы, или всех блоков конкретной подсистемы</span>.
+Для этого используется сервисная функция
+<span id="light_ref8" class="cpp"><a href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a></span>:</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> System, <span class="rem">// Подсистема, блоки которой вызываются</span>
+    <span class="kw">int</span> FuncId,         <span class="rem">// Идентификатор вызываемой функции</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Parameters,  <span class="rem">// Указатель на параметры</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags);       <span class="rem">// Флаги вызова</span></pre>
+
+<p>В первом параметре указывается подсистема, у всех блоков которой будет вызвана указанная функция.
+Второй и третий параметры (идентификатор функции и указатель на ее параметры) аналогичны параметрам
+рассмотренной выше <span class="cpp"><a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a></span>. Четвертый параметр содержит битовые
+флаги, управляющие перебором блоков подсистемы при вызове их функций:</p>
+
+<ul>
+  <li><span class="cpp"><span id="light_ref9"><a href="rdsBroadcastFuncCallsDelayed.htm#light_ref4" title="RDS_BCALL_SUBSYSTEMS">RDS_BCALL_SUBSYSTEMS</a></span></span> &ndash; если флаг взведен, будут вызываться не
+  только блоки указанной подсистемы, но и все блоки подсистем, вложенных в нее;</li>
+
+  <li><span class="cpp"><span id="light_ref10"><a href="rdsBroadcastFuncCallsDelayed.htm#light_ref2" title="RDS_BCALL_ALLOWSTOP">RDS_BCALL_ALLOWSTOP</a></span></span> &ndash; если флаг взведен, очередной вызванный блок может
+  прекратить дальнейший вызов других блоков, присвоив полю <span class="cpp">Stop</span> структуры
+  <span class="cpp"><a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span> значение <span class="cpp"></span>;</li>
+
+  <li><span class="cpp"><span id="light_ref11"><a href="rdsBroadcastFuncCallsDelayed.htm#light_ref3" title="RDS_BCALL_CHECKSUPPORT">RDS_BCALL_CHECKSUPPORT</a></span></span> &ndash; если флаг взведен, перед вызовом функции
+  модель каждого блока будет вызываться в режиме <span class="cpp"><span id="light_ref12"><a href="RDS_BFM_CHECKFUNCSUPPORT.htm" title="А.2.4.2. RDS_BFM_CHECKFUNCSUPPORT &ndash; проверка поддержки блоком функции с заданным идентификатором">RDS_BFM_CHECKFUNCSUPPORT</a></span></span>, и, если
+  при этом модель вернет нулевое значение, функция этого блока вызываться не будет.
+  Это устаревший флаг &ndash; режим <span class="cpp"><a class="hidden" href="RDS_BFM_CHECKFUNCSUPPORT.htm" title="А.2.4.2. RDS_BFM_CHECKFUNCSUPPORT &ndash; проверка поддержки блоком функции с заданным идентификатором">RDS_BFM_CHECKFUNCSUPPORT</a></span> теперь практически
+  не применяется, однако он до сих пор поддерживается и может использоваться по желанию программиста.</li>
+</ul>
+
+<p class="noindent">Вызов одной функции у всех блоков позволяет, например, уведомить всех
+&laquo;соседей&raquo; о наступлении какого-либо события, или подготовить блоки к началу какой-либо операции.
+Можно также использовать вызов функции всех блоков для поиска блока, удовлетворяющего какому-либо критерию, или
+для составления списка таких блоков. Реагируя на вызов функции и считав ее параметры, модель блока может передать
+вызвавшему блоку свой идентификатор для занесения в список (например, вызвав в ответ какую-либо функцию у
+вызвавшего блока &ndash; его идентификатор содержится в поле
+<span class="cpp">Caller</span> структуры <span class="cpp"><a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span>). Или, если
+нужно найти единственный блок, она может занести идентификатор своего блока в какое-либо поле структуры параметров
+и остановить перебор блоков, присвоив <span class="cpp">TRUE</span> полю Stop структуры
+<span class="cpp"><a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span> (при этом вызывать функции блоков нужно с флагом
+<span class="cpp"><a class="hidden" href="rdsBroadcastFuncCallsDelayed.htm#light_ref2" title="RDS_BCALL_ALLOWSTOP">RDS_BCALL_ALLOWSTOP</a></span>).</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_12_8.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_2.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

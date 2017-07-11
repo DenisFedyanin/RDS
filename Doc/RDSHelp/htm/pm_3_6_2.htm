@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.6.2. Рисование и прокрутка изображения</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3">Глава 3. Управление RDS из других приложений</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3_6">&sect;3.6. Отображение схемы RDS в собственном окне приложения</a></p>
+<div class="level"><p>&sect;3.6.2. Рисование и прокрутка изображения</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_3_6_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_6_3.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_6_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_3_6_2_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 3. Управление RDS из других приложений</h2>
+<h3 class="off">&sect;3.6. Отображение схемы RDS в собственном окне приложения</h3>
+<h4>&sect;3.6.2. Рисование и прокрутка изображения</h4>
+<p class="abstract">Рассматриваются функции для создания и настройки порта вывода, привязки к нему подсистемы и рисования 
+                в нем изображения. Эти функции добавляются в программу, созданную в <a href="pm_3_6_1.htm" title="&sect;3.6.1. Общие принципы работы с портом вывода">&sect;3.6.1</a>.</p>
+
+
+<p>Написание функций, которые будут непосредственно работать с RDS через
+<a href="pm_3_6_1.htm" title="&sect;3.6.1. Общие принципы работы с портом вывода">порт вывода</a>, начнем с
+функции привязки <a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистемы</a>
+к порту <span class="cpp">SetViewport</span>:</p>
+
+<pre class="cpp">  <span class="rem">// Привязка к порту вывода подсистемы system</span>
+  <span class="kw">void</span> SetViewport(<span class="kw">char</span> *system)
+  { <span class="kw">int</span> nvp;
+    <span class="kw">int</span> ScrollX,ScrollY;
+
+    <span class="rem">// Проверяем, создана ли связь с RDS</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Создаем новый порт или меняем параметры созданного</span>
+    nvp=<span id="light_ref1"><a class="hidden" href="rdsctrlSetViewport.htm" title="Б.3.7.5. rdsctrlSetViewport &ndash; создать порт вывода">rdsctrlSetViewport</a></span>(RdsLink,Viewport,MainWin,system,<span class="const">0</span>);
+    <span class="kw">if</span>(nvp==-<span class="const">1</span>) <span class="rem">// Задать параметры порта не получилось</span>
+      <span class="kw">return</span>;
+    Viewport=nvp;
+
+    <span class="rem">// Получаем запомненное положение прокрутки</span>
+    <span id="light_ref2"><a class="hidden" href="rdsctrlGetViewportParams.htm" title="Б.3.7.1. rdsctrlGetViewportParams &ndash; получить масштаб и сдвиг подсистемы в порте вывода">rdsctrlGetViewportParams</a></span>(RdsLink,nvp,NULL,&amp;ScrollX,&amp;ScrollY);
+
+    <span class="rem">// Настраиваем полосы прокрутки по рабочему полю</span>
+    SetScrollBarParams();
+    <span class="rem">// Устанавливаем полосы прокрутки в запомненное положение</span>
+    SetScrollPos(HorzScroll,SB_CTL,ScrollX,TRUE);
+    SetScrollPos(VertScroll,SB_CTL,ScrollY,TRUE);
+
+    <span class="rem">// Нужна ли какому-либо блоку подсистемы реакция на перемещение</span>
+    <span class="rem">// мыши без нажатия кнопок</span>
+    FreeMouseMove=(<span id="light_ref3"><a class="hidden" href="rdsctrlGetVPMouseLevel.htm" title="Б.3.7.3. rdsctrlGetVPMouseLevel &ndash; получить тип реакции на мышь у подсистемы в порте вывода">rdsctrlGetVPMouseLevel</a></span>(RdsLink,nvp)==<span class="const">2</span>);
+
+    <span class="rem">// Командуем обновить окно программы</span>
+    InvalidateRect(MainWin,NULL,TRUE);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции мы вызываем функцию настройки порта вывода <span class="cpp"><a href="rdsctrlSetViewport.htm" title="Б.3.7.5. rdsctrlSetViewport &ndash; создать порт вывода">rdsctrlSetViewport</a></span>, передавая
+ей идентификатор связи с RDS (<span class="cpp">RdsLink</span>), идентификатор настраиваемого порта вывода
+(<span class="cpp">Viewport</span>), дескриптор окна, в котором создается порт (<span class="cpp">MainWin</span>),
+полное имя подсистемы, привязываемой к порту (<span class="cpp">system</span>) и флаги порта (не используются).
+При самом первом вызове в переменной <span class="cpp">Viewport</span> будет содержаться значение &minus;1,
+поэтому функция создаст новый порт вывода. При всех последующих вызовах в ней будет находиться идентификатор
+порта, поэтому <a class="hidden" href="rdsctrlSetViewport.htm" title="Б.3.7.5. rdsctrlSetViewport &ndash; создать порт вывода">rdsctrlSetViewport</a> вместо создания нового порта изменит параметры
+существующего. Идентификатор созданного (или измененного) порта вывода, возвращаемый функцией, присваивается
+переменной <span class="cpp">nvp</span>. Если функция вернула &minus;1, значит, настройка порта не удалась
+(например, передано несуществующее имя подсистемы), и никаких действий больше не производится. В противном
+случае <span class="cpp">nvp</span> записывается в глобальную переменную
+<span class="cpp">Viewport</span> &ndash; начиная с этого момента, в ней находится идентификатор успешно
+созданного порта вывода.</p>
+
+<p>Теперь нужно получить из RDS текущее положение прокрутки схемы, то есть координаты,
+соответствующие верхнему левому углу видимой области рабочего поля (эти координаты сохраняются в файле
+схемы вместе с остальными параметрами подсистемы). Для этого мы вызываем функцию получения параметров
+порта вывода <span class="cpp"><a href="rdsctrlGetViewportParams.htm" title="Б.3.7.1. rdsctrlGetViewportParams &ndash; получить масштаб и сдвиг подсистемы в порте вывода">rdsctrlGetViewportParams</a></span>, передавая в ее четвертом и пятом параметрах
+указатели на целые переменные <span class="cpp">ScrollX</span> и <span class="cpp">ScrollY</span>, в которые
+и будут записаны координаты верхнего левого угла этой области. В первом параметре функции, как обычно,
+передается идентификатор связи с RDS, во втором &ndash; идентификатор порта вывода, параметры которого
+запрашиваются, в третьем &ndash; указатель на вещественную переменную, через который функция вернет запомненный
+масштаб подсистемы (сейчас нам это не нужно, поэтому в третьем параметре мы передаем <span class="cpp">NULL</span>).</p>
+
+<p>Пока существует порт вывода, RDS запоминает в его внутренних параметрах положение прокрутки
+и масштаб для каждой подсистемы, которая когда-либо отображалась через этот порт. Если данная подсистема
+уже привязывалась к этому порту вывода ранее, функция <span class="cpp"><a class="hidden" href="rdsctrlGetViewportParams.htm" title="Б.3.7.1. rdsctrlGetViewportParams &ndash; получить масштаб и сдвиг подсистемы в порте вывода">rdsctrlGetViewportParams</a></span>
+вернет не параметры, хранящиеся для этой подсистемы в файле схемы, а параметры, с которыми она рисовалась через
+этот порт в прошлый раз. Таким образом, возвращаясь к уже отображавшимся в данном порте подсистемам,
+мы будем наблюдать их в том же самом масштабе и положении, в котором мы оставили их. Следует помнить,
+что эта информация хранится именно в параметрах порта вывода и не передается в параметры самой подсистемы,
+поэтому она не сохраняется в файле схемы и теряется при уничтожении порта вывода: если, например, мы изменим
+масштаб какой-либо подсистемы через порт вывода и сохраним схему, изменение масштаба запомнено не будет,
+и в следующий раз подсистема откроется в том масштабе, который установил пользователь при работе с ней в
+&laquo;нормальном&raquo; окне RDS.</p>
+
+<p>Считав параметры прокрутки подсистемы в переменные <span class="cpp">ScrollX</span> и
+<span class="cpp">ScrollY</span>, мы настраиваем диапазон полос прокрутки на размер рабочего поля схемы функцией
+<span class="cpp">SetScrollBarParams</span> (мы ее пока еще не написали) и устанавливаем в этих полосах
+текущую позицию <span class="cpp">ScrollX</span> и <span class="cpp">ScrollY</span> функцией Windows API
+<span class="cpp">SetScrollPos</span>. Дескрипторы полос мы берем из глобальных переменных
+<span class="cpp">HorzScroll</span> и <span class="cpp">VertScroll</span>, в которые они были записаны
+при создании внутренних объектов окна. Мы также подстраиваем размер и положение полос под размеры окна
+программы функцией <span class="cpp">AdjustScrollBars</span> &ndash; эта функция состоит только из вызовов
+Windows API, и мы не будем ее подробно разбирать.</p>
+
+<p>Затем мы вызываем функцию <span class="cpp"><a href="rdsctrlGetVPMouseLevel.htm" title="Б.3.7.3. rdsctrlGetVPMouseLevel &ndash; получить тип реакции на мышь у подсистемы в порте вывода">rdsctrlGetVPMouseLevel</a></span> чтобы узнать, нужна ли подсистеме
+в порте вывода или ее внутренним блокам реакция на действия пользователя мышью. Эта функция возвращает одно
+из трех значений: 0 &ndash; подсистема вообще не обрабатывает мышь, 1 &ndash; подсистема реагирует на кнопки
+мыши и на перемещения курсора при нажатых кнопках, 2 &ndash; подсистема реагирует на любые действия мышью.
+Если функция вернула значение 2, мы взводим глобальный логический флаг <span class="cpp">FreeMouseMove</span>.
+Он поможет нам &laquo;разгрузить&raquo; взаимодействие нашей программы с RDS: если функция вернет значения
+0 или 1 (то есть если <span class="cpp">FreeMouseMove</span> ложно), нам не нужно при каждом перемещении курсора
+мыши без нажатия кнопок (а таких перемещений большинство) передавать информацию в RdsCtrl.dll.</p>
+
+<p>В конце функции <span class="cpp">SetViewport</span> мы указываем Windows на необходимость обновить окно
+нашей программы вызовом <span class="cpp">InvalidateRect</span>: после того, как мы привязали подсистему к
+порту вывода, нужно нарисовать изображение. Можно заметить, что нигде в <span class="cpp">SetViewport</span>
+мы не задавали координаты и размер порта вывода &ndash; для простоты примера мы будем делать это каждый раз
+перед рисованием содержимого подсистемы.</p>
+
+<p>Теперь нужно написать функцию <span class="cpp">SetScrollBarParams</span>, которую мы вызываем из
+<span class="cpp">SetViewport</span> и из некоторых других функций нашей программы: она будет устанавливать диапазон
+полос прокрутки согласно размерам рабочего поля привязанной к порту вывода подсистемы.</p>
+
+<pre class="cpp">  <span class="rem">// Установить параметры полос прокрутки</span>
+  <span class="kw">void</span> SetScrollBarParams(<span class="kw">void</span>)
+  { <span class="kw">int</span> w,h,m;
+    <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> rect;
+    SCROLLINFO si;
+
+    <span class="rem">// Есть ли связь с RDS и порт вывода?</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Размеры прямоугольника, доступного в окне для порта</span>
+    <span class="kw">if</span>(!GetAvailableRect(&amp;rect))
+      <span class="kw">return</span>;
+
+    <span class="rem">// Получаем размер рабочего поля подсистемы в текущем масштабе</span>
+    <span class="kw">if</span>(!<span id="light_ref4"><a class="hidden" href="rdsctrlGetViewportSysArea.htm" title="Б.3.7.2. rdsctrlGetViewportSysArea &ndash; получить размеры рабочего поля подсистемы в порте вывода">rdsctrlGetViewportSysArea</a></span>(RdsLink,Viewport,-<span class="const">1.0</span>,&amp;w,&amp;h))
+      <span class="kw">return</span>;
+
+    <span class="rem">// Заполняем общие поля структуры для установки параметров</span>
+    <span class="rem">// полосы прокрутки</span>
+    si.cbSize=<span class="kw">sizeof</span>(si);
+    si.fMask=SIF_RANGE|SIF_PAGE|SIF_DISABLENOSCROLL;
+    si.nMin=<span class="const">0</span>;
+
+    <span class="rem">// Максимум прокрутки по горизонтали</span>
+    m=w-(rect.right-rect.left);
+    <span class="kw">if</span>(m&lt;<span class="const">0</span>) m=<span class="const">0</span>;
+    si.nMax=m;
+    si.nPage=rect.right-rect.left;
+    SetScrollInfo(HorzScroll,SB_CTL,&amp;si,TRUE);
+
+    <span class="rem">// Максимум прокрутки по вертикали</span>
+    m=h-(rect.bottom-rect.top);
+    <span class="kw">if</span>(m&lt;<span class="const">0</span>) m=<span class="const">0</span>;
+    si.nMax=m;
+    si.nPage=rect.bottom-rect.top;
+    SetScrollInfo(VertScroll,SB_CTL,&amp;si,TRUE);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Нам нужно согласовать диапазон каждой из полос с размером порта вывода и размером рабочей области схемы.
+Допустим, например, что в текущем масштабе рабочее поле имеет по вертикали размер в тысячу точек экрана,
+а область порта вывода &ndash; высоту сто точек. Положение вертикальной полосы прокрутки, то есть вертикальная
+координата верхней границы отображаемой области, может изменяться от нуля (видны первые сто точек рабочего поля)
+до девятисот (видны последние сто точек). Таким образом, чтобы получить максимально возможное значение полосы
+прокрутки, нужно из размеров рабочего поля вычесть размер прямоугольника порта вывода.</p>
+
+<p>Сначала мы вызываем функцию <span class="cpp">GetAvailableRect</span>, которая записывает координаты и
+размеры прямоугольника, доступного для порта вывода при текущем размере окна, в переменную rect типа
+<span class="cpp"><a href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a></span> (стандартный тип Windows API, описывающий прямоугольник). В этой функции,
+которую мы не будем разбирать подробно, из всей внутренней области окна сверху вычитается горизонтальная полоса
+высотой в константу <span class="cpp">VIEWPORTTOP</span> (там размещаются кнопки), снизу &ndash;
+высота горизонтальной полосы прокрутки, и справа &ndash; ширина вертикальной полосы прокрутки. Все оставшееся
+пространство окна считается доступным для порта вывода и записывается в структуру типа <span class="cpp"><a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a></span>,
+указатель на которую передается в функцию. Таким образом, ширину порта вывода можно вычислить как разность
+правой и левой координат прямоугольника <span class="cpp">rect</span>: <span class="cpp">rect.right-rect.left</span>,
+а высоту &ndash; как разность его нижней и верхней координат: <span class="cpp">rect.bottom-rect.top</span>.</p>
+
+<p>Для получения размеров рабочего поля подсистемы, привязанной к порту вывода, мы вызываем функцию
+<span class="cpp"><a href="rdsctrlGetViewportSysArea.htm" title="Б.3.7.2. rdsctrlGetViewportSysArea &ndash; получить размеры рабочего поля подсистемы в порте вывода">rdsctrlGetViewportSysArea</a></span>. В ее параметрах передается идентификатор связи с RDS
+(<span class="cpp">RdsLink</span>), идентификатор порта (<span class="cpp">Viewport</span>), масштабный коэффициент,
+для которого мы ходим получить размеры поля (мы передаем &minus;1, поскольку нас интересует размер рабочего поля
+в текущем масштабе подсистемы), и указатели на целые переменные, в которые функция запишет ширину и высоту
+рабочего поля (<span class="cpp">&amp;w</span> и <span class="cpp">&amp;h</span>). Теперь мы знаем размеры рабочего
+поля и размеры порта вывода &ndash; можно устанавливать параметры полос прокрутки.</p>
+
+<p>Для каждой из полос мы будем устанавливать два параметра: диапазон изменения (размер рабочего поля минус
+размер порта вывода) и размер страницы, от которого зависит размер движка на полосе, символизирующего положение
+текущей видимой области во всем диапазоне прокрутки. В Windows для задания параметров полос прокрутки служит
+структура <span class="cpp">SCROLLINFO</span> (в нашей функции описана переменная <span class="cpp">si</span>
+этого типа), поле <span class="cpp">fMask</span> которой содержит флаги, определяющие устанавливаемые параметры.
+Мы будем использовать три флага: <span class="cpp">SIF_RANGE</span> (установка диапазона),
+<span class="cpp">SIF_PAGE</span> (установка размера страницы) и <span class="cpp">SIF_DISABLENOSCROLL</span>
+(запрет исчезновения полосы с экрана). Диапазон в нашем случае всегда начинается с нуля, поэтому в поле
+<span class="cpp">nMin</span> мы сразу записываем 0.</p>
+
+<p>Сначала мы устанавливаем параметры горизонтальной полосы &ndash; ее дескриптор находится в глобальной переменной
+<span class="cpp">HorzScroll</span>. Максимум диапазона прокрутки <span class="cpp">m</span> мы вычисляем как
+<span class="cpp">w-(rect.right-rect.left)</span>: ширина рабочего поля подсистемы минус ширина порта вывода.
+Если рабочее поле меньше порта вывода, значение <span class="cpp">m</span> получится отрицательным, в этом случае
+мы делаем его нулевым. В поле максимума диапазона <span class="cpp">nMax</span> структуры
+<span class="cpp">si</span> мы записываем <span class="cpp">m</span>, в поле размера страницы
+<span class="cpp">nPage</span> &ndash; ширину порта вывода, после чего записываем эти параметры в горизонтальную
+полосу прокрутки <span class="cpp">HorzScroll</span> функцией Windows API <span class="cpp">SetScrollInfo</span>.
+После этого мы аналогичным образом настраиваем параметры вертикальной полосы <span class="cpp">VertScroll</span>.</p>
+
+<p><span id="ref5">Теперь</span>
+наши полосы прокрутки настраиваются согласно параметрам привязанной к рабочему полю подсистемы и
+реагируют на щелчки и перетаскивание своих движков (за это отвечает функция <span class="cpp">DoScroll</span>,
+которая целиком состоит из различных вызовов Windows API, поэтому мы не будем ее подробно рассматривать). Однако,
+изображение подсистемы пока не рисуется &ndash; нужно написать функцию <span class="cpp">DrawViewport</span>,
+которая вызывается из процедуры нашего окна при обработке сообщения Windows
+<span class="cpp" id="light_ref5">WM_PAINT</span>:</p>
+
+<pre class="cpp">  <span class="rem">// Рисование подсистемы в порте вывода</span>
+  <span class="kw">void</span> DrawViewport(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> rect;
+    <span class="rem">// Проверяем наличие связи с RDS и существование порта</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+    <span class="rem">// Получаем прямоугольник, доступный для вывода</span>
+    <span class="kw">if</span>(!GetAvailableRect(&amp;rect))
+      <span class="kw">return</span>;
+    <span class="rem">// Устанавливаем координаты и размер порта</span>
+    <span id="light_ref6"><a class="hidden" href="rdsctrlSetViewportRect.htm" title="Б.3.7.7. rdsctrlSetViewportRect &ndash; задать положение порта вывода в окне">rdsctrlSetViewportRect</a></span>(RdsLink,Viewport,
+          rect.left,rect.top,    <span class="rem">// координаты</span>
+          rect.right-rect.left,  <span class="rem">// ширина</span>
+          rect.bottom-rect.top); <span class="rem">// высота</span>
+    <span class="rem">// Устанавливаем положение видимой в порте области</span>
+    <span id="light_ref7"><a class="hidden" href="rdsctrlSetViewportParams.htm" title="Б.3.7.6. rdsctrlSetViewportParams &ndash; установить масштаб и сдвиг подсистемы в порте вывода">rdsctrlSetViewportParams</a></span>(RdsLink,Viewport,-<span class="const">1.0</span>,
+          GetScrollPos(HorzScroll,SB_CTL),
+          GetScrollPos(VertScroll,SB_CTL),
+          <span class="const">0</span>);
+    <span class="rem">// Командуем RDS перерисовать порт вывода</span>
+    <span id="light_ref8"><a class="hidden" href="rdsctrlUpdateViewport.htm" title="Б.3.7.10. rdsctrlUpdateViewport &ndash; обновить порт вывода">rdsctrlUpdateViewport</a></span>(RdsLink,Viewport);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции мы получаем координаты и размер доступной для отображения области окна уже знакомой
+нам функцией <span class="cpp">GetAvailableRect</span> и передаем их в RDS функцией
+<span class="cpp"><a href="rdsctrlSetViewportRect.htm" title="Б.3.7.7. rdsctrlSetViewportRect &ndash; задать положение порта вывода в окне">rdsctrlSetViewportRect</a></span>. Затем мы устанавливаем координаты верхнего левого угла
+видимой через порт области рабочего поля функцией <span class="cpp"><a href="rdsctrlSetViewportParams.htm" title="Б.3.7.6. rdsctrlSetViewportParams &ndash; установить масштаб и сдвиг подсистемы в порте вывода">rdsctrlSetViewportParams</a></span>, получив их
+из полос прокрутки вызовами <span class="cpp">GetScrollPos</span>. Масштаб изображения подсистемы мы
+не меняем, поэтому вместо масштабного коэффициента передаем &minus;1. После этого мы перерисовываем порт
+вывода вызовом <span class="cpp"><a href="rdsctrlUpdateViewport.htm" title="Б.3.7.10. rdsctrlUpdateViewport &ndash; обновить порт вывода">rdsctrlUpdateViewport</a></span>: изображение рабочего поля подсистемы в
+текущем установленном для порта масштабе и положении будет нарисовано
+в главном окне нашей программы.</p>
+
+<p>Здесь мы устанавливаем размеры порта и положение прокрутки каждый раз непосредственно перед рисованием.
+Можно было бы улучшить нашу программу, например, устанавливая размеры порта при изменении размеров окна,
+а положение прокрутки &ndash; при любом срабатывании горизонтальной или вертикальной полосы, но
+мы не будем делать этого, чтобы не усложнять пример.</p>
+
+<p>Фактически, для рисования подсистемы в порте вывода необходимо выполнить следующие действия:</p>
+
+<ul>
+  <li>создать порт вывода в каком-либо окне программы и привязать к нему подсистему вызовом
+  <span class="cpp"><a class="hidden" href="rdsctrlSetViewport.htm" title="Б.3.7.5. rdsctrlSetViewport &ndash; создать порт вывода">rdsctrlSetViewport</a></span>;</li>
+  <li>задать координаты и размеры порта в этом окне вызовом <span class="cpp"><a class="hidden" href="rdsctrlSetViewportRect.htm" title="Б.3.7.7. rdsctrlSetViewportRect &ndash; задать положение порта вывода в окне">rdsctrlSetViewportRect</a></span>;</li>
+  <li>задать положение видимой через порт области и масштаб изображения вызовом
+  <span class="cpp"><a class="hidden" href="rdsctrlSetViewportParams.htm" title="Б.3.7.6. rdsctrlSetViewportParams &ndash; установить масштаб и сдвиг подсистемы в порте вывода">rdsctrlSetViewportParams</a></span>;</li>
+  <li>нарисовать изображение вызовом <span class="cpp"><a class="hidden" href="rdsctrlUpdateViewport.htm" title="Б.3.7.10. rdsctrlUpdateViewport &ndash; обновить порт вывода">rdsctrlUpdateViewport</a></span>.</li>
+</ul>
+
+<p class="noindent">Порт вывода запоминает установленные параметры, поэтому не так уж важно, как
+эти вызовы будут распределены по разным функциям программы.</p>
+
+<p>Теперь в нашей программе можно открыть какую-либо схему, и изображение ее
+<a href="pm_1_2.htm#ref5" title="Корневая подсистема">корневой подсистемы</a> появится в окне
+(<a href="#pic1" title="Изображение подсистемы в порте вывода">рис.&nbsp;129</a>).
+Его можно будет прокручивать по горизонтали и вертикали, но ни изменить масштаб, ни перейти в другую
+подсистему пока нельзя. Кроме того, блоки подсистемы пока не реагируют на мышь и клавиатуру и не
+выводят всплывающие подсказки. Исправление этих недостатков начнем с добавления возможности
+изменения масштаба.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/WinApplicationPort.png" width="644" height="395" alt="Изображение подсистемы в порте вывода" />
+<p id="light_pic1">Рис.&nbsp;129. Изображение подсистемы в порте вывода</p>
+</div></div>
+
+
+<p>Для изменения масштаба подсистемы мы предусмотрели функцию <span class="cpp">ZoomButtonClick</span>, которая
+вызывается с разными множителями при нажатии кнопок
+&laquo;<span class="menu">Масшт&nbsp;+</span>&raquo; и &laquo;<span class="menu">Масшт&nbsp;&ndash;</span>&raquo;:</p>
+
+<pre class="cpp">  <span class="rem">// Изменение масштаба (multiplier - множитель)</span>
+  <span class="kw">void</span> ZoomButtonClick(<span class="kw">double</span> multiplier)
+  { <span class="kw">double</span> zoom;
+    <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> rect;
+    <span class="kw">int</span> halfwidth,halfheight,cx,cy,sx,sy;
+
+    <span class="rem">// Проверяем наличие связи с RDS и существование порта</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Получаем прямоугольник, доступный для вывода</span>
+    <span class="kw">if</span>(!GetAvailableRect(&amp;rect))
+      <span class="kw">return</span>;
+
+    <span class="rem">// Получаем текущий масштаб и положение прокрутки подсистемы</span>
+    <a class="hidden" href="rdsctrlGetViewportParams.htm" title="Б.3.7.1. rdsctrlGetViewportParams &ndash; получить масштаб и сдвиг подсистемы в порте вывода">rdsctrlGetViewportParams</a>(RdsLink,Viewport,&amp;zoom,&amp;sx,&amp;sy);
+
+    <span class="rem">// Вычисляем координаты центра видимой части в старом масштабе</span>
+    halfwidth=(rect.right-rect.left)/<span class="const">2</span>,
+    halfheight=(rect.bottom-rect.top)/<span class="const">2</span>;
+    cx=(sx+halfwidth)/zoom;
+    cy=(sy+halfheight)/zoom;
+
+    <span class="rem">// Новый масштаб</span>
+    zoom*=multiplier;
+
+    <span class="rem">// Вычисление новых координат прокрутки, чтобы в новом масштабе</span>
+    <span class="rem">// центр изображения не сдвинулся</span>
+    sx=(<span class="kw">int</span>)(cx*zoom)-halfwidth;
+    <span class="kw">if</span>(sx&lt;<span class="const">0</span>) sx=<span class="const">0</span>;
+    sy=(<span class="kw">int</span>)(cy*zoom)-halfheight;
+    <span class="kw">if</span>(sy&lt;<span class="const">0</span>) sy=<span class="const">0</span>;
+
+    <span class="rem">// Установка нового масштаба и положения полос прокрутки</span>
+    <a class="hidden" href="rdsctrlSetViewportParams.htm" title="Б.3.7.6. rdsctrlSetViewportParams &ndash; установить масштаб и сдвиг подсистемы в порте вывода">rdsctrlSetViewportParams</a>(RdsLink,Viewport,zoom,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>);
+    SetScrollBarParams();
+    SetScrollPos(HorzScroll,SB_CTL,sx,TRUE);
+    SetScrollPos(VertScroll,SB_CTL,sy,TRUE);
+
+    <span class="rem">// Обновление порта вывода</span>
+    InvalidateRect(MainWin,&amp;rect,TRUE);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Задача этой функции &ndash; изменить текущий масштаб порта вывода в <span class="cpp">multiplier</span> раз,
+причем так, чтобы объекты, находившиеся в центре порта, остались бы в центре и при новом масштабе. Для этого,
+после собственно изменения масштаба, необходимо также изменить координаты верхнего левого угла видимой в порте
+области, то есть изменить положение полос прокрутки.</p>
+
+<p>Сначала мы получаем размеры области порта вывода вызовом функции
+<span class="cpp">GetAvailableRect</span> &ndash; размеры порта понадобятся нам для определения его центра.
+Затем, вызвав <span class="cpp"><a href="rdsctrlGetViewportParams.htm" title="Б.3.7.1. rdsctrlGetViewportParams &ndash; получить масштаб и сдвиг подсистемы в порте вывода">rdsctrlGetViewportParams</a></span>, мы считываем текущий масштаб порта и текущее
+положение левого верхнего угла видимой через него области в переменные <span class="cpp">zoom</span>,
+<span class="cpp">sx</span> и <span class="cpp">sy</span> соответственно. Положение левого верхнего
+угла мы могли бы считать из полос прокрутки и вызовом <span class="cpp">GetScrollPos</span>, но, в данном случае,
+удобнее получить все три значения вызовом одной функции. Теперь мы можем вычислить координаты
+(<span class="cpp">cx</span>,<span class="cpp">cy</span>), соответствующие точке рабочего поля подсистемы,
+которая находится в центре порта вывода в его текущем масштабе и положении. Затем мы умножаем текущий масштаб
+<span class="cpp">zoom</span> на параметр функции <span class="cpp">multiplier</span> и вычисляем новые координаты
+левого верхнего угла видимой области, такие, чтобы точка рабочего поля (<span class="cpp">cx</span>,<span class="cpp">cy</span>)
+оставалась в центре порта в новом масштабе. Осталось только установить новый масштаб порта вывода вызовом
+<span class="cpp"><a href="rdsctrlSetViewportParams.htm" title="Б.3.7.6. rdsctrlSetViewportParams &ndash; установить масштаб и сдвиг подсистемы в порте вывода">rdsctrlSetViewportParams</a></span>, настроить диапазоны полос прокрутки на размер рабочего поля
+в новом масштабе вызовом <span class="cpp">SetScrollBarParams</span> и установить их в новое положение вызовами
+<span class="cpp">SetScrollPos</span>. После этого вызовом <span class="cpp">InvalidateRect</span> мы даем
+Windows команду перерисовать область порта вывода при первой возможности &ndash; при рисовании функцией
+<span class="cpp">DrawViewport</span> содержимое подсистемы будет нарисовано согласно новому положению полос
+прокрутки и в новом масштабе.</p>
+
+<p>Теперь наша программа увеличивает масштаб вдвое при нажатии кнопки &laquo;<span class="menu">Масшт&nbsp;+</span>&raquo; и уменьшает его
+вдвое при нажатии &laquo;<span class="menu">Масшт&nbsp;&ndash;</span>&raquo;. Обычно в программах ограничивают возможное увеличение
+и уменьшение масштаба какими-либо разумными пределами, но для упрощения примеры мы не будем этого делать.
+Мы также не будем выполнять увеличение масштаба в произвольной точке по щелчку мыши и выделение увеличиваемой
+области прямоугольной рамкой &ndash; все это легко реализуется при помощи функций
+RdsCtrl.dll.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_3_6_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_6_3.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_6_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_27">А.5.27. Вспомогательный объект для работы с текстом в формате INI-файла</a></p>
+<div class="level"><p>А.5.27.1. <span class="cpp">rdsINICreateTextHolder</span> &ndash; создать объект для работы с текстом</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsSTRSetTextToRead.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsINIOpenSection.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsINICreateTextHolder">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4>А.5.27. Вспомогательный объект для работы с текстом в формате INI-файла</h4>
+<p class="abstract">Описываются функции и команды вспомогательного объекта RDS, предназначенного для разбора и формирования текста в стандартном формате INI-файлов Windows.</p>
+<h5>А.5.27.1. <span class="cpp">rdsINICreateTextHolder</span> &ndash; создать объект для работы с текстом</h5>
+
+
+<p>Функция <span class="cpp">rdsINICreateTextHolder</span> создает
+<a href="app_a_objects.htm" title="А.5.22.1. Использование вспомогательных объектов RDS">вспомогательный объект</a> RDS, с помощью которого можно
+работать с текстом, хранящим значения различных параметров в формате INI-файлов Windows, то есть в виде
+&laquo;<i>имя</i>=<i>значение</i>&raquo;.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsINICreateTextHolder(
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> IgnoreCase    <span class="rem">// Без учета регистра</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_HoB</span></p>
+
+<p class="apphdr">Параметр</p>
+
+<dl>
+  <dt><span class="cpp">IgnoreCase</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span> &ndash; искать в тексте названия параметров и секций без
+  учета регистра символов, <span class="cpp">FALSE</span> &ndash; с его учетом.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Уникальный идентификатор созданного объекта (<span class="cpp"><a href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a></span>).</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция создает вспомогательный объект для работы с текстом и возвращает его идентификатор типа
+<span class="cpp">RDS_HOBJECT</span>. Текст, с которым работает этот объект, разделен на секции,
+каждая из которых начинается с названия секции на отдельной строке в квадратных скобках. Внутри секции каждая
+строка имеет вид &laquo;<i>имя</i>=<i>значение</i>&raquo;. Например, текст</p>
+
+<pre class="cpp">  [Section1]
+  var1=value1
+  var2=0
+  [OtherSection]
+  var1=текстовая строка
+  var3=10</pre>
+
+<p class="noindent">состоит из двух секций &laquo;Section1&raquo; и
+&laquo;OtherSection&raquo;, в первой из которых записаны значения параметров
+&laquo;var1&raquo; и &laquo;var2&raquo;, во второй &ndash;
+&laquo;var1&raquo; и &laquo;var3&raquo; (при этом &laquo;var1&raquo; в разных секциях имеет
+разное значение). С помощью различных сервисных функций RDS (как
+<a href="app_index.htm#light_htm:app_a_5_22" title="А.5.22. Общие функции вспомогательных объектов">общих</a> для всех типов вспомогательных объектов, так
+и специализированных для данного) в этот объект можно записывать значения параметров и считывать их
+из него, создавать и удалять секции и т.п. Объект может загружать текст из файла и записывать его в файл,
+а также передавать текст в RDS для использования его в качестве сохраняемых параметров блока при
+реакции на событие <span class="cpp"><a href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a></span>.</p>
+
+<p>Если в параметре <span class="cpp">IgnoreCase</span> передано значение <span class="cpp">TRUE</span>, при
+поиске в тексте названий секций и параметров объект не будет учитывать регистр символов &ndash; например,
+секции &laquo;SECTION&raquo; и &laquo;Section&raquo; будут считаться совпадающими.</p>
+
+<p>Созданный вспомогательный объект будет существовать до тех пор, пока схема не будет выгружена из памяти,
+или пока он не будет удален вызовом функции <span class="cpp"><a href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>.</p>
+
+<p class="apphdr">Пример</p>
+<p>Примеры использования функции <span class="cpp">rdsINICreateTextHolder</span> приведены в
+<a href="pm_index.htm" title="Руководство программиста">руководстве программиста</a>:
+<a href="pm_2_8_5.htm" title="&sect;2.8.5. Сохранение параметров блока в формате INI-файла">&sect;2.8.5</a>,
+<a href="pm_4_2.htm" title="&sect;4.2. Инициализация, очистка и настройка параметров модуля">&sect;4.2</a> и др.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><a href="app_a_objects.htm" title="А.5.22.1. Использование вспомогательных объектов RDS">Вспомогательные объекты</a>,
+<span class="cpp"><a href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>,
+<span class="cpp"><a href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsSTRSetTextToRead.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsINIOpenSection.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsINICreateTextHolder">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

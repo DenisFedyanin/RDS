@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>Б.3.2.10. rdsctrlSetStringCallback &ndash; регистрация функции возврата строки</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b_3">Б.3. Б.3 Функции библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b_3_2">Б.3.2. Функции управления связью с RDS</a></p>
+<div class="level"><p>Б.3.2.10. <span class="cpp">rdsctrlSetStringCallback</span> &ndash; регистрация функции возврата строки</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsctrlSetPath.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsctrlEnableCalcMode.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsctrlSetStringCallback">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</h2>
+<h3 class="off">Б.3. Б.3 Функции библиотеки RdsCtrl.dll</h3>
+<h4 class="off">Б.3.2. Функции управления связью с RDS</h4>
+<h5>Б.3.2.10. <span class="cpp">rdsctrlSetStringCallback</span> &ndash; регистрация функции возврата строки</h5>
+
+
+<p><span id="ref1">Функция</span>
+<span class="cpp">rdsctrlSetStringCallback</span> регистрирует в
+RdsCtrl.dll функцию возврата строк произвольной длины.</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsctrlSetStringCallback(
+    <span id="light_ref1">RDSCTRL_RETURNSTRING</span> Func    <span class="rem">// Функция</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDSCTRL_VRs</span></p>
+
+<p class="apphdr">Параметр</p>
+
+<dl>
+  <dt><span class="cpp">Func</span>&emsp;(<span class="cpp"><i>RDSCTRL_RETURNSTRING</i></span>)</dt>
+  <dd>Указатель на функцию, которая записывает строку символов в объект (экземпляр класса, массив и т.п.),
+  используемый в управляющей программе для хранения строк произвольной длины.</dd>
+</dl>
+
+<p class="apphdr">Примечания</p>
+<p>При помощи этой функции в библиотеку RdsCtrl.dll передается указатель на функцию управляющего приложения вида</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции</i>(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> objptr,<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> str);</pre>
+
+<p>Задача этой функции &ndash; записать строку <span class="cpp">str</span> в объект, на который указывает
+<span class="cpp">objptr</span>, чем бы этот объект ни являлся. Использование функции обратного вызова для
+передачи строк в управляющую программу позволяет вынести отведение памяти под эти строки за пределы библиотеки
+RdsCtrl.dll, в результате чего управляющее приложение может хранить эти строки в памяти так, как
+это удобно его разработчику. Во всех случаях, когда библиотека должна возвратить управляющей программе строку
+произвольной длины, в одну из функций библиотеки передается указатель на некий объект, и этот указатель
+используется в качестве первого параметра функции обратного вызова.</p>
+
+<p>Пример использования функции <span class="cpp">rdsctrlSetStringCallback</span> приведен в
+<a href="pm_3_2.htm" title="&sect;3.2. Загрузка библиотеки и управление схемой">&sect;3.2</a>,
+различные варианты функции обратного вызова описываются в
+<a href="pm_3_1.htm" title="&sect;3.1. Общие принципы управления RDS">&sect;3.1 руководства программиста</a>.</p>
+
+<p class="apphdr">Пример</p>
+<p>Допустим, управляющая программа использует для хранения строк произвольной длины класс
+<span class="cpp">String</span>, для которого определена операция присваивания строки вида</p>
+
+<pre class="cpp">  String s=<span class="str">"строка"</span>;</pre>
+
+<p>Тогда функцию обратного вызова можно написать следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> MyReturnString(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ptr,<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> str)
+  { <span class="rem">// Приводим указатель ptr к типу "указатель на String"</span>
+    String *pS=(String*)ptr;
+    <span class="rem">// Если указатель не передан, не делаем ничего</span>
+    <span class="kw">if</span>(pS==NULL) <span class="kw">return</span>;
+    <span class="rem">// Присваиваем строку объекту</span>
+    *pS=str;
+  }</pre>
+
+<p>Теперь, зарегистрировав эту функцию в библиотеке вызовом</p>
+
+<pre class="cpp">  rdsctrlSetStringCallback(MyReturnString);</pre>
+
+<p class="noindent">можно загрузить в память управляемой копии RDS какую-либо схему и вызвать
+один из ее блоков функцией <span class="cpp"><a href="rdsctrlCallBlockFunctionEx.htm" title="Б.3.4.7. rdsctrlCallBlockFunctionEx &ndash; передача блоку числа и строки">rdsctrlCallBlockFunctionEx</a></span>:</p>
+
+<pre class="cpp">  String str;          <span class="rem">// Переменная для возвращаемой строки</span>
+  rdsctrlCallBlockFunctionEx(
+    Link,              <span class="rem">// Идентификатор связи с RDS</span>
+    <span class="str">":Sys1:Block1"</span>,    <span class="rem">// Полное имя вызываемого блока</span>
+    <span class="const">99</span>,                <span class="rem">// Передаваемое блоку число</span>
+    <span class="str">"Строка 1"</span>,        <span class="rem">// Передаваемая блоку строка</span>
+    &amp;str);             <span class="rem">// Указатель для возвращаемой строки</span></pre>
+
+<p>В результате, получив от блока с именем &laquo;:Sys1:Block1&raquo; какую либо строку в ответ,
+RdsCtrl.dll вызовет функцию <span class="cpp">MyReturnString</span>, передав в ее первом параметре указатель
+на <span class="cpp">str</span> (то есть последний параметр вызова
+<span class="cpp">rdsctrlCallBlockFunctionEx</span>), а во втором &ndash; указатель на эту, полученную от блока,
+строку. Таким образом, строка запишется в объект <span class="cpp">str</span>, и управляющая программа сможет далее
+работать с ней без учета какой-либо специфики RdsCtrl.dll.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsctrlSetPath.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsctrlEnableCalcMode.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsctrlSetStringCallback">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

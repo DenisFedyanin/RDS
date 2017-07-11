@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>Б.2.1. Способы реакции на события</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b_2">Б.2. События, на которые может реагировать программа</a></p>
+<div class="level"><p>Б.2.1. Способы реакции на события</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDSCTRL_ZOOMRECT.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDSCTRLEVENT_BLOCKMSG.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:app_rdsctrl_react">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</h2>
+<h3>Б.2. События, на которые может реагировать программа</h3>
+<p class="abstract">Описываются все события RDS, на которые может реагировать внешняя управляющая программа.</p>
+<h4>Б.2.1. Способы реакции на события</h4>
+
+
+<p>Внешняя управляющая программа, работающая с библиотекой RdsCtrl.dll, может реагировать на события,
+возникающие в управляемой копии RDS, если реакция на такие события разрешена функцией
+<span class="cpp"><a href="rdsctrlEnableEvents.htm" title="Б.3.6.1. rdsctrlEnableEvents &ndash; разрешение реакции на события">rdsctrlEnableEvents</a></span>. Сама реакция может осуществляться несколькими способами.</p>
+
+<p>Самый простой способ реакции на событие &ndash; использование функции обратного вызова. При помощи
+функции <span class="cpp"><a href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a></span> управляющая программа может связать с
+каким-либо событием собственную функцию вида</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции</i>(
+    <span class="kw">int</span> Link,         <span class="rem">// Идентификатор связи с RDS</span>
+    <span class="kw">int</span> Event,        <span class="rem">// Идентификатор события (RDSCTRLEVENT_*)</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> pEData,    <span class="rem">// Данные события</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> pAux       <span class="rem">// Дополнительные данные</span>
+  );</pre>
+
+<p>Получив от управляемой копии RDS информацию о наступлении указанного события,
+RdsCtrl.dll вызовет эту функцию, передав в параметре <span class="cpp">Link</span> идентификатор связи с
+управляемой копией RDS, в которой произошло событие, в параметре
+<span class="cpp">Event</span> &ndash; идентификатор наступившего события, в параметре
+<span class="cpp">pEData</span> &ndash; указатель на структуру, описывающую событие (эта структура у
+каждого события своя), и в параметре <span class="cpp">pAux</span> &ndash; указатель на какие-либо дополнительные
+данные, который был задан при регистрации функции обратного вызова.</p>
+
+<p>Для события <span class="cpp"><a href="RDSCTRLEVENT_BLOCKMSG.htm" title="Б.2.2. RDSCTRLEVENT_BLOCKMSG &ndash; сообщение от блока">RDSCTRLEVENT_BLOCKMSG</a></span> (сообщение от блока) можно указать специализированную
+функцию обратного вызова, в которой параметры события будут передаваться не в структуре через указатель
+<span class="cpp">pEData</span>, а в самих параметрах функции. Такая функция регистрируется вызовом
+<span class="cpp"><a href="rdsctrlRegisterBlockMsgCallback.htm" title="Б.3.6.2. rdsctrlRegisterBlockMsgCallback &ndash; регистрация функции для реакции на сообщение от блока">rdsctrlRegisterBlockMsgCallback</a></span> и имеет вид</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции</i>(
+    <span class="kw">int</span> Link,       <span class="rem">// Идентификатор связи с RDS</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> BName,    <span class="rem">// Имя блока</span>
+    <span class="kw">int</span> Imsg,       <span class="rem">// Переданное блоком число</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Smsg,     <span class="rem">// Переданная блоком строка</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> pAux     <span class="rem">// Дополнительные данные</span>
+  );</pre>
+
+<p>В параметре <span class="cpp">Link</span>, как и в стандартной функции обратного вызова,
+передается идентификатор связи с управляемой копией RDS, в которой произошло событие, в параметре
+<span class="cpp">BName</span> &ndash; строка с
+<a href="pm_1_4.htm#light_ref2" title="Полное имя блока">полным именем блока</a>, передавшего сообщение, в
+<span class="cpp">Imsg</span> &ndash; целое число переданное блоком, в
+<span class="cpp">Smsg</span> &ndash; указатель на строку, переданную блоком, в
+<span class="cpp">pAux</span> &ndash; указатель на какие-либо дополнительные данные, который был
+задан при регистрации функции. Поскольку получение сообщений от блоков требуется в
+управляющих программах достаточно часто, и при этом обычно нужно каким-либо образом разбирать
+принятые от блока данные, использование специализированной функции для реакции на это событие часто
+удобнее использования стандартной.</p>
+
+<p><span id="ref1">Если</span>
+<span id="ref2">разработчику</span> управляющей программы по каким-либо причинам неудобно использовать функции обратного
+вызова, можно настроить RdsCtrl.dll таким образом, чтобы при наступлении события указанному окну
+управляющей программы направлялось сообщение. Для этого нужно вызвать функцию
+<span class="cpp"><a href="rdsctrlRegisterEventMessage.htm" title="Б.3.6.3. rdsctrlRegisterEventMessage &ndash; регистрация оконного сообщения для реакции на событие">rdsctrlRegisterEventMessage</a></span>, указав в ее параметрах идентификатор события,
+реакция на которое настраивается, дескриптор окна (<span class="cpp" id="light_ref1">HWND</span>),
+которому должно направляться сообщение, и целый идентификатор самого сообщения. После этого,
+получив от управляемой копии RDS информацию о наступлении события,
+RdsCtrl.dll вызовет функцию Windows API
+<span class="cpp" id="light_ref2">SendMessage</span>, которая передаст указанному окну указанное
+сообщение, и будет ожидать завершения процедуры этого окна. Все сообщения Windows имеют два параметра:
+<span class="cpp">WPARAM</span> и <span class="cpp">LPARAM</span>; в параметре
+<span class="cpp">WPARAM</span> сообщения о событии, направляемого окну, передается значение, указанное
+при регистрации реакции на сообщение функцией <span class="cpp">rdsctrlRegisterEventMessage</span>, а в
+параметре <span class="cpp">LPARAM</span> &ndash; указатель на структуру описания события
+<span class="cpp"><a href="RDSCTRL_MSGEVENTDATA.htm#ref1" title="Структура RDSCTRL_MSGEVENTDATA">RDSCTRL_MSGEVENTDATA</a></span>. В этой структуре передается идентификатор связи с управляемой копией
+RDS, в которой произошло событие (поле <span class="cpp">Link</span>), идентификатор самого события
+(поле <span class="cpp">Event</span>) и указатель на структуру данных события (поле <span class="cpp">Data</span>).</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsctrlEnableEvents.htm" title="Б.3.6.1. rdsctrlEnableEvents &ndash; разрешение реакции на события">rdsctrlEnableEvents</a></span>,
+<span class="cpp"><a href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a></span>,
+<span class="cpp"><a href="rdsctrlRegisterEventMessage.htm" title="Б.3.6.3. rdsctrlRegisterEventMessage &ndash; регистрация оконного сообщения для реакции на событие">rdsctrlRegisterEventMessage</a></span>,
+<span class="cpp"><a href="RDSCTRL_MSGEVENTDATA.htm#ref1" title="Структура RDSCTRL_MSGEVENTDATA">RDSCTRL_MSGEVENTDATA</a></span>,
+<span class="cpp"><a href="rdsctrlRegisterBlockMsgCallback.htm" title="Б.3.6.2. rdsctrlRegisterBlockMsgCallback &ndash; регистрация функции для реакции на сообщение от блока">rdsctrlRegisterBlockMsgCallback</a></span>,
+<span class="cpp"><a href="RDSCTRLEVENT_BLOCKMSG.htm" title="Б.2.2. RDSCTRLEVENT_BLOCKMSG &ndash; сообщение от блока">RDSCTRLEVENT_BLOCKMSG</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDSCTRL_ZOOMRECT.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDSCTRLEVENT_BLOCKMSG.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:app_rdsctrl_react">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

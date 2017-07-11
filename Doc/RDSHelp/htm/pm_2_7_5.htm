@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.7.5. Открытие модальных окон средствами Windows API</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_7">&sect;2.7. Настройка параметров блока</a></p>
+<div class="level"><p>&sect;2.7.5. Открытие модальных окон средствами Windows API</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_7_4.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_6.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_7_5_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.7. Настройка параметров блока</h3>
+<h4>&sect;2.7.5. Открытие модальных окон средствами Windows API</h4>
+<p class="abstract">Рассматривается пример модели блока, позволяющего выбрать произвольный цвет при помощи стандартного
+                диалога Windows и выдающего выбранный цвет на выход в виде целого числа. Пример иллюстрирует открытие модальных
+                окон (в данном случае &ndash; стандартного диалога) средствами Windows API.</p>
+
+
+<p>Вспомогательные объекты-окна RDS могут содержать только набор
+<a href="app_a_fields.htm" title="А.5.28.3. Типы и флаги полей ввода">стандартных элементов</a>
+(простые поля ввода, выпадающие списки, флаги, области рисования и т.п.),
+расположенных друг под другом на вкладках окна или на боковой панели. Если модели блока этого
+недостаточно, она должна организовать диалог с пользователем самостоятельно при помощи функций
+Windows API или каких-либо специальных библиотек. При этом необходимо соблюдать все
+<a href="pm_1_8.htm#light_ref9" title="Проблемы модальных окон">правила работы с модальными окнами</a>, в частности, информировать
+RDS об открытии и закрытии модального окна функциями
+<span class="cpp"><a href="rdsBlockModalWinOpen.htm" title="А.5.2.8. rdsBlockModalWinOpen &ndash; сообщение об открытии модального окна">rdsBlockModalWinOpen</a></span> и <span class="cpp"><a href="rdsBlockModalWinClose.htm" title="А.5.2.7. rdsBlockModalWinClose &ndash; сообщение о закрытии модального окна">rdsBlockModalWinClose</a></span>.
+<span id="light_ref1">Рассмотрим пример</span>,
+в котором блок будет открывать модальное окно средствами Windows.
+Чтобы не загромождать текст модели блока большим количеством вызовов API, не имеющих прямого отношения к
+RDS, в качестве модального окна будем использовать стандартный диалог выбора цвета. Это один из
+простейших диалогов, используемых в Windows, он обладает всеми свойствами модального окна и для него
+не придется писать собственную функцию обработки событий. Создадим блок, который позволяет выбрать цвет
+с помощью стандартного диалога Windows, и выдает его на свой выход &laquo;<span class="rdsvar">Color</span>&raquo; типа
+<span class="cpp">int</span>. Как принято в Windows, младший байт целого числа будет содержать интенсивность
+красной компоненты цвета, второй байт &ndash; интенсивность зеленой, а третий &ndash; интенсивность синей
+(это соответствует структуре стандартного типа <span class="cpp"><a href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a></span> в Windows API). Для
+наглядности следует задать для блока векторную картинку, связав цвет какой-нибудь геометрической фигуры
+(например, прямоугольника) с переменной &laquo;<span class="rdsvar">Color</span>&raquo;, в этом случае заданный цвет будет отражаться
+на внешнем виде блока в режимах <a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a>
+и <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a>.</p>
+
+<p>Блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">Color</td>
+<td class="center">int</td>
+<td class="center">4</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Поскольку этот блок не имеет
+<a href="pm_1_4.htm#ref8" title="Личная область данных блока">личной области данных</a>, не работает с
+<a href="pm_1_6.htm#ref1" title="Динамическая переменная">динамическими переменными</a> и не участвует в
+расчете, его модель будет достаточно простой:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> ModalWindowTest(<span class="kw">int</span> CallMode,
+                                <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                                <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define Color  (*((int *)(pStart+2)))</span>
+    <span class="rem">// Вспомогательная структура для работы с диалогом цвета</span>
+    CHOOSECOLOR cc;
+    <span class="rem">// Массив дополнительных цветов для диалога</span>
+    <span class="kw">static</span> <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> CustomColors[<span class="const">16</span>]=
+                    {<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>};
+    <span class="rem">// Возвращаемое функцией модели значение</span>
+    <span class="kw">int</span> result=<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+    <span class="rem">// Вспомогательная переменная – результат вызова диалога</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSI}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Функция настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="rem">// Установка параметров структуры для работы с диалогом</span>
+          memset(&amp;cc,<span class="const">0</span>,<span class="kw">sizeof</span>(cc));
+          cc.lStructSize=<span class="kw">sizeof</span>(cc);
+          cc.hwndOwner=<span id="light_ref2"><a class="hidden" href="rdsGetAppWindowHandle.htm" title="А.5.2.18. rdsGetAppWindowHandle &ndash; дескриптор главного окна RDS">rdsGetAppWindowHandle</a></span>();
+          cc.lpCustColors=CustomColors;
+          cc.rgbResult=Color;
+          cc.Flags=CC_RGBINIT;
+          <span class="rem">// Уведомление RDS об открытии модального окна</span>
+          <span id="light_ref3"><a class="hidden" href="rdsBlockModalWinOpen.htm" title="А.5.2.8. rdsBlockModalWinOpen &ndash; сообщение об открытии модального окна">rdsBlockModalWinOpen</a></span>(NULL);
+          <span class="rem">// Вызов диалога</span>
+          ok=<span id="light_ref4">ChooseColor</span>(&amp;cc);
+          <span class="rem">// Уведомление RDS о закрытии модального окна</span>
+          <span id="light_ref5"><a class="hidden" href="rdsBlockModalWinClose.htm" title="А.5.2.7. rdsBlockModalWinClose &ndash; сообщение о закрытии модального окна">rdsBlockModalWinClose</a></span>(NULL);
+          <span class="kw">if</span>(ok) <span class="rem">// Пользователь выбрал цвет</span>
+            { <span class="rem">// Запись цвета в Color</span>
+              Color=cc.rgbResult;
+              <span class="rem">// Установка этого значения Color по умолчанию</span>
+              <span class="rem">// (2 – порядковый номер переменной Color в блоке)</span>
+              <span id="light_ref6"><a class="hidden" href="rdsSetBlockVarDefValueByCur.htm" title="А.5.14.16. rdsSetBlockVarDefValueByCur &ndash; сделать текущее значение переменной блока значением по умолчанию">rdsSetBlockVarDefValueByCur</a></span>(BlockData-&gt;Block,<span class="const">2</span>);
+              <span class="rem">// Возвращаемое значение должно сигнализировать о наличии изменений в схеме</span>
+              result=<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>;
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> result;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef Color</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Для работы с диалогом выбора цвета требуется специальная структура <span class="cpp">CHOOSECOLOR</span>,
+поэтому в начале функции модели описана вспомогательная переменная <span class="cpp">cc</span> этого типа.
+Перед вызовом диалога в поля этой структуры записываются различные параметры, определяющие вид и
+поведение диалога, а после закрытия окна из нее можно считать цвет, выбранный пользователем. Кроме этой
+структуры для работы диалога нужен массив из 16 значений типа <span class="cpp">COLORREF</span> для
+хранения цветов, определенных пользователем (подробнее см. описание Windows API). Этот массив также
+описан в начале функции модели. Он объявлен статическим, чтобы определенные пользователем цвета сохранялись
+между вызовами диалога и были доступны всем блокам с этой моделью. Дополнительно описывается целая переменная
+&ndash; результат функции модели <span class="cpp">result</span>, которой исходно присваивается константа
+<span class="cpp"><a href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a></span> (если пользователь выберет другой цвет в функции настройки, этой переменной
+будет присвоено значение <span class="cpp"><a href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a></span>), и вспомогательная логическая переменная
+<span class="cpp">ok</span>, которой позднее будет присвоен результат вызова функции диалога.</p>
+
+<p>При вызове модели в режиме <span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> переданная строка типа переменных сравнивается
+со строкой &laquo;{SSI}&raquo; &ndash; кроме двух
+<a href="pm_1_5.htm#ref4" title="Обязательные сигналы простого блока">обязательных сигналов</a>
+блок должен иметь целую переменную, в которую будет записываться цвет. При вызове функции настройки блока
+(<span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>) прежде всего инициализируется структура <span class="cpp">сс</span> типа
+<span class="cpp">CHOOSECOLOR</span>, необходимая для стандартного диалога выбора цвета. Сначала при
+помощи функции <span class="cpp">memset</span> вся структура заполняется нулевыми байтами, после чего в поле
+<span class="cpp">lStructSize</span> записывается размер самой структуры. Это обычная практика при работе с
+Windows API &ndash; функция <span class="cpp">ChooseColor</span>, в которую будет передан указатель на
+эту структуру, сможет проверить, соответствует ли размер структуры требованиям функции. В поле
+<span class="cpp">hwndOwner</span> записывается дескриптор главного окна приложения, полученный
+при помощи сервисной функции RDS <span class="cpp"><a href="rdsGetAppWindowHandle.htm" title="А.5.2.18. rdsGetAppWindowHandle &ndash; дескриптор главного окна RDS">rdsGetAppWindowHandle</a></span>. Это нужно для того,
+чтобы открывающееся модальное окно было привязано к главному окну RDS. В поле
+<span class="cpp">lpCustColors</span> записывается указатель на статический массив для шестнадцати пользовательских
+цветов <span class="cpp">CustomColors</span>, описанный в начале функции модели. В поле
+<span class="cpp">rgbResult</span> записывается исходное значение цвета, которое пользователь будет
+изменять в диалоге, взятое из переменной <span class="cpp">Color</span>. Наконец, в поле
+<span class="cpp">Flags</span> записывается стандартная константа <span class="cpp">CC_RGBINIT</span>,
+приказывающая диалогу взять исходное значение цвета из поля <span class="cpp">rgbResult</span> этой структуры
+перед открытием окна. Теперь структура <span class="cpp">сс</span> готова к вызову диалога.</p>
+
+<p>Перед открытием любого модального окна (в данном случае &ndash; перед вызовом диалога) необходимо
+уведомить об этом RDS при помощи функции <span class="cpp"><a class="hidden" href="rdsBlockModalWinOpen.htm" title="А.5.2.8. rdsBlockModalWinOpen &ndash; сообщение об открытии модального окна">rdsBlockModalWinOpen</a></span>. Эта функция
+принимает единственный параметр &ndash;
+<a href="app_ids.htm#light_ref1" title="Идентификатор блока">идентификатор блока</a>, открывающего модальное окно. В данном случае
+окно открывается изнутри функции модели блока, поэтому RDS в состоянии самостоятельно определить,
+модель какого блока в данный момент работает, и вместо идентификатора блока можно передать значение
+<span class="cpp">NULL</span> (при желании можно было явно указать идентификатор этого блока, вызвав функцию
+с параметром <span class="cpp">BlockData-&gt;Block</span>). Теперь можно открыть окно диалога, вызвав функцию
+Windows API <span class="cpp">ChooseColor</span> и передав в нее указатель на структуру <span class="cpp">cc</span>.
+Когда пользователь закроет окно, функция вернет <span class="cpp">TRUE</span>, если он нажал кнопку
+&laquo;<span class="menu">OK</span>&raquo; (при этом в поле <span class="cpp">rgbResult</span> структуры <span class="cpp">cc</span>
+будет записан выбранный цвет), или <span class="cpp">FALSE</span>, если он нажал кнопку
+&laquo;<span class="menu">Отмена</span>&raquo;. Возвращенное функцией значение записывается во вспомогательную переменную
+<span class="cpp">ok</span> и будет проанализировано позднее. После вызова функции диалога модель информирует
+RDS о закрытии модального окна при помощи сервисной функции <span class="cpp"><a class="hidden" href="rdsBlockModalWinClose.htm" title="А.5.2.7. rdsBlockModalWinClose &ndash; сообщение о закрытии модального окна">rdsBlockModalWinClose</a></span>.</p>
+
+<p>Теперь, когда модальное окно закрыто, и RDS знает об этом, можно разобраться с цветом,
+выбранным пользователем. Если пользователь закрыл окно кнопкой &laquo;<span class="menu">OK</span>&raquo;, значение вспомогательной
+логической переменной <span class="cpp">ok</span> будет истинно. При этом выбранный пользователем цвет
+записывается в переменную блока <span class="cpp">Color</span> из поля структуры
+<span class="cpp">cc.rgbResult</span>. Может показаться, что этого достаточно, однако присвоение нового
+значения переменной <span class="cpp">Color</span> изменяет только ее текущее значение, которое не
+запоминается при сохранении схемы. Кроме того, при первом же сбросе расчета переменной
+<span class="cpp">Color</span> будет присвоено значение по умолчанию, и выбранный пользователем цвет будет
+потерян. Чтобы этого не произошло, нужно кроме текущего значения переменной <span class="cpp">Color</span> изменить
+еще и ее значение по умолчанию. Для этого используется сервисная функция RDS
+<span class="cpp"><a href="rdsSetBlockVarDefValueByCur.htm" title="А.5.14.16. rdsSetBlockVarDefValueByCur &ndash; сделать текущее значение переменной блока значением по умолчанию">rdsSetBlockVarDefValueByCur</a></span>, запоминающая текущее значение переменной блока
+в качестве значения по умолчанию. Функция принимает два параметра: идентификатор блока, над переменной
+которого производится операция (<span class="cpp">BlockData-&gt;Block</span>), и порядковый номер обрабатываемой
+переменной, начиная с нуля. В данном блоке три переменных: &laquo;<span class="rdsvar">Start</span>&raquo; (номер 0),
+&laquo;<span class="rdsvar">Ready</span>&raquo; (номер 1) и &laquo;<span class="rdsvar">Color</span>&raquo; (номер 2), поэтому чтобы изменить значение
+по умолчанию у переменной <span class="cpp">Color</span>, нужно передать в функцию число 2. Таким образом,
+вызов функции <span class="cpp"><a class="hidden" href="rdsSetBlockVarDefValueByCur.htm" title="А.5.14.16. rdsSetBlockVarDefValueByCur &ndash; сделать текущее значение переменной блока значением по умолчанию">rdsSetBlockVarDefValueByCur</a></span> с параметрами
+<span class="cpp">BlockData-&gt;Block</span> и 2 делает значение переменной <span class="cpp">Color</span>
+по умолчанию равным ее текущему значению, то есть цвету, только что полученному из закрытого пользователем
+диалога. После этого переменной <span class="cpp">result</span> присваивается константа
+<span class="cpp"><a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a></span>, чтобы возвращаемое функцией значение сообщило RDS
+о наличии изменений в схеме.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/ColorDialog.png" width="379" height="403" alt="Вызов модального диалога из функции настройки блока" />
+<p id="light_pic1">Рис.&nbsp;53. Вызов модального диалога<br />из функции настройки блока</p>
+</div></div>
+
+
+<p>Чтобы проверить работу этой модели, нужно установить флаг
+&laquo;<span class="menu">блок имеет функцию настройки</span>&raquo; в
+<a href="pm_1_4.htm#pic3" title="Параметры блока &ndash; модель и реакции">окне параметров блока</a> и, для наглядности,
+задать блоку векторную картинку с какой-нибудь простой геометрической фигурой (например,
+<a href="um_2_10_2.htm" title="&sect;2.10.2. Рисование прямоугольников и эллипсов">прямоугольником</a>),
+цвет которой <a href="um_2_10_2.htm#ref6" title="Связи цвета элемента">связан</a> с переменной блока &laquo;<span class="rdsvar">Color</span>&raquo;. Теперь,
+если выбрать в контекстном меню блока пункт &laquo;<span class="menu">настройка</span>&raquo;, задать в открывшемся окне диалога
+какой-нибудь цвет
+(<a href="#pic1" title="Вызов модального диалога из функции настройки блока">рис.&nbsp;53</a>) и перейти из режима
+<a href="pm_1_3.htm#ref1" title="Режим редактирования">редактирования</a> в режим моделирования,
+картинка блока должна окраситься в выбранный цвет.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_7_4.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_6.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

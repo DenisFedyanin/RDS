@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.14.1. Запуск и остановка расчета</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_14">&sect;2.14. Программное управление расчетом</a></p>
+<div class="level"><p>&sect;2.14.1. Запуск и остановка расчета</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_13_6.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_14_2.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_14_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_14_1_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3>&sect;2.14. Программное управление расчетом</h3>
+<p class="abstract">Рассматриваются сервисные функции, позволяющие останавливать, перезапускать и сбрасывать расчет. С
+            их помощью можно выполнять сложные итерационные вычисления.</p>
+<h4>&sect;2.14.1. Запуск и остановка расчета</h4>
+<p class="abstract">Описывается использование сервисных функций для запуска и остановки расчета. Приводится
+                пример блока, запускающего и останавливающего расчет при нажатии кнопки мыши на его изображении,
+                а также останавливающего расчет поступлении сигнала на вход.</p>
+
+
+<p>Из всех функций управления <a href="pm_1_3.htm#ref3" title="Режим расчета">расчетом</a> чаще всего используется функция 
+остановки расчета 
+<span class="cpp"><span id="light_ref1"><a href="rdsStopCalc.htm" title="А.5.2.42. rdsStopCalc &ndash; остановка расчета">rdsStopCalc</a></span></span>. Обычно пользователь запускает расчет самостоятельно, после чего 
+один из блоков схемы останавливает его, когда результат расчета получен. 
+<span id="ref2">Например</span>, стандартный блок 
+управления динамическим расчетом 
+(<span id="light_ref2"><a href="pm_2_6_1.htm#ref10" title="Блок управления динамическим расчетом (планировщик)">планировщик</a></span>) может останавливать расчет 
+по истечении заданного в его настройках времени, стандартный блок параметрической оптимизации останавливает расчет 
+тогда, когда значения оптимизируемых параметров определены с заданной точностью, и т.д. Необходимость 
+в программном запуске расчета функцией <span class="cpp"><span id="light_ref3"><a href="rdsStartCalc.htm" title="А.5.2.41. rdsStartCalc &ndash; запуск расчета">rdsStartCalc</a></span></span> возникает значительно реже, 
+однако, в некоторых случаях, она позволяет сделать работу со схемой более удобной. Например, если 
+моделируемая система состоит из нескольких схем, работающих на разных машинах и обменивающихся данными по 
+сети, имеет смысл при запуске расчета в одной из таких схем автоматически запускать расчет во 
+всех остальных, иначе пользователю придется постоянно перемещаться от машины к машине и запускать расчет 
+каждой из схем вручную. Возможны и другие случаи, когда программный запуск расчета может быть полезен: 
+блок может запустить расчет сразу после загрузки схемы, при срабатывании какого-либо аппаратного устройства 
+и т.п.</p>
+
+<p>Функции <span class="cpp"><a class="hidden" href="rdsStartCalc.htm" title="А.5.2.41. rdsStartCalc &ndash; запуск расчета">rdsStartCalc</a></span> и <span class="cpp"><a class="hidden" href="rdsStopCalc.htm" title="А.5.2.42. rdsStopCalc &ndash; остановка расчета">rdsStopCalc</a></span> не имеют 
+параметров, поэтому работать с ними несложно: для того, чтобы запустить расчет, нужно вызвать 
+<span class="cpp"><a class="hidden" href="rdsStartCalc.htm" title="А.5.2.41. rdsStartCalc &ndash; запуск расчета">rdsStartCalc</a></span>, чтобы остановить &ndash; 
+<span class="cpp"><a class="hidden" href="rdsStopCalc.htm" title="А.5.2.42. rdsStopCalc &ndash; остановка расчета">rdsStopCalc</a></span>. Следует только помнить, что расчет запускается и 
+останавливается не мгновенно, вызов этих функций только начинает процедуру запуска или остановки. 
+Вызвав <span class="cpp"><a class="hidden" href="rdsStopCalc.htm" title="А.5.2.42. rdsStopCalc &ndash; остановка расчета">rdsStopCalc</a></span>, не следует ожидать, что, когда функция вернет управление 
+вызвавшей программе, расчет будет уже остановлен. На самом деле расчет остановится только после завершения 
+текущего такта, когда модели всех блоков сработают и данные передадутся по связям. Функция 
+<span class="cpp"><a class="hidden" href="rdsStartCalc.htm" title="А.5.2.41. rdsStartCalc &ndash; запуск расчета">rdsStartCalc</a></span> тоже не запускает расчет немедленно, он не запустится, по крайней 
+мере, до тех пор, пока не завершится вызвавшая функцию модель блока (возможно, перед запуском расчета 
+будут выполнены еще какие-то действия, например, 
+<a href="pm_2_13_5.htm" title="&sect;2.13.5. Отложенный вызов функций блоков">отложенные вызовы</a> функций блоков).</p>
+
+<p>Напишем модель, которая будет запускать и останавливать расчет по щелчку мыши на изображении блока, 
+а также останавливать расчет по сигналу, поступившему на вход (очевидно, запускать расчет по 
+сигналу не получится, поскольку при остановленном расчете данные по связям не передаются). Поскольку никаких 
+других входов, кроме сигнального входа остановки расчета, у нашего блока не будет, в качестве этого входа 
+можно использовать 
+<a href="um_1_4.htm#ref25" title="Сигнал запуска блока">фиксированный сигнал запуска модели блока</a>. Обычно он называется 
+<span class="cpp">Start</span>, но мы переименуем его в <span class="cpp">Stop</span>, поскольку подача на 
+него сигнала будет приводить к остановке расчета. Таким образом, блок будет иметь следующую структуру 
+переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Stop</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Выходной сигнал <span class="cpp"><a href="um_1_4.htm#ref27" title="Сигнал готовности блока">Ready</a></span> нам, в данном случае, не нужен, 
+но этот выход должен обязательно присутствовать в любом 
+<a href="pm_1_2.htm#light_ref3" title="Простой блок">простом блоке</a> RDS, поэтому удалить его мы не сможем. При 
+поступлении сигнала на вход <span class="cpp">Stop</span> модель автоматически запустится, поэтому в реакции 
+на такт расчета <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span> нужно просто вызвать функцию 
+<span class="cpp"><a class="hidden" href="rdsStopCalc.htm" title="А.5.2.42. rdsStopCalc &ndash; остановка расчета">rdsStopCalc</a></span> без каких-либо проверок. Разумеется, в параметрах блока нужно 
+отключить <a href="pm_1_4.htm#ref6" title="Запуск модели каждый такт">флаг запуска каждый такт</a>, иначе он будет останавливать расчет 
+постоянно, независимо от значения входа <span class="cpp">Stop</span>.</p>
+
+<p>Сама модель будет достаточно простой:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> StopCalc(<span class="kw">int</span> CallMode,
+        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="kw">switch</span>(CallMode)
+      { <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>: <span class="rem">// Один такт расчета</span>
+          <a class="hidden" href="rdsStopCalc.htm" title="А.5.2.42. rdsStopCalc &ndash; остановка расчета">rdsStopCalc</a>();
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <span id="light_ref4"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>: <span class="rem">// Нажатие кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>: <span class="rem">// Вызов функции настройки</span>
+          <span class="kw">if</span>(<span id="light_ref5"><a class="hidden" href="rdsCalcProcessIsRunning.htm" title="А.5.2.10. rdsCalcProcessIsRunning &ndash; RDS в режиме расчета">rdsCalcProcessIsRunning</a></span>()) <span class="rem">// Расчет сейчас запущен</span>
+            <a class="hidden" href="rdsStopCalc.htm" title="А.5.2.42. rdsStopCalc &ndash; остановка расчета">rdsStopCalc</a>();
+          <span class="kw">else</span> <span class="rem">// Расчет сейчас остановлен</span>
+            <a class="hidden" href="rdsStartCalc.htm" title="А.5.2.41. rdsStartCalc &ndash; запуск расчета">rdsStartCalc</a>();
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В такте расчета, как и было написано выше, мы просто останавливаем расчет: если модель запустилась в 
+этом режиме, значит, на первый сигнальный вход пришел сигнал, а этот вход мы используем для остановки расчета. 
+Мы не обнуляем сигнал <span class="cpp">Stop</span> после срабатывания, как мы это делали с 
+<a href="pm_2_5_2.htm" title="&sect;2.5.2. Особенности использования сигналов">другими сигнальными входами</a>, поскольку первый сигнальный вход 
+блока обнуляется автоматически при запуске модели. Если пользователь нажал на изображении блока кнопку 
+мыши (режим <span class="cpp"><a href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>) или в 
+<a href="pm_1_3.htm#ref1" title="Режим редактирования">режиме редактирования</a> вызвал функцию настройки 
+(<span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>), вызывается сервисная функция 
+<span class="cpp"><a href="rdsCalcProcessIsRunning.htm" title="А.5.2.10. rdsCalcProcessIsRunning &ndash; RDS в режиме расчета">rdsCalcProcessIsRunning</a></span>, которая возвращает <span class="cpp">TRUE</span>, если расчет 
+в данный момент работает, и <span class="cpp">FALSE</span>, если он остановлен. Если расчет работает, 
+мы его останавливаем, если нет &ndash; запускаем. Таким образом, нажатие кнопки мыши будет то запускать, 
+то останавливать расчет.</p>
+
+<p>Реакция на вызов функции настройки добавлена в модель для того, чтобы блок мог запустить расчет 
+в режиме редактирования. Если разрешить в параметрах блока с этой моделью вызов функции настройки 
+(см. <a href="pm_1_4.htm#pic3" title="Параметры блока &ndash; модель и реакции">рис.&nbsp;7</a>)
+и назвать ее &laquo;Запустить расчет&raquo;, выбор пункта контекстного меню с этим 
+названием приведет к вызову модели в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>. В этот 
+момент, поскольку RDS находится в режиме редактирования, расчет работать не будет, 
+<span class="cpp"><a class="hidden" href="rdsCalcProcessIsRunning.htm" title="А.5.2.10. rdsCalcProcessIsRunning &ndash; RDS в режиме расчета">rdsCalcProcessIsRunning</a></span> вернет <span class="cpp">FALSE</span>, и расчет будет 
+запущен вызовом <span class="cpp"><a class="hidden" href="rdsStartCalc.htm" title="А.5.2.41. rdsStartCalc &ndash; запуск расчета">rdsStartCalc</a></span>.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/CalcControl_StartStop.png" width="185" height="64" alt="Тестирование блока запуска и остановки расчета" />
+<p id="light_pic1">Рис.&nbsp;93. Тестирование блока<br />запуска и остановки расчета</p>
+</div></div>
+
+
+<p>Для тестирования этого блока можно подключить к его входу &laquo;<span class="rdsvar">Stop</span>&raquo; выход 
+&laquo;<span class="rdsvar">Click</span>&raquo; стандартной кнопки из библиотеки RDS 
+(<a href="#pic1" title="Тестирование блока запуска и остановки расчета">рис.&nbsp;93</a>) и 
+<a href="pm_2_12_1.htm#pic1" title="Включение реакции на мышь в параметрах блока">разрешить в параметрах блока реакцию на мышь</a>. 
+Теперь нажатие на кнопку при работающем расчете приведет к его остановке. Нажатие на изображение блока 
+будет запускать расчет, если RDS находится в режиме 
+<a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a>, или останавливать его, если RDS находится в режиме расчета.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_13_6.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_14_2.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_14_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

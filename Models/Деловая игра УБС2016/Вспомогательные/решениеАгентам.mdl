@@ -1,0 +1,44 @@
+$BC55MODEL 0.0.0 2016.10.10.18.37.1 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$VARS
+  signal name "Start" in menu run default 0
+  signal name "Ready" out menu default 0
+  matrix int name "Knapsack" in menu run default "[ ] 0"
+  matrix int name "Projects" in menu default "[ ] 0"
+  matrix int name "MergedProjects" in menu default "[ ] 0"
+  matrix int name "ToAgents" out menu default "[ ] 0"
+  matrix int name "SupportedProjects" out menu default "[ ] 0"
+$ENDDECL
+$MODEL
+SupportedProjects = Projects;
+SupportedProjects.Resize(Projects.Rows(),4,TRUE);
+int SPsize = SupportedProjects.Rows();
+// find knapsack items in all items (var Projects)
+for( int i = 0 ; i < Knapsack.Rows() ; i++ ) {
+  int j = 0 ;
+  while( j < SPsize && 
+		!(SupportedProjects[j][1] == Knapsack[i][0] &&
+		  SupportedProjects[j][2] == Knapsack[i][1] &&
+  		  SupportedProjects[j][3] == 0))
+  { j++; }
+  // when found mark it
+  if( j < SPsize ) { SupportedProjects[j][3] = 1; }
+  else {}
+}
+$OPTIONS
+  tabs $MODEL
+  window pos 58 203 size 1030 568 hdiv 337 vdiv 220 fdiv 208
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 1
+  ignorewarnings 0
+  customerrmsg 0
+  autoreadonlyeditor 0
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

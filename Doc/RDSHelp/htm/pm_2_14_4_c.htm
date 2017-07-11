@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.14.4. Отдельный расчет подсистемы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_14">&sect;2.14. Программное управление расчетом</a></p>
+<div class="level"><p>&sect;2.14.4. Отдельный расчет подсистемы</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_14_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_14_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_14_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_14_4.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделями блоков, иллюстрирующих
+отдельный расчет подсистемы. Библиотека содержит три модели:</p>
+
+<ul>
+  <li><span class="cpp">SetExclusiveCalc</span> &ndash; блок, включающий и выключающий
+  отдельный расчет <a href="pm_1_2.htm#ref7" title="Родительская подсистема">родительской подсистемы</a> по входным
+  сигналам;</li>
+  <li><span class="cpp">ChgCalcTickCount</span> &ndash; блок, увеличивающий свой выход
+  на единицу каждый такт после изменения своего вещественного входа (нужен для
+  построения графика &laquo;выбросов&raquo;);</li>
+  <li><span class="cpp">TestKxC</span> &ndash; блок, вычисляющий значение выхода
+  &laquo;<span class="rdsvar">y</span>&raquo; по формуле &laquo;y=K&times;x+C&raquo; (копия 
+  модели из <a href="pm_2_7_4.htm" title="&sect;2.7.4. Хранение настроечных параметров в переменных блока">&sect;2.7.4</a>, сюда
+  она включена для того, чтобы все модели из рассматриваемых примеров схем 
+  находились в одной библиотеке).</li>
+</ul>
+
+<pre class="cpp">  <span class="rem">// Отдельный расчет подсистемы</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,<a class="hidden" href="rdsMessageBox.htm#light_ref7" title="MB_OK">MB_OK</a>);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Включение/выключение отдельного расчета</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> SetExclusiveCalc(<span class="kw">int</span> CallMode,
+          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define Lock   (*((char *)(pStart+2)))</span>
+  <span class="preproc">#define Unlock (*((char *)(pStart+3)))</span>
+  <span class="preproc">#define Locked (*((char *)(pStart+4)))</span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSSSL}"</span>)?
+              <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">if</span>(Lock) <span class="rem">// Поступил сигнал включения отдельного расчета</span>
+            { <span class="kw">if</span>(Locked) <span class="rem">// Отдельный расчет уже включен</span>
+                { Lock=<span class="const">0</span>; <span class="rem">// Сбрасываем сигнал, завершаем модель</span>
+                  <span class="kw">break</span>;
+                }
+              <span class="rem">// Включаем отдельный расчет родительской подсистемы</span>
+              <span class="kw">if</span>(<a class="hidden" href="rdsSetExclusiveCalc.htm" title="А.5.2.35. rdsSetExclusiveCalc &ndash; выделенный расчет подсистемы">rdsSetExclusiveCalc</a>(BlockData-&gt;Parent,TRUE))
+                { <span class="rem">// Включить удалось</span>
+                  Lock=<span class="const">0</span>;   <span class="rem">// Сбрасываем сигнал</span>
+                  Locked=<span class="const">1</span>; <span class="rem">// Запоминаем факт включения</span>
+                }
+            }
+          <span class="kw">if</span>(Unlock) <span class="rem">// Поступил сигнал выключения</span>
+            { <span class="kw">if</span>(Locked) <span class="rem">// Отдельный расчет был включен - выключаем</span>
+                <a class="hidden" href="rdsSetExclusiveCalc.htm" title="А.5.2.35. rdsSetExclusiveCalc &ndash; выделенный расчет подсистемы">rdsSetExclusiveCalc</a>(BlockData-&gt;Parent,FALSE);
+              Locked=Lock=Unlock=<span class="const">0</span>; <span class="rem">// Сбрасываем сигналы и состояние</span>
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef Locked</span>
+  <span class="preproc">#undef Unlock</span>
+  <span class="preproc">#undef Lock</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Счетчик тактов</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+      <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> ChgCalcTickCount(<span class="kw">int</span> CallMode,
+                          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define Count   (*((int *)(pStart+2)))</span>
+  <span class="preproc">#define Stop    (*((int *)(pStart+6)))</span>
+  <span class="preproc">#define Enabled (*((char *)(pStart+10)))</span>
+  <span class="preproc">#define x       (*((double *)(pStart+11)))</span>
+  <span class="preproc">#define xold    (*((double *)(pStart+19)))</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSIILDD}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Запуск расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a>:
+          Start=<span class="const">1</span>; <span class="rem">// Принудительный запуск модели в следующем такте</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Один такт моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">if</span>(!Enabled) <span class="rem">// Работа блока не разрешена</span>
+            { xold=x; <span class="rem">// Запоминаем значение входа</span>
+              <span class="kw">break</span>;
+            }
+          <span class="rem">// Работа блока разрешена</span>
+          <span class="kw">if</span>(xold==x &amp;&amp; Count==<span class="const">0</span>)
+            <span class="kw">break</span>; <span class="rem">// Вход не изменился или счет не идет</span>
+          <span class="rem">// Изменился вход (x!=xold) или уже считаем (Count!=0)</span>
+          Count++; <span class="rem">// Увеличиваем число тактов</span>
+          <span class="kw">if</span>(Count&gt;Stop) <span class="rem">// Пора остановить расчет</span>
+            <a class="hidden" href="rdsStopCalc.htm" title="А.5.2.42. rdsStopCalc &ndash; остановка расчета">rdsStopCalc</a>();
+          Start=<span class="const">1</span>; <span class="rem">// Принудительный перезапуск модели</span>
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef xold</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Enabled</span>
+  <span class="preproc">#undef Stop</span>
+  <span class="preproc">#undef Count</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+
+  <span class="rem">//=========================================================================</span>
+  <span class="rem">// Блок y=Kx+C из прошлых примеров (нужен только как пример алгебраического</span>
+  <span class="rem">// блока, в его модель после </span><a href="pm_2_7_4.htm" title="&sect;2.7.4. Хранение настроечных параметров в переменных блока"><span class="rem">&sect;2.7.4</span></a><span class="rem"> не внесено никаких изменений)</span>
+  <span class="rem">//=========================================================================</span>
+  <span class="rem">// Проверка наличия связи у входа блока</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> CheckBlockInputConnection(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,            <span class="rem">// Идентификатор блока</span>
+    <span class="kw">int</span> num,                      <span class="rem">// Номер входа</span>
+    <a class="hidden" href="RDS_VARDESCRIPTION.htm#ref2" title="Указатель на RDS_VARDESCRIPTION">RDS_PVARDESCRIPTION</a> pVarDescr)<span class="rem">// Указатель на структуру</span>
+                                  <span class="rem">// описания переменной</span>
+  { <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> c; <span class="rem">// Идентификатор связи</span>
+    <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">RDS_POINTDESCRIPTION</a> PtDescr; <span class="rem">// Структура описания точки связи</span>
+
+    <span class="rem">// Заполнение служебных полей структур их размерами</span>
+    PtDescr.servSize=<span class="kw">sizeof</span>(PtDescr);
+    pVarDescr-&gt;servSize=<span class="kw">sizeof</span>(<a class="hidden" href="RDS_VARDESCRIPTION.htm#ref1" title="Структура RDS_VARDESCRIPTION">RDS_VARDESCRIPTION</a>);
+
+    <span class="rem">// Получение описания переменной блока по номеру</span>
+    <span class="kw">if</span>(<a class="hidden" href="rdsGetBlockVar.htm" title="А.5.14.10. rdsGetBlockVar &ndash; переменная блока по номеру">rdsGetBlockVar</a>(Block,num,pVarDescr)==NULL)
+      <span class="kw">return</span> FALSE; <span class="rem">// Нет такой переменной</span>
+
+    <span class="rem">// Перебор всех связей, подключенных к этому блоку</span>
+    c=NULL;
+    <span class="kw">for</span>(;;)
+      { <span class="rem">// Найти связь, следующую за c, и заполнить структуру</span>
+        <span class="rem">// описания точки соединения PtDescr</span>
+        c=<a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a>(Block,c,TRUE,FALSE,&amp;PtDescr);
+        <span class="kw">if</span>(c==NULL) <span class="rem">// Больше нет связей</span>
+          <span class="kw">break</span>;
+        <span class="rem">// Найдена очередная связь – сравнение имени заданной</span>
+        <span class="rem">// переменной с именем переменной точки этой связи</span>
+        <span class="kw">if</span>(strcmp(PtDescr.VarName,pVarDescr-&gt;Name)==<span class="const">0</span>)
+          <span class="kw">return</span> TRUE; <span class="rem">// Имена совпали – есть связь, соединенная</span>
+                       <span class="rem">// с переменной блока</span>
+      }
+    <span class="rem">// Все подключенные связи перебраны, а связь, подключенная</span>
+    <span class="rem">// к заданной переменной так и не была найдена</span>
+    <span class="kw">return</span> FALSE;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Добавление поля для ввода или индикации вещественного параметра</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> AddWinEditOrDisplayDouble(
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window, <span class="rem">// Идентификатор объекта-окна</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,  <span class="rem">// Блок</span>
+    <span class="kw">int</span> varnum,         <span class="rem">// Номер переменной в блоке</span>
+    <span class="kw">int</span> ctrlnum,        <span class="rem">// Идентификатор поля ввода в окне</span>
+    <span class="kw">char</span> *title)        <span class="rem">// Заголовок поля или NULL</span>
+  { <span class="rem">// Структура описания переменной блока</span>
+    <a class="hidden" href="RDS_VARDESCRIPTION.htm#ref1" title="Структура RDS_VARDESCRIPTION">RDS_VARDESCRIPTION</a> VarDescr;
+    <span class="rem">// Проверка наличия связи у переменной varnum в блоке Block</span>
+    <span class="rem">// и заполнение структуры VarDescr описанием переменной</span>
+    BOOL conn=CheckBlockInputConnection(Block,varnum,&amp;VarDescr);
+
+    <span class="kw">if</span>(conn) <span class="rem">// К переменной подключена связь</span>
+      { <span class="rem">// Вспомогательные переменные</span>
+        <span class="kw">char</span> *caption; <span class="rem">// Заголовок поля</span>
+        <span class="kw">double</span> *cur; <span class="rem">// Указатель на данные переменной</span>
+        <span class="rem">// Заголовок поля формируется из имени переменной и</span>
+        <span class="rem">// текста “подключена связь"</span>
+        caption=<a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a>(title?title:VarDescr.Name,
+                             <span class="str">" (подключена связь)"</span>,
+                             FALSE);
+        <span class="rem">// Добавление поля для индикации текущего значения</span>
+        <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,ctrlnum,<a class="hidden" href="app_a_fields.htm#light_ref7" title="RDS_FORMCTRL_DISPLAY">RDS_FORMCTRL_DISPLAY</a>,
+                       caption,<span class="const">80</span>);
+        <span class="rem">// Освобождение динамически сформированной строки заголовка поля</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(caption);
+        <span class="rem">// Получение указателя на данные переменной</span>
+        cur=(<span class="kw">double</span>*)<a class="hidden" href="rdsGetBlockVarBase.htm" title="А.5.14.11. rdsGetBlockVarBase &ndash; базовый адрес переменной блока по ее номеру">rdsGetBlockVarBase</a>(Block,varnum,NULL);
+        <span class="rem">// Проверка – переменная должна существовать и иметь тип double</span>
+        <span class="kw">if</span>(cur!=NULL &amp;&amp; VarDescr.Type==<span class="str">'D'</span>)
+          <span class="rem">// Занесение текущего значения переменной в поле</span>
+          <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,ctrlnum,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,
+                             *cur);
+      }
+    <span class="kw">else</span> <span class="rem">// К переменной не подключена связь</span>
+      { <span class="rem">// Вспомогательная переменная для значения по умолчанию</span>
+        <span class="kw">char</span> *defval;
+        <span class="rem">// Получение строки со значением переменной по умолчанию</span>
+        <span class="rem">// (необходимо потом освободить при помощи rdsFree)</span>
+        defval=<a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a>(Block,varnum,NULL);
+        <span class="rem">// Добавление поля для ввода параметра</span>
+        <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,ctrlnum,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,
+                       title?title:VarDescr.Name,<span class="const">80</span>);
+        <span class="rem">// Занесение в поле ввода значения перменной по умолчанию</span>
+        <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,ctrlnum,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,defval);
+        <span class="rem">// Освобождение динамически сформированной строки</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(defval);
+      }
+    <span class="rem">// Возврат: TRUE – есть связь, FALSE – нет связи</span>
+    <span class="kw">return</span> conn;
+  }
+  <span class="rem">//=========================================</span>
+
+
+  <span class="rem">// Функция настройки K и C для модели блока y=Kx+C</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> TestKxCSetup(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block, <span class="rem">// Идентификатор блока</span>
+    <span class="kw">int</span> numK,          <span class="rem">// Номер переменной K в блоке</span>
+    <span class="kw">int</span> numC)          <span class="rem">// Номер переменной C в блоке</span>
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window; <span class="rem">// Идентификатор вспомогательного объекта</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;            <span class="rem">// Пользователь нажал "OK"</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> K_conn,C_conn; <span class="rem">// Флаги наличия связей у K и C</span>
+
+    <span class="rem">// Создание окна</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Kx+C"</span>);
+
+    <span class="rem">// Добавление полей для ввода или индикации K и C</span>
+    <span class="rem">// (в зависимости от наличия связей)</span>
+    K_conn=AddWinEditOrDisplayDouble(window,Block,numK,<span class="const">1</span>,NULL);
+    C_conn=AddWinEditOrDisplayDouble(window,Block,numC,<span class="const">2</span>,NULL);
+
+    <span class="rem">// Открытие окна</span>
+    ok=<a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Нажата кнопка OK – запись параметров в блок</span>
+        <span class="kw">if</span>(!K_conn) <span class="rem">// У K нет связи</span>
+          { <span class="rem">// Получение строки из поля ввода</span>
+            <span class="kw">char</span> *str=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+            <span class="rem">// Установка значения переменной K по умолчанию</span>
+            <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(Block,numK,str);
+          }
+        <span class="kw">if</span>(!C_conn) <span class="rem">// У С нет связи</span>
+          { <span class="rem">// Получение строки из поля ввода</span>
+            <span class="kw">char</span> *str=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+            <span class="rem">// Установка значения переменной C по умолчанию</span>
+            <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(Block,numC,str);
+          }
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="rem">// Возвращаемое значение – истина, если нажата “OK"</span>
+    <span class="kw">return</span> ok;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция модели блока</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestKxC(<span class="kw">int</span> CallMode,
+                        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))      </span><span class="rem">// 0</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))    </span><span class="rem">// 1</span>
+  <span class="preproc">#define x      (*((double *)(pStart+2)))  </span><span class="rem">// 2</span>
+  <span class="preproc">#define K      (*((double *)(pStart+10))) </span><span class="rem">// 3</span>
+  <span class="preproc">#define C      (*((double *)(pStart+18))) </span><span class="rem">// 4</span>
+  <span class="preproc">#define y      (*((double *)(pStart+26))) </span><span class="rem">// 5</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDDDD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Запуск расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a>:
+          <span class="rem">// Если это запуск с начала, взвести Start</span>
+          <span class="kw">if</span>(((<a class="hidden" href="RDS_BFM_STARTCALC.htm#ref2" title="Указатель на RDS_STARTSTOPDATA">RDS_PSTARTSTOPDATA</a>)ExtParam)-&gt;FirstStart)
+            Start=<span class="const">1</span>; <span class="rem">// Модель запустится в первом же такте</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          y=K*x+C;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Функция настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="kw">if</span>(TestKxCSetup(BlockData-&gt;Block,<span class="const">3</span>,<span class="const">4</span>))
+            { <span class="rem">// Нажата “OK"</span>
+              Start=<span class="const">1</span>; <span class="rem">// Запустить модель в следующем такте</span>
+              <span class="kw">return</span> <a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>;
+            }
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef C</span>
+  <span class="preproc">#undef K</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_14_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_14_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_14_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

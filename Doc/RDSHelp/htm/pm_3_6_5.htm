@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.6.5. Работа с контекстным меню блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3">Глава 3. Управление RDS из других приложений</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3_6">&sect;3.6. Отображение схемы RDS в собственном окне приложения</a></p>
+<div class="level"><p>&sect;3.6.5. Работа с контекстным меню блока</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_3_6_4.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_6_6.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_6_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_3_6_5_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 3. Управление RDS из других приложений</h2>
+<h3 class="off">&sect;3.6. Отображение схемы RDS в собственном окне приложения</h3>
+<h4>&sect;3.6.5. Работа с контекстным меню блока</h4>
+<p class="abstract">В рассматриваемый пример программы добавляется вывод контекстного меню блока или подсистемы, 
+                пункты которого запрашиваются у RDS.</p>
+
+
+<p>В нашей программе мы обеспечили реакцию блоков отображаемой <a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистемы</a> на
+действия пользователя, однако, добавленные блоками в контекстное меню пункты
+(см. <a href="pm_2_12_6.htm" title="&sect;2.12.6. Добавление пунктов в контекстное меню блока">&sect;2.12.6</a>) сейчас не отображаются &ndash; за контекстное меню
+отвечает наша программа, а в ней меню пока не реализовано. Нам придется сделать все вручную: получить у
+RDS список пунктов меню блока и связанных с ними чисел-идентификаторов, сформировать из них контекстное
+меню, показать его пользователю и, если он выберет какой-либо пункт, передать его идентификатор в RDS.
+Разумеется, мы можем добавить в меню не только пункты, полученные от блока схемы, но и свои собственные, но
+в этом примере мы не будем этого делать.</p>
+
+<p><span id="ref1">Для</span>
+формирования контекстного меню и показа его пользователю мы предусмотрели функцию
+<span class="cpp">ShowPopupMenu</span>, которая вызывается из процедуры главного окна в ответ на сообщение
+<span class="cpp">WM_CONTEXTMENU</span>, и в которую передаются координаты курсора мыши на экране на момент вызова
+меню. Поскольку момент выбора пункта меню пользователем отстоит по времени от момента показа этого меню, мы
+будем записывать данные пунктов меню, полученных от RDS, в глобальный массив структур
+<span class="cpp">MenuItems</span>, а при выборе пункта меню будем обращаться к этому массиву. Структуру
+и массив опишем следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Данные пункта контекстного меню блока</span>
+  <span class="kw">struct</span> <span id="light_ref1">TPopupMenuData</span>
+  { <a class="hidden" href="pm_3_3.htm#ref3" title="Вспомогательный класс для хранения строк">TDynString</a> BlockName; <span class="rem">// Полное имя блока</span>
+    <span class="kw">int</span> MenuFunc;         <span class="rem">// Идентификатор пункта меню</span>
+    <span class="kw">int</span> MenuData;         <span class="rem">// Данные пункта меню</span>
+  };
+  <span class="preproc">#define MENUITEMSMAXCOUNT 100 </span><span class="rem">// Max число пунктов</span>
+  TPopupMenuData MenuItems[MENUITEMSMAXCOUNT]; <span class="rem">// Массив пунктов</span>
+  <span class="kw">int</span> MenuItemsCount=<span class="const">0</span>; <span class="rem">// Число пунктов в массиве</span>
+  <span class="rem">//=========================================</span></pre>
+
+<p>Структура <span class="cpp">TPopupMenuData</span> описывает данные одного пункта меню, полученные от RDS.
+В поле <span class="cpp">BlockName</span> будет храниться полное имя блока, которому принадлежит пункт меню,
+в полях <span class="cpp">MenuFunc</span> и <span class="cpp">MenuData</span> &ndash; целые идентификаторы
+этого пункта. Массив <span class="cpp">MenuItems</span> будет состоять из ста элементов &ndash; будем считать,
+что у блока не может быть больше ста пунктов контекстного меню. Фактическое число пунктов меню блока
+будет записываться в глобальную переменную <span class="cpp">MenuItemsCount</span>.</p>
+
+<p>Функция <span class="cpp">ShowPopupMenu</span> будет выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Показать контекстное меню</span>
+  <span class="rem">// (screenx,screeny) – координаты курсора</span>
+  <span class="kw">void</span> ShowPopupMenu(<span class="kw">int</span> screenx,<span class="kw">int</span> screeny)
+  { HMENU menu;
+    MENUITEMINFO mi;
+    <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> rect;
+    <a class="hidden" href="app_ids.htm#light_ref22" title="Координаты точки в Windows API">POINT</a> pt;
+    <span class="kw">int</span> cnt,type;
+    <a class="hidden" href="pm_3_3.htm#ref3" title="Вспомогательный класс для хранения строк">TDynString</a> MenuBlockName;
+
+    <span class="rem">// Проверяем наличие связи с RDS и существование порта</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+    <span class="rem">// Получаем прямоугольник порта вывода</span>
+    <span class="kw">if</span>(!GetAvailableRect(&amp;rect))
+      <span class="kw">return</span>;
+
+    <span class="rem">// Переводим экранные координаты курсора в оконные и</span>
+    <span class="rem">// проверяем попадание в порт вывода</span>
+    pt.x=screenx;
+    pt.y=screeny;
+    ScreenToClient(MainWin,&amp;pt);
+    <span class="kw">if</span>(!PtInRect(&amp;rect,pt)) <span class="rem">// не попали в порт</span>
+      <span class="kw">return</span>;
+
+    <span class="rem">// Определяем блок, попавший под курсор</span>
+    <span class="kw">if</span>(<span id="light_ref2"><a class="hidden" href="rdsctrlViewportBlockAtPos.htm" title="Б.3.7.11. rdsctrlViewportBlockAtPos &ndash; получить имя блока в указанной точке порта вывода">rdsctrlViewportBlockAtPos</a></span>(RdsLink,Viewport,pt.x,pt.y,
+        &amp;MenuBlockName))
+      type=<span id="light_ref3"><a class="hidden" href="rdsctrlReadBlockMenuItems.htm#light_ref1" title="RDSCTRL_MENUTYPE_BLK">RDSCTRL_MENUTYPE_BLK</a></span>; <span class="rem">// Нашли блок</span>
+    <span class="kw">else</span>
+      { <span class="rem">// Под курсором блока нет – получаем меню подсистемы</span>
+        type=<span id="light_ref4"><a class="hidden" href="rdsctrlReadBlockMenuItems.htm#light_ref2" title="RDSCTRL_MENUTYPE_SYS">RDSCTRL_MENUTYPE_SYS</a></span>;
+        <span class="rem">// Получаем имя подсистемы в порте вывода</span>
+        <span id="light_ref5"><a class="hidden" href="rdsctrlViewportSystem.htm" title="Б.3.7.15. rdsctrlViewportSystem &ndash; получить имя подсистемы в порте вывода">rdsctrlViewportSystem</a></span>(RdsLink,Viewport,&amp;MenuBlockName);
+      }
+    <span class="rem">// Выводим имя блока или подсистемы на индикацию</span>
+    DisplayText(MenuBlockName.c_str);
+    <span class="rem">// Теперь в MenuBlockName – имя блока, меню которого нужно</span>
+    <span class="rem">// получить, а в type – тип меню (меню блока или подсистемы)</span>
+
+    <span class="rem">// Читаем список пунктов меню блока  MenuBlockName</span>
+    cnt=<span id="light_ref6"><a class="hidden" href="rdsctrlReadBlockMenuItems.htm" title="Б.3.4.23. rdsctrlReadBlockMenuItems &ndash; считать пункты меню блока в память">rdsctrlReadBlockMenuItems</a></span>(RdsLink,MenuBlockName.c_str,type);
+    <span class="kw">if</span>(cnt==<span class="const">0</span>) <span class="rem">// Нет пунктов меню</span>
+      <span class="kw">return</span>;
+    <span class="kw">if</span>(cnt&gt;MENUITEMSMAXCOUNT) <span class="rem">// Слишком много пунктов</span>
+      cnt=MENUITEMSMAXCOUNT;
+
+    <span class="rem">// Создаем меню и добавляем в него пункты</span>
+    menu=CreatePopupMenu();
+    mi.cbSize=<span class="kw">sizeof</span>(mi);
+    mi.fMask=MIIM_DATA|MIIM_ID|MIIM_STATE|MIIM_TYPE;
+    MenuItemsCount=<span class="const">0</span>;
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;cnt;i++)
+      { <span class="rem">// Получаем указатель на структуру пункта меню i</span>
+        <span id="light_ref7"><a class="hidden" href="RDSCTRL_MENUITEM.htm#ref2" title="Указатель на RDSCTRL_MENUITEM">RDSCTRL_PMENUITEM</a></span> item=<span id="light_ref8"><a class="hidden" href="rdsctrlGetMenuItemData.htm" title="Б.3.4.18. rdsctrlGetMenuItemData &ndash; получить данные пункта меню">rdsctrlGetMenuItemData</a></span>(RdsLink,i);
+        <span class="kw">if</span>(!item-&gt;Visible) <span class="rem">// Невидимые пункты нам не нужны</span>
+          <span class="kw">continue</span>;
+        <span class="rem">// Идентификаторы наших пунктов начинаются с IDC_MENUSTART</span>
+        mi.wID=MenuItemsCount+IDC_MENUSTART;
+        mi.dwTypeData=item-&gt;Text; <span class="rem">// Название пункта</span>
+        mi.fState=<span class="const">0</span>;
+        <span class="kw">if</span>(item-&gt;Divider) <span class="rem">// Это разделитель, а не пункт</span>
+          mi.fType=MFT_SEPARATOR;
+        <span class="kw">else</span>
+          { mi.fType=MFT_STRING;
+            <span class="kw">if</span>(!item-&gt;Enabled) <span class="rem">// Пункт запрещен</span>
+              mi.fState|=MFS_DISABLED;
+            <span class="kw">if</span>(item-&gt;Checked) <span class="rem">// Пункт с галочкой</span>
+              mi.fState|=MFS_CHECKED;
+          }
+        <span class="rem">// Добавляем пункт в конец меню</span>
+        InsertMenuItem(menu,i,TRUE,&amp;mi);
+        <span class="rem">// Запоминаем данные пункта в глобальном массиве</span>
+        MenuItems[MenuItemsCount].MenuFunc=item-&gt;MenuFunc;
+        MenuItems[MenuItemsCount].MenuData=item-&gt;MenuData;
+        MenuItems[MenuItemsCount].BlockName.Set(item-&gt;BlockFullName);
+        MenuItemsCount++;
+      } <span class="rem">// for(int i=0;...)</span>
+
+    <span class="rem">// Показываем меню пользователю</span>
+    TrackPopupMenuEx(menu,<span class="const">0</span>,screenx,screeny,MainWin,NULL);
+
+    <span class="rem">// Уничтожаем меню</span>
+    DestroyMenu(menu);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции мы, прежде всего, проверяем, попал ли курсор мыши в порт вывода. Для этого
+мы переводим координаты курсора на экране (<span class="cpp">screenx</span>,<span class="cpp">screeny</span>),
+переданные в функцию, в координаты внутри окна (<span class="cpp">pt.x</span>,<span class="cpp">pt.y</span>),
+и сравниваем их с границами прямоугольника порта вывода, полученные вызовом
+<span class="cpp">GetAvailableRect</span>. Если курсор находится вне порта вывода, мы завершаем функцию и
+не выводим меню.</p>
+
+<p>Затем мы вызываем уже знакомую нам функцию <span class="cpp"><a href="rdsctrlViewportBlockAtPos.htm" title="Б.3.7.11. rdsctrlViewportBlockAtPos &ndash; получить имя блока в указанной точке порта вывода">rdsctrlViewportBlockAtPos</a></span> для определения
+имени блока, который находится в порте вывода по координатам (<span class="cpp">pt.x</span>,<span class="cpp">pt.y</span>)
+&ndash; имя блока записывается в строку <span class="cpp">MenuBlockName</span>. Если функция вернула
+<span class="cpp">TRUE</span>, то есть по данным координатам в порте есть блок, целой переменной
+<span class="cpp">type</span> присваивается константа <span class="cpp"><a href="rdsctrlReadBlockMenuItems.htm#light_ref1" title="RDSCTRL_MENUTYPE_BLK">RDSCTRL_MENUTYPE_BLK</a></span> &ndash;
+мы будем запрашивать у RDS контекстное меню блока. Если же она вернула <span class="cpp">FALSE</span>, значит,
+курсор мыши находится на свободном участке рабочего поля схемы. В этом случае мы присваиваем переменной
+<span class="cpp">type</span> константу <span class="cpp"><a href="rdsctrlReadBlockMenuItems.htm#light_ref2" title="RDSCTRL_MENUTYPE_SYS">RDSCTRL_MENUTYPE_SYS</a></span>, чтобы получить
+контекстное меню окна подсистемы, а в строку <span class="cpp">MenuBlockName</span> вызовом
+<span class="cpp"><a href="rdsctrlViewportSystem.htm" title="Б.3.7.15. rdsctrlViewportSystem &ndash; получить имя подсистемы в порте вывода">rdsctrlViewportSystem</a></span> записываем имя подсистемы, в данный момент привязанной к
+порту вывода. Теперь, независимо от того, куда пришелся щелчок правой кнопкой мыши, вызвавший запрос
+контекстного меню, в строке <span class="cpp">MenuBlockName</span> будет находиться имя блока,
+меню которого нужно вывести, а в переменной <span class="cpp">type</span> &ndash; тип этого меню
+(<span class="cpp"><a class="hidden" href="rdsctrlReadBlockMenuItems.htm#light_ref1" title="RDSCTRL_MENUTYPE_BLK">RDSCTRL_MENUTYPE_BLK</a></span> или <span class="cpp"><a class="hidden" href="rdsctrlReadBlockMenuItems.htm#light_ref2" title="RDSCTRL_MENUTYPE_SYS">RDSCTRL_MENUTYPE_SYS</a></span>). Кроме
+пунктов меню блока или окна подсистемы мы можем запросить список пунктов меню, добавленных блоками в главное меню
+RDS (см. <a href="pm_2_12_7.htm" title="&sect;2.12.7. Добавление пунктов в системное меню RDS">&sect;2.12.7</a>) &ndash; для этого используется константа
+<span class="cpp"><span id="light_ref9"><a href="rdsctrlReadBlockMenuItems.htm#light_ref3" title="RDSCTRL_MENUTYPE_MAIN">RDSCTRL_MENUTYPE_MAIN</a></span></span>. Эти пункты мы могли бы добавить, например, в главное меню
+нашей программы, однако, в этом примере мы не будем этого делать, чтобы не загромождать его: добавление пунктов
+в главное меню мало чем отличается от добавления пунктов в контекстное.</p>
+
+<p>После того, как мы определились, какой тип меню какого блока нам нужен, мы считываем все данные этого меню
+во внутренние структуры RdsCtrl.dll функцией <span class="cpp"><a href="rdsctrlReadBlockMenuItems.htm" title="Б.3.4.23. rdsctrlReadBlockMenuItems &ndash; считать пункты меню блока в память">rdsctrlReadBlockMenuItems</a></span>. Эта функция
+возвращает число считанных пунктов меню, которое мы записываем в переменную <span class="cpp">cnt</span>. Если
+блок не добавляет в контекстное меню своих пунктов, <span class="cpp">cnt</span> будет иметь нулевое значение,
+и мы завершаем функцию, не выводя контекстное меню. В противном случае нам нужно переписать данные пунктов меню
+из внутренних структур RdsCtrl.dll в наш собственный массив <span class="cpp">MenuItems</span>. В
+данном примере мы могли бы и не делать этого, поскольку мы работаем с единственным портом вывода и вызываем
+<span class="cpp"><a class="hidden" href="rdsctrlReadBlockMenuItems.htm" title="Б.3.4.23. rdsctrlReadBlockMenuItems &ndash; считать пункты меню блока в память">rdsctrlReadBlockMenuItems</a></span> только в одном месте нашей программы. Однако, лучше
+скопировать данные из внутренних структур RdsCtrl.dll как можно быстрее, поскольку эти структуры
+очищаются при каждом вызове <span class="cpp"><a class="hidden" href="rdsctrlReadBlockMenuItems.htm" title="Б.3.4.23. rdsctrlReadBlockMenuItems &ndash; считать пункты меню блока в память">rdsctrlReadBlockMenuItems</a></span>.</p>
+
+<p>Одновременно с записью данных пунктов меню в массив <span class="cpp">MenuItems</span>, мы будем
+формировать само контекстное меню. Сначала мы создаем пустое меню menu вызовом функции Windows API
+<span class="cpp">CreatePopupMenu</span>, а затем начинаем перебирать полученные из RDS пункты в цикле от
+0 до <span class="cpp">cnt</span>. Для получения указателя на структуру, описывающую <span class="cpp">i</span>-й
+пункт меню, используется функция <span class="cpp"><a href="rdsctrlGetMenuItemData.htm" title="Б.3.4.18. rdsctrlGetMenuItemData &ndash; получить данные пункта меню">rdsctrlGetMenuItemData</a></span>. В нее передается всего два
+параметра: связь с RDS <span class="cpp">RdsLink</span> и номер пункта меню <span class="cpp">i</span>. Функция
+возвращает указатель на структуру типа <span class="cpp"><span id="light_ref10"><a href="RDSCTRL_MENUITEM.htm#ref1" title="Структура RDSCTRL_MENUITEM">RDSCTRL_MENUITEM</a></span></span> во внутренней памяти RdsCtrl.dll,
+описывающую запрошенный пункт меню блока, который мы присваиваем переменной <span class="cpp">item</span>.
+Структура <span class="cpp"><a class="hidden" href="RDSCTRL_MENUITEM.htm#ref1" title="Структура RDSCTRL_MENUITEM">RDSCTRL_MENUITEM</a></span> описана в &laquo;<span class="file">RdsCtrl.h</span>&raquo;
+следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;        <span class="rem">// Размер этой структуры (для</span>
+                           <span class="rem">// совместимости версий)</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Text;            <span class="rem">// Текст пункта меню</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Enabled;          <span class="rem">// Пункт разрешен</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Visible;          <span class="rem">// Пункт видим</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> BlockFullName;   <span class="rem">// Имя блока-владельца пункта</span>
+    <span class="kw">int</span> MenuFunc,MenuData; <span class="rem">// Идентификаторы пункта</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Checked           <span class="rem">// Пункт помечен</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Divider;          <span class="rem">// Это - разделитель</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> HasKey;           <span class="rem">// Есть "горячая клавиша"</span>
+    <span class="kw">int</span> Key;               <span class="rem">// Код клавиши</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> KeyFlags;        <span class="rem">// Флаги клавиши (RDS_M* e RDS_K*</span>
+                           <span class="rem">// из RdsDef.h)</span>
+  } <a class="hidden" href="RDSCTRL_MENUITEM.htm#ref1" title="Структура RDSCTRL_MENUITEM">RDSCTRL_MENUITEM</a>;</pre>
+
+<p>Нас в этой структуре будут интересовать поля <span class="cpp">Text</span>, <span class="cpp"></span>,
+<span class="cpp">Divider</span>, <span class="cpp">Enabled</span> и <span class="cpp">Checked</span>, определяющие
+название и внешний вид пункта меню, а также <span class="cpp">BlockFullName</span>, <span class="cpp">MenuFunc</span> и
+<span class="cpp">MenuData</span>, определяющие блок, к которому относится пункт, и целые идентификаторы
+этого пункта (их мы будем записывать в массив <span class="cpp">MenuItems</span>). Для добавления пункта в
+меню <span class="cpp">menu</span> мы заполняем структуру <span class="cpp">mi</span> типа
+<span class="cpp">MENUITEMINFO</span> согласно полученным через указатель <span class="cpp">item</span> данным,
+а затем вызываем функцию <span class="cpp">InsertMenuItem</span>. Поскольку мы работаем с контекстным меню,
+мы игнорируем все поля структуры <span class="cpp"><a class="hidden" href="RDSCTRL_MENUITEM.htm#ref1" title="Структура RDSCTRL_MENUITEM">RDSCTRL_MENUITEM</a></span>, относящиеся к
+&laquo;горячей клавише&raquo; пункта меню (они пригодились бы нам, если бы мы добавляли пункты в
+главное меню нашей программы). Чтобы у всех пунктов меню были разные идентификаторы, мы делаем идентификатором
+пункта сумму константы <span class="cpp">IDC_MENUSTART</span>, которой мы присвоили значение 200, и
+текущего числа элементов массива пунктов <span class="cpp">MenuItemsCount</span> (оно увеличивается
+по мере добавления в меню пунктов). Таким образом, первый добавленный в меню пункт получит идентификатор 200,
+второй &ndash; 201, и т.д.</p>
+
+<p>Добавив пункт в контекстное меню, мы записываем имя блока и два целых идентификатора пункта в
+очередной элемент массива <span class="cpp">MenuItems</span> и увеличиваем на единицу число его элементов
+<span class="cpp">MenuItemsCount</span>. Может возникнуть вопрос: зачем мы храним в массиве имя
+блока-владельца для каждого пункта меню? Контекстное меню всегда относится к какому-то одному блоку или
+подсистеме, поэтому нам достаточно было бы отвести одну глобальную переменную для имени блока, а в
+массиве хранить только целые идентификаторы. Однако, такой подход бы не сработал для пунктов главного меню
+RDS, у каждого из которых может быть свой блок-владелец. Хотя в этом примере мы и не работаем с
+главным меню, массив <span class="cpp">MenuItems</span> и тип его элемента <span class="cpp"><a class="hidden" href="#ref1" title="Вспомогательная структура описания пункта меню">TPopupMenuData</a></span>
+мы сделали универсальным, чтобы, при желании, главное меню можно было легко добавить.</p>
+
+<p>Сформировав контекстное меню <span class="cpp">menu</span> и заполнив массив
+<span class="cpp">MenuItems</span>, мы показываем это меню по переданным в функцию экранным координатам функцией
+Windows API <span class="cpp">TrackPopupMenuEx</span>, после чего уничтожаем меню функцией
+<span class="cpp">DestroyMenu</span> &ndash; когда пользователь вызовет его в следующий раз,
+мы создадим его снова.</p>
+
+<p>Теперь правый щелчок на изображении блока в порте вывода или на свободном месте подсистемы открывает контекстное
+меню с пунктами, созданными моделью этого блока или подсистемы (если, конечно, модель добавила в меню хотя бы
+один пункт). Осталось ввести в программу реакцию на выбор этих пунктов пользователем &ndash; для этого
+у нас предусмотрена функция <span class="cpp">PopupMenuClick</span>, вызываемая из процедуры главного окна
+при получении сообщения <span class="cpp">WM_COMMAND</span> (команда от объектов окна) с идентификатором,
+большим или равным <span class="cpp">IDC_MENUSTART</span>.</p>
+
+<pre class="cpp">  <span class="rem">// Выбор пункта контекстного меню</span>
+  <span class="kw">void</span> PopupMenuClick(<span class="kw">int</span> id)
+  { <span class="kw">int</span> index=id-IDC_MENUSTART; <span class="rem">// Индекс в  MenuItems</span>
+    <span class="rem">// Проверяем наличие связи с RDS и существование порта</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+    <span class="rem">// Проверяем допустимость индекса пункта меню</span>
+    <span class="kw">if</span>(index&lt;<span class="const">0</span> || index&gt;=MenuItemsCount)
+      <span class="kw">return</span>;
+    <span class="rem">// Вызываем пункт меню блока</span>
+    <span id="light_ref11"><a class="hidden" href="rdsctrlBlockMenuClick.htm" title="Б.3.4.2. rdsctrlBlockMenuClick &ndash; имитация выбора пункта меню блока">rdsctrlBlockMenuClick</a></span>(RdsLink,
+        MenuItems[index].BlockName.c_str,
+        MenuItems[index].MenuFunc,
+        MenuItems[index].MenuData);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В эту функцию передается идентификатор выбранного пользователем пункта меню <span class="cpp">id</span>.
+Поскольку в <span class="cpp">ShowPopupMenu</span> мы давали пунктам последовательные идентификаторы, начиная с
+<span class="cpp">IDC_MENUSTART</span>, для получения номера выбранного пункта, то есть, индекса
+<span class="cpp">index</span> в массиве <span class="cpp">MenuItems</span>, нам нужно вычесть
+<span class="cpp">IDC_MENUSTART</span> из <span class="cpp">id</span>. Таким образом, структура
+<span class="cpp">MenuItems[index]</span> в поле <span class="cpp">BlockName</span> содержит имя блока,
+которому принадлежит пункт меню, а в полях <span class="cpp">MenuFunc</span> и <span class="cpp">MenuData</span>
+&ndash; целые идентификаторы этого пункта. Эти данные мы передаем в RDS функцией
+<span class="cpp"><a href="rdsctrlBlockMenuClick.htm" title="Б.3.4.2. rdsctrlBlockMenuClick &ndash; имитация выбора пункта меню блока">rdsctrlBlockMenuClick</a></span>, вызывающей в указанном блоке реакцию на выбор пункта меню.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_3_6_4.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_6_6.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_6_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

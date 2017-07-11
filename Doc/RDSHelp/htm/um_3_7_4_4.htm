@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.7.4.4. Создание динамического блока по шаблону</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_7">&sect;3.7. Принципы создания автокомпилируемых моделей блоков</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_7_4">&sect;3.7.4. Моделирование длящихся во времени процессов</a></p>
+<div class="level"><p>&sect;3.7.4.4. Создание динамического блока по шаблону</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="um_3_7_4_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_7_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_4_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.7. Принципы создания автокомпилируемых моделей блоков</h3>
+<h4 class="off">&sect;3.7.4. Моделирование длящихся во времени процессов</h4>
+<h5>&sect;3.7.4.4. Создание динамического блока по шаблону</h5>
+<p class="abstract">Описывается создание динамического блока при помощи стандартного шаблона модели, входящего в состав RDS. Использование шаблона упрощает написание модели блока, поскольку в этот шаблон уже включена связь с динамической переменной времени &laquo;<span class="rdsvar">DynTime</span>&raquo;, вычисление шага расчета и возможность чтения начальных условий с входов блока.</p>
+
+
+<p>В <a href="um_3_7_4_2.htm" title="&sect;3.7.4.2. Система дифференциальных уравнений и задание начальных условий">&sect;3.7.4.2</a>
+и <a href="um_3_7_4_3.htm" title="&sect;3.7.4.3. Важность правильного выбора шага расчета">&sect;3.7.4.3</a> описаны модели блоков, которые численно рассчитывали
+процессы в системах, описываемых дифференциальными уравнениями (которые мы переводили в разностные),
+причем начальные условия этих уравнений подаются на входы блока. В каждой из этих моделей мы вычисляли шаг
+расчета как разность текущего времени и времени прошлого шага, а для определения правильного момента
+считывания начальных начальных условий мы использовали специальный логический флаг инициализации.
+Таким образом, в наших программах моделей динамических блоков содержатся похожие фрагменты, а
+в структуре статических переменных блока &ndash; переменные одинакового назначения. В составе стандартного
+модуля автокомпиляции есть шаблон динамического блока, в котором эти фрагменты и переменные уже
+введены, и разработчику остается только добавить свои переменные и дописать внутри модели две
+подпрограммы: чтения начальных условий с входов и выполнения вычислений для шага расчета. Во
+многих случаях это удобнее создания модели &laquo;с нуля&raquo;.</p>
+
+<p>Создание модели по шаблону отличается от создания пустой модели только на одном шаге:
+после нажатия кнопки &laquo;<span class="menu">новый</span>&raquo; на вкладке
+&laquo;<span class="menu">компиляция</span>&raquo;
+<a href="um_3_3.htm#pic2" title="Создание для блока новой автокомпилируемой модели">окна параметров блока</a>, для которого создается модель
+в окне &laquo;<span class="menu">новая модель</span>&raquo; нужно вместо флажка &laquo;<span class="menu">создать пустую модель</span>&raquo;
+установить флажок &laquo;<span class="menu">создать модель по шаблону</span>&raquo; и выбрать название шаблона в списке под
+флажком (<a href="um_3_3.htm#pic4" title="Выбор создания модели по шаблону">рис.&nbsp;317</a>).</p>
+
+<p>В <a href="um_3_7_4_2.htm" title="&sect;3.7.4.2. Система дифференциальных уравнений и задание начальных условий">&sect;3.7.4.2</a> рассматривалась модель блока, рассчитывающего
+траекторию тела, брошенного под углом к горизонту при наличии тяготения и отсутствии сопротивления
+воздуха. В
+<a href="um_3_7_4_2.htm#ref1" title="Чтение начальных условий с входов блока">окончательном варианте</a>
+этой модели начальная скорость и угол броска считывались с входов блока &laquo;<span class="rdsvar">v0</span>&raquo; и
+&laquo;<span class="rdsvar">Alpha</span>&raquo; соответственно. Создадим точно такую же модель, но с использованием
+стандартного шаблона. Для этого необходимо выполнить следующие действия:</p>
+
+<ul>
+  <li>нажать на свободном месте окна подсистемы правую кнопку мыши;</li>
+
+  <li>выбрать в открывшемся контекстном меню пункт &laquo;<span class="menu">создать | новый блок</span>&raquo;;</li>
+
+  <li>нажать на созданном блоке (он будет выглядеть как белый квадрат с черной рамкой) правую кнопку мыши;</li>
+
+  <li>выбрать в открывшемся контекстном меню пункт
+  &laquo;<span class="menu"><a href="um_3_3.htm#pic1_1" title="Создание простого блока (а) и вызов окна его параметров (б)">параметры</a></span>&raquo;;</li>
+
+  <li>на вкладке &laquo;<span class="menu">общие</span>&raquo; открывшегося окна
+  <a href="um_3_7_2_1.htm#pic2" title="Установка запуска по сигналу в окне параметров блока">включить флажок</a>
+  &laquo;<span class="menu">по сигналу</span>&raquo; на панели &laquo;<span class="menu">запуск</span>&raquo;;</li>
+
+  <li>на вкладке &laquo;<span class="menu">компиляция</span>&raquo;
+  <a href="um_3_3.htm#pic2" title="Создание для блока новой автокомпилируемой модели">установить флажок</a>
+  &laquo;<span class="menu">функция блока компилируется автоматически</span>&raquo;, выбрать в выпадающем списке подключенный
+  модуль автокомпиляции и нажать кнопку &laquo;<span class="menu">новый</span>&raquo;;</li>
+
+  <li>в появившемся окне &laquo;<span class="menu">новая модель</span>&raquo; выбрать флажок
+  &laquo;<span class="menu">создать модель по шаблону</span>&raquo;, выбрать в списке шаблон &laquo;<span class="menu">динамический блок</span>&raquo;
+  (см. <a href="um_3_3.htm#pic4" title="Выбор создания модели по шаблону">рис.&nbsp;317</a>), а затем закрыть окно кнопкой
+  &laquo;<span class="menu">OK</span>&raquo; (это единственное отличие от
+  <a href="um_3_7_2_1.htm#light_ref6" title="Создание нового блока с моделью">последовательности действий</a>, которая выполняется при создании
+  пустой модели);</li>
+
+<div class="pic"><div class="container">
+<img src="../img/AC_ModelTemplates2.png" width="535" height="299" alt="Выбор создания модели по шаблону" />
+<p>Рис.&nbsp;317 (<a href="um_3_3.htm#pic4">повтор</a>). Выбор создания модели по шаблону</p>
+</div></div>
+
+
+  <li>в <a href="um_3_3.htm#pic5" title="Диалог сохранения файла модели">диалоге сохранения</a> модели ввести имя нового файла,
+  в который будет записана создаваемая модель, и нажать кнопку
+  &laquo;<span class="menu">сохранить</span>&raquo;;</li>
+
+  <li>закрыть окно параметров блока кнопкой &laquo;<span class="menu">OK</span>&raquo;.</li>
+</ul>
+
+<p>После выполнения перечисленных выше действий откроется окно редактора, в котором вместо пустой вкладки
+&laquo;<span class="menu">модель</span>&raquo;, которая открывалась при создании моделей &laquo;с нуля&raquo;, будет открыта
+частично заполненная вкладка &laquo;<span class="menu">описания в классе</span>&raquo;
+(<a href="#pic2" title="Окно редактора модели, созданной по стандартному шаблону">рис.&nbsp;409</a>).</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/AC_editor_template.png" width="809" height="436" alt="Окно редактора модели, созданной по стандартному шаблону" />
+<p id="light_pic2">Рис.&nbsp;409. Окно редактора модели, созданной по стандартному шаблону</p>
+</div></div>
+
+
+<p>На этой вкладке размещается следующий текст:</p>
+
+<pre class="cpp">  //---------------------------------------------------------
+  // ВНИМАНИЕ! Переменные rdsbcppTime0, rdsbcppFirstStep и
+  // DynTime нужны для работы блока, их не следует изменять
+  // или удалять.
+  //---------------------------------------------------------
+
+  // Функции, заполняемые пользователем
+
+  #pragma argsused
+  void InitVars(double h)
+  {
+    // Здесь можно считать начальные условия с входов блока,
+    // если это необходимо.
+    // h - шаг расчета.
+  }
+  //---------------------------------------------------------
+
+  #pragma argsused
+  void DoStep(double h)
+  {
+    // Здесь можно вычислить новые значения выходов блока на
+    // момент времени DynTime (интервал времени с прошлого
+    // вычисления - h)
+  }
+  //---------------------------------------------------------</pre>
+
+<p><span id="ref1">В</span>
+<span id="ref2">описаниях</span>
+внутри класса блока в этом шаблоне находятся две пустых функции, внутрь которых пользователь должен
+вставить свои фрагменты программы: в функцию <span class="cpp" id="light_ref1">InitVars</span>
+записывается чтение начальных условий
+с входов блока, в функцию <span class="cpp" id="light_ref2">DoStep</span> &ndash; вычисления в
+<a href="um_3_7_4_2.htm#light_ref2" title="Шаг расчета">шаге расчета</a>.
+В обе этих функции шаг расчета передается в параметре <span class="cpp">h</span>.</p>
+
+<p>К модели блока уже подключена динамическая переменная времени &laquo;<span class="rdsvar">DynTime</span>&raquo;, структура
+<a href="um_3_6_2.htm" title="&sect;3.6.2. Статические переменные блока">статических переменных</a>
+блока тоже уже частично заполнена. В ней находятся следующие переменные:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Start</td>
+    <td class="center">Сигнал</td>
+    <td class="center">Вход</td>
+    <td class="center">&checkmark;</td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Ready</td>
+    <td class="center">Сигнал</td>
+    <td class="center">Выход</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">rdsbcppTime0</td>
+    <td class="center">double</td>
+    <td class="center">Внутренняя</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">rdsbcppFirstStep</td>
+    <td class="center">Логический</td>
+    <td class="center">Внутренняя</td>
+    <td></td>
+    <td class="center">1</td>
+  </tr>
+</table>
+</div></div>
+
+<p>Помимо стандартных сигналов &laquo;<span class="rdsvar">Start</span>&raquo; и &laquo;<span class="rdsvar">Ready</span>&raquo;, которые есть у любого
+простого блока, в эту структуру добавлены две внутренние переменные: вещественная
+&laquo;<span class="rdsvar">rdsbcppTime0</span>&raquo; и логическая &laquo;<span class="rdsvar">rdsbcppFirstStep</span>&raquo;. В переменной
+&laquo;<span class="rdsvar">rdsbcppTime0</span>&raquo; хранится значение времени при прошлом срабатывании блока, необходимое для
+вычисления значения шага расчета &ndash; в моделях, которые мы создавали ранее, аналогичную переменную мы
+называли &laquo;<span class="rdsvar">t0</span>&raquo;. Логическая переменная &laquo;<span class="rdsvar">rdsbcppFirstStep</span>&raquo; с единичным
+начальным значением используется как флаг инициализации блока &ndash; в предыдущих примерах моделей для этих
+целей мы использовали переменную &laquo;<span class="rdsvar">Init</span>&raquo;.</p>
+
+<p>Эти добавленные переменные необходимы для работы модели, созданной по шаблону динамического блока.
+Во фрагменте программы на вкладке &laquo;<span class="menu">описания в классе</span>&raquo; они не используются (там есть только
+комментарий об их необходимости), они используются в реакции блока на такт расчета: хотя вкладка
+&laquo;<span class="menu">модель</span>&raquo; и не открылась по умолчанию, соответствующий ей фрагмент программы присутствует в
+модели, и его можно увидеть в редакторе, открыв эту вкладку вручную. Сделаем это: выберем на левой панели
+редактора вкладку &laquo;<span class="menu">события</span>&raquo;
+(<a href="#pic3" title="События и описания модели, созданной по шаблону">рис.&nbsp;410</a>), раскроем на ней группу
+&laquo;<span class="menu">моделирование и режимы</span>&raquo; и дважды щелкнем на пункте &laquo;<span class="menu">модель</span>&raquo;.</p>
+
+<div class="pic"><div class="container" id="pic3">
+<img src="../img/AC_editor_template_events.png" width="324" height="285" alt="События и описания модели, созданной по шаблону" />
+<p id="light_pic3">Рис.&nbsp;410. События и описания модели,<br />созданной по шаблону</p>
+</div></div>
+
+
+<p>После этого
+в правой части окна редактора появится уже знакомая нам вкладка
+&laquo;<span class="menu">модель</span>&raquo; со следующим текстом:</p>
+
+<pre class="cpp">  double h;
+  if(DynTime==rdsbcppTime0) // Время не изменилось
+    return;
+  // Время изменилось
+  h=DynTime-rdsbcppTime0; // Вычисление шага расчета
+
+  if(rdsbcppFirstStep) // Инициализация
+    { InitVars(h);
+      rdsbcppFirstStep=0;
+    }
+
+  // Выполнение шага расчета
+  DoStep(h);
+
+  // Запоминание времени последнего расчета
+  rdsbcppTime0=DynTime;</pre>
+
+<p>Этот текст уже знаком нам по предыдущим моделям, только раньше мы писали его вручную, а здесь он является
+частью стандартного шаблона. Как и раньше, сначала текущее время <span class="cpp">DynTime</span> сравнивается с
+временем прошлого шага расчета <span class="cpp">rdsbcppTime0</span> и, если время не изменилось, модель
+немедленно завершается. Если время изменилось, вычисляется шаг расчета <span class="cpp">h</span> и проверяется
+значение переменной <span class="cpp">rdsbcppFirstStep</span>. Если оно равно единице, значит, выполняется
+самый первый шаг расчета &ndash; при этом вызывается функция <span class="cpp">InitVars</span> из описаний в
+классе, внутрь которой мы должны вставить программу чтения начальных значений, после чего
+<span class="cpp">rdsbcppFirstStep</span> сбрасывается. Затем вызывается функция
+<span class="cpp">DoStep</span>, внутрь которой мы вставим вычисления значений переменных блока на новом
+шаге, и новое время запоминается в переменной <span class="cpp">rdsbcppTime0</span>. При желании, в текст
+этой программы можно внести какие-либо изменения, но все, что необходимо для расчета, в ней уже есть,
+поэтому можно вернуться на вкладку &laquo;<span class="menu">описания в классе</span>&raquo; и наполнить содержимым две ее
+пустые функции. Но сначала добавим в блок необходимые для нашей модели переменные.</p>
+
+<p>В рассмотренной в <a href="um_3_7_4_2.htm" title="&sect;3.7.4.2. Система дифференциальных уравнений и задание начальных условий">&sect;3.7.4.2</a> модели свободного полета тела,
+<a href="um_3_7_4_2.htm#ref1" title="Чтение начальных условий с входов блока">получавшей начальные значения с входов блока</a>,
+блок имел входы &laquo;<span class="rdsvar">v0</span>&raquo; и
+&laquo;<span class="rdsvar">Alpha</span>&raquo;, на которые подавались начальная скорость в м/с и угол броска к горизонту в градусах
+соответственно, выходы &laquo;<span class="rdsvar">x</span>&raquo; и &laquo;<span class="rdsvar">y</span>&raquo;, на которые выдавались текущие координаты
+летящего тела, и внутренние переменные &laquo;<span class="rdsvar">vx</span>&raquo; и &laquo;<span class="rdsvar">vy</span>&raquo;, в которых вычислялась его
+текущая скорость, необходимая для расчета координат. Добавим эти переменные в структуру нашего блока, сохранив
+в ней те, которые являются частью шаблона. В результате этого наш блок будет иметь следующую структуру
+переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Start</td>
+    <td class="center">Сигнал</td>
+    <td class="center">Вход</td>
+    <td class="center">&checkmark;</td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Ready</td>
+    <td class="center">Сигнал</td>
+    <td class="center">Выход</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">rdsbcppTime0</td>
+    <td class="center">double</td>
+    <td class="center">Внутренняя</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">rdsbcppFirstStep</td>
+    <td class="center">Логический</td>
+    <td class="center">Внутренняя</td>
+    <td></td>
+    <td class="center">1</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">v0</td>
+    <td class="center">double</td>
+    <td class="center">Вход</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Alpha</td>
+    <td class="center">double</td>
+    <td class="center">Вход</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">x</td>
+    <td class="center">double</td>
+    <td class="center">Выход</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">y</td>
+    <td class="center">double</td>
+    <td class="center">Выход</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">vx</td>
+    <td class="center">double</td>
+    <td class="center">Внутренняя</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">vy</td>
+    <td class="center">double</td>
+    <td class="center">Внутренняя</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+</table>
+</div></div>
+
+<p>Внутрь функции <span class="cpp">InitVars</span> мы вставим фрагмент старой модели,
+отвечающий за чтение начальных условий:</p>
+
+<pre class="cpp">  if(v0==<a class="hidden" href="um_3_7_1.htm#ref15" title="Переменная rdsbcppHugeDouble">rdsbcppHugeDouble</a> || Alpha==<a class="hidden" href="um_3_7_1.htm#ref15" title="Переменная rdsbcppHugeDouble">rdsbcppHugeDouble</a>)
+    vx=vy=<a class="hidden" href="um_3_7_1.htm#ref15" title="Переменная rdsbcppHugeDouble">rdsbcppHugeDouble</a>; // Ошибка на входе
+  else
+    { double alpha_rad=Alpha*M_PI/180; // В радианы
+      // Вычисление начальных проекций скорости
+      vx=v0*cos(alpha_rad);
+      vy=v0*sin(alpha_rad);
+    }</pre>
+
+<p>В нем мы вычисляем начальные значения проекций скорости <span class="cpp">vx</span> и <span class="cpp">vy</span>
+по данным на входах блока <span class="cpp">v0</span> и <span class="cpp">Alpha</span>, если оба входа не содержат
+признака ошибки <span class="cpp"><a href="um_3_7_1.htm#ref15" title="Переменная rdsbcppHugeDouble">rdsbcppHugeDouble</a></span>. Параметр функции
+<span class="cpp">h</span>, в котором передается шаг расчета, для чтения начальных условий нам не нужен
+(директива препроцессора &laquo;<span class="rdsvar"><span class="cpp">#pragma argsused</span></span>&raquo;,
+расположенная перед описанием функции <span class="cpp">InitVars</span>, подавит вывод предупреждения о
+неиспользуемом параметре).</p>
+
+<p>Внутрь функции <span class="cpp">DoStep</span> мы вставим фрагмент, вычислявший в старой модели новые
+значения <span class="cpp">x</span>, <span class="cpp">y</span> и <span class="cpp">vy</span>
+(<span class="cpp">vx</span> в данной задаче не изменяется со временем, поскольку в горизонтальном направлении
+на тело не действует никаких сил):</p>
+
+<pre class="cpp">  double g=1.62; // Ускорение свободного падения на Луне
+  x=x+h*vx;
+  y=y+h*vy;
+  vy=vy-h*g; // Новое vy вычисляем ПОСЛЕ нового y</pre>
+
+<p>Таким образом, если убрать поясняющие комментарии, находившиеся внутри функций
+<span class="cpp">InitVars</span> и <span class="cpp">DoStep</span>, содержимое вкладки
+&laquo;<span class="menu">описания в классе</span>&raquo; должно теперь выглядеть следующим образом:</p>
+
+<pre class="cpp">  //---------------------------------------------------------
+  // ВНИМАНИЕ! Переменные rdsbcppTime0, rdsbcppFirstStep и
+  // DynTime нужны для работы блока, их не следует изменять
+  // или удалять.
+  //---------------------------------------------------------
+  #pragma argsused
+  void InitVars(double h)
+  {
+    if(v0==rdsbcppHugeDouble || Alpha==rdsbcppHugeDouble)
+      vx=vy=rdsbcppHugeDouble; // Ошибка на входе
+    else
+      { double alpha_rad=Alpha*M_PI/180; // В радианы
+        // Вычисление начальных проекций скорости
+        vx=v0*cos(alpha_rad);
+        vy=v0*sin(alpha_rad);
+      }
+  }
+  //---------------------------------------------------------
+
+  #pragma argsused
+  void DoStep(double h)
+  { double g=1.62; // Ускорение свободного падения на Луне
+    x=x+h*vx;
+    y=y+h*vy;
+    vy=vy-h*g; // Новое vy вычисляем ПОСЛЕ нового y
+  }
+  //---------------------------------------------------------</pre>
+
+<p>Если теперь собрать с нашим новым блоком схему, аналогичную изображенной
+на <a href="um_3_7_4_2.htm#pic3" title="Модель свободного полета с внешним заданием начальных условий">рис.&nbsp;402</a>, и запустить расчет, на графике мы увидим ту же
+самую параболу: новая модель, созданная по шаблону, будет работать точно так же, как и
+старая, созданная вручную.</p>
+
+<p>Важно понимать, что после создания по какому-либо шаблону, модель, с точки зрения
+RDS и модуля автокомпиляции, ничем не будет отличаться от модели, созданной вручную &laquo;с нуля&raquo;.
+Никакой связи между моделью и шаблоном не сохраняется, шаблон &ndash; это просто некоторое начальное содержимое
+модели, которое может быть потом как угодно изменено пользователем. В рассмотренной модели, например, можно
+было бы стереть все описания в классе, а содержимое функций, которое мы туда вставили, разместить непосредственно
+на вкладке &laquo;<span class="menu">модель</span>&raquo; вместо вызовов этих функций. Можно было бы, при желании,
+переименовать переменные &laquo;<span class="rdsvar">rdsbcppTime0</span>&raquo; и &laquo;<span class="rdsvar">rdsbcppFirstStep</span>&raquo;, являющиеся
+частью шаблона (например, дать им имена &laquo;<span class="rdsvar">t0</span>&raquo; и &laquo;<span class="rdsvar">Init</span>&raquo;, как раньше), и в
+структуре статических переменных блока, и на вкладке &laquo;<span class="menu">модель</span>&raquo;, где они используются. Ни то,
+ни другое на работоспособность блока не повлияло бы.</p>
+
+<p>Пользователь может в любой момент сохранить любую свою модель в качестве шаблона, выбрав в меню редактора
+пункт &laquo;<span class="menu">файл | сохранить как шаблон</span>&raquo;
+(см. <a href="um_3_6_1.htm" title="&sect;3.6.1. Элементы и меню окна редактора модели">&sect;3.6.1</a>). Редактировать, добавлять и удалять шаблоны можно в
+настройках модуля автокомпиляции, эти действия рассматриваются в
+<a href="um_3_9_2.htm" title="&sect;3.9.2. Добавление и изменение шаблонов моделей">&sect;3.9.2</a>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="um_3_7_4_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_7_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_4_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

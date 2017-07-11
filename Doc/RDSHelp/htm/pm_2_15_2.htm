@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.15.2. Пример использования функций передачи и приема данных</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_15">&sect;2.15. Обмен данными по сети</a></p>
+<div class="level"><p>&sect;2.15.2. Пример использования функций передачи и приема данных</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_15_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_15_3.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_15_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_15_2_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.15. Обмен данными по сети</h3>
+<h4>&sect;2.15.2. Пример использования функций передачи и приема данных</h4>
+<p class="abstract">Приводятся примеры моделей блоков, позволяющих организовать передачу вещественного значения 
+                между схемами, работающими на разных машинах. В дополнение к ним описывается модель блока, добавление которого 
+                в схему включает серверные функции в RDS.</p>
+
+
+<p>Для иллюстрации работы с сетевыми сервисными функциями создадим два блока: один будет передавать в
+выбранный пользователем канал данных значение своего вещественного входа, другой будет принимать это значение
+и выдавать его на выход. С помощью этих блоков можно будет организовать связь между схемами, работающими
+на разных машинах. Но сначала, чтобы не запускать на третьей машине сервер RDS, сделаем вспомогательный блок,
+который будет запускать серверные функции RDS в схеме, в которой он находится. Таким образом,
+для проверки работы сетевой связи между двумя схемами не нужно будет запускать отдельный сервер: RDS
+на одной из машин будет не только работать со схемой, но и выполнять функции сервера. Разумеется, в
+качестве сервера лучше выбрать машину побыстрее.</p>
+
+<p><span id="light_ref1">Модель блока для включения сервера</span>
+будет очень простой: при инициализации будет вызываться функция <span class="cpp"><span id="light_ref2"><a href="rdsNetServer.htm" title="А.5.20.5. rdsNetServer &ndash; запуск сервера и установка соединения с ним">rdsNetServer</a></span></span> с указанием
+какого-нибудь имени канала, а при очистке &ndash; <span class="cpp"><span id="light_ref3"><a href="rdsNetCloseConnection.htm" title="А.5.20.2. rdsNetCloseConnection &ndash; разорвать соединение">rdsNetCloseConnection</a></span></span>. Мы не
+будем ни передавать данные в этот канал, ни получать их из него &ndash; он нужен только для запуска сервера,
+поскольку функцию <span class="cpp"><a class="hidden" href="rdsNetServer.htm" title="А.5.20.5. rdsNetServer &ndash; запуск сервера и установка соединения с ним">rdsNetServer</a></span> нельзя вызвать с пустым именем канала. Назовем
+этот фиктивный канал &laquo;ProgrammersGuide.Server&raquo;. Если другие блоки будут использовать его для
+передачи своих данных, ничего страшного не случится, поскольку наш блок не вмешивается в обмен данными
+по этому каналу.</p>
+
+<p>Модель блока будет выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Включение сервера</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> Server(<span class="kw">int</span> CallMode,
+          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="kw">int</span> *pConnId;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Отводим место под личную область данных размером в int</span>
+          BlockData-&gt;BlockData=pConnId=<span class="kw">new</span> <span class="kw">int</span>;
+          <span class="rem">// Запускаем сервер и соединяемся с ним</span>
+          *pConnId=<a class="hidden" href="rdsNetServer.htm" title="А.5.20.5. rdsNetServer &ndash; запуск сервера и установка соединения с ним">rdsNetServer</a>(-<span class="const">1</span>,     <span class="rem">// Порт по умолчанию</span>
+                                <span class="str">"ProgrammersGuide.Server"</span>, <span class="rem">// Канал</span>
+                                FALSE); <span class="rem">// Не принимаем данные</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Личная область данных – целое число</span>
+          pConnId=(<span class="kw">int</span>*)(BlockData-&gt;BlockData);
+          <span class="rem">// Разрываем связь с сервером (он завершится сам)</span>
+          <a class="hidden" href="rdsNetCloseConnection.htm" title="А.5.20.2. rdsNetCloseConnection &ndash; разорвать соединение">rdsNetCloseConnection</a>(*pConnId);
+          <span class="rem">// Удаляем личную область</span>
+          <span class="kw">delete</span> pConnId;
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>При <a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">инициализации</a>
+блока мы отводим место в памяти под
+<a href="pm_1_4.htm#ref8" title="Личная область данных блока">личную область данных</a> размером в одно целое число &ndash;
+в ней мы будем хранить идентификатор соединения. Затем мы вызываем <span class="cpp"><a class="hidden" href="rdsNetServer.htm" title="А.5.20.5. rdsNetServer &ndash; запуск сервера и установка соединения с ним">rdsNetServer</a></span>
+для соединения с каналом &laquo;ProgrammersGuide.Server&raquo; на локальном сервере, то есть сервере в
+исполняемом файле RDS, который работает с данной схемой. В качестве номера порта мы передаем &minus;1,
+чтобы был использован порт по умолчанию, указанный в <a href="pm_2_15_1.htm#pic1" title="Окно настроек RDS: вкладка сеть &ndash; TCP">настройках</a>
+RDS. Конечно, лучше было бы дать пользователю выбор: использовать порт по умолчанию или задать
+свое значение, но мы не будем этого делать, чтобы не усложнять пример. Принимать данные из канала нам не нужно,
+поэтому в параметре <span class="cpp">Receive</span> функции <span class="cpp"><a class="hidden" href="rdsNetServer.htm" title="А.5.20.5. rdsNetServer &ndash; запуск сервера и установка соединения с ним">rdsNetServer</a></span>
+передается <span class="cpp">FALSE</span>.</p>
+
+<p>При первом вызове <span class="cpp"><a class="hidden" href="rdsNetServer.htm" title="А.5.20.5. rdsNetServer &ndash; запуск сервера и установка соединения с ним">rdsNetServer</a></span> с конкретным номером порта сервер запускается
+и начинает ждать внешних соединений с этим портом, а функция возвращает уникальный внутренний идентификатор
+соединения, который можно использовать для передачи данных на этот сервер напрямую, минуя сетевые протоколы.
+Нам этот идентификатор нужен для того, чтобы при удалении блока из схемы закрыть соединение с сервером,
+поэтому мы сохраняем его в личной области данных. Таким образом, после добавления этого блока в схему,
+машина, на которой эта схема работает, становится сервером RDS, принимающим данные через порт, указанный
+в сетевых настройках.</p>
+
+<p>При удалении блока из схемы его модель будет вызвана в режиме <span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span>. При этом
+мы закрываем соединение, идентификатор которого хранится в личной области данных блока. Если это соединение
+было единственным, сервер будет автоматически отключен.</p>
+
+<p><span id="ref4">Теперь</span>, когда у нас есть блок,
+превращающий машину в сервер RDS, можно заняться <span id="light_ref4">блоками приема и передачи данных</span>.
+У этих блоков будет много общего: в настройках обоих необходимо будет вводить имя канала, оба будут подключаться
+к серверу, и т.д. Чтобы не писать один и тот же код два раза, мы сделаем для этих двух блоков общий класс
+личной области данных с полным набором функций и для приема, и для передачи данных, а из функции модели каждого блока
+будем вызывать только те из них, которые нужны данному блоку. Начнем с описания класса:</p>
+
+<pre class="cpp">  <span class="rem">// Личная область данных блоков приема и передачи по сети</span>
+  <span class="kw">class</span> TNetSendRcvData
+  { <span class="kw">public</span>:
+      <span class="kw">int</span> Mode; <span class="rem">// Режим данного блока: прием или передача</span>
+        <span class="preproc">#define NETSRMODE_SENDER    0 </span><span class="rem">// Передатчик</span>
+        <span class="preproc">#define NETSRMODE_RECEIVER  1 </span><span class="rem">// Приемник</span>
+      <span class="kw">char</span> *ChannelName; <span class="rem">// Имя канала</span>
+
+      <span class="kw">int</span> ConnId; <span class="rem">// Идентификатор соединения</span>
+
+      <span class="rem">// Переменные состояния блока-передатчика</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Connected;   <span class="rem">// Соединение установлено</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> DataWaiting; <span class="rem">// Передача данных отложена</span>
+
+      <span class="rem">// Функции класса</span>
+      <span class="kw">void</span> Connect(<span class="kw">void</span>);    <span class="rem">// Установить соединение</span>
+      <span class="kw">void</span> Disconnect(<span class="kw">void</span>); <span class="rem">// Разорвать соединение</span>
+
+      <span class="kw">void</span> SendValue(<span class="kw">double</span> value); <span class="rem">// Передать число в канал</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ReceiveValue(<a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a> *rcv, <span class="rem">// Реакция на</span>
+                        <span class="kw">double</span> *pOut);            <span class="rem">// пришедшие данные</span>
+
+      <span class="kw">int</span> Setup(<span class="kw">char</span> *title);    <span class="rem">// Функция настройки блока</span>
+      <span class="kw">void</span> SaveText(<span class="kw">void</span>);       <span class="rem">// Сохранить параметры</span>
+      <span class="kw">void</span> LoadText(<span class="kw">char</span> *text); <span class="rem">// Загрузить параметры</span>
+
+      <span class="rem">// Конструктор класса</span>
+      TNetSendRcvData(<span class="kw">int</span> mode)
+        { ConnId=-<span class="const">1</span>; <span class="rem">// Нет соединения</span>
+          Connected=DataWaiting=FALSE;
+          ChannelName=NULL;
+          Mode=mode; <span class="rem">// Режим передается в параметре конструктора</span>
+        };
+      <span class="rem">// Деструктор класса</span>
+      ~TNetSendRcvData()
+        { Disconnect(); <span class="rem">// Разорвать соединение</span>
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(ChannelName); <span class="rem">// Освободить строку имени канала</span>
+        };
+  };
+  <span class="rem">//=========================================</span></pre>
+
+<p>Самое первое поля класса, <span class="cpp">Mode</span>, указывает на то, принадлежит ли эта
+область данных блоку-передатчику (константа <span class="cpp">NETSRMODE_SENDER</span>) или приемнику (константа
+<span class="cpp">NETSRMODE_RECEIVER</span>). Значение этому полю присваивается в конструкторе и далее
+не меняется на протяжении всего существования блока: в блоке-передатчике конструктор будет вызываться с параметром
+<span class="cpp"></span>, в приемнике &ndash; с параметром <span class="cpp">NETSRMODE_RECEIVER</span>.</p>
+
+<p>Мы не будем делать имя сервера и его порт параметрами блока &ndash; для простоты всегда будем использовать значения
+по умолчанию из сетевых настроек RDS. Поэтому соответствующие поля в классе не предусмотрены. А вот
+имя канала нужно обязательно сделать настраиваемым, для этого используется поле <span class="cpp">ChannelName</span>.
+Оно содержит указатель на динамически отведенную строку с именем канала, к которому подключен блок, это
+имя будет вводиться пользователем в функции настройки блока. В конструкторе ему присваивается значение
+<span class="cpp">NULL</span>: место под строку будет отведено позднее, при настройке блока или загрузке его
+параметров. В деструкторе класса память, занятая строкой, освобождается при помощи функции
+<span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span> (отводиться она тоже будет сервисными функциями RDS).</p>
+
+<p>В следующем поле, <span class="cpp">ConnId</span>, будет храниться идентификатор соединения с сервером,
+когда оно будет установлено. В конструкторе ему присваивается значение &minus;1 (соединение в конструкторе
+установить нельзя &ndash; еще не известно имя канала), в деструкторе соединение разрывается функцией
+класса <span class="cpp">Disconnect</span>.</p>
+
+<p>Логические поля <span class="cpp">Connected</span> и <span class="cpp">DataWaiting</span> используются
+только в блоке-передатчике. <span class="cpp">Connected</span> используется как флаг наличия связи
+с сервером &ndash; при установке связи ему будет присваиваться значение <span class="cpp">TRUE</span>, при разрыве
+&ndash; <span class="cpp">FALSE</span>. <span class="cpp">DataWaiting</span> служит для запоминания
+попытки передачи данных, пока связь еще не установлена. Если значение входа блока-передатчика изменится, а
+связи с сервером пока нет, полю <span class="cpp">DataWaiting</span> будет присвоено значение
+<span class="cpp">TRUE</span>. Как только связь будет установлена, модель передаст данные в канал и сбросит
+<span class="cpp">DataWaiting</span>.</p>
+
+<p>Функции класса <span class="cpp">Connect</span> и <span class="cpp">Disconnect</span> предназначены для
+установки связи с сервером и ее разрыва соответственно. Они будут использоваться и блоками-приемниками,
+и блоками-передатчиками. Функция <span class="cpp">SendValue</span> передает в канал вещественное число,
+она будет использоваться только в блоках-передатчиках. Функция <span class="cpp">ReceiveValue</span> будет
+вызываться в реакции модели блока-приемника на поступившие данные, анализировать эти данные и, если размер
+переданного буфера равен размеру вещественного числа, копировать их на выход блока (указатель на переменную
+выхода передается в параметре функции). Наконец, функции <span class="cpp">Setup</span>,
+<span class="cpp">LoadText</span> и <span class="cpp">SaveText</span> предназначены для настройки параметров
+блока (у нас только один параметр &ndash; имя канала), их загрузки и записи. В функцию
+<span class="cpp">Setup</span> будет передаваться заголовок окна настройки &ndash; у передатчика и приемника
+он будет различаться.</p>
+
+<p>Напишем функцию установки соединения с сервером. Она будет использовать имя и порт сервера по умолчанию,
+а имя канала будет брать из поля <span class="cpp">ChannelName</span>, добавляя к нему префикс
+&laquo;ProgrammersGuide.&raquo; для того, чтобы каналы, используемые нашими блоками, не пересеклись по
+именам с каналами блоков других разработчиков (точно так же мы поступали, когда
+<a href="pm_2_13_1.htm#ref1" title="Регистрация функции блока">давали имена функциям блоков</a>).</p>
+
+<pre class="cpp">  <span class="rem">// Установка соединения</span>
+  <span class="kw">void</span> TNetSendRcvData::Connect(<span class="kw">void</span>)
+  { <span class="kw">char</span> *PrefixedName; <span class="rem">// Полное имя канала</span>
+
+    <span class="rem">// Если имя канала пустое, соединение невозможно</span>
+    <span class="kw">if</span>(ChannelName==NULL || (*ChannelName)==<span class="const">0</span>)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Добавляем префикс к имени канала</span>
+    PrefixedName=<span id="light_ref5"><a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span>(<span class="str">"ProgrammersGuide."</span>,ChannelName,FALSE);
+    <span class="rem">// Устанавливаем соединение с сервером</span>
+    ConnId=<span id="light_ref6"><a class="hidden" href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a></span>(NULL, <span class="rem">// Сервер по умолчанию</span>
+                         -<span class="const">1</span>,   <span class="rem">// Порт по умолчанию</span>
+                         PrefixedName, <span class="rem">// Имя канала с префиксом</span>
+                         Mode==NETSRMODE_RECEIVER); <span class="rem">// Прием данных</span>
+    <span class="rem">// Освобождаем динамически отведенную строку</span>
+    <span id="light_ref7"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>(PrefixedName);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Прежде всего, мы проверяем, введено ли имя канала, то есть не пуста ли строка
+<span class="cpp">ChannelName</span>. Если имя канала не введено (поле <span class="cpp">ChannelName</span> содержит
+<span class="cpp">NULL</span> или указывает на пустую строку), соединение с сервером установить невозможно
+&ndash; функция завершается. В противном случае при помощи сервисной функции
+<span class="cpp"><a href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span> к имени канала, заданному пользователем, добавляется префикс
+&laquo;ProgrammersGuide.&raquo;, и результат записывается в переменную
+<span class="cpp">PrefixedName</span>. <span class="cpp"><a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span> возвращает указатель
+на динамически отведенную строку, поэтому ее нужно будет освободить перед завершением функции <span class="cpp">Connect</span>.</p>
+
+<p>Теперь можно устанавливать соединение с сервером: вызывается функция <span class="cpp"><a href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a></span>,
+и возвращенный ей идентификатор соединения записывается в поле <span class="cpp">ConnId</span>.
+Мы подключаемся к серверу по умолчанию, указанному в настройках RDS, поэтому вместо адреса сервера
+передается <span class="cpp">NULL</span>, а вместо номера его порта &ndash; &minus;1. Имя канала с
+префиксом сформировано в переменной <span class="cpp">PrefixedName</span>, а последний параметр функции
+<span class="cpp"><a class="hidden" href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a></span>, определяющий, должен ли наш блок получать данные по сети,
+зависит от значения поля класса <span class="cpp">Mode</span>. Блок будет принимать данные только
+в том случае, если в этом поле находится константа <span class="cpp">NETSRMODE_RECEIVER</span>, то есть
+если эта личная область данных принадлежит блоку-приемнику. Таким образом, сервер не будет отправлять данные
+блокам-передатчикам, что снизит нагрузку на сеть.</p>
+
+<p>Следует помнить, что при вызове <span class="cpp"><a class="hidden" href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a></span> соединение с сервером
+устанавливается не мгновенно. Эта функция только запрашивает соединение и создает внутренний объект RDS,
+идентификатор которого возвращается. После этого клиент отправит запрос серверу, дождется ответа от него,
+обменяется с ним служебной информацией и т.п. &ndash; на все это нужно время. После фактической установки
+соединения модель блока будет вызвана в режиме <span class="cpp"><a href="RDS_BFM_NETCONNECT.htm" title="А.2.8.1. RDS_BFM_NETCONNECT &ndash; установка соединения">RDS_BFM_NETCONNECT</a></span>, до
+этого момента передаваемые данные отправляться на сервер не будут. Лучше всего отложить вызов функций передачи
+данных до фактической установки соединения, чтобы не загружать очередь. По этой причине мы не
+взводим логический флаг наличия соединения <span class="cpp">Connected</span> в функции
+<span class="cpp">Connect</span>: он будет установлен только после вызова модели в режиме
+<span class="cpp"><a class="hidden" href="RDS_BFM_NETCONNECT.htm" title="А.2.8.1. RDS_BFM_NETCONNECT &ndash; установка соединения">RDS_BFM_NETCONNECT</a></span>.</p>
+
+<p>Функция разрыва соединения будет короткой:</p>
+
+<pre class="cpp">  <span class="rem">// Разорвать соединение</span>
+  <span class="kw">void</span> TNetSendRcvData::Disconnect(<span class="kw">void</span>)
+  { <span class="kw">if</span>(ConnId!=-<span class="const">1</span>) <span class="rem">// Соединение было создано</span>
+      <a class="hidden" href="rdsNetCloseConnection.htm" title="А.5.20.2. rdsNetCloseConnection &ndash; разорвать соединение">rdsNetCloseConnection</a>(ConnId); <span class="rem">// Разорвать</span>
+    <span class="rem">// Сбрасываем переменные состояния</span>
+    ConnId=-<span class="const">1</span>;       <span class="rem">// Соединения больше нет</span>
+    Connected=FALSE; <span class="rem">// Связи тоже больше нет</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Если соединение было создано (<span class="cpp">ConnId</span> не равно &minus;1), мы разрываем его функцией
+<span class="cpp"><a href="rdsNetCloseConnection.htm" title="А.5.20.2. rdsNetCloseConnection &ndash; разорвать соединение">rdsNetCloseConnection</a></span>, после чего присваиваем <span class="cpp">ConnId</span> значение
+&minus;1, поскольку соединения уже нет. Логический флаг <span class="cpp">Connected</span> мы тоже сбрасываем
+&ndash; хотя физически соединение, может быть, еще не разорвано, данные передавать уже нельзя.</p>
+
+<p>Теперь напишем функцию передачи вещественного числа &ndash; она будет вызываться при
+изменении входа блока-передатчика:</p>
+
+<pre class="cpp">  <span class="rem">// Передать данные</span>
+  <span class="kw">void</span> TNetSendRcvData::SendValue(<span class="kw">double</span> value)
+  {
+    <span class="kw">if</span>(!Connected) <span class="rem">// Нет связи с сервером</span>
+      { <span class="rem">// Взводим флаг наличия данных, ожидающих передачи</span>
+        DataWaiting=TRUE;
+        <span class="kw">return</span>;
+      }
+
+    <span class="rem">// Связь есть – передаем всем блокам канала</span>
+    <span id="light_ref8"><a class="hidden" href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span>(ConnId, <span class="rem">// Соединение</span>
+                        <span id="light_ref9"><a class="hidden" href="rdsNetBroadcastData.htm#light_ref6" title="RDS_NETSEND_UPDATE">RDS_NETSEND_UPDATE</a></span>|<span id="light_ref10"><a class="hidden" href="rdsNetBroadcastData.htm#light_ref4" title="RDS_NETSEND_UDP">RDS_NETSEND_UDP</a></span>, <span class="rem">// Флаги</span>
+                        <span class="const">0</span>,NULL, <span class="rem">// Не передаем целое число и строку</span>
+                        &amp;value, <span class="rem">// Указатель на данные</span>
+                        <span class="kw">sizeof</span>(value)); <span class="rem">// Размер данных</span>
+    <span class="rem">// Сбрасываем флаг ожидания – мы только что передали данные</span>
+    DataWaiting=FALSE;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Сначала мы проверяем, взведен ли логический флаг <span class="cpp">Connected</span>, то есть пришло
+ли подтверждение установки связи с сервером. Если он сброшен, связи еще нет, и передавать данные не
+следует. В этом случае взводится логический флаг <span class="cpp">DataWaiting</span> и функция завершается
+&ndash; как только связь будет установлена, мы проверим этот флаг, и, если он взведен, передадим в канал
+значение входа блока.</p>
+
+<p><span id="ref11">Если</span>
+флаг взведен, вызывается функция <span class="cpp"><a href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span>, передающая через соединение
+<span class="cpp">ConnId</span> данные всем блокам, подключившимся к этому же каналу сервера. При
+передаче используются флаги <span class="cpp"><a href="rdsNetBroadcastData.htm#light_ref6" title="RDS_NETSEND_UPDATE">RDS_NETSEND_UPDATE</a></span> (если в очереди на передачу уже
+стоят данные для этого канала, они будут выброшены) и <span class="cpp"><a href="rdsNetBroadcastData.htm#light_ref4" title="RDS_NETSEND_UDP">RDS_NETSEND_UDP</a></span> (использовать при
+передаче протокол <span id="light_ref11">UDP</span>, если возможно). Вещественное число мы отправляем в
+канал как восемь байтов двоичных данных &ndash; в качестве указателя на буфер с данными мы передаем в
+функцию указатель на параметр <span class="cpp">value</span>, а в качестве длины буфера &ndash;
+размер этого параметра <span class="cpp">sizeof(value)</span> (<span class="cpp">value</span> имеет тип
+<span class="cpp">double</span>, поэтому <span class="cpp">sizeof(value)</span> будет равно восьми).
+Функция <span class="cpp"><a class="hidden" href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span> одновременно с блоком двоичных данных может передать
+целое число и строку, но это нам не нужно, поэтому вместо строки передается <span class="cpp">NULL</span>, а вместо
+числа &ndash; 0. На самом деле, число 0 все равно будет передано, но блок-приемник никак
+не будет на него реагировать.</p>
+
+<p>Сразу после вызова <span class="cpp"><a class="hidden" href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span> мы сбрасываем флаг
+<span class="cpp">DataWaiting</span> &ndash; теперь данные уже не ожидают передачи, они
+только что были переданы.</p>
+
+<p>Функция <span class="cpp">ReceiveValue</span> будет вызываться в реакции модели на поступление данных из сети
+(<span class="cpp"><span id="light_ref12"><a href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">RDS_BFM_NETDATARECEIVED</a></span></span>). В нее будет передаваться указатель на структуру
+<span class="cpp"><span id="light_ref13"><a href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a></span></span>, описывающую принятые данные (в функцию модели этот
+указатель передается в параметре <span class="cpp">ExtParam</span>) и указатель на вещественный выход
+блока-приемника, в который нужно записать принятое значение. Функция будет возвращать
+<span class="cpp">TRUE</span>, если размер принятых данных соответствует типу <span class="cpp">double</span>,
+то есть равен восьми.</p>
+
+<pre class="cpp">  <span class="rem">// Прием данных</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> TNetSendRcvData::ReceiveValue(
+           <a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a> *rcv, <span class="rem">// Указатель на структуру с данными</span>
+    <span class="kw">double</span> *pOut)             <span class="rem">// Указатель на выход блока</span>
+  {
+    <span class="kw">if</span>(rcv==NULL || pOut==NULL) <span class="rem">// Нет одного из указателей</span>
+      <span class="kw">return</span> FALSE;
+
+    <span class="rem">// Проверяем, есть ли среди принятых данных двоичные,</span>
+    <span class="rem">// и равен ли размер этих данных размеру double</span>
+    <span class="kw">if</span>(rcv-&gt;Buffer==NULL || rcv-&gt;BufferSize!=<span class="kw">sizeof</span>(<span class="kw">double</span>))
+      <span class="kw">return</span> FALSE; <span class="rem">// Нет данных или не совпал размер</span>
+
+    <span class="rem">// Копируем принятое числов pOut</span>
+    memcpy(pOut,rcv-&gt;Buffer,<span class="kw">sizeof</span>(<span class="kw">double</span>));
+    <span class="kw">return</span> TRUE; <span class="rem">// Приняты правильные данные</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В начале функции мы, на всякий случай, проверяем, не переданы ли в нее случайно нулевые указатели
+на структуру с принятыми данными и выход блока &ndash; без этих указателей функция не сможет работать. Затем мы
+проверяем, какие именно данные приняты. В канал можно одновременно передать целое число, строку и буфер с
+двоичными данными, но нас интересуют только двоичные данные, причем их размер должен совпадать с размером
+вещественного числа двойной точности (<span class="cpp">double</span>). Если в принятых данных нет
+двоичных (указатель <span class="cpp">rcv-&gt;Buffer</span> равен <span class="cpp">NULL</span>) или размер данных
+неправильный (<span class="cpp">rcv-&gt;BufferSize</span> не равно <span class="cpp">sizeof(double)</span>), функция
+возвращает <span class="cpp">FALSE</span> &ndash; блок не может обработать такие данные. В противном случае
+весь принятый двоичный буфер копируется в выход блока, указатель на который передан в параметре <span class="cpp">pOut</span>,
+и функция возвращает <span class="cpp">TRUE</span>.</p>
+
+<p>Осталось написать три вспомогательные функции. Начнем с функций сохранения и загрузки параметров блока.
+В данном случае, параметр у нас один &ndash; строка имени канала. Сохранять параметры мы будем в текстовом
+формате, аналогичном формату INI-файлов Windows (см. <a href="pm_2_8_5.htm" title="&sect;2.8.5. Сохранение параметров блока в формате INI-файла">&sect;2.8.5</a>):</p>
+
+<pre class="cpp">  <span class="rem">// Сохранение параметров блока</span>
+  <span class="kw">void</span> TNetSendRcvData::SaveText(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini; <span class="rem">// Вспомогательный объект</span>
+    <span class="rem">// Создаем вспомогательный объект</span>
+    ini=<a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a>(TRUE);
+    <span class="rem">// Создаем в объекте секцию "[General]"</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a>,<span class="const">0</span>,<span class="str">"General"</span>);
+    <span class="rem">// Записываем в эту секцию имя канала</span>
+    <a class="hidden" href="rdsINIWriteString.htm" title="А.5.27.9. rdsINIWriteString &ndash; установить текстовое значение параметра">rdsINIWriteString</a>(ini,<span class="str">"Channel"</span>,ChannelName);
+    <span class="rem">// Сохраняем текст, сформированный объектом, как параметры блока</span>
+    <a class="hidden" href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a>(ini,<a class="hidden" href="RDS_HINI_SAVEBLOCKTEXT.htm" title="А.5.27.16. Команда RDS_HINI_SAVEBLOCKTEXT &ndash; передать текст параметров блока в RDS">RDS_HINI_SAVEBLOCKTEXT</a>);
+    <span class="rem">// Удаляем вспомогательный объект</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(ini);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Функция загрузки параметров будет аналогична функции сохранения:</p>
+
+<pre class="cpp">  <span class="rem">// Загрузка параметров блока</span>
+  <span class="kw">void</span> TNetSendRcvData::LoadText(<span class="kw">char</span> *text)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini; <span class="rem">// Вспомогательный объект</span>
+    <span class="kw">char</span> *str;
+    <span class="rem">// Создаем вспомогательный объект</span>
+    ini=<a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a>(TRUE);
+    <span class="rem">// Записываем в объект полученный текст с параметрами блока</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_SETTEXT.htm" title="А.5.27.18. Команда RDS_HINI_SETTEXT &ndash; занести текст в объект">RDS_HINI_SETTEXT</a>,<span class="const">0</span>,text);
+    <span class="rem">// Начинаем чтение секции "[General]", если она есть</span>
+    <span class="kw">if</span>(<a class="hidden" href="rdsINIOpenSection.htm" title="А.5.27.2. rdsINIOpenSection &ndash; установить текущую секцию">rdsINIOpenSection</a>(ini,<span class="str">"General"</span>)) <span class="rem">// Секция есть</span>
+      { <span class="rem">// Освобождаем старое имя канала</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(ChannelName);
+        ChannelName=NULL;
+        <span class="rem">// Получаем у объекта указатель на строку с именем</span>
+        str=<a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a>(ini,<span class="str">"Channel"</span>,<span class="str">""</span>,NULL);
+        <span class="rem">// Если такая строка есть в тексте, копируем ее в ChannelName</span>
+        <span class="kw">if</span>(str)
+          ChannelName=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(str);
+      }
+    <span class="rem">// Удаляем вспомогательный объект</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(ini);
+
+    <span class="rem">// Поскольку имя канала могло измениться, соединяемся с</span>
+    <span class="rem">// сервером заново</span>
+    Disconnect(); <span class="rem">// Разрываем старое соединение</span>
+    Connect();    <span class="rem">// Создаем новое</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции следует обратить внимание на последние два вызова: после загрузки параметров блока
+мы разрываем связь с сервером и устанавливаем ее заново. Это связано с тем, что в результате загрузки
+параметров имя канала в <span class="cpp">ChannelName</span> могло измениться, и мы должны присоединиться к
+каналу с новым именем, предварительно разорвав связь со старым.</p>
+
+<p>Теперь напишем функцию настройки, которая позволит пользователю задавать имя канала для
+блока-приемника и блока-передатчика. Будем использовать для ввода строки сервисную функцию
+<span class="cpp"><span id="light_ref14"><a href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a></span></span>:</p>
+
+<pre class="cpp">  <span class="rem">// Настройка параметров</span>
+  <span class="kw">int</span> TNetSendRcvData::Setup(<span class="kw">char</span> *title)
+  { <span class="kw">char</span> *NewName;
+
+    <span class="rem">// Запрос строки у пользователя</span>
+    NewName=<a class="hidden" href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a>(
+              title,         <span class="rem">// Заголовок окна</span>
+              <span class="str">"Имя канала:"</span>, <span class="rem">// Текст перед полем</span>
+              ChannelName,   <span class="rem">// Исходное значение</span>
+              <span class="const">200</span>);          <span class="rem">// Ширина поля</span>
+
+    <span class="kw">if</span>(NewName==NULL) <span class="rem">// Нажата кнопка "Отмена"</span>
+      <span class="kw">return</span> <span class="const">0</span>;
+
+    <span class="kw">if</span>(ChannelName!=NULL &amp;&amp; strcmp(NewName,ChannelName)==<span class="const">0</span>)
+      { <span class="rem">// Имя канала не изменилось</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(NewName); <span class="rem">// Освобождаем вовращенную строку</span>
+        <span class="kw">return</span> <span class="const">0</span>;
+      }
+
+    <span class="rem">// Освобождаем старое имя канала</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(ChannelName);
+    <span class="rem">// Запоминаем новое</span>
+    ChannelName=NewName;
+    <span class="rem">// Имя канала изменилось – устанавливаем связь заново</span>
+    Disconnect();
+    Connect();
+    <span class="kw">return</span> <span class="const">1</span>; <span class="rem">// Параметры блока изменены</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Заголовок окна, которое откроет функция <span class="cpp"><a class="hidden" href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a></span>, передается в параметре
+функции <span class="cpp">Setup</span>, он будет зависеть от того, какому типу блока принадлежит объект этого
+класса. Функция вернет нам управление только после того, как пользователь закроет окно кнопкой &laquo;<span class="menu">ОК</span>&raquo;
+или &laquo;<span class="menu">Отмена</span>&raquo;. При нажатии кнопки &laquo;<span class="menu">Отмена</span>&raquo; функция возвращает <span class="cpp">NULL</span>,
+при этом мы завершаем функцию настройки, возвращая ноль &ndash; параметры блока не изменились. Если же
+пользователь нажмет &laquo;<span class="menu">ОК</span>&raquo;, функция вернет указатель на динамически отведенную строку с
+текстом, введенным в окне. В этом случае имеет смысл проверить, изменил ли пользователь имя канала, или оно
+осталось прежним. Если строки <span class="cpp">ChnName</span> и <span class="cpp">NewName</span> совпадают,
+то есть пользователь не изменил имя канала, возвращенная функцией <span class="cpp"><a class="hidden" href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a></span>
+строка <span class="cpp">NewName</span> освобождается, и мы завершаем функцию настройки. В противном случае
+мы освобождаем строку со старым именем канала и копируем в <span class="cpp">ChnName</span> новое из переменной
+<span class="cpp">NewName</span>. Затем, как и после загрузки параметров, мы разрываем соединение с сервером и
+устанавливаем его заново, но уже с новым именем канала.</p>
+
+<p>Теперь, когда все вспомогательные функции готовы, можно приступать к написанию моделей блока приемника и
+блока-передатчика. Начнем с модели передатчика &ndash; она будет чуть более сложной, поскольку, в отличие
+от модели приемника, ей нужно следить за наличием связи с сервером и передавать данные только тогда, когда
+эта связь есть.</p>
+
+<p>В блоке-передатчике нам нужен единственный вещественный вход, значение которого будет передаваться в
+канал, поэтому его структура переменных будет следующей:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">x</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Для входа блока &laquo;<span class="rdsvar">x</span>&raquo; установлен
+<a href="pm_1_5.htm#ref18" title="Флаг запуска у входа блока">флаг &laquo;<span class="menu">пуск</span>&raquo;</a>, чтобы при срабатывании связи, подключенной
+к этому входу, модель блока автоматически запускалась в следующем такте
+<a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a> &ndash; передавать данные на
+сервер блок будет именно в такте расчета. Для правильной работы модели необходимо будет также установить
+в параметрах блока
+<a href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">флаг &laquo;<span class="menu">запуск по сигналу</span>&raquo;</a>, иначе модель будет передавать
+данные не при изменении входа, а в каждом такте расчета, что приведет к неоправданно большой нагрузке на сеть.</p>
+
+<p>Модель блока будет следующей:</p>
+
+<pre class="cpp">  <span class="rem">// Блок-передатчик</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> NetSend(<span class="kw">int</span> CallMode,
+          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Указатель на личную область данных, приведенный к нужному типу</span>
+    TNetSendRcvData *data=(TNetSendRcvData*)(BlockData-&gt;BlockData);
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x      (*((double *)(pStart+2)))</span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Создаем объект класса TNetSendRcvData с</span>
+          <span class="rem">// Mode==NETSRMODE_SENDER (передатчик)</span>
+          BlockData-&gt;BlockData=<span class="kw">new</span> TNetSendRcvData(NETSRMODE_SENDER);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSD}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Связь с сервером установлена</span>
+        <span class="kw">case</span> <span id="light_ref15"><a class="hidden" href="RDS_BFM_NETCONNECT.htm" title="А.2.8.1. RDS_BFM_NETCONNECT &ndash; установка соединения">RDS_BFM_NETCONNECT</a></span>:
+          <span class="rem">// Взводим флаг наличия связи</span>
+          data-&gt;Connected=TRUE;
+          <span class="rem">// Если были данные, ожидающие отправки,</span>
+          <span class="rem">// посылаем значение входа блока</span>
+          <span class="kw">if</span>(data-&gt;DataWaiting)
+            data-&gt;SendValue(x);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Связь с сервером разорвана</span>
+        <span class="kw">case</span> <span id="light_ref16"><a class="hidden" href="RDS_BFM_NETDISCONNECT.htm" title="А.2.8.4. RDS_BFM_NETDISCONNECT &ndash; разрыв соединения">RDS_BFM_NETDISCONNECT</a></span>:
+          <span class="rem">// Сбрасываем флаг наличия связи</span>
+          data-&gt;Connected=FALSE;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Запуск расчета</span>
+        <span class="kw">case</span> <span id="light_ref17"><a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a></span>:
+          <span class="rem">// Если это – первый запуск после сброса,</span>
+          <span class="rem">// передаем значение входа</span>
+          <span class="kw">if</span>(((<span id="light_ref18"><a class="hidden" href="RDS_BFM_STARTCALC.htm#ref2" title="Указатель на RDS_STARTSTOPDATA">RDS_PSTARTSTOPDATA</a></span>)ExtParam)-&gt;FirstStart)
+            data-&gt;SendValue(x);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          data-&gt;SendValue(x); <span class="rem">// Передаем значение входа</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="kw">return</span> data-&gt;Setup(<span class="str">"Передача double"</span>);
+
+       <span class="rem">// Сохранение параметров в текстовом виде</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a>:
+          data-&gt;SaveText();
+          <span class="kw">break</span>;
+
+       <span class="rem">// Загрузка параметров в текстовом виде</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a>:
+          data-&gt;LoadText((<span class="kw">char</span>*)ExtParam);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>При инициализации модели мы создаем личную область данных блока &ndash; объект класса
+<span class="cpp">TNetSendRcvData</span>. В параметре конструктора класса мы передаем константу
+<span class="cpp">NETSRMODE_SENDER</span> &ndash; она будет записана в поле <span class="cpp">Mode</span>,
+чтобы все функции класса знали, что объект принадлежит блоку-передатчику.</p>
+
+<p>Как только связь с сервером будет установлена (а устанавливается она после загрузки параметров или ввода
+имени канала пользователем в функциях, которые мы уже написали), модель будет вызвана в режиме
+<span class="cpp"><a href="RDS_BFM_NETCONNECT.htm" title="А.2.8.1. RDS_BFM_NETCONNECT &ndash; установка соединения">RDS_BFM_NETCONNECT</a></span>. При этом будет взведен флаг наличия связи
+<span class="cpp">data-&gt;Connected</span>, и, если есть данные, ожидающие передачи
+(взведен <span class="cpp">data-&gt;DataWaiting</span>), значение входа блока <span class="cpp">x</span>
+будет передано на сервер функцией <span class="cpp">SendValue</span>. Флаг <span class="cpp">DataWaiting</span>
+взводится внутри функции <span class="cpp">SendValue</span> при попытке передать данные в отсутствие связи
+с сервером, и сбрасывается там же после успешной передачи. Если на момент установления связи
+<span class="cpp">DataWaiting</span> будет истинным, значит, до этого были неудачные попытки передачи, и
+вход блока нужно передать на сервер.</p>
+
+<p>При разрыве связи модель будет вызвана в режиме <span class="cpp"><a href="RDS_BFM_NETDISCONNECT.htm" title="А.2.8.4. RDS_BFM_NETDISCONNECT &ndash; разрыв соединения">RDS_BFM_NETDISCONNECT</a></span>, при этом
+будет сброшен флаг <span class="cpp">data-&gt;Connected</span>. Начиная с этого момента все вызовы
+функции <span class="cpp">SendValue</span> будут приводить не к передаче данных, а к взведению флага
+<span class="cpp">DataWaiting</span>. Как только RDS сможет восстановить связь, данные немедленно будут
+переданы.</p>
+
+<p>При самом первом запуске расчета (сразу после загрузки схемы или после сброса) блок отправляет значение своего
+входа на сервер &ndash; таким образом мы передаем всем блокам-приемникам начальное значение входа блока
+передатчика. Текущее значение входа <span class="cpp">x</span> при его изменениях передается в такте расчета
+(<span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>). В трех оставшихся реакциях модели вызываются функции класса для настройки,
+сохранения и загрузки параметров, которые мы уже написали.</p>
+
+<p>Теперь напишем модель блока-приемника. У него будет очень похожая структура переменных, только место входа
+&laquo;<span class="rdsvar">x</span>&raquo; займет выход &laquo;<span class="rdsvar">y</span>&raquo;:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">y</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Для этого блока тоже желательно установить в параметрах блока
+<a class="hidden" href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">флаг &laquo;<span class="menu">запуск по сигналу</span>&raquo;</a>, чтобы он не тратил
+зря процессорное время: в его модели не будет реакции на выполнение такта расчета.</p>
+
+<p>Модель блока-приемника будет выглядеть так:</p>
+
+<pre class="cpp">  <span class="rem">// Блок-приемник</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> NetReceive(<span class="kw">int</span> CallMode,
+            <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+            <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Указатель на личную область данных, приведенный к нужному типу</span>
+    TNetSendRcvData *data=(TNetSendRcvData*)(BlockData-&gt;BlockData);
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define y      (*((double *)(pStart+2)))</span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Создаем объект класса TNetSendRcvData с</span>
+          <span class="rem">// Mode==NETSRMODE_RECEIVER (приемник)</span>
+          BlockData-&gt;BlockData=
+            <span class="kw">new</span> TNetSendRcvData(NETSRMODE_RECEIVER);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSD}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// По сети получены данные</span>
+        <span class="kw">case</span> <span id="light_ref19"><a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">RDS_BFM_NETDATARECEIVED</a></span>:
+          <span class="kw">if</span>(data-&gt;ReceiveValue((<span id="light_ref20"><a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a></span>*)ExtParam,&amp;y))
+            Ready=<span class="const">1</span>; <span class="rem">// Если данные верны, взводим флаг готовности</span>
+                     <span class="rem">// для передачи выхода по связям</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="kw">return</span> data-&gt;Setup(<span class="str">"Прием double"</span>);
+
+       <span class="rem">// Сохранение параметров в текстовом виде</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a>:
+          data-&gt;SaveText();
+          <span class="kw">break</span>;
+
+       <span class="rem">// Загрузка параметров в текстовом виде</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a>:
+          data-&gt;LoadText((<span class="kw">char</span>*)ExtParam);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой модели, как и в модели передатчика, при инициализации тоже создается объект класса
+<span class="cpp">TNetSendRcvData</span>, но в его конструктор передается константа
+<span class="cpp">NETSRMODE_RECEIVER</span>, указывающая на то, что этот объект принадлежит блоку-приемнику.
+Реакции на установку и разрыв связи в модели отсутствуют: этому блоку не нужно знать, есть ли
+в данный момент связь с сервером. Он реагирует на пришедшие от сервера данные &ndash; если связи нет, данные
+просто не будут приходить.</p>
+
+<p>Полученные по сети данные обрабатываются в реакции модели на событие
+<span class="cpp"><a href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">RDS_BFM_NETDATARECEIVED</a></span>. При этом вызывается функция <span class="cpp">ReceiveValue</span> класса
+<span class="cpp">TNetSendRcvData</span>, которую мы написали ранее. В функцию передается указатель на структуру,
+описывающую принятые данные (для этого <span class="cpp">ExtParam</span> приводится к типу
+<span class="cpp"><a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a>*</span>) и указатель на выход блока
+<span class="cpp">y</span>, в который она запишет принятое вещественное число. Если
+<span class="cpp">ReceiveValue</span> вернет <span class="cpp">TRUE</span>, то есть если принятые данные
+соответствуют размеру числа <span class="cpp">double</span>, будет взведен сигнал готовности блока
+<span class="cpp"><a href="um_1_4.htm#ref27" title="Сигнал готовности блока">Ready</a></span>, чтобы новое значение выхода было передано по связям.</p>
+
+<p>Все остальные реакции модели приемника совпадают с реакциями модели передатчика: их личная область данных
+описывается одним классом, поэтому при настройке, загрузке и сохранении параметров вызываются одни и
+те же функции этого класса. В тех случаях, когда для работы функции важно, обслуживает она блок-передатчик или
+приемник, внутри функции анализируется поле класса <span class="cpp">Mode</span>.</p>
+
+<p>Для проверки работы созданных блоков потребуется две машины, соединенные сетью. В сетевых настройках
+RDS (см. <a href="pm_2_15_1.htm#pic1" title="Окно настроек RDS: вкладка сеть &ndash; TCP">рис.&nbsp;109</a>) на каждой из них в поле
+&laquo;<span class="menu">сервер по умолчанию</span>&raquo; необходимо указать IP-адрес той машины, которая будет играть роль сервера,
+и задать один и тот же номер порта. На сервере следует собрать схему, изображенную
+на <a href="#pic1_0" title="Схемы для тестирования блоков сетевого обмена: схема на сервере (а) и на клиенте (б)">рис.&nbsp;110&nbsp;а</a>:
+в ней должен присутствовать блок, запускающий сервер
+(<a href="#light_ref1" title="Пример блока, включающего функции сервера RDS">модель <span class="cpp">Server</span></a>), блок-передатчик (модель
+<span class="cpp">NetSend</span>) и блок-приемник (модель <span class="cpp">NetReceive</span>). В параметрах всех
+трех блоков необходимо установить
+<a class="hidden" href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">флаг &laquo;<span class="menu">запуск по сигналу</span>&raquo;</a>, к входу блока-передатчика подключить
+поле ввода, а к выходу блока-приемника &ndash; индикатор. В параметрах передатчика и приемника нужно ввести
+разные имена каналов (например, &laquo;Channel1&raquo; и &laquo;Channel2&raquo;).</p>
+
+<div class="pic"><div class="container" id="pic1">
+<div class="multi" id="pic1_0"><img src="../img/NetServer.png" width="274" height="294" alt="Схемы для тестирования блоков сетевого обмена: схема на сервере (а) и на клиенте (б) 1" /><p id="light_pic1_0">(а)</p></div><div class="multi" id="pic1_1"><img src="../img/NetClient.png" width="274" height="294" alt="Схемы для тестирования блоков сетевого обмена: схема на сервере (а) и на клиенте (б) 2" /><p id="light_pic1_1">(б)</p></div><p id="light_pic1">Рис.&nbsp;110. Схемы для тестирования блоков сетевого обмена: схема на сервере (а) и на клиенте (б)</p>
+</div></div>
+
+
+<p>На машине-клиенте следует собрать аналогичную схему
+(<a href="#pic1_1" title="Схемы для тестирования блоков сетевого обмена: схема на сервере (а) и на клиенте (б)">рис.&nbsp;110&nbsp;б</a>), но без блока включения сервера. Имена
+каналов у приемника и передатчика нужно задать такими, чтобы приемник клиента работал с каналом передатчика сервера,
+а передатчик клиента &ndash; с каналом приемника сервера. Например, если в блоке-передатчике на сервере задан
+канал &laquo;Channel1&raquo;, это же имя канала нужно ввести в настройках блока-приемника клиента.</p>
+
+<p>Теперь нужно запустить расчет на обеих машинах. Если имена каналов заданы правильно, значение, введенное в поле
+ввода в одной схеме, должно отображаться на индикаторе в другой.</p>
+
+<p><span id="ref21">Если</span>
+открыть на сервере <span id="light_ref21"><a href="um_2_20.htm" title="&sect;2.20. Окно сетевых соединений">окно сетевых соединений</a></span>
+(пункт главного меню RDS &laquo;<span class="menu">Окна | Сетевые соединения</span>&raquo;,
+<a href="#pic2" title="Окно сетевых соединений">рис.&nbsp;111</a>),
+можно будет увидеть два IP-адреса подключенных клиентов. Один из них,
+&laquo;127.0.0.1&raquo;, это адрес этой же машины &ndash; она выступает сервером и для блоков в своей собственной
+схеме. Второй &ndash; адрес машины, на которой работает схема-клиент. Можно также видеть имена трех созданных
+блоками каналов, один из которых используется только для включения сервера, а два других связывают передатчики и
+приемники в двух схемах.</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/NetConnWin.png" width="382" height="405" alt="Окно сетевых соединений" />
+<p id="light_pic2">Рис.&nbsp;111. Окно сетевых соединений</p>
+</div></div>
+
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_15_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_15_3.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_15_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

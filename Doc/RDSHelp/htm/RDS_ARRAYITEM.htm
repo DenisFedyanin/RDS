@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.15.4. Макрос RDS_ARRAYITEM &ndash; элемент матрицы с заданными индексами</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_15">А.5.15. Работа с матрицами и массивами</a></p>
+<div class="level"><p>А.5.15.4. Макрос <span class="cpp">RDS_ARRAYITEM</span> &ndash; элемент матрицы с заданными индексами</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_ARRAYEXISTS.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_ARRAYITEMADDR.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_ARRAYITEM">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.15. Работа с матрицами и массивами</h4>
+<h5>А.5.15.4. Макрос <span class="cpp">RDS_ARRAYITEM</span> &ndash; элемент матрицы с заданными индексами</h5>
+
+
+<p><span id="ref1">Макрос</span>
+<span class="cpp">RDS_ARRAYITEM</span> возвращает элемент
+<a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статической</a>
+или <a href="pm_1_6.htm#ref1" title="Динамическая переменная">динамической</a> переменной блока, являющейся
+<a href="pm_1_5.htm#light_ref13" title="тип переменной: массив">матрицей или массивом</a>, с указанными в параметрах
+индексами. Он может использоваться только для матриц и массивов простых переменных и только вместе со структурой
+<span class="cpp" id="light_ref1"><a href="RDS_ARRAYACCESSDATA.htm#ref1" title="Структура RDS_ARRAYACCESSDATA">RDS_ARRAYACCESSDATA</a></span>.</p>
+
+<pre class="cpp">  RDS_ARRAYITEM(
+    type,    <span class="rem">// Тип элемента</span>
+    acc,     <span class="rem">// Указатель на структуру описания</span>
+    r,       <span class="rem">// Строка</span>
+    c        <span class="rem">// Столбец</span>
+  )</pre>
+
+<p class="apphdr">Определение</p>
+<pre class="cpp">  <span class="preproc">#define RDS_ARRAYITEM(type,acc,r,c) \</span>
+<span class="preproc">      ( *((type *)RDS_ARRAYITEMADDR(acc,r,c)) )</span></pre>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">type</span>&emsp;(<span class="cpp"><i>имя типа</i></span>)</dt>
+  <dd>Простой тип элемента матрицы/массива (<span class="cpp">double</span>, <span class="cpp">int</span> и т.д.).</dd>
+
+  <dt><span class="cpp">acc</span>&emsp;(<span class="cpp"><i><a href="RDS_ARRAYACCESSDATA.htm#ref1" title="Структура RDS_ARRAYACCESSDATA">RDS_ARRAYACCESSDATA</a>*</i></span>)</dt>
+  <dd>Указатель на структуру описания матрицы <span class="cpp">RDS_ARRAYACCESSDATA</span>.</dd>
+
+  <dt><span class="cpp">r</span>,&nbsp;<span class="cpp">c</span>&emsp;(<span class="cpp"><i>целые</i></span>)</dt>
+  <dd>Строка (<span class="cpp">r</span>) и столбец (<span class="cpp">c</span>) элемента, нумерация начинается с нуля.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Значение элемента матрицы, описываемой структурой <span class="cpp">acc</span>. Это значение может
+использоваться как в правой, так и в левой (lvalue) части выражений.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Для использования этого макроса необходимо иметь заполненную структуру описания матрицы
+<span class="cpp">RDS_ARRAYACCESSDATA</span> (указатель на нее передается во втором параметре макроса).
+Сам макрос определен через другой макрос &ndash;
+<span class="cpp"><a href="RDS_ARRAYITEMADDR.htm" title="А.5.15.5. Макрос RDS_ARRAYITEMADDR &ndash; указатель на элемент матрицы с заданными индексами">RDS_ARRAYITEMADDR</a></span> &ndash; который возвращает указатель на данные элемента матрицы с
+указанным номером. Этот адрес затем приводится к типу
+&laquo;указатель на <span class="cpp">type</span>&raquo;, после чего оператором
+<span class="cpp">*</span> берется его содержимое (именно поэтому этот макрос можно использовать только для
+матриц, элементы которых имеют простой тип, совпадающий с одним из типов языка C). Массивы в
+RDS хранятся в памяти так же, как и матрицы, поэтому этот макрос можно применять как для матриц,
+так и для массивов &ndash; в массиве в качестве номера строки всегда следует передавать 0.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования <span class="cpp">RDS_ARRAYITEM</span> приведен
+в <a href="pm_2_5_3.htm" title="&sect;2.5.3. Доступ к матрицам и массивам">&sect;2.5.3 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_ARRAYACCESSDATA.htm#ref1" title="Структура RDS_ARRAYACCESSDATA">RDS_ARRAYACCESSDATA</a></span>,
+<span class="cpp"><a href="RDS_ARRAYITEMADDR.htm" title="А.5.15.5. Макрос RDS_ARRAYITEMADDR &ndash; указатель на элемент матрицы с заданными индексами">RDS_ARRAYITEMADDR</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_ARRAYEXISTS.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_ARRAYITEMADDR.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_ARRAYITEM">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

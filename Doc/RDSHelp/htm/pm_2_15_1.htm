@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.15.1. Общие принципы обмена данными по сети в RDS</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_15">&sect;2.15. Обмен данными по сети</a></p>
+<div class="level"><p>&sect;2.15.1. Общие принципы обмена данными по сети в RDS</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_14_5.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_15_2.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_15_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3>&sect;2.15. Обмен данными по сети</h3>
+<p class="abstract">Рассматриваются способы обмена данными между схемами, работающими на разных машинах. Приводятся 
+            примеры моделей блоков, осуществляющих такой обмен.</p>
+<h4>&sect;2.15.1. Общие принципы обмена данными по сети в RDS</h4>
+<p class="abstract">Рассматривается механизм обмена данными по сети между блоками RDS. Описываются основные сервисные 
+                функции и структуры и способ их использования.</p>
+
+
+<p>Поскольку модели блоков в RDS являются просто функциями в составе динамически подключаемой библиотеки
+(DLL), им доступны все функции Windows API, и они могут самостоятельно создавать сетевые соединения и
+обмениваться данными друг с другом, как это делают обычные программы. Тем не менее, в RDS
+включен специализированный механизм сетевого обмена, облегчающий работу программистам, которые не хотят
+писать сетевые функции самостоятельно. Конечно, этот механизм менее гибок, чем универсальные функции API,
+но свою задачу он выполняет: с его помощью блок может передать произвольные данные одному или нескольким блокам в
+схемах, запущенных на других машинах.</p>
+
+<p><span id="ref1">В</span>
+RDS используется клиент-серверная модель обмена данными.
+Одна из машин в сети (точнее, одна из запущенных на ней копий &laquo;<span class="file">rds.exe</span>&raquo;)
+должна стать <span id="light_ref1">сервером</span>, через который будет проходить весь поток данных.
+Все остальные будут передавать ей данные и получать их от нее. RDS может работать в режиме выделенного
+сервера, то есть заниматься только организацией обмена данными между клиентами (для этого нужно запустить
+&laquo;<span class="file">rds.exe</span>&raquo; с параметром командной строки
+&laquo;/<a href="app_key_server.htm" title="В.8. &laquo; /server &raquo; &ndash; запустить выделенный сервер RDS">server</a>&nbsp;default&raquo; или
+&laquo;/<a class="hidden" href="app_key_server.htm" title="В.8. &laquo; /server &raquo; &ndash; запустить выделенный сервер RDS">server</a>&nbsp;<i>номер_порта</i>&raquo;)
+или обслуживать работу какой-либо схемы, выполняя при
+этом еще и функции сервера. Если в сети есть свободная машина, можно использовать первый вариант, если нет
+&ndash; второй. Технически, первый вариант предпочтительнее, поскольку во втором варианте критические ошибки
+в моделях блоков загруженной схемы могут привести к аварийному завершению RDS, при этом вся сеть лишится сервера.</p>
+
+<p><span id="ref2">Для</span>
+того, чтобы блоки схемы могли обмениваться данными с другими схемами, в
+<span id="light_ref2"><a href="um_2_18.htm#ref26" title="Настройка TCP">сетевых настройках</a> RDS</span>
+(<a href="#pic1" title="Окно настроек RDS: вкладка сеть &ndash; TCP">рис.&nbsp;109</a>) должен быть разрешен сетевой обмен &ndash;
+в противном случае все попытки установить соединение с другими машинами или запустить сервер будут
+блокироваться. Разумеется, все это относится только к встроенному механизму сетевого обмена RDS:
+если модель блока установит соединение с помощью функций Windows API, никакие настройки
+RDS не смогут ей помешать. В настройках также обычно указывается имя или IP-адрес и порт
+сервера по умолчанию. Эти параметры будут использованы клиентом при создании соединения с
+сервером, если адрес сервера и порт не будут указаны моделью блока. Номер порта по умолчанию также
+используется при запуске RDS в режиме выделенного сервера с параметром командной строки
+&laquo;/<a class="hidden" href="app_key_server.htm" title="В.8. &laquo; /server &raquo; &ndash; запустить выделенный сервер RDS">server</a>&nbsp;default&raquo;.
+<span id="ref3">Для</span>
+<span id="ref4">обмена</span>
+данными между клиентом и сервером используются протоколы
+<span id="light_ref3">TCP</span> и <span id="light_ref4">UDP</span>: служебные данные всегда передаются
+по протоколу TCP, а данные, которыми обмениваются блоки, могут передаваться как по TCP, так и по UDP,
+в зависимости от
+<a href="um_2_18.htm#pic8" title="Окно настроек: вкладка сеть &ndash; UDP">настроек</a>
+RDS (использование UDP должно быть разрешено) и флагов при вызове сервисных функций.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/Setup_TCP.png" width="578" height="422" alt="Окно настроек RDS: вкладка сеть &ndash; TCP" />
+<p id="light_pic1">Рис.&nbsp;109. Окно настроек RDS: вкладка &laquo;<span class="menu">сеть &ndash; TCP</span>&raquo;</p>
+</div></div>
+
+
+<p><span id="ref5">Обмен</span> данными между блоками происходит через так
+называемые <span class="emph" id="light_ref5">каналы передачи данных</span> сервера, каждый из которых
+имеет текстовое имя, уникальное на данном сервере. Когда блок создает сетевое соединение с сервером
+при помощи сервисной функции RDS, он указывает IP-адрес и порт сервера (или разрешает использовать значения
+по умолчанию из настроек RDS), имя канала, с которым нужно установить соединение, а также хочет ли
+он получать данные из этого канала, или будет только передавать их. После этого блок может передавать
+в этот канал двоичные данные произвольного размера. Если при передаче данных не указана машина и блок,
+которые должны их получить, то сервер, приняв эти данные, отправляет их на все машины, блоки которых сообщили о
+желании получать данные из этого канала. Копии RDS, работающие на этих машинах, принимают данные от
+сервера и вызывают модели блоков-получателей, передавая им полученные данные. Если же при передаче данных
+указан конкретный блок-получатель на конкретной машине, сервер передаст данные только на эту машину, и
+на ней будет вызвана модель только одного блока.</p>
+
+<p>Для установки соединения с каким-либо каналом сервера модель блока должна вызвать сервисную функцию
+<span class="cpp"><span id="light_ref6"><a href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a></span></span>:</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a>(
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Host,    <span class="rem">// IP-адрес или имя сервера, или NULL для</span>
+                   <span class="rem">// сервера по умолчанию</span>
+    <span class="kw">int</span> Port,      <span class="rem">// Порт сервера или -1 для порта по умолчанию</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Channel, <span class="rem">// Имя канала передачи данных сервера</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Receive); <span class="rem">// Будет ли блок получать данные</span></pre>
+
+<p>В параметре <span class="cpp">Host</span> передается строка с IP-адресом сервера (четыре числа,
+разделенные точками, например &laquo;192.168.1.1&raquo;) или его именем. Если вместо строки будет передано
+значение <span class="cpp">NULL</span>, адрес сервера будет взят из
+сетевых настроек RDS (см. <a href="#pic1" title="Окно настроек RDS: вкладка сеть &ndash; TCP">рис.&nbsp;109</a>). В параметре
+<span class="cpp">Port</span> передается номер порта, используемого сервером RDS для обмена данными,
+при передаче значения &minus;1 номер порта будет взят из сетевых настроек. Лучше всего использовать именно
+значения по умолчанию, то есть <span class="cpp">NULL</span> и &minus;1 &ndash; в этом случае при переносе
+сервера на другую машину достаточно будет изменить сетевые настройки RDS на каждой клиентской машине.
+Если же адрес сервера и номер порта будут храниться в настройках блока, при изменении адреса или порта сервера
+потребуется изменить настройки всех блоков на всех клиентских машинах. Тем не менее, если схеме необходимо
+устанавливать соединения с двумя разными серверами, адрес и порт одного из них придется хранить в настройках
+блоков.</p>
+
+<p>В параметре <span class="cpp">Channel</span> передается имя канала передачи данных, с которым
+устанавливается соединение. Имя канала может быть произвольной строкой символов. В параметрах сервера каналы
+никак не настраиваются, они создаются автоматически при первом запросе на подключение к каналу с
+указанным именем. Типа данных у канала тоже нет, блоки передают в него двоичные данные произвольного размера, и
+сервер пересылает их получателям без какой-либо обработки. Чаще всего имя канала хранят в настройках блока,
+чтобы пользователь мог ввести его самостоятельно, указывая, какие группы блоков связываются друг с другом через
+этот канал. Для обеспечения уникальности можно добавлять к имени, введенному пользователем или жестко указанному
+в программе, какой-нибудь префикс &ndash; например, имя библиотеки, в которой находится модель блока. Логический
+параметр <span class="cpp">Receive</span> определяет, должен ли блок, вызвавший функцию, получать данные
+из канала (<span class="cpp">TRUE</span>) или он будет только передавать их (<span class="cpp">FALSE</span>).
+Если в модели блока не предусмотрен прием данных по сети, а в параметре <span class="cpp">Receive</span>
+передано значение <span class="cpp">TRUE</span>, ничего страшного не случится &ndash; при поступлении данных
+модель блока будет вызвана, но, поскольку в ней нет
+<a href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">соответствующей реакции</a>, принятые данные будут
+проигнорированы. Тем не менее, в блоках, которые только передают данные, лучше указывать в параметре
+<span class="cpp">Receive</span> значение <span class="cpp">FALSE</span>: это не только предотвратит потери
+процессорного времени на лишние вызовы модели блока, но и снизит нагрузку на сеть. Если в схеме
+на клиентской машине нет ни одного блока, получающего данные из канала, сервер вообще не будет передавать данные
+этого канала на эту машину.</p>
+
+<p>Функция <span class="cpp"><a class="hidden" href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a></span> возвращает целое число, являющееся уникальным
+идентификатором созданного соединения. Это число в дальнейшем используется в сервисных функциях передачи
+данных и в реакциях блока на получение данных из сети. Если сетевое соединение установить невозможно
+(например, если обмен данными по сети запрещен в настройках RDS), функция вернет &minus;1.</p>
+
+<p>Если нужно не подключиться к другому серверу, а включить функции сервера в RDS на данной машине,
+необходимо вызвать функцию <span class="cpp"><span id="light_ref7"><a href="rdsNetServer.htm" title="А.5.20.5. rdsNetServer &ndash; запуск сервера и установка соединения с ним">rdsNetServer</a></span></span>. Она одновременно запускает сервер
+RDS, если он еще не запущен, и устанавливает соединение с указанным каналом в нем:</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsNetServer.htm" title="А.5.20.5. rdsNetServer &ndash; запуск сервера и установка соединения с ним">rdsNetServer</a>(
+    <span class="kw">int</span> Port,      <span class="rem">// Порт сервера или -1 для порта по умолчанию</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Channel, <span class="rem">// Имя канала передачи данных сервера</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Receive); <span class="rem">// Будет ли блок получать данные</span></pre>
+
+<p>Параметры этой функции совпадают с параметрами <span class="cpp"><a class="hidden" href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a></span>, за исключением
+отсутствующего параметра <span class="cpp">Host</span>: поскольку сервер запускается на той же машине,
+на которой загружена схема с вызвавшим эту функцию блоком, адрес сервера, очевидно, указывать не нужно.
+Для запуска сервера достаточно одного блока, вызвавшего эту функцию, все остальные блоки схемы могут использовать
+как <span class="cpp"><a class="hidden" href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a></span>, так и <span class="cpp"><a class="hidden" href="rdsNetServer.htm" title="А.5.20.5. rdsNetServer &ndash; запуск сервера и установка соединения с ним">rdsNetServer</a></span>. Функция
+<span class="cpp"><a class="hidden" href="rdsNetServer.htm" title="А.5.20.5. rdsNetServer &ndash; запуск сервера и установка соединения с ним">rdsNetServer</a></span> тоже возвращает уникальный номер соединения, которым можно
+пользоваться при приеме и передаче данных.</p>
+
+<p>После успешного соединении с сервером (не важно, на этой же машине, или на другой) модель блока вызывается
+в режиме <span class="cpp"><span id="light_ref8"><a href="RDS_BFM_NETCONNECT.htm" title="А.2.8.1. RDS_BFM_NETCONNECT &ndash; установка соединения">RDS_BFM_NETCONNECT</a></span></span>, при этом в параметре <span class="cpp">ExtParam</span>
+передается указатель на структуру <span class="cpp"><span id="light_ref9"><a href="RDS_BFM_NETCONNECT.htm#ref1" title="Структура RDS_NETCONNDATA">RDS_NETCONNDATA</a></span></span>:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="kw">int</span> ConnId;    <span class="rem">// Уникальный идентификатор соединения</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Host;    <span class="rem">// Сервер (только для клиента)</span>
+    <span class="kw">int</span> Port;      <span class="rem">// Порт сервера</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Channel; <span class="rem">// Имя канала</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ByServer; <span class="rem">// Соединение разорвано сервером (только при</span>
+                   <span class="rem">// разрыве соединения)</span>
+  } <a class="hidden" href="RDS_BFM_NETCONNECT.htm#ref1" title="Структура RDS_NETCONNDATA">RDS_NETCONNDATA</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_BFM_NETCONNECT.htm#ref1" title="Структура RDS_NETCONNDATA">RDS_NETCONNDATA</a> *<a class="hidden" href="RDS_BFM_NETCONNECT.htm#ref2" title="Указатель на RDS_NETCONNDATA">RDS_PNETCONNDATA</a>;</pre>
+
+<p>Поля этой структуры повторяют параметры функций <span class="cpp"><a class="hidden" href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a></span> и
+<span class="cpp"><a class="hidden" href="rdsNetServer.htm" title="А.5.20.5. rdsNetServer &ndash; запуск сервера и установка соединения с ним">rdsNetServer</a></span> (кроме поля <span class="cpp">ByServer</span>, которое в
+режиме вызова <span class="cpp"><a class="hidden" href="RDS_BFM_NETCONNECT.htm" title="А.2.8.1. RDS_BFM_NETCONNECT &ndash; установка соединения">RDS_BFM_NETCONNECT</a></span> не используется). Этот вызов информирует блок
+о том, что соединение с сервером успешно установлено, и теперь можно передавать данные в указанный канал,
+используя уникальный номер соединения <span class="cpp">ConnId</span>.</p>
+
+<p>Для передачи данных всем блокам канала используется сервисная функция
+<span class="cpp"><span id="light_ref10"><a href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span></span>, возвращающая <span class="cpp">TRUE</span> при успешной передаче:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a>(
+    <span class="kw">int</span> ConnId,     <span class="rem">// Идентификатор соединения</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags,    <span class="rem">// Флаги RDS_NETSEND_*</span>
+    <span class="kw">int</span> id,         <span class="rem">// Передаваемое целое число</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> string,   <span class="rem">// Передаваемая строка (или NULL)</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> buf,     <span class="rem">// Указатель на передаваемый блока данных</span>
+                    <span class="rem">// (или NULL)</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> bufsize); <span class="rem">// Размер передаваемого блока данных</span></pre>
+
+<p>В параметре <span class="cpp">ConnId</span> передается уникальный номер соединения с каналом
+сервера, возвращенный функцией <span class="cpp"><a class="hidden" href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a></span> или <span class="cpp"><a class="hidden" href="rdsNetServer.htm" title="А.5.20.5. rdsNetServer &ndash; запуск сервера и установка соединения с ним">rdsNetServer</a></span>
+при создании этого соединения. Функция позволяет одновременно передать в канал целое число <span class="cpp">id</span>,
+строку текста <span class="cpp">string</span> и блок двоичных данных <span class="cpp">buf</span> произвольного размера
+<span class="cpp">bufsize</span>. Целое число передается всегда, а строку и блок данных можно не передавать
+&ndash; в этом случае в соответствующем параметре следует указать <span class="cpp">NULL</span>. Разбиение
+передаваемых данных на три части сделано для удобства программиста: в принципе, строки и числа тоже
+можно передавать в виде двоичных данных. Однако, во многих случаях приходится передавать данные сложного
+формата, и тут отдельная передача целых чисел и строк облегчает жизнь программисту, ликвидируя необходимость
+разбирать принятые данные. Например, число <span class="cpp">id</span> можно использовать в качестве
+типа передаваемых двоичных данных или номера фрагмента, если данные передаются последовательными блоками;
+строка <span class="cpp">string</span> может содержать имя файла, содержимое которого передается в
+двоичном блоке, и т.д.</p>
+
+<p>Способом передачи данных серверу управляют битовые флаги в параметре <span class="cpp">Flags</span>.
+Можно использовать сочетание следующих флагов:</p>
+
+<ul>
+  <li><span class="cpp"><span id="light_ref11"><a href="rdsNetBroadcastData.htm#light_ref4" title="RDS_NETSEND_UDP">RDS_NETSEND_UDP</a></span></span> &ndash; использовать для передачи данных протокол UDP,
+  если его использование разрешено в настройках RDS. По умолчанию все данные передаются по протоколу TCP.
+  С использованием протокола UDP данные, как правило, передаются быстрее, но не всегда настройки и политика
+  сети позволяют использовать этот протокол. Если при использовании этого флага данные по каким-либо причинам
+  не могут быть переданы по протоколу UDP, они будут переданы по TCP &ndash; никаких дополнительных действий для
+  этого не потребуется.</li>
+
+  <li><span class="cpp"><span id="light_ref12"><a href="rdsNetBroadcastData.htm#light_ref6" title="RDS_NETSEND_UPDATE">RDS_NETSEND_UPDATE</a></span></span> &ndash; можно заменять еще не отправленные данные новыми.
+  Для передачи данных на сервер в RDS используется очередь: при вызове <span class="cpp"><a class="hidden" href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span>
+  данные ставятся в ее конец, а данные, находящиеся в ее начале, отправляются на сервер с той скоростью,
+  которую может обеспечить сеть. Если блоки будут передавать данные быстрее, чем они будут уходить в сеть,
+  очередь будет расти. В результате этого в некоторых случаях в очереди могут оказаться устаревшие данные,
+  которые можно было бы и не передавать. Допустим, например, что в одной из схем данные в канал передачи
+  поступают через какой-либо блок, берущий эти данные со своего вещественного входа. Если значение входа
+  изменится, блок поставит это новое значение в очередь на передачу, вызвав <span class="cpp"><a class="hidden" href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span>.
+  Если затем, через очень небольшой промежуток времени, значение снова изменится, блок снова поставит в
+  очередь новое значение. Если сеть перегружена и очередь достаточно длинная, в очереди окажется два числа
+  для передачи в один и тот же канал: устаревшее (поставленное в очередь первым) и актуальное (поставленное вторым).
+  Если при передаче использовать флаг <span class="cpp"><a class="hidden" href="rdsNetBroadcastData.htm#light_ref6" title="RDS_NETSEND_UPDATE">RDS_NETSEND_UPDATE</a></span>, устаревшее значение
+  будет автоматически выбрасываться из очереди при поступлении новых данных для этого канала, таким образом, нагрузка
+  на сеть несколько снизится (устаревшими будут считаться ранее поставленные в очередь данные
+  <span class="emph">с тем же значением <span class="cpp">Id</span></span>). Без этого флага
+  передаются все поставленные в очередь данные &ndash; чаще всего,
+  повторная передача данных в канал не означает, что предыдущая устарела, обычно это просто новая порция
+  данных, которые должен обработать принимающий блок.</li>
+
+  <li><span class="cpp"><span id="light_ref13"><a href="rdsNetBroadcastData.htm#light_ref2" title="RDS_NETSEND_NOWAIT">RDS_NETSEND_NOWAIT</a></span></span> &ndash; не ждать ответа от сервера, передавать следующие
+  данные немедленно. По умолчанию после передачи данных на сервер клиент ждет от него сигнала о
+  получении этих данных, и, пока он не придет, не передает следующую порцию данных из очереди. Это
+  позволяет несколько снизить нагрузку на сеть, но уменьшает скорость передачи почти в два раза &ndash;
+  к задержке при передаче данных на сервер добавляется задержка ответа от сервера. Если при передаче
+  использовать этот флаг, для передаваемой порции данных сервер не будет отправлять подтверждение приема,
+  а клиент не будет ждать этого подтверждения.</li>
+
+  <li><span class="cpp"><span id="light_ref14"><a href="rdsNetBroadcastData.htm#light_ref3" title="RDS_NETSEND_SERVREPLY">RDS_NETSEND_SERVREPLY</a></span></span> &ndash; получив данные, сервер должен сообщить об
+  этом передавшему их блоку (нельзя использовать вместе с флагом <span class="cpp"><a class="hidden" href="rdsNetBroadcastData.htm#light_ref2" title="RDS_NETSEND_NOWAIT">RDS_NETSEND_NOWAIT</a></span>).
+  Если этот флаг включен, то, как только клиент получит подтверждение приема данных сервером, модель
+  блока, передавшего данные, будет вызвана в режиме <span class="cpp"><span id="light_ref15"><a href="RDS_BFM_NETDATAACCEPTED.htm" title="А.2.8.2. RDS_BFM_NETDATAACCEPTED &ndash; получение данных сервером">RDS_BFM_NETDATAACCEPTED</a></span></span>. Это
+  позволит, при необходимости, организовать в модели блока собственную очередь передачи данных, отправляя
+  новую порцию на сервер только после подтверждения приема предыдущей.</li>
+</ul>
+
+<p class="noindent">При вызове модели в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_NETDATAACCEPTED.htm" title="А.2.8.2. RDS_BFM_NETDATAACCEPTED &ndash; получение данных сервером">RDS_BFM_NETDATAACCEPTED</a></span> в параметре
+<span class="cpp">ExtParam</span> передается указатель на структуру <span class="cpp"><span id="light_ref16"><a href="RDS_BFM_NETDATAACCEPTED.htm#ref1" title="Структура RDS_NETACCEPTDATA">RDS_NETACCEPTDATA</a></span></span>:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="kw">int</span> ConnId;    <span class="rem">// Идентификатор соединения</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Host;    <span class="rem">// Адрес сервера (только для клиента)</span>
+    <span class="kw">int</span> Port;      <span class="rem">// Порт сервера</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Channel; <span class="rem">// Канал передачи</span>
+
+    <span class="kw">int</span> Id;        <span class="rem">// Целое число (id) из принятого блока</span>
+  } <a class="hidden" href="RDS_BFM_NETDATAACCEPTED.htm#ref1" title="Структура RDS_NETACCEPTDATA">RDS_NETACCEPTDATA</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_BFM_NETDATAACCEPTED.htm#ref1" title="Структура RDS_NETACCEPTDATA">RDS_NETACCEPTDATA</a> *<a class="hidden" href="RDS_BFM_NETDATAACCEPTED.htm#ref2" title="Указатель на RDS_NETACCEPTDATA">RDS_PNETACCEPTDATA</a>;</pre>
+
+<p>В полях <span class="cpp">ConnId</span>, <span class="cpp">Host</span>, <span class="cpp">Port</span> и
+<span class="cpp">Channel</span>, как и в структуре <span class="cpp"><a class="hidden" href="RDS_BFM_NETCONNECT.htm#ref1" title="Структура RDS_NETCONNDATA">RDS_NETCONNDATA</a></span>, содержатся
+идентификатор соединения, адрес сервера, порт и имя канала соответственно. В поле <span class="cpp">Id</span>
+записано целое число, которое было передано в параметре <span class="cpp">id</span> при вызове
+<span class="cpp"><a class="hidden" href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span>. Таким образом, реагируя на вызов в режиме
+<span class="cpp"><a class="hidden" href="RDS_BFM_NETDATAACCEPTED.htm" title="А.2.8.2. RDS_BFM_NETDATAACCEPTED &ndash; получение данных сервером">RDS_BFM_NETDATAACCEPTED</a></span>, модель блока сможет понять, прием какой именно
+порции данных подтвердил сервер.</p>
+
+<p>Получив данные для какого-либо канала передачи, сервер рассылает их всем подключенным к нему клиентам,
+блоки которых создали соединение с этим каналом и изъявили желание получать данные (параметр
+<span class="cpp">Receive</span> при вызове <span class="cpp"><a class="hidden" href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a></span> или
+ был равен <span class="cpp">TRUE</span>). Приняв данные,
+клиент вызывает модели всех этих блоков в режиме <span class="cpp"><span id="light_ref17"><a href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">RDS_BFM_NETDATARECEIVED</a></span></span>, передавая
+в параметре <span class="cpp">ExtParam</span> указатель на структуру <span class="cpp"><span id="light_ref18"><a href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a></span></span>:</p>
+
+<pre class="cpp"><span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="rem">// Параметры соединения</span>
+    <span class="kw">int</span> ConnId;    <span class="rem">// Идентификатор соединения</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Host;    <span class="rem">// Адрес сервера (только для клиента)</span>
+    <span class="kw">int</span> Port;      <span class="rem">// Порт сервера</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Channel; <span class="rem">// Имя канала передачи данных</span>
+    <span class="rem">// Принятые данные</span>
+    <span class="kw">int</span> Id;           <span class="rem">// Принятое целое число</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Str;        <span class="rem">// Принятая строка</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Buffer;    <span class="rem">// Указатель на буфер с принятыми двоичными</span>
+                      <span class="rem">// данными или NULL</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> BufferSize; <span class="rem">// Размер принятого буфера</span>
+    <span class="rem">// Идентификаторы отправителя</span>
+    <span id="light_ref19"><a class="hidden" href="app_ids.htm#light_ref7" title="Идентификатор машины в сети">RDS_NETSTATION</a></span> SenderStation; <span class="rem">// Идентификатор пердавшей машины</span>
+    <span id="light_ref20"><a class="hidden" href="app_ids.htm#light_ref8" title="Идентификатор блока в сети">RDS_NETBLOCK</a></span> SenderBlock;     <span class="rem">// Идентификатор передавшего блока</span>
+  } <a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a> *<a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref2" title="Указатель на RDS_NETRECEIVEDDATA">RDS_PNETRECEIVEDDATA</a>;</pre>
+
+<p>Первые четыре поля структуры, как всегда, описывают параметры соединения, по которому пришли данные,
+для обработки которых вызвана модель. Если блок установил сразу несколько соединений, по этим
+параметрам можно понять, какое из них приняло данные. В поле <span class="cpp">Id</span> содержится принятое
+целое число, переданное другим блоком в параметре <span class="cpp">id</span> при вызове
+<span class="cpp"><a class="hidden" href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span>. В поле <span class="cpp">Str</span> &ndash; указатель на
+принятую строку во внутренней памяти RDS (ей соответствует параметр <span class="cpp">string</span> в
+вызове <span class="cpp"><a class="hidden" href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span>). Этот указатель никогда не будет равен <span class="cpp">NULL</span>:
+если строка не передавалась, поле <span class="cpp">String</span> будет указывать на пустую строку. Наконец, поле
+<span class="cpp">Buffer</span> указывает на принятый блок двоичных данных (при этом в
+<span class="cpp">BufferSize</span> записан размер этого блока), или содержит <span class="cpp">NULL</span>,
+если двоичные данные не передавались. Таким образом, есть однозначное соответствие между параметрами функции
+<span class="cpp"><a class="hidden" href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span> и полями структуры <span class="cpp"><a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a></span>:
+то, что один блок передал в параметрах сервисной функции, другой блок получает в полях структуры при
+вызове модели в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">RDS_BFM_NETDATARECEIVED</a></span>.</p>
+
+<p>Два последних поля структуры, <span class="cpp">SenderStation</span> и
+<span class="cpp">SenderBlock</span>, содержат уникальные идентификаторы машины и блока в схеме на
+этой машине, отправившего данные в канал. Эти поля могут использоваться для того, чтобы получивший данные
+блок мог передать ответ только блоку, пославшему эти данные, а не всем блокам, подключенным к каналу передачи.
+Для передачи данных единственному блоку используется сервисная функция <span class="cpp"><span id="light_ref21"><a href="rdsNetSendData.htm" title="А.5.20.4. rdsNetSendData &ndash; передача данных конкретному блоку канала">rdsNetSendData</a></span></span>:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsNetSendData.htm" title="А.5.20.4. rdsNetSendData &ndash; передача данных конкретному блоку канала">rdsNetSendData</a>(
+    <span class="kw">int</span> ConnId,    <span class="rem">// Идентификатор соединения</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags,   <span class="rem">// Флаги RDS_NETSEND_*</span>
+    <span class="kw">int</span> id,        <span class="rem">// Передаваемое целое число</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> string,  <span class="rem">// Передаваемая строка (или NULL)</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> buf,    <span class="rem">// Указатель на передаваемый блока данных</span>
+                   <span class="rem">// (или NULL)</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> bufsize, <span class="rem">// Размер передаваемого блока данных</span>
+    <a class="hidden" href="app_ids.htm#light_ref7" title="Идентификатор машины в сети">RDS_NETSTATION</a> station, <span class="rem">// Машина-получатель</span>
+    <a class="hidden" href="app_ids.htm#light_ref8" title="Идентификатор блока в сети">RDS_NETBLOCK</a> block);    <span class="rem">// Блок-получатель</span></pre>
+
+<p>Первые шесть параметров функции в точности совпадают с параметрами <span class="cpp"><a class="hidden" href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span>
+&ndash; они определяют передаваемые данные и соединение, через которое их нужно передать. Последние два
+параметра указывают машину-клиент, на которую нужно передать эти данные, и блок в схеме на этой машине,
+который должен их получить. Эти два идентификатора блок-отправитель данных может узнать, только приняв
+данные из структуры <span class="cpp"><a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a></span>, поэтому функцию
+<span class="cpp"><a class="hidden" href="rdsNetSendData.htm" title="А.5.20.4. rdsNetSendData &ndash; передача данных конкретному блоку канала">rdsNetSendData</a></span> можно использовать только для ответа на переданные данные.
+Нет никакой возможности узнать идентификатор машины-клиента и блока, не приняв от них какие-либо данные.
+Обычно это и не требуется: если нужно передавать данные конкретному блоку конкретной схемы, лучше всего
+выделить ему отдельный канал передачи данных, в котором он будет единственным получателем.</p>
+
+<p>Таким образом, вызывая функции <span class="cpp"><a class="hidden" href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span> и
+<span class="cpp"><a class="hidden" href="rdsNetSendData.htm" title="А.5.20.4. rdsNetSendData &ndash; передача данных конкретному блоку канала">rdsNetSendData</a></span> и реагируя на вызовы в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">RDS_BFM_NETDATARECEIVED</a></span>,
+блоки на разных машинах могут обмениваться произвольными данными до тех пор, пока сетевое соединение не будет
+разорвано. Для завершения сетевого соединения модель блока должна вызвать сервисную функцию
+<span class="cpp"><span id="light_ref22"><a href="rdsNetCloseConnection.htm" title="А.5.20.2. rdsNetCloseConnection &ndash; разорвать соединение">rdsNetCloseConnection</a></span></span>, принимающую единственный параметр: уникальный
+идентификатор соединения, которое нужно закрыть. После этого, как только соединение будет разорвано,
+модель блока будет вызвана в режиме <span class="cpp"><span id="light_ref23"><a href="RDS_BFM_NETDISCONNECT.htm" title="А.2.8.4. RDS_BFM_NETDISCONNECT &ndash; разрыв соединения">RDS_BFM_NETDISCONNECT</a></span></span>, и в параметре
+<span class="cpp">ExtParam</span> ей будет передан указатель на уже знакомую нам структуру
+<span class="cpp"><a class="hidden" href="RDS_BFM_NETCONNECT.htm#ref1" title="Структура RDS_NETCONNDATA">RDS_NETCONNDATA</a></span>, содержащую параметры конкретного разорванного соединения.
+В этом режиме модель вызывается не только при самостоятельном завершении соединения, но и при его разрыве
+по инициативе сервера, из-за отключения сети или по другим причинам. При разрыве соединения из-за отключения
+сервера в поле <span class="cpp">ByServer</span> будет содержаться значение <span class="cpp">TRUE</span>.
+В этом случае, а также при разрыве соединения по любым причинам, отличным от вызова
+<span class="cpp"><a class="hidden" href="rdsNetCloseConnection.htm" title="А.5.20.2. rdsNetCloseConnection &ndash; разорвать соединение">rdsNetCloseConnection</a></span>, RDS будет пытаться самостоятельно восстановить связь до
+тех пор, пока эти попытки не увенчаются успехом, или пока для этого соединения не будет вызвана функция
+<span class="cpp"><a class="hidden" href="rdsNetCloseConnection.htm" title="А.5.20.2. rdsNetCloseConnection &ndash; разорвать соединение">rdsNetCloseConnection</a></span>.</p>
+
+<p>В случае возникновения ошибок при приеме или передаче данных модель блока вызывается в режиме
+<span class="cpp"><span id="light_ref24"><a href="RDS_BFM_NETERROR.htm" title="А.2.8.5. RDS_BFM_NETERROR &ndash; ошибка при работе с сетью">RDS_BFM_NETERROR</a></span></span>, при этом в параметре <span class="cpp">ExtParam</span> передается
+указатель на структуру ошибки <span class="cpp"><span id="light_ref25"><a href="RDS_BFM_NETERROR.htm#ref1" title="Структура RDS_NETERRORDATA">RDS_NETERRORDATA</a></span></span>. Поскольку
+RDS самостоятельно восстанавливает оборванные соединения, заново посылает пропавшие данные и
+решает прочие возникающие проблемы, модели редко реагируют на этот вызов. Чаще всего реакция на
+<span class="cpp"><a class="hidden" href="RDS_BFM_NETERROR.htm" title="А.2.8.5. RDS_BFM_NETERROR &ndash; ошибка при работе с сетью">RDS_BFM_NETERROR</a></span> используется при отладке моделей блоков, когда обмен данными по
+сети не работает, и нужно выяснить, почему именно.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_14_5.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_15_2.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_15_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

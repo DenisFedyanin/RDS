@@ -1,0 +1,999 @@
+$BC55MODEL
+Автоматически генерируемая модель полуавтокомпилируемого внутреннего максимизатора
+//@L57CMD_FORONE_BEGIN_0 FUNC 0
+  //@L57CMD_IF_BEGIN_1 "/*VAR0*/" EQ ""
+    //@L57CMD_SET funcvar "_max"
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 "/*VAR0*/" NE ""
+    //@L57CMD_SET funcvar "/*VAR0*/"
+  //@L57CMD_IF_END_1
+//@L57CMD_FORONE_END_0
+$NOSHARE
+$VARS
+  signal name "_Start" in run default 1
+  signal name "_Ready" out default 0
+  short name "Aux_in" in hide default 0
+  short name "Aux_out" out hide default 0
+  signal name "Start_cmd" in menu run default 0
+  signal name "Restart_cmd" in menu run default 0
+  matrix logical oneindex name "Enabled_in" in run default "[ ] 0"
+  signal name "_Enabled_chg" default 1
+  int name "_Stage" out default 0
+  int name "_SubStage" out default 0
+  logical name "_results_ok" default 0
+  logical name "_enabled_res" default 1
+  logical name "Complete_out" out default 0
+  logical name "Error_out" out default 0
+  signal name "Finished_out" out default 0
+  signal name "Started_out" out default 0
+  double name "Time_out" out default "?"
+  char name "Func_in" in menu default ""
+  char name "Func_out" out menu default ""
+//@L57_REM ------------ Сигнал для входных вещественных ------------
+  signal name "_allinval_dchg" default 1
+//@L57_REM --------------- Сигналы для входных матриц --------------
+//@L57CMD_FOREACH_BEGIN_0 IVAR
+  //@L57CMD_IF_BEGIN_1 /*RDSTYPE0*/ EQ "M"
+  signal name "_/*VAR0*/_mchg" default 1
+  //@L57CMD_IF_END_1
+//@L57CMD_FOREACH_END_0
+//@L57_REM ---------------------------------------------------------
+//@L57_REM ----------------- Служебные входы блока -----------------
+//@L57CMD_FOREACH_BEGIN_0 SERVIN
+  double name "/*VAR0*/" in menu run default "/*VAL0*/"
+//@L57CMD_FOREACH_END_0
+//@L57_REM ---------------------------------------------------------
+//@L57_REM ------------------ Обычные входы блока ------------------
+//@L57CMD_FOREACH_BEGIN_0 IVAR
+  //@L57CMD_SET start "matrix double"
+  //@L57CMD_SET end "[ ] ?"
+  //@L57CMD_IF_BEGIN_1 /*TYPE0*/ EQ "V"
+    //@L57CMD_SET start "double"
+    //@L57CMD_SET end "/*VAL0*/"
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*TYPE0*/ EQ "A"
+    //@L57CMD_SET start "matrix double oneindex"
+  //@L57CMD_IF_END_1
+  /*@start*/ name "/*VAR0*/" in menu run default "/*@end*/"
+//@L57CMD_FOREACH_END_0
+//@L57CMD_CLEAR end
+//@L57CMD_CLEAR start
+//@L57_REM ---------------------------------------------------------
+//@L57_REM ------------------ Служебные параметры ------------------
+//@L57CMD_FOREACH_BEGIN_0 SVAR
+  //@L57CMD_SET start "matrix double"
+  //@L57CMD_SET end "[ ] ?"
+  //@L57CMD_IF_BEGIN_1 /*TYPE0*/ EQ "V"
+    //@L57CMD_SET start "double"
+    //@L57CMD_SET end "/*VAL0*/"
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*TYPE0*/ EQ "A"
+    //@L57CMD_SET start "matrix double oneindex"
+  //@L57CMD_IF_END_1
+  /*@start*/ name "/*VAR0*/" default "/*@end*/"
+//@L57CMD_FOREACH_END_0
+//@L57CMD_CLEAR end
+//@L57CMD_CLEAR start
+//@L57_REM ---------------------------------------------------------
+//@L57_REM ------------- Значения всех табличных функций -----------
+//@L57CMD_FOREACH_BEGIN_0 OUTMATR
+  matrix double name "/*VAR0*/" out menu default "[ ] ?"
+//@L57CMD_FOREACH_END_0
+//@L57_REM ---------------------------------------------------------
+//@L57_REM -- Индивидуальная готовность простых табличных функций --
+//@L57CMD_FOREACH_BEGIN_0 OUTMATR FOR TYPE "f"
+  logical name "_/*VAR0*/_ok" default 0
+//@L57CMD_FOREACH_END_0
+//@L57_REM ---------------------------------------------------------
+  matrix double name "AllMax_out" out default "[ ] ?"
+  double name "Progress_out" out default "0"
+//@L57_REM ----------- Массивы-выходы найденных максимумов ---------
+//@L57CMD_FOREACH_BEGIN_0 NVAR
+  matrix double oneindex name "/*VAR0*/_res" out menu default "[ ] ?"
+  double name "/*VAR0*/_res_f" out default "?"
+//@L57CMD_FOREACH_END_0
+//@L57CMD_FORONE_BEGIN_0 FUNC 0
+  matrix double oneindex name "/*@funcvar*/_res" out menu default "[ ] ?"
+  double name "/*@funcvar*/_res_f" out default "?"
+//@L57CMD_FORONE_END_0
+//@L57_REM ---------------------------------------------------------
+
+$AUTO
+  "Enabled_in","_Enabled_chg"
+  "AllMax_out","_results_ok"
+  "Complete_out","_results_ok"
+  "Error_out","_results_ok"
+//@L57_REM ---------------- Вещественные входы блока ---------------
+//@L57CMD_FOREACH_BEGIN_0 IVAR
+  //@L57CMD_IF_BEGIN_1 /*RDSTYPE0*/ EQ "D"
+    "/*VAR0*/","_allinval_dchg"
+  //@L57CMD_IF_END_1
+//@L57CMD_FOREACH_END_0
+//@L57_REM ---------------------------------------------------------
+//@L57_REM ----------------- Служебные входы блока -----------------
+//@L57CMD_FOREACH_BEGIN_0 SERVIN
+    "/*VAR0*/","_allinval_dchg"
+//@L57CMD_FOREACH_END_0
+//@L57_REM --------------- Сигналы для входных матриц --------------
+//@L57CMD_FOREACH_BEGIN_0 IVAR
+  //@L57CMD_IF_BEGIN_1 /*RDSTYPE0*/ EQ "M"
+  "/*VAR0*/","_/*VAR0*/_mchg"
+  //@L57CMD_IF_END_1
+//@L57CMD_FOREACH_END_0
+//@L57_REM ---------------------------------------------------------
+//@L57_REM -- Индивидуальная готовность простых табличных функций --
+//@L57CMD_FOREACH_BEGIN_0 OUTMATR FOR TYPE "f"
+  "/*VAR0*/","_/*VAR0*/_ok"
+//@L57CMD_FOREACH_END_0
+//@L57_REM ---------------------------------------------------------
+//@L57_REM ------ Общая готовность табличных функций Arg Max -------
+//@L57CMD_FOREACH_BEGIN_0 OUTMATR FOR TYPE "max"
+  "/*VAR0*/","_results_ok"
+//@L57CMD_FOREACH_END_0
+//@L57_REM ---------------------------------------------------------
+//@L57_REM - Общая готовность массивов-выходов найденных максимумов -
+//@L57CMD_FOREACH_BEGIN_0 NVAR
+  "/*VAR0*/_res","_results_ok"
+  "/*VAR0*/_res_f","_results_ok"
+//@L57CMD_FOREACH_END_0
+//@L57CMD_FORONE_BEGIN_0 FUNC 0
+  "/*@funcvar*/_res","_results_ok"
+  "/*@funcvar*/_res_f","_results_ok"
+//@L57CMD_FORONE_END_0
+//@L57_REM ---------------------------------------------------------
+
+$PARAM
+  BOOL name "deepsearch_setup" default "FALSE"
+  BOOL name "noautostart_setup" default "FALSE"
+  double name "ChunkSizeMb_setup" default "4"
+  int name "tactcount_setup" default "1000"
+  double name "EqualMaxDelta_setup" default "0.001"
+  BOOL name "PrecToEndSteps_setup" default "TRUE"
+  BOOL name "PrecToDf_setup" default "TRUE"
+  int name "DfCycles_setup" default "5"
+  double name "DfDelta_setup" default "0.00001"
+  int name "PrecGridSize_setup" default "0"
+  BOOL name "NoPlateau_setup" default "FALSE"
+  BOOL name "TabAfterCalc_setup" default "TRUE"
+  BOOL name "TabPrecCalc_setup" default "TRUE"
+  BOOL name "Tab_PrecToEndSteps_setup" default "TRUE"
+  BOOL name "Tab_PrecToDf_setup" default "TRUE"
+  int name "Tab_DfCycles_setup" default "5"
+  double name "Tab_DfDelta_setup" default "0.00001"
+  int name "Tab_PrecGridSize_setup" default "0"
+  double name "DfFilter_setup" default "0.00001"
+  int name "TR_params" default "0"
+  rdsbcppString name "TR_text" default "" notranslate
+$REGFUN
+  name "IPU.L57.UserFuncTransfer.IsFuncSource" id "L57_BlkFunc_IsFuncSource"
+  name "IPU.L57.UserFuncTransfer.AcceptFunction" id "L57_BlkFunc_AcceptFunc" param "L57_AcceptFunc_Param*"
+  name "IPU.L57.UserFuncTransfer.AcceptParameter" id "L57_BlkFunc_AcceptParam" param "L57_AcceptParam_Param*"
+  name "IPU.L57.UserFuncTransfer.IsParameterTransferredWithFunc" id "L57_BlkFunc_CheckTransParam" param "L57_CheckParamConn_Param*"
+  name "IPU.L57.UserFuncTransfer.CheckParamTransfer" id "L57_BlkFunc_CheckTransParam2" param "L57_CheckTranser_Param*"
+$LINKS
+  manual "$RDSINCLUDE$\RdsL57Mk2\L57Mk2ArgMax.cpp"
+  manual "$RDSINCLUDE$\RdsL57Mk2\L57Mk2Basic.cpp"
+  manual "$RDSINCLUDE$\RdsL57Mk2\L57Mk2Basic.h"
+  manual "$RDSINCLUDE$\RdsL57Mk2\L57Mk2Bits.cpp"
+$CUSTOMERR
+|В одном из описаний функций обнаружена ошибка: видимо, текст функции написан не в синтаксисе языка C. Пожалуйста, проверьте все описания в настройках блока или откройте редактор модели и изучите ошибки, выданные компилятором.
+$ENDDECL
+$GLOBAL
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Версия модели (в норме должна соответствовать L57_LATESTMODELVERSION)
+#define L57_MODELVERSION 10
+
+//@L57CMD_IF_BEGIN_1 /*@@NVAR*/ NE 0
+// Число максимизируемых параметров
+#define L57_PARAMSCOUNT /*@@NVAR*/
+//@L57CMD_IF_END_1
+
+//@L57CMD_IF_BEGIN_1 /*@@HELPUI*/ NE ""
+// Файл и тема справки
+#define L57_HELPUIFILE /*@@HELPUI*/
+#define L57_HELPTOPIC /*@@HELPTOPIC*/
+//@L57CMD_IF_END_1
+
+// Заголовки функций для индикации
+//@L57_ALLFUNCTITLES "#define L57_TITLES " "" " \"
+
+//@L57CMD_COUNT OUTMATRSET _onearg_simple_cnt FOR TYPE "f" NARGS 1
+//@L57CMD_COUNT OUTMATRSET _twoarg_simple_cnt FOR TYPE "f" NARGS 2
+//@L57CMD_COUNT OUTMATRSET _onearg_argmax_cnt FOR TYPE "max" NARGS 1
+//@L57CMD_COUNT OUTMATRSET _twoarg_argmax_cnt FOR TYPE "max" NARGS 2
+// Число простых выходных таблиц F(x)
+#define L57_ONEARG_SIMPLE_CNT /*@_onearg_simple_cnt*/
+// Число простых выходных таблиц F(x,y)
+#define L57_TWOARG_SIMPLE_CNT /*@_twoarg_simple_cnt*/
+// Число выходных таблиц ArgMax(x)
+#define L57_ONEARG_ARGMAX_CNT /*@_onearg_argmax_cnt*/
+// Число выходных таблиц ArgMax(x,y)
+#define L57_TWOARG_ARGMAX_CNT /*@_twoarg_argmax_cnt*/
+
+//@L57CMD_IF_BEGIN_1 /*@@ENDSTEP*/ EQ 1
+// Определены конечные шаги
+#define L57_ENDSTEPSUSED
+//@L57CMD_IF_END_1
+
+#define L57MS_GLOBALS
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_GLOBALS
+
+//@L57_REM ------ Переменные для служебного класса
+//@L57CMD_SET double "double"
+//@L57CMD_SET matrix "L57_RdsDoubleMatrix"
+//@L57CMD_SET array "L57_RdsDoubleArray"
+//@L57CMD_SET func1arg "L57_OneArgFunc"
+//@L57CMD_SET func2arg "L57_TwoArgFunc"
+// Служебный класс для вычисления значения функции
+//@L57_FUNCCLASS 0 L57_Calc
+
+$MODEL
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_MODEL
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_MODEL
+
+$SETUP
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_SETUP
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_SETUP
+
+$CLASSDEF
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_CLASS
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_CLASS
+
+//@L57_REM ----- Фиксированные значения границ, шагов и т.п. -------
+  // Фиксированные значения границ и шагов
+//@L57CMD_FOREACH_BEGIN_0 NVAR
+  //@L57CMD_IF_BEGIN_1 /*VALVAR0*/ NE 1
+    double /*VAR0*/_0;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*MINVALVAR0*/ NE 1
+    double /*VAR0*/_min;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*MAXVALVAR0*/ NE 1
+    double /*VAR0*/_max;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*STEPVAR0*/ NE 1
+    double /*VAR0*/_step;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_2 /*@@ENDSTEP*/ EQ 1
+    //@L57CMD_IF_BEGIN_1 /*ENDSTEPVAR0*/ NE 1
+    double /*VAR0*/_end;
+    //@L57CMD_IF_END_1
+  //@L57CMD_IF_END_2
+//@L57CMD_FOREACH_END_0
+  // Инициализация фиксированных значений
+  void L57_Init_Fixed_Data(void);
+//@L57_REM ---------------------------------------------------------
+
+//@L57_REM --- Указатели на параметры передачи входов-параметров ---
+  // Объекты для передачи входов-параметров функции
+  L57_FuncTransfer _Transfer;
+//@L57CMD_FOREACH_BEGIN_0 IANDSVAR
+  L57_FuncTransferParameter */*VAR0*/_trans;
+//@L57CMD_FOREACH_END_0
+//@L57CMD_FOREACH_BEGIN_0 SERVIN
+  L57_FuncTransferParameter */*VAR0*/_trans;
+//@L57CMD_FOREACH_END_0
+  // Сброс
+  void L57_Reset_Trans_Data(void)
+  {
+    //@L57CMD_FOREACH_BEGIN_0 IANDSVAR
+    /*VAR0*/_trans=NULL;
+    //@L57CMD_FOREACH_END_0
+    //@L57CMD_FOREACH_BEGIN_0 SERVIN
+    /*VAR0*/_trans=NULL;
+    //@L57CMD_FOREACH_END_0
+  };
+  // Создание всех параметров передачи
+  void L57_Create_Trans_Data(void);
+//@L57_REM ---------------------------------------------------------
+
+//@L57_REM ------- Хранилища входов для проверки изменения --------
+  // Хранилища для проверки изменения переменных
+//@L57CMD_FOREACH_BEGIN_0 IANDSVAR
+  //@L57CMD_IF_BEGIN_1 /*RDSTYPE0*/ EQ "M"
+  L57_DblMatrTempStorage /*VAR0*/_old;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*RDSTYPE0*/ EQ "D"
+  double /*VAR0*/_old;
+  //@L57CMD_IF_END_1
+//@L57CMD_FOREACH_END_0
+//@L57CMD_FOREACH_BEGIN_0 SERVIN
+  double /*VAR0*/_old;
+//@L57CMD_FOREACH_END_0
+  // Инициализация хранилищ значений
+  void L57_Init_Old_Data(void)
+  {
+  //@L57CMD_FOREACH_BEGIN_0 IANDSVAR FOR RDSTYPE D
+    /*VAR0*/_old=rdsbcppHugeDouble;
+  //@L57CMD_FOREACH_END_0
+  //@L57CMD_FOREACH_BEGIN_0 SERVIN
+    /*VAR0*/_old=rdsbcppHugeDouble;
+  //@L57CMD_FOREACH_END_0
+  //@L57CMD_FOREACH_BEGIN_0 IANDSVAR FOR RDSTYPE M
+    /*VAR0*/_old.Clear();
+  //@L57CMD_FOREACH_END_0
+  };
+//@L57_REM ---------------------------------------------------------
+
+//@L57_REM ----- Массивы генерации выходных табличных функций ------
+//@L57CMD_IF_BEGIN_1 /*@_onearg_simple_cnt*/ NE 0
+  // Простые выходные таблицы F(x)
+  L57_Table1ArgFuncData _OneargSimpleF[L57_ONEARG_SIMPLE_CNT];
+//@L57CMD_IF_END_1
+//@L57CMD_IF_BEGIN_1 /*@_twoarg_simple_cnt*/ NE 0
+  // Простые выходные таблицы F(x,y)
+  L57_Table2ArgFuncData _TwoargSimpleF[L57_TWOARG_SIMPLE_CNT];
+//@L57CMD_IF_END_1
+//@L57CMD_IF_BEGIN_1 /*@_onearg_argmax_cnt*/ NE 0
+  // Выходные таблицы argmax(x)
+  L57_Table1ArgFuncData _OneargArgMaxF[L57_ONEARG_ARGMAX_CNT];
+//@L57CMD_IF_END_1
+//@L57CMD_IF_BEGIN_1 /*@_twoarg_argmax_cnt*/ NE 0
+  // Выходные таблицы argmax(x,y)
+  L57_Table2ArgFuncData _TwoargArgMaxF[L57_TWOARG_ARGMAX_CNT];
+//@L57CMD_IF_END_1
+//@L57_REM ---------------------------------------------------------
+
+
+$CLASSEXT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_AFTERCLASS
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_AFTERCLASS
+
+// Экспорт текста функции для взаимодействия с другими блоками по связям
+//@L57_FUNCEXPORT 0 "char *rdsbcppBlockClass::_FuncExportText=" ";"
+
+// Инициализация фиксированных значений
+void rdsbcppBlockClass::L57_Init_Fixed_Data(void)
+{
+//@L57CMD_FOREACH_BEGIN_0 NVAR
+  //@L57CMD_IF_BEGIN_1 /*VALVAR0*/ NE 1
+    /*VAR0*/_0=/*CVAL0*/;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*MINVALVAR0*/ NE 1
+    /*VAR0*/_min=/*MINVAL0*/;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*MAXVALVAR0*/ NE 1
+    /*VAR0*/_max=/*MAXVAL0*/;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*STEPVAR0*/ NE 1
+    /*VAR0*/_step=/*STEP0*/;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_2 /*@@ENDSTEP*/ EQ 1
+    //@L57CMD_IF_BEGIN_1 /*ENDSTEPVAR0*/ NE 1
+    /*VAR0*/_end=/*ENDSTEP0*/;
+    //@L57CMD_IF_END_1
+  //@L57CMD_IF_END_2
+//@L57CMD_FOREACH_END_0
+
+}
+//-----------------------------------------------------------------------
+
+// Создание всех параметров передачи
+void rdsbcppBlockClass::L57_Create_Trans_Data(void)
+{
+  //@L57CMD_COUNT IANDSVAR _cnt_1
+  // Стационарных входов: /*@_cnt_1*/
+  //@L57CMD_COUNT NVAR _cnt_2
+  // Максимизируемых параметров: /*@_cnt_2*/
+  _Transfer.ClearParameters();
+  //@L57CMD_IF_BEGIN_2 /*@@ENDSTEP*/ EQ 1
+  _Transfer.EnlargeParameters(/*@_cnt_1*/+/*@_cnt_2*/*5);
+  //@L57CMD_IF_END_2
+  //@L57CMD_IF_BEGIN_2 /*@@ENDSTEP*/ NE 1
+  _Transfer.EnlargeParameters(/*@_cnt_1*/+/*@_cnt_2*/*4);
+  //@L57CMD_IF_END_2
+  //@L57CMD_CLEAR _cnt_1
+  //@L57CMD_CLEAR _cnt_2
+
+//@L57CMD_FOREACH_BEGIN_0 IANDSVAR
+  //@L57CMD_IF_BEGIN_1 /*RDSTYPE0*/ EQ "M"
+  /*VAR0*/_trans=_Transfer.AddParameterRds("/*VAR0*/",L57_VARSUFFIX_NONE,TRUE,/*VAR0*/.Num(),&/*VAR0*/);
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*RDSTYPE0*/ EQ "D"
+  /*VAR0*/_trans=_Transfer.AddParameterRds("/*VAR0*/",L57_VARSUFFIX_NONE,FALSE,/*VAR0*/.Num(),&/*VAR0*/);
+  //@L57CMD_IF_END_1
+//@L57CMD_FOREACH_END_0
+
+//@L57CMD_FOREACH_BEGIN_0 NVAR
+  //@L57CMD_IF_BEGIN_1 /*VALVAR0*/ EQ 1
+  /*VAR0*/_0_trans=_Transfer.AddParameterRds("/*VAR0*/",L57_VARSUFFIX_0,FALSE,/*VAR0*/_0.Num(),&/*VAR0*/_0);
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*VALVAR0*/ NE 1
+  _Transfer.AddParameter("/*VAR0*/",L57_VARSUFFIX_0,FALSE,-1,&/*VAR0*/_0);
+  //@L57CMD_IF_END_1
+  //@L57_REM
+  //@L57CMD_IF_BEGIN_1 /*MINVALVAR0*/ EQ 1
+  /*VAR0*/_min_trans=_Transfer.AddParameterRds("/*VAR0*/",L57_VARSUFFIX_MIN,FALSE,/*VAR0*/_min.Num(),&/*VAR0*/_min);
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*MINVALVAR0*/ NE 1
+  _Transfer.AddParameter("/*VAR0*/",L57_VARSUFFIX_MIN,FALSE,-1,&/*VAR0*/_min);
+  //@L57CMD_IF_END_1
+  //@L57_REM
+  //@L57CMD_IF_BEGIN_1 /*MAXVALVAR0*/ EQ 1
+  /*VAR0*/_max_trans=_Transfer.AddParameterRds("/*VAR0*/",L57_VARSUFFIX_MAX,FALSE,/*VAR0*/_max.Num(),&/*VAR0*/_max);
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*MAXVALVAR0*/ NE 1
+  _Transfer.AddParameter("/*VAR0*/",L57_VARSUFFIX_MAX,FALSE,-1,&/*VAR0*/_max);
+  //@L57CMD_IF_END_1
+  //@L57_REM
+  //@L57CMD_IF_BEGIN_1 /*STEPVAR0*/ EQ 1
+  /*VAR0*/_step_trans=_Transfer.AddParameterRds("/*VAR0*/",L57_VARSUFFIX_STEP,FALSE,/*VAR0*/_step.Num(),&/*VAR0*/_step);
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*STEPVAR0*/ NE 1
+  //@L57_REM
+  _Transfer.AddParameter("/*VAR0*/",L57_VARSUFFIX_STEP,FALSE,-1,&/*VAR0*/_step);
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_2 /*@@ENDSTEP*/ EQ 1
+    //@L57CMD_IF_BEGIN_1 /*ENDSTEPVAR0*/ EQ 1
+  /*VAR0*/_end_trans=_Transfer.AddParameterRds("/*VAR0*/",L57_VARSUFFIX_END,FALSE,/*VAR0*/_end.Num(),&/*VAR0*/_end);
+    //@L57CMD_IF_END_1
+    //@L57CMD_IF_BEGIN_1 /*ENDSTEPVAR0*/ NE 1
+  _Transfer.AddParameter("/*VAR0*/",L57_VARSUFFIX_END,FALSE,-1,&/*VAR0*/_end);
+    //@L57CMD_IF_END_1
+  //@L57CMD_IF_END_2
+
+//@L57CMD_FOREACH_END_0
+}
+//-----------------------------------------------------------------------
+
+// Проверка изменения переменных
+// *pChgSignalOn взводится при наличии сигнала изменения (независимо от фактического изменения)
+BOOL rdsbcppBlockClass::L57InputsChange(BOOL _force,BOOL *pChgSignalOn)
+{ BOOL _changes=FALSE;
+
+  //@L57CMD_COUNT IVAR _cnt_1 FOR RDSTYPE D
+  // Стационарных вещественных входов: /*@_cnt_1*/
+  //@L57CMD_COUNT SERVIN _cnt_2
+  // Служебных вещественных входов: /*@_cnt_2*/
+  //@L57CMD_CALC _cnt_3 /*@_cnt_1*/ + /*@_cnt_2*/
+  // Итого вещественных: /*@_cnt_3*/
+
+  // Вещественные входы
+  if(_allinval_dchg!=0 || _force)
+    { _allinval_dchg=0;
+      _changes=_force;
+      if(pChgSignalOn) *pChgSignalOn=TRUE;
+
+    //@L57CMD_FOREACH_BEGIN_0 IVAR FOR RDSTYPE D
+      if(/*VAR0*/_old!=/*VAR0*/)
+        { _changes=TRUE;
+          _Transfer.TransferParameter(rdsbcppBlockData->Block,/*VAR0*/_trans,_Transfer.DestBlocks,TRUE);
+        }
+    //@L57CMD_FOREACH_END_0
+
+    //@L57CMD_FOREACH_BEGIN_0 SERVIN
+      if(/*VAR0*/_old!=/*VAR0*/)
+        { _changes=TRUE;
+          _Transfer.TransferParameter(rdsbcppBlockData->Block,/*VAR0*/_trans,_Transfer.DestBlocks,TRUE);
+        }
+    //@L57CMD_FOREACH_END_0
+
+    //@L57CMD_IF_BEGIN_9 /*@_cnt_3*/ NE 0
+      if(_changes)
+        { // Запоминание изменившихся
+          //@L57CMD_FOREACH_BEGIN_0 IVAR FOR RDSTYPE D
+          /*VAR0*/_old=/*VAR0*/;
+          //@L57CMD_FOREACH_END_0
+          //@L57CMD_FOREACH_BEGIN_0 SERVIN
+          /*VAR0*/_old=/*VAR0*/;
+          //@L57CMD_FOREACH_END_0
+        }
+    //@L57CMD_IF_END_9
+    }
+
+  // Матричные входы (матрицы, массивы, функции)
+  //@L57CMD_FOREACH_BEGIN_0 IVAR FOR RDSTYPE M
+  if(/*VAR0*/_old.Check(_/*VAR0*/_mchg.GetPtr(),&/*VAR0*/,_changes,_force))
+    _Transfer.TransferParameter(rdsbcppBlockData->Block,/*VAR0*/_trans,_Transfer.DestBlocks,TRUE);
+  if(pChgSignalOn!=NULL && _/*VAR0*/_mchg!=0)
+    *pChgSignalOn=TRUE;
+  //@L57CMD_FOREACH_END_0
+
+  return _changes;
+  //@L57CMD_CLEAR _cnt_1
+  //@L57CMD_CLEAR _cnt_2
+  //@L57CMD_CLEAR _cnt_3
+}
+//-----------------------------------------------------------------------
+
+// Занесение стационарных переменных в вычислитель функции
+void rdsbcppBlockClass::L57InputsToCalc(void)
+{
+//@L57CMD_FOREACH_BEGIN_0 IANDSVAR
+  //@L57CMD_IF_BEGIN_1 /*TYPE0*/ EQ "V"
+  _Calculator./*VAR0*/=/*VAR0*/;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*TYPE0*/ NE "V"
+  _Calculator./*VAR0*/.Setup(/*VAR0*/);
+  //@L57CMD_IF_END_1
+//@L57CMD_FOREACH_END_0
+}
+//-----------------------------------------------------------------------
+
+// Инициализация набора максимизируемых параметров
+void rdsbcppBlockClass::L57InitParams(void)
+{
+//@L57CMD_FOREACH_BEGIN_0 NVAR
+  //@L57CMD_IF_BEGIN_1 /*VALVAR0*/ EQ 1
+  _Params.P[/*NUM0*/].FuncVal=/*VAR0*/_0;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*VALVAR0*/ NE 1
+  _Params.P[/*NUM0*/].FuncVal=/*VAR0*/_0; // /*CVAL0*/
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*MINVALVAR0*/ EQ 1
+  _Params.P[/*NUM0*/].Min=/*VAR0*/_min;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*MINVALVAR0*/ NE 1
+  _Params.P[/*NUM0*/].Min=/*VAR0*/_min; // /*MINVAL0*/
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*MAXVALVAR0*/ EQ 1
+  _Params.P[/*NUM0*/].Max=/*VAR0*/_max;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*MAXVALVAR0*/ NE 1
+  _Params.P[/*NUM0*/].Max=/*VAR0*/_max; // /*MAXVAL0*/
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*STEPVAR0*/ EQ 1
+  _Params.P[/*NUM0*/].StartStep=/*VAR0*/_step;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*STEPVAR0*/ NE 1
+  _Params.P[/*NUM0*/].StartStep=/*VAR0*/_step; // /*STEP0*/
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_2 /*@@ENDSTEP*/ EQ 1
+    //@L57CMD_IF_BEGIN_1 /*ENDSTEPVAR0*/ EQ 1
+  _Params.P[/*NUM0*/].EndStep=/*VAR0*/_end;
+    //@L57CMD_IF_END_1
+    //@L57CMD_IF_BEGIN_1 /*ENDSTEPVAR0*/ NE 1
+  _Params.P[/*NUM0*/].EndStep=/*VAR0*/_end; // /*ENDSTEP0*/
+    //@L57CMD_IF_END_1
+  //@L57CMD_IF_END_2
+
+//@L57CMD_FOREACH_END_0
+}
+//-----------------------------------------------------------------------
+
+// Занесение текущих значений параметров в вычислитель функции
+void rdsbcppBlockClass::L57ParamsToCalc(void)
+{
+//@L57CMD_FOREACH_BEGIN_0 NVAR
+  _Calculator./*VAR0*/=_Params.P[/*NUM0*/].Current;
+//@L57CMD_FOREACH_END_0
+}
+//-----------------------------------------------------------------------
+
+// Установить готовность всех простых табличных функций
+void rdsbcppBlockClass::_SetAllSimpleTableFuncReady(char flag)
+{
+//@L57CMD_FOREACH_BEGIN_0 OUTMATR FOR TYPE "f"
+  _/*VAR0*/_ok=flag;
+//@L57CMD_FOREACH_END_0
+}
+//-----------------------------------------------------------------------
+
+// Очистить выходные матрицы всех табличных функций
+void rdsbcppBlockClass::_ClearAllTableFunc(void)
+{
+//@L57CMD_FOREACH_BEGIN_0 OUTMATR
+  /*VAR0*/.Resize(0,0);
+//@L57CMD_FOREACH_END_0
+}
+//-----------------------------------------------------------------------
+
+//@L57CMD_IF_BEGIN_1 /*@_onearg_simple_cnt*/ NE 0
+// Заполнение массива генерации простых выходных таблиц F(x)
+BOOL rdsbcppBlockClass::_OneargSimpleF_fill(void)
+{ L57_Table1ArgFuncData *f;
+  L57_Parameter *p;
+  L57_TableFiller *t;
+
+//@L57CMD_FOREACH_BEGIN_0 OUTMATRSET FOR TYPE "f" NARGS 1
+//@L57CMD_IF_BEGIN_9 /*FIRSTARGPARAM0*/ NE -1
+  f=_OneargSimpleF+/*SEQ0*/;
+  p=_Params.P+/*FIRSTARGPARAM0*/; // /*FIRSTARG0*/
+    f->ArgsArray=&(p->Array);
+    f->ArgIndex=/*FIRSTARGPARAM0*/; // /*FIRSTARG0*/
+    f->NResults=1; // Только значение самой функции
+    if(!f->AllocateResultArrays()) return FALSE;
+    //@L57CMD_FOREACH_BEGIN_1 OUTMATRSET_VAR /*NUM0*/
+      //@L57CMD_FORONE_BEGIN_2 OUTMATR /*PARAM1*/
+      // Выходная матрица /*VAR1*/
+      t=f->Output.Add1Arg(&/*VAR1*/,_/*VAR1*/_ok.GetPtr(),1);
+      t->MatrCol[0]=1;
+      t->ResultN[0]=0;
+      //@L57CMD_FORONE_END_2
+    //@L57CMD_FOREACH_END_1
+
+//@L57CMD_IF_END_9
+//@L57CMD_FOREACH_END_0
+  return TRUE;
+}
+//-----------------------------------------------------------------------
+//@L57CMD_IF_END_1
+
+//@L57CMD_IF_BEGIN_1 /*@_twoarg_simple_cnt*/ NE 0
+// Заполнение массива генерации простых выходных таблиц F(x,y)
+BOOL rdsbcppBlockClass::_TwoargSimpleF_fill(void)
+{ L57_Table2ArgFuncData *f;
+  L57_Parameter *p1,*p2;
+
+//@L57CMD_FOREACH_BEGIN_0 OUTMATRSET FOR TYPE "f" NARGS 2
+//@L57CMD_IF_BEGIN_9 /*FIRSTARGPARAM0*/ NE -1
+//@L57CMD_IF_BEGIN_8 /*SECONDARGPARAM0*/ NE -1
+  f=_TwoargSimpleF+/*SEQ0*/;
+  p1=_Params.P+/*FIRSTARGPARAM0*/; // /*FIRSTARG0*/
+  p2=_Params.P+/*SECONDARGPARAM0*/; // /*SECONDARG0*/
+    f->Args1Array=&(p1->Array);
+    f->Arg1Index=/*FIRSTARGPARAM0*/; // /*FIRSTARG0*/
+    f->Args2Array=&(p2->Array);
+    f->Arg2Index=/*SECONDARGPARAM0*/; // /*SECONDARG0*/
+    f->NResults=1; // Только значение самой функции
+    if(!f->AllocateResultArrays()) return FALSE;
+    //@L57CMD_FOREACH_BEGIN_1 OUTMATRSET_VAR /*NUM0*/
+      //@L57CMD_FORONE_BEGIN_2 OUTMATR /*PARAM1*/
+      // Выходная матрица /*VAR1*/
+      f->Output.Add2Arg(&/*VAR1*/,_/*VAR1*/_ok.GetPtr(),0,0 /* /*ARGTRANSP2*/ */);
+      //@L57CMD_FORONE_END_2
+    //@L57CMD_FOREACH_END_1
+
+//@L57CMD_IF_END_8
+//@L57CMD_IF_END_9
+//@L57CMD_FOREACH_END_0
+  return TRUE;
+}
+//-----------------------------------------------------------------------
+//@L57CMD_IF_END_1
+
+//@L57CMD_IF_BEGIN_1 /*@_onearg_argmax_cnt*/ NE 0
+// Заполнение массива генерации выходных таблиц argmax(x)
+BOOL rdsbcppBlockClass::_OneargArgMaxF_fill(void)
+{ L57_Table1ArgFuncData *f;
+  L57_Parameter *p;
+  L57_TableFiller *t;
+
+//@L57CMD_FOREACH_BEGIN_0 OUTMATRSET FOR TYPE "max" NARGS 1
+//@L57CMD_IF_BEGIN_9 /*FIRSTARGPARAM0*/ NE -1
+  f=_OneargArgMaxF+/*SEQ0*/;
+  p=_Params.P+/*FIRSTARGPARAM0*/; // /*FIRSTARG0*/
+    f->ArgsArray=&(p->Array);
+    f->ArgIndex=/*FIRSTARGPARAM0*/; // /*FIRSTARG0*/
+    f->NResults=/*@@NVAR*/+1; // Значения всех аргументов и самой функции
+    if(!f->AllocateResultArrays()) return FALSE;
+    //@L57CMD_FOREACH_BEGIN_1 OUTMATRSET_VAR /*NUM0*/
+      //@L57CMD_FORONE_BEGIN_2 OUTMATR /*PARAM1*/
+      // Выходная матрица /*VAR2*/ (столбцов результатов: /*NRES2*/)
+      t=f->Output.Add1Arg(&/*VAR1*/,NULL,/*NRES2*/);
+      //@L57CMD_FOREACH_BEGIN_3 OUTMATR_RESULT /*NUM2*/
+      // /*RESULT3*/
+      t->MatrCol[/*NUM3*/]=/*NUM3*/+1;
+      t->ResultN[/*NUM3*/]=/*PARAM3*/;
+      //@L57CMD_FOREACH_END_3
+      //@L57CMD_FORONE_END_2
+    //@L57CMD_FOREACH_END_1
+
+//@L57CMD_IF_END_9
+//@L57CMD_FOREACH_END_0
+  return TRUE;
+}
+//-----------------------------------------------------------------------
+//@L57CMD_IF_END_1
+
+//@L57CMD_IF_BEGIN_1 /*@_twoarg_argmax_cnt*/ NE 0
+// Заполнение массива генерации выходных таблиц argmax(x,y)
+BOOL rdsbcppBlockClass::_TwoargArgMaxF_fill(void)
+{ L57_Table2ArgFuncData *f;
+  L57_Parameter *p1,*p2;
+
+//@L57CMD_FOREACH_BEGIN_0 OUTMATRSET FOR TYPE "max" NARGS 2
+//@L57CMD_IF_BEGIN_9 /*FIRSTARGPARAM0*/ NE -1
+//@L57CMD_IF_BEGIN_8 /*SECONDARGPARAM0*/ NE -1
+  f=_TwoargArgMaxF+/*SEQ0*/;
+  p1=_Params.P+/*FIRSTARGPARAM0*/; // /*FIRSTARG0*/
+  p2=_Params.P+/*SECONDARGPARAM0*/; // /*SECONDARG0*/
+    f->Args1Array=&(p1->Array);
+    f->Arg1Index=/*FIRSTARGPARAM0*/; // /*FIRSTARG0*/
+    f->Args2Array=&(p2->Array);
+    f->Arg2Index=/*SECONDARGPARAM0*/; // /*SECONDARG0*/
+    f->NResults=/*@@NVAR*/+1; // Значения всех аргументов и самой функции
+    if(!f->AllocateResultArrays()) return FALSE;
+    //@L57CMD_FOREACH_BEGIN_1 OUTMATRSET_VAR /*NUM0*/
+      //@L57CMD_FORONE_BEGIN_2 OUTMATR /*PARAM1*/
+      // Выходная матрица /*VAR2*/
+      //@L57CMD_FOREACH_BEGIN_3 OUTMATR_RESULT /*NUM2*/
+      f->Output.Add2Arg(&/*VAR2*/,NULL,/*PARAM3*/,/*ARGTRANSP2*/); // /*RESULT3*/
+      //@L57CMD_FOREACH_END_3
+      //@L57CMD_FORONE_END_2
+    //@L57CMD_FOREACH_END_1
+
+//@L57CMD_IF_END_8
+//@L57CMD_IF_END_9
+//@L57CMD_FOREACH_END_0
+  return TRUE;
+}
+//-----------------------------------------------------------------------
+//@L57CMD_IF_END_1
+
+// Переписать максимумы из AllMax_out в отдельные массивы (генерируется)
+BOOL rdsbcppBlockClass::L57AllMaxToArrays(void)
+{
+#ifdef L57_PARAMSCOUNT
+  int n_max=AllMax_out.Rows();
+  // Аргументы
+//@L57CMD_FOREACH_BEGIN_0 NVAR
+  if(!/*VAR0*/_res.Resize(n_max))
+    return FALSE;
+  for(int i=0;i<n_max;i++)
+    /*VAR0*/_res[i]=AllMax_out[i][/*NUM0*/];
+//@L57CMD_FOREACH_END_0
+
+  // Значения
+//@L57CMD_FORONE_BEGIN_0 FUNC 0
+  if(!/*@funcvar*/_res.Resize(n_max))
+    return FALSE;
+  for(int i=0;i<n_max;i++)
+    /*@funcvar*/_res[i]=AllMax_out[i][L57_PARAMSCOUNT];
+//@L57CMD_FORONE_END_0
+
+  // Фильтрованные данные
+  if(n_max)
+    { BOOL _fchg=FALSE;
+      double _v,_vn;
+      //@L57CMD_FOREACH_BEGIN_0 NVAR
+      if(!_fchg)
+        { _v=/*VAR0*/_res_f;
+          _vn=/*VAR0*/_res[0];
+          if(_v==rdsbcppHugeDouble || (_vn!=rdsbcppHugeDouble && fabs(_v-_vn)>_Params.P[/*NUM0*/].EndStep*1.1) )
+            _fchg=TRUE;
+        }
+      //@L57CMD_FOREACH_END_0
+      //@L57CMD_FORONE_BEGIN_0 FUNC 0
+      if((!_fchg) && DfFilter_setup!=rdsbcppHugeDouble)
+        { _v=/*@funcvar*/_res_f;
+          _vn=/*@funcvar*/_res[0];
+          if(_v==rdsbcppHugeDouble || (_vn!=rdsbcppHugeDouble && fabs(_v-_vn)>DfFilter_setup) )
+            _fchg=TRUE;
+        }
+      //@L57CMD_FORONE_END_0
+
+      if(_fchg)
+        {
+          //@L57CMD_FOREACH_BEGIN_0 NVAR
+          /*VAR0*/_res_f=/*VAR0*/_res[0];
+          //@L57CMD_FOREACH_END_0
+          //@L57CMD_FORONE_BEGIN_0 FUNC 0
+          /*@funcvar*/_res_f=/*@funcvar*/_res[0];
+          //@L57CMD_FORONE_END_0
+        }
+    }
+#endif // ifdef L57_PARAMSCOUNT
+
+  return TRUE;
+}
+//-----------------------------------------------------------------------
+
+
+$INIT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_INIT
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_INIT
+
+$START
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_START
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_START
+
+$CALCMODE
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_CALCMODE
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_CALCMODE
+
+$LOADTEXT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_LOADPARAMS
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_LOADPARAMS
+$SAVETEXT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_SAVEPARAMS
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_SAVEPARAMS
+
+$OTHER
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_OTHER
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_OTHER
+
+$FUNC "IPU.L57.UserFuncTransfer.IsFuncSource"
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+Result=1;
+
+$FUNC "IPU.L57.UserFuncTransfer.AcceptFunction"
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_ACCEPTFUNC
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_ACCEPTFUNC
+
+$FUNC "IPU.L57.UserFuncTransfer.AcceptParameter"
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_ACCEPTPARAM
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_ACCEPTPARAM
+
+$FUNC "IPU.L57.UserFuncTransfer.IsParameterTransferredWithFunc"
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_CHECKTRANSFUNC
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_CHECKTRANSFUNC
+
+
+$FUNC "IPU.L57.UserFuncTransfer.CheckParamTransfer"
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_CHECKTRANSFUNC2
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_CHECKTRANSFUNC2
+
+
+$RESET
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_RESET
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_RESET
+
+
+$VARCHECK
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_VARCHECK
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_VARCHECK
+
+$DRAWADD
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_DRAWADDITIONAL
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_DRAWADDITIONAL
+
+$HINT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_HINT
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_HINT
+
+$POPUP
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_POPUP
+#include <RdsL57Mk2/L57Mk2ArgMax.cpp>
+#undef L57MS_POPUP
+
+
+$HIDDEN
+{W
+ TПеременные и функции
+ FN+F-O+T+E+C-I-_+
+ ?Blocks\L57.ui,L57Mk2ArgMax
+}
+{N
+ TМаксимизируемые параметры
+ C"IИндекс","NИмя","DДиапазон","SШаг","XАргумент"
+ E+"[Начало диапазона:","]Конец диапазона:","DШаг:","EКонечный шаг:","XАргумент для функций:"
+}
+{I
+ TВходы блока
+ C"NИмя","TТип","VЗначение"
+}
+{T
+ {X
+   Tmax
+   NArg max / Max
+ }
+ {X
+   Tf
+   NЗначение функции
+   F#*N-F+A+
+ }
+ C"NИмя","TТип","AАргументы","RРезультаты"
+ FI+
+}
+$OPTIONS
+  tabs $GLOBAL
+  window pos 18 164 size 1214 837 hdiv 337 vdiv 356 fdiv 334 hidevar
+  svc 0 90 1 73 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 0
+  ignorewarnings 1
+  customerrmsg 1 showblock
+  autoreadonlyeditor 1
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

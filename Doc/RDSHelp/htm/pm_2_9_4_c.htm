@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.9.4. Несколько таймеров в одной модели</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_9">&sect;2.9. Использование таймеров</a></p>
+<div class="level"><p>&sect;2.9.4. Несколько таймеров в одной модели</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_9_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_10_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_9_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_9_4.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделью блока, изображение
+которого может вращаться и мигать одновременно (используется два
+циклических таймера).</p>
+
+<pre class="cpp">  <span class="rem">// Мигающий и вращающийся блок</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;math.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+  <span class="rem">//=== Структура личной области данных =====</span>
+  <span class="kw">struct</span> TRotateFlashData
+  { <a class="hidden" href="app_ids.htm#light_ref3" title="Идентификатор таймера">RDS_TIMERID</a> FlashTimer; <span class="rem">// Таймер мигания</span>
+    <a class="hidden" href="app_ids.htm#light_ref3" title="Идентификатор таймера">RDS_TIMERID</a> RotTimer;   <span class="rem">// Таймер вращения</span>
+  };
+  <span class="rem">//============= Модель блока ==============</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>) <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> RotateFlash(
+          <span class="kw">int</span> CallMode,
+          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define Flash  (*((char *)(pStart+2)))</span>
+  <span class="preproc">#define Rotate (*((char *)(pStart+3)))</span>
+  <span class="preproc">#define State  (*((char *)(pStart+4)))</span>
+  <span class="preproc">#define Angle  (*((double *)(pStart+5)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на личную область</span>
+    TRotateFlashData *data=(TRotateFlashData*)(BlockData-&gt;BlockData);
+    <span class="rem">// Структура для получения параметров таймера</span>
+    <a class="hidden" href="RDS_TIMERDESCRIPTION.htm#ref1" title="Структура RDS_TIMERDESCRIPTION">RDS_TIMERDESCRIPTION</a> descr;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Отведение памяти под личную область</span>
+          BlockData-&gt;BlockData=data=<span class="kw">new</span> TRotateFlashData;
+          <span class="rem">// Создание двух одинаковых таймеров</span>
+          data-&gt;FlashTimer=<a class="hidden" href="rdsSetBlockTimer.htm" title="А.5.12.4. rdsSetBlockTimer &ndash; создать таймер">rdsSetBlockTimer</a>(NULL,<span class="const">0</span>,
+            <a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref4" title="RDS_TIMERM_LOOP">RDS_TIMERM_LOOP</a>|<a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref8" title="RDS_TIMERS_TIMER">RDS_TIMERS_TIMER</a>,FALSE);
+          data-&gt;RotTimer=<a class="hidden" href="rdsSetBlockTimer.htm" title="А.5.12.4. rdsSetBlockTimer &ndash; создать таймер">rdsSetBlockTimer</a>(NULL,<span class="const">0</span>,
+            <a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref4" title="RDS_TIMERM_LOOP">RDS_TIMERM_LOOP</a>|<a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref8" title="RDS_TIMERS_TIMER">RDS_TIMERS_TIMER</a>,FALSE);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка данных блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Уничтожение таймеров</span>
+          <a class="hidden" href="rdsDeleteBlockTimer.htm" title="А.5.12.1. rdsDeleteBlockTimer &ndash; удалить таймер">rdsDeleteBlockTimer</a>(data-&gt;FlashTimer);
+          <a class="hidden" href="rdsDeleteBlockTimer.htm" title="А.5.12.1. rdsDeleteBlockTimer &ndash; удалить таймер">rdsDeleteBlockTimer</a>(data-&gt;RotTimer);
+          <span class="rem">// Освобождение памяти, занятой под личную область</span>
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSLLLD}"</span>))
+            <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+          <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="rem">// Подготовка структуры descr к чтению данных таймера</span>
+          descr.servSize=<span class="kw">sizeof</span>(descr);
+          <span class="rem">// Управление миганием</span>
+          <a class="hidden" href="rdsGetBlockTimerDescr.htm" title="А.5.12.2. rdsGetBlockTimerDescr &ndash; получить описание таймера">rdsGetBlockTimerDescr</a>(data-&gt;FlashTimer,&amp;descr);
+          <span class="kw">if</span>(Flash) <span class="rem">// Включить мигание</span>
+            { <span class="kw">if</span>(!descr.On) <span class="rem">// Таймер остановлен</span>
+                { <span class="rem">// Запускаем таймер и “зажигаем" индикатор</span>
+                  <a class="hidden" href="rdsRestartBlockTimer.htm" title="А.5.12.3. rdsRestartBlockTimer &ndash; перезапустить таймер">rdsRestartBlockTimer</a>(data-&gt;FlashTimer,<span class="const">1000</span>);
+                  State=<span class="const">1</span>;
+                }
+            }
+          <span class="kw">else</span> <span class="rem">// Выключить мигание</span>
+            { <span class="kw">if</span>(descr.On) <span class="rem">// Таймер работает</span>
+                { <span class="rem">// Останавливаем и “гасим" индикатор</span>
+                  <a class="hidden" href="rdsStopBlockTimer.htm" title="А.5.12.5. rdsStopBlockTimer &ndash; остановить таймер">rdsStopBlockTimer</a>(data-&gt;FlashTimer);
+                  State=<span class="const">0</span>;
+                }
+            }
+          <span class="rem">// Управление вращением</span>
+          <a class="hidden" href="rdsGetBlockTimerDescr.htm" title="А.5.12.2. rdsGetBlockTimerDescr &ndash; получить описание таймера">rdsGetBlockTimerDescr</a>(data-&gt;RotTimer,&amp;descr);
+          <span class="kw">if</span>(Rotate) <span class="rem">// Включить врашение</span>
+            { <span class="kw">if</span>(!descr.On) <span class="rem">// Таймер остановлен – запускаем</span>
+                <a class="hidden" href="rdsRestartBlockTimer.htm" title="А.5.12.3. rdsRestartBlockTimer &ndash; перезапустить таймер">rdsRestartBlockTimer</a>(data-&gt;RotTimer,<span class="const">100</span>);
+            }
+          <span class="kw">else</span> <span class="rem">// Выключить вращение</span>
+            { <span class="kw">if</span>(descr.On) <span class="rem">// Таймер работает – останавливаем</span>
+                <a class="hidden" href="rdsStopBlockTimer.htm" title="А.5.12.5. rdsStopBlockTimer &ndash; остановить таймер">rdsStopBlockTimer</a>(data-&gt;RotTimer);
+            }
+          <span class="kw">break</span>;
+
+        <span class="rem">// Срабатывание таймера</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a>:
+          <span class="rem">// Сравниваем с имеющимися таймерами</span>
+          <span class="kw">if</span>(ExtParam==((<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a>)data-&gt;FlashTimer))
+            <span class="rem">// Это – таймер мигания</span>
+            State=!State;
+          <span class="kw">else</span> <span class="rem">// Если не таймер мигания, значит, вращения</span>
+            Angle=fmod(Angle+<span class="const">0</span>.<span class="const">4</span>,<span class="const">2</span>*M_PI);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+  <span class="rem">// Отмена макроопределений для переменных</span>
+  <span class="preproc">#undef Angle</span>
+  <span class="preproc">#undef State</span>
+  <span class="preproc">#undef Rotate</span>
+  <span class="preproc">#undef Flash</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=================================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_9_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_10_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_9_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

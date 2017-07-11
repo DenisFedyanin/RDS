@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.8.9.4. Рисование блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8_9">&sect;3.8.9. Внешний вид блока</a></p>
+<div class="level"><p>&sect;3.8.9.4. Рисование блока</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_MOVED.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_DRAWADDITIONAL.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_DRAW">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</h3>
+<h4 class="off">&sect;3.8.9. Внешний вид блока</h4>
+<h5>&sect;3.8.9.4. Рисование блока</h5>
+
+
+<p>Это событие возникает у всех блоков, для которых в окне параметров
+<a href="um_3_7_5.htm#pic1" title="Флажок, разрешающий программное рисование в окне параметров блока">установлено программное рисование</a>,
+при перерисовке окна подсистемы, в котором эти блоки находятся. В реакции на него блок должен нарисовать
+свой внешний вид при помощи функций Windows API или специальных
+<a href="app_index.htm#light_htm:app_a_5_18" title="А.5.18. Графические функции">функций рисования</a>
+RDS. Примеры моделей, реагирующих на это событие, приведены в
+<a href="um_3_7_5.htm" title="&sect;3.7.5. Блоки, программно рисующие свое изображение">&sect;3.7.5</a>.</p>
+
+<p>Текст реакции на событие программного рисования блока вводится
+на вкладке &laquo;<span class="menu"><a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">события</a></span>&raquo; левой панели редактора модели: раздел
+&laquo;<span class="menu">внешний вид блока</span>&raquo;, подраздел &laquo;<span class="menu">рисование блока</span>&raquo;.
+<span id="ref1">В</span> классе блока для нее создается функция с именем
+<span class="cpp" id="light_ref1">rdsbcppDraw</span> следующего вида:</p>
+
+<pre class="cpp">  // Рисование внешнего вида блока в схеме
+  void rdsbcppBlockClass::rdsbcppDraw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> DrawData)
+  {
+    <span class="changes"><i>&nbsp;&hellip; пользовательский текст реакции &hellip;&nbsp;</i></span>
+  }</pre>
+
+<p><span id="ref2">Параметр</span> функции <span class="cpp">DrawData</span>
+&ndash; это указатель на структуру описания
+события <span class="cpp" id="light_ref2"><a class="hidden" href="RDS_BFM_DRAW.htm#ref1" title="Структура RDS_DRAWDATA">RDS_DRAWDATA</a></span>:</p>
+
+<pre class="cpp">  typedef struct {
+    <a class="hidden" href="app_ids.htm#light_ref16" title="Контекст устройства Windows">HDC</a> dc;             // Контекст устройства рисования
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> CalcMode;      // Текущий режим RDS
+    int BlockX,         // Координаты точки привязки
+        BlockY;         // блока в окне
+    double DoubleZoom;  // Масштаб окна (в долях единицы)
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> RectValid;     // Флаг изменения размеров блока
+    int Left,Top;       // Верхний левый угол блока
+    int Width,Height;   // Ширина и высота блока
+    <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> *VisibleRect;  // Видимая в окне часть рабочего поля
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> FullDraw;      // Необходимо перерисовать весь блок
+  } <a class="hidden" href="RDS_BFM_DRAW.htm#ref1" title="Структура RDS_DRAWDATA">RDS_DRAWDATA</a>;
+  typedef <a class="hidden" href="RDS_BFM_DRAW.htm#ref1" title="Структура RDS_DRAWDATA">RDS_DRAWDATA</a> *<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a>;</pre>
+
+<p>Поля структуры имеют следующий смысл:</p>
+<dl>
+  <dt><span id="light_ref3"><span class="cpp">dc</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref16" title="Контекст устройства Windows">HDC</a></i></span>)</span></dt>
+  <dd>Контекст устройства Windows
+  (device context), на котором модель рисует
+  изображение. Этот параметр используется только в графических функциях Windows API, в графических функциях
+  RDS его указывать не нужно.</dd>
+
+  <dt><span class="cpp">CalcMode</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если RDS находится в
+  <a href="um_1_3.htm" title="&sect;1.3. Режимы работы RDS">режимах</a> моделирования
+  или расчета, и <span class="cpp">FALSE</span>, если
+  RDS находится в режиме редактирования (в режиме редактирования сложные блоки часто рисуют в
+  наиболее общей их форме и со всеми включенными дополнительными элементами, если эти элементы могут
+  исчезать в процессе расчета).</dd>
+
+  <dt><span class="cpp">BlockX</span>,&nbsp;<span class="cpp">BlockY</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Координаты верхнего левого угла изображения блока в текущем масштабе окна его подсистемы. В
+  этих координатах уже учтена возможная связь положения блока с его переменными, которая может быть задана в
+  <a href="um_3_7_5.htm#pic1" title="Флажок, разрешающий программное рисование в окне параметров блока">окне параметров</a>
+  на панели &laquo;<span class="menu">координаты точки привязки</span>&raquo;.</dd>
+
+  <dt><span class="cpp">DoubleZoom</span>&emsp;(<span class="cpp"><i>double</i></span>)</dt>
+  <dd>Текущий масштаб окна родительской подсистемы блока в долях единицы: 1 &ndash; 100%, 0.5 &ndash; 50%,
+  2 &ndash; 200% и т.п. Если какие-то внутренние элементы программно рисуемого изображения блока (например,
+  шрифт надписи) должны масштабироваться вместе с ним, при рисовании размеры этих элементов необходимо умножать на
+  значение этого поля.</dd>
+
+  <dt><span class="cpp">RectValid</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd>Признак изменения размеров прямоугольника блока. Если в результате рисования модель изменяет размер
+  блока (например, если его высота или ширина отражают его внутреннее состояние), в это поле необходимо записать
+  значение <span class="cpp">TRUE</span> и занести в следующие четыре целых поля
+  (<span class="cpp">Left</span>, <span class="cpp">Top</span>, <span class="cpp">Width</span> и
+  <span class="cpp">Height</span>) новые координаты и размеры блока. В автокомпилируемых блоках эта возможность
+  используется крайне редко.</dd>
+
+  <dt><span class="cpp">Left</span>,&nbsp;<span class="cpp">Top</span>,&nbsp;<span class="cpp">Width</span>,&nbsp;<span class="cpp">Height</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Координаты левого верхнего угла (<span class="cpp">Left</span>, <span class="cpp">Top</span>) прямоугольной
+  области, занимаемой блоком, ее ширина (<span class="cpp">Width</span>) и высота (<span class="cpp">Height</span>)
+  в текущем масштабе с учетом возможной связи положения блока с его переменными. Эти значения можно непосредственно
+  использовать в функциях рисования. В эти же поля модель может записать новые координаты и размеры блока, если,
+  по какой-либо причине, она решит изменить их при рисовании (при этом также необходимо записать
+  <span class="cpp">TRUE</span> в поле <span class="cpp">RectValid</span>).</dd>
+
+  <dt><span id="light_ref4"><span class="cpp">VisibleRect</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a>*</i></span>)</span></dt>
+  <dd>Указатель на структуру <span class="cpp">RECT</span> Windows API, в которой записаны координаты видимой в
+  данный момент в окне части рабочего поля подсистемы. Модель может использовать их для того, чтобы уменьшить
+  потери времени на обновление окна, не рисуя части блока, не попавшие в видимую в данный момент область. Делать
+  это не обязательно &ndash; рисование за пределами видимой в окне области отсекается автоматически.</dd>
+
+  <dt><span class="cpp">FullDraw</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd>Логическое поле, указывающее на необходимость полной перерисовки всего изображения блока
+  (<span class="cpp">TRUE</span>) или только тех его частей, которые изменились с момента последнего рисования
+  (<span class="cpp">FALSE</span>). Его использование позволяет снизить потери времени на обновление окна,
+  не рисуя не изменившиеся части изображения блока без необходимости. В автокомпилируемых блоках эта возможность
+  используется крайне редко, подробно она рассматривается в
+  <a href="pm_2_10_2.htm" title="&sect;2.10.2. Оптимизация рисования">&sect;2.10.2 руководства программиста</a>.</dd>
+
+</dl>
+
+<p class="noindent">При написании моделей блоков без использования модуля автокомпиляции рисованию блока соответствует
+константа RDS <span class="cpp"><a href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_MOVED.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_DRAWADDITIONAL.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_DRAW">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

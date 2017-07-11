@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.2.3. RDS_BLOCKDATA &ndash; структура данных блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2">А.2. События блока и связанные с ними описания</a></p>
+<div class="level"><p>А.2.3. <span class="cpp">RDS_BLOCKDATA</span> &ndash; структура данных блока</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="DllEntryPoint.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_CALCMODE.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BLOCKDATA">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.2. События блока и связанные с ними описания</h3>
+<h4>А.2.3. <span class="cpp">RDS_BLOCKDATA</span> &ndash; структура данных блока</h4>
+
+
+<p><span id="ref1">Структура</span>
+<span id="ref2">данных</span>
+<span id="ref3">блока</span>
+<span class="cpp">RDS_BLOCKDATA</span> содержит основные параметры блока, которые
+обычно используются <a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функцией его модели</a>
+для выполнения реакции на событие. Эта структура создается RDS одновременно с блоком и хранится
+в памяти в течение всего времени существования этого блока.</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span> {
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> VarData;     <span class="rem">// Адрес дерева переменных блока</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> BlockData;   <span class="rem">// Адрес личной области данных блока</span>
+    <span id="light_ref1"><a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></span> Block;  <span class="rem">// Идентификатор блока</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> BlockName;    <span class="rem">// Имя блока</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Parent; <span class="rem">// Идентификатор подсистемы</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags;        <span class="rem">// Флаги</span>
+    <span class="kw">int</span> Width,Height;   <span class="rem">// Размеры прямоугольника блока</span>
+    <span class="kw">int</span> Tag;            <span class="rem">// Пользовательское поле</span>
+  } <span id="light_ref3">RDS_BLOCKDATA</span>;
+  <span class="kw">typedef</span> RDS_BLOCKDATA *<span id="light_ref2">RDS_PBLOCKDATA</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">VarData</span>&emsp;(<span class="cpp"><i>LPVOID</i></span>)</dt>
+  <dd>Указатель на дерево переменных блока. В дереве переменных хранятся все значения
+  <a href="um_1_4.htm" title="&sect;1.4. Статические переменные блоков">статических переменных</a> блока, функция модели может считывать их
+  оттуда и записывать туда новые значения. Для переменных сложной структуры (строк, массивов, структур,
+  переменных произвольного типа) в дереве переменных хранятся указатели на области памяти, занимаемые этими
+  переменными, в которых, в свою очередь, могут содержаться указатели на другие области и т.д., поэтому данные
+  переменных блока в общем случае имеют древовидную структуру. Для изменения размера массивов и длины строк,
+  изменения фактического типа переменных произвольного типа и операций со сложными переменными предусмотрены
+  специальные сервисные функции RDS, модель блока не должна самостоятельно пытаться отводить память в
+  дереве переменных или изменять значение самого поля <span class="cpp">VarData</span>. Работа со статическими
+  переменными блока подробно рассмотрена в <a href="pm_index.htm#light_htm:pm_2_5" title="&sect;2.5. Статические переменные блоков">&sect;2.5 руководства программиста</a>.</dd>
+
+  <dt><span id="ref4"><span class="cpp">BlockData</span>&emsp;(<span class="cpp"><i>LPVOID</i></span>)</span></dt>
+  <dd>Указатель на <span id="light_ref4">личную область данных</span> блока. Перед самым первым для данного
+  блока вызовом модели RDS записывает в это поле значение <span class="cpp">NULL</span> и больше к нему
+  не обращается. Если модели блока требуется отводить память под свои нужды, она может записать указатель на
+  отведенную область памяти в это поле. В этом случае освободить отведенную область тоже должна будет
+  функция модели &ndash; обычно это делается в реакции на событие <span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span>,
+  вызываемой непосредственно перед отключением модели от блока. Фактически, поскольку RDS никак не
+  вмешивается в работу функции модели с этим полем, разработчик может использовать его для хранения любого
+  нужного ему указателя.</dd>
+
+  <dt><span class="cpp">Block</span>&emsp;(<span class="cpp"><i>RDS_BHANDLE</i></span>)</dt>
+  <dd>Уникальный идентификатор данного блока. Для идентификаторов блоков в RDS введен специальный тип
+  <span class="cpp"><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></span>, такие идентификаторы используются в сервисных функциях для указания блока,
+  с которым нужно произвести то или иное действие. Из этого поля функция модели может считать идентификатор
+  &laquo;своего&raquo; блока, менять значение поля она не должна.</dd>
+
+  <dt><span class="cpp">BlockName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку во внутренней памяти RDS, в которой хранится имя данного блока. Функция модели
+  не должна как-либо изменять эту строку, для переименования блоков существует специальная сервисная функция
+  <span class="cpp"><span id="light_ref5"><a href="rdsRenameBlock.htm" title="А.5.6.42. rdsRenameBlock &ndash; переименовать блок">rdsRenameBlock</a></span></span>.</dd>
+
+  <dt><span class="cpp">Parent</span>&emsp;(<span class="cpp"><i>RDS_BHANDLE</i></span>)</dt>
+  <dd>Идентификатор родительской подсистемы блока, то есть подсистемы, внутри которой находится данный блок.
+  Функция модели не должна изменять значение этого поля.</dd>
+
+  <dt><span class="cpp">Flags</span>&emsp;(<span class="cpp"><i>DWORD</i></span>)</dt>
+  <dd><span id="light_ref6">Битовые флаги</span>, 
+  определяющие состояние и поведение блока &ndash; некоторые из них модель может и читать, и
+  писать, некоторые &ndash; только читать (их изменение игнорируется RDS):
+    <div class="tableleft"><div class="tcont">
+    <table class="list">
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref7">RDS_VARCHECKFAILED</span></span></td>
+        <td>Блок имеет не совместимую с моделью структуру статических переменных. Этот флаг взводится RDS по
+        результатам вызова модели блока для проверки типов переменных (событие <span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>).
+        Модель блока может только читать этот флаг, его установка игнорируется. На самом деле, модель сможет
+        обнаружить этот флаг взведенным только в реакции на событие отключения модели <span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span>,
+        поскольку при несовместимом типе переменных все остальные вызовы модели блокируются.</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref8">RDS_NEEDSDLLREDRAW</span><span id="light_ref9"></span></span></td>
+        <td>Действия, выполненные функцией модели, привели к изменению внешнего вида блока, и он должен быть перерисован
+        при следующем обновлении окна подсистемы. Этот флаг используется только в блоках, изображения которых рисуются
+        функцией модели программно в реакции на событие <span class="cpp"><a href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a></span>, для всех остальных блоков он
+        игнорируется. Перед любым вызовом функции модели RDS автоматически взводит этот флаг, поэтому модели не
+        обязательно работать с ним &ndash; если она ничего не предпримет, блок будет перерисован. Если внешний вид
+        блока в результате вызова функции модели не изменился, модель может сбросить этот флаг чтобы избежать затрат
+        времени на лишнюю перерисовку.</td>
+      </tr>
+
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref10">RDS_MOUSECAPTURE</span></span></td>
+        <td>Блок <a href="pm_2_12_2.htm" title="&sect;2.12.2. Захват мыши, реакция на перемещение курсора">&laquo;захватил&raquo; мышь</a>: если модель взведет этот флаг, информация обо всех манипуляциях мышью
+        в окне родительской подсистемы блока будет поступать только в этот блок, независимо от того, над каким блоком
+        находится курсор. Сброс флага восстановит нормальный порядок работы. Установка и сброс этого флага возможны
+        только в реакциях на перемещение мыши или нажатие и отпускание ее кнопок, во всех остальных реакциях
+        RDS игнорирует изменения этого флага и возвращает его в исходное состояние.</td>
+      </tr>
+
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref11">RDS_NOWINREFRESH</span></span></td>
+        <td>При взведении этого флага перерисовка немодальных окон данного блока (если они есть) или окна
+        подсистемы (если данный блок &ndash; подсистема) будет временно запрещена. Временное запрещение обновления
+        окон используется в тех случаях, когда выполняется какая-либо длительная операция, занимающая несколько
+        тактов расчета, и в середине этой операции, когда готовы еще не все данные, перерисовывать окна
+        нежелательно. Для установки и сброса этого флага обычно применяется сервисная функция
+        <span class="cpp"><span id="light_ref12"><a href="rdsEnableWindowRefresh.htm" title="А.5.8.4. rdsEnableWindowRefresh &ndash; разрешение/запрет обновления окон">rdsEnableWindowRefresh</a></span></span>, но, при желании, разработчик модели может управлять им
+        непосредственно.</td>
+      </tr>
+
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref13">RDS_WINREFRESHWAITING</span></span></td>
+        <td>Установка этого флага сигнализирует о том, что немодальные окна блока или окно подсистемы необходимо
+        перерисовать, как только обновление окон будет разрешено. Если обновление окон запрещено (взведен флаг
+        <span class="cpp">RDS_NOWINREFRESH</span>) и поступает команда обновления (по таймеру или от сервисной функции
+        <span class="cpp"><span id="light_ref14"><a href="rdsRefreshBlockWindows.htm" title="А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна">rdsRefreshBlockWindows</a></span></span>), этот флаг взводится автоматически. Как только обновление окон
+        снова будет разрешено сервисной функцией <span class="cpp"><a href="rdsEnableWindowRefresh.htm" title="А.5.8.4. rdsEnableWindowRefresh &ndash; разрешение/запрет обновления окон">rdsEnableWindowRefresh</a></span>, RDS проверит флаг
+        <span class="cpp">RDS_WINREFRESHWAITING</span> и, если он установлен, даст повторную команду на обновление окон.
+        При необходимости, разработчик модели может взводить и сбрасывать этот флаг вручную.</td>
+      </tr>
+
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref15">RDS_DISABLED</span></span></td>
+        <td>Блок не реагирует на действия пользователя: пользователь не сможет удалить этот блок, изменить его
+        параметры и выделить его в режиме редактирования. RDS не взводит этот флаг, модель блока может управлять
+        им самостоятельно. По умолчанию флаг сброшен.</td>
+      </tr>
+
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref16">RDS_CTRLCALC</span></span></td>
+        <td>Если этот флаг взведен, перед началом каждого
+        <a href="um_1_3.htm#ref4" title="Такт расчета">такта расчета</a>
+        модель этого блока вызывается для реакции на событие <span class="cpp"><span id="light_ref17"><a href="RDS_BFM_PREMODEL.htm" title="А.2.4.10. RDS_BFM_PREMODEL &ndash; вызов модели перед тактом расчета">RDS_BFM_PREMODEL</a></span></span> в том
+        случае, если в этом такте блок должен быть запущен в режиме <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>, то есть
+        если он <a href="pm_1_4.htm#ref6" title="Запуск модели каждый такт">запускается каждый такт</a>
+        или его <a href="pm_2_5_2.htm#light_ref3" title="Сигналы запуска и готовности">первая статическая переменная</a>
+        (&laquo;Start&raquo;) не равна
+        нулю. По умолчанию флаг сброшен, модель может взвести его, если ей нужно вызываться непосредственно перед
+        каждым тактом расчета. Взвести флаг нужно до перехода в режим моделирования или расчета, иначе его
+        фактическая установка будет отложена до перехода в режим редактирования (это связано с внутренней логикой
+        работы RDS).</td>
+      </tr>
+
+      </table>
+    </div></div>
+    </dd>
+
+  <dt><span class="cpp">Width</span>,&nbsp;<span class="cpp">Height</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Ширина (<span class="cpp">Width</span>) и высота (<span class="cpp">Height</span>) описывающего прямоугольника
+  блока в точках экрана в масштабе 100% без учета возможной связи с переменными, то есть размер блока, заданный
+  пользователем в режиме редактирования. Эти поля можно использовать только в том случае, если модель блока
+  <a href="pm_2_10_1.htm" title="&sect;2.10.1. Рисование изображения блока в окне подсистемы">рисует его внешний вид программно</a>. Если изображение блока задано
+  прямоугольником с текстом или векторной картинкой, эти поля не используются.</dd>
+
+  <dt><span class="cpp">Tag</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Целое значение, никак не обрабатываемое RDS. Разработчик модели может использовать его по своему
+  усмотрению &ndash; например, для хранения каких-либо флагов. RDS не инициализирует это поле при подключении
+  к блоку новой модели, поэтому функция модели должна заниматься этим самостоятельно.</dd>
+
+</dl>
+
+
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="DllEntryPoint.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_CALCMODE.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BLOCKDATA">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

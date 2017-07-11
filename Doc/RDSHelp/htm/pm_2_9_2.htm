@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.9.2. Циклический таймер</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_9">&sect;2.9. Использование таймеров</a></p>
+<div class="level"><p>&sect;2.9.2. Циклический таймер</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_9_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_9_3.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_9_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_9_2_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.9. Использование таймеров</h3>
+<h4>&sect;2.9.2. Циклический таймер</h4>
+<p class="abstract">Описывается циклический таймер, постоянно вызывающий модель блока через заданный интервал времени.
+                Рассматривается пример блока, изображающего мигающую индикаторную лампочку.</p>
+
+
+<p><span id="ref1">Рассмотрим</span>
+для примера <span id="light_ref1">блок, изображающий мигающую индикаторную лампочку</span>
+на каком-либо пульте. Внешний вид этой лампочки может быть любым &ndash; мигание будет реализовано при
+помощи векторной картинки блока. Блок будет иметь логический вход &laquo;<span class="rdsvar">Flash</span>&raquo;, при подаче на
+который единицы изображение блока должно мигать с частотой 1 Гц, привлекая внимание оператора. Для реализации
+самого мигания будет использоваться внутренняя логическая переменная &laquo;<span class="rdsvar">State</span>&raquo;, значение которой
+будет инвертироваться по таймеру с задержкой в половину секунды, что и даст частоту в 1 Гц. В
+<a href="pm_1_4.htm#light_ref4" title="Векторная картинка блока">векторной картинке</a>
+блока с этой переменной будет
+<a href="um_2_10_2.htm#ref6" title="Связи цвета элемента">связан</a> цвет изображающего индикатор прямоугольника
+(<a href="#pic1" title="Связь логической переменной с цветом в векторной картинке блока">рис.&nbsp;55</a>).
+При нулевом значении переменной прямоугольник будет иметь цвет, заданные при его создании
+(в данном случае &ndash; белый), а при единичном &ndash; альтернативный (красный). Таким образом,
+меняя значение &laquo;<span class="rdsvar">State</span>&raquo;, можно выбирать один из двух цветов прямоугольника.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/FlashVectorPicture.png" width="599" height="347" alt="Связь логической переменной с цветом в векторной картинке блока" />
+<p id="light_pic1">Рис.&nbsp;55. Связь логической переменной с цветом в векторной картинке блока</p>
+</div></div>
+
+
+<p>Вместо прямоугольника можно было бы использовать круг или произвольный
+<a href="um_2_10_4.htm" title="&sect;2.10.4. Рисование многоугольников и ломаных линий">многоугольник</a>, можно было бы
+вместо цвета фигуры связать с переменной &laquo;<span class="rdsvar">State</span>&raquo; видимость какого-либо
+<a href="um_2_10_8.htm" title="&sect;2.10.8. Добавление в картинку вложенных систем координат">набора объектов</a> (и сделать, например, мигающую надпись) и т.п.
+&ndash; в данном случае внешний вид блока ограничен только фантазией создателя векторной картинки,
+функция модели от этого не изменится.</p>
+
+<p><span id="light_ref2">Блок будет иметь следующую структуру переменных:</span></p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">Flash</td>
+<td class="center">Логический</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">3</td>
+<td class="vcenter">State</td>
+<td class="center">Логический</td>
+<td class="center">1</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Чтобы не тратить зря системные ресурсы, как обычно, включим для блока
+<a href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">запуск только по сигналу</a>, и у входа &laquo;<span class="rdsvar">Flash</span>&raquo; установим
+<a href="pm_1_5.htm#ref18" title="Флаг запуска у входа блока">флаг &laquo;<span class="menu">пуск</span>&raquo;</a>, чтобы модель запустилась при срабатывании
+связи, подключенной к этому входу.</p>
+
+<p>Модель блока с обычными <a href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока">макроопределениями</a>
+для переменных будет иметь следующий вид:</p>
+
+<pre class="cpp">  <span class="rem">//====== Модель простого мигающего блока ======</span>
+  <span class="rem">// Функция модели блока</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>) <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> SimpleFlash(
+          <span class="kw">int</span> CallMode,
+          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define Flash  (*((char *)(pStart+2)))</span>
+  <span class="preproc">#define State  (*((char *)(pStart+3)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на личную область</span>
+    <span class="rem">// В личной области хранится только идентификатор таймера</span>
+    <span id="light_ref3"><a class="hidden" href="app_ids.htm#light_ref3" title="Идентификатор таймера">RDS_TIMERID</a></span> *data=(<a class="hidden" href="app_ids.htm#light_ref3" title="Идентификатор таймера">RDS_TIMERID</a>*)(BlockData-&gt;BlockData);
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Отводим место для хранения идентификатора таймера</span>
+          BlockData-&gt;BlockData=data=<span class="kw">new</span> <a class="hidden" href="app_ids.htm#light_ref3" title="Идентификатор таймера">RDS_TIMERID</a>;
+          <span class="rem">// Создаем таймер, интервал пока не устанавливаем</span>
+          *data=<span id="light_ref4"><a class="hidden" href="rdsSetBlockTimer.htm" title="А.5.12.4. rdsSetBlockTimer &ndash; создать таймер">rdsSetBlockTimer</a></span>(NULL,<span class="const">0</span>,
+                  <span id="light_ref5"><a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref4" title="RDS_TIMERM_LOOP">RDS_TIMERM_LOOP</a></span>|<span id="light_ref6"><a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref8" title="RDS_TIMERS_TIMER">RDS_TIMERS_TIMER</a></span>,FALSE);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка данных блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Уничтожаем таймер</span>
+          <span id="light_ref7"><a class="hidden" href="rdsDeleteBlockTimer.htm" title="А.5.12.1. rdsDeleteBlockTimer &ndash; удалить таймер">rdsDeleteBlockTimer</a></span>(*data);
+          <span class="rem">// Освобождаем память, где он хранился</span>
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSLL}"</span>))
+            <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+          <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">if</span>(Flash) <span class="rem">// Включаем мигание</span>
+            { <span class="rem">// Запускаем таймер с интервалом 500 мс</span>
+              <span id="light_ref8"><a class="hidden" href="rdsRestartBlockTimer.htm" title="А.5.12.3. rdsRestartBlockTimer &ndash; перезапустить таймер">rdsRestartBlockTimer</a></span>(*data,<span class="const">500</span>);
+              <span class="rem">// Сразу "зажигаем" изображение блока</span>
+              State=<span class="const">1</span>;
+            }
+          <span class="kw">else</span> <span class="rem">// Выключаем мигание</span>
+            { <span class="rem">// Останавливаем таймер</span>
+              <span id="light_ref9"><a class="hidden" href="rdsStopBlockTimer.htm" title="А.5.12.5. rdsStopBlockTimer &ndash; остановить таймер">rdsStopBlockTimer</a></span>(*data);
+              <span class="rem">// "Гасим" изображение блока</span>
+              State=<span class="const">0</span>;
+            }
+          <span class="kw">break</span>;
+
+        <span class="rem">// Срабатывание таймера</span>
+        <span class="kw">case</span> <span id="light_ref10"><a class="hidden" href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a></span>:
+          <span class="rem">// Инвертируем состояние</span>
+          State=!State;
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений для переменных</span>
+  <span class="preproc">#undef State</span>
+  <span class="preproc">#undef Flash</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=================================================</span></pre>
+
+<p>В этой модели в <a href="pm_1_4.htm#ref8" title="Личная область данных блока">личной области данных</a>
+блока хранится идентификатор таймера, с которым эта модель работает.
+Для удобства доступа к хранимому идентификатору в начале модели вводится вспомогательная переменная <span class="cpp">data</span>,
+которой сразу присваивается указатель на личную область данных, приведенный к типу
+<span class="cpp"><a href="app_ids.htm#light_ref3" title="Идентификатор таймера">RDS_TIMERID</a>*</span>. При вызове в режиме
+<span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span> модель отводит память для хранения идентификатора таймера и, как обычно,
+запоминает указатель на нее в структуре данных блока. Затем функцией
+<span class="cpp"><a href="rdsSetBlockTimer.htm" title="А.5.12.4. rdsSetBlockTimer &ndash; создать таймер">rdsSetBlockTimer</a></span> создается сам таймер. Первый параметр функции &ndash;
+<span class="cpp">NULL</span>, поскольку мы создаем новый таймер, а не изменяем параметры существующего.
+Интервал срабатывания таймера мы зададим позднее, при запуске таймера, поэтому в
+<span class="cpp"><a class="hidden" href="rdsSetBlockTimer.htm" title="А.5.12.4. rdsSetBlockTimer &ndash; создать таймер">rdsSetBlockTimer</a></span> он не задается &ndash; второй параметр функции равен нулю.
+Создаваемый таймер будет циклическим (константа <span class="cpp"><a href="RDS_TIMERDESCRIPTION.htm#light_ref4" title="RDS_TIMERM_LOOP">RDS_TIMERM_LOOP</a></span>), при его срабатывании модель
+будет вызываться в режиме <span class="cpp"><a href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a></span> (константа <span class="cpp"><a href="RDS_TIMERDESCRIPTION.htm#light_ref8" title="RDS_TIMERS_TIMER">RDS_TIMERS_TIMER</a></span>),
+таймер не запускается сразу после создания (последний параметр функции &ndash; <span class="cpp">FALSE</span>).</p>
+
+<p>При вызове модели в режиме <span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span> (при удалении блока, закрытии RDS,
+отключении модели от блока и т.п.) созданный таймер удаляется функцией
+<span class="cpp"><a href="rdsDeleteBlockTimer.htm" title="А.5.12.1. rdsDeleteBlockTimer &ndash; удалить таймер">rdsDeleteBlockTimer</a></span>. Технически, можно было бы этого не делать &ndash; при отключении
+модели от блока RDS автоматически удаляет все созданные блоком объекты, включая таймеры, однако,
+хороший стиль программирования обычно подразумевает явное удаление созданных объектов (если все время
+полагаться на автоматику, можно по привычке забыть уничтожить какой-либо объект, автоматическое удаление
+которого не предусмотрено).</p>
+
+<p>В такте расчета (режим <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>) модель анализирует значение логического входа
+<span class="cpp">Flash</span>. Если оно равно единице (&laquo;истина&raquo;), таймер запускается с интервалом
+500 мс. Начиная с этого момента модель будет вызываться в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a></span>
+два раза в секунду по системным часам. Кроме того, переменной <span class="cpp">State</span> при
+запуске таймера присваивается значение 1, чтобы изображение блока &laquo;зажглось&raquo; сразу, а
+не через 500 миллисекунд, когда сработает таймер. Если же значение
+<span class="cpp">Flash</span> равно нулю (&laquo;ложь&raquo;), таймер останавливается функцией
+<span class="cpp"><a href="rdsStopBlockTimer.htm" title="А.5.12.5. rdsStopBlockTimer &ndash; остановить таймер">rdsStopBlockTimer</a></span> и его изображение &laquo;гасится&raquo; присваиванием нуля переменной
+<span class="cpp">State</span>.</p>
+
+<p>Наконец, при вызове модели в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a></span>, значение
+<span class="cpp">State</span> инвертируется, что приведет к смене цвета изображения блока. Таким образом,
+цвет блока будет меняться два раза в секунду, что и создаст эффект мигания индикатора.</p>
+
+<div class="picright"><div class="container" id="pic2">
+<img src="../img/FlashBlockTest.png" width="154" height="56" alt="Проверка работы мигающего блока" />
+<p id="light_pic2">Рис.&nbsp;56. Проверка работы<br />мигающего блока</p>
+</div></div>
+
+
+<p>Для проверки работы блока можно подключить к его входу &laquo;<span class="rdsvar">Flash</span>&raquo; стандартную
+переключающуюся кнопку (<a href="#pic2" title="Проверка работы мигающего блока">рис.&nbsp;56</a>).
+В <a href="pm_1_3.htm#ref3" title="Режим расчета">режиме расчета</a> при нажатой кнопке изображение блока должно мигать.</p>
+
+<p>Приведенная выше модель имеет один существенный недостаток. Представим себе, что ко входу
+&laquo;<span class="rdsvar">Flash</span>&raquo; подключен выход какого-либо блока, работающего
+<a href="pm_1_4.htm#ref6" title="Запуск модели каждый такт">каждый такт</a>. Выход этого блока будет передаваться на вход
+&laquo;<span class="rdsvar">Flash</span>&raquo; в каждом такте расчета, что будет каждый раз приводить к запуску модели нашего
+мигающего блока. В реакции на такт расчета наш блок анализирует значение <span class="cpp">Flash</span> и
+запускает или останавливает таймер. Если единичное значение будет передаваться на вход модели в каждом такте,
+значит, таймер также будет перезапускаться в каждом такте. Фактически, этот постоянный перезапуск не даст ему
+считать, модель не будет вызываться в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a></span>, переменная <span class="cpp">State</span>
+не будет инвертироваться, и блок не будет мигать.</p>
+
+<p>Чтобы устранить этот эффект, необходимо запускать таймер при единичном значении &laquo;<span class="rdsvar">Flash</span>&raquo;
+только в том случае, если он еще не запущен. Таким образом повторные срабатывания модели не приведут к
+перезапуску таймера. При этом останавливать таймер нужно при совпадении двух условий: значение
+&laquo;<span class="rdsvar">Flash</span>&raquo; равно нулю и таймер в данный момент работает.</p>
+
+<p>Для реализации такого поведения модели можно добавить в блок новую логическую переменную-флаг,
+взводить ее при запуске таймера и сбрасывать при остановке, а в такте расчета сравнивать ее со значением
+<span class="cpp">Flash</span> и управлять таймером, если они не совпадают. Мы сделаем по-другому &ndash;
+при вызове модели в такте расчета будем проверять, запущен ли таймер, при помощи сервисной функции
+чтения параметров таймера <span class="cpp"><span id="light_ref11"><a href="rdsGetBlockTimerDescr.htm" title="А.5.12.2. rdsGetBlockTimerDescr &ndash; получить описание таймера">rdsGetBlockTimerDescr</a></span></span>. Для этого нужно ввести в
+функцию модели дополнительную переменную &ndash;
+<a href="RDS_TIMERDESCRIPTION.htm#ref1" title="Структура RDS_TIMERDESCRIPTION">структуру</a>, в которую будут записаны запрошенные параметры
+таймера (выделена <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">//====== Модель простого мигающего блока ======</span>
+  <span class="rem">// Функция модели блока</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>) <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> SimpleFlash(
+          <span class="kw">int</span> CallMode,
+          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+    <span class="changes"><span id="light_ref12"><a class="hidden" href="RDS_TIMERDESCRIPTION.htm#ref1" title="Структура RDS_TIMERDESCRIPTION">RDS_TIMERDESCRIPTION</a></span> descr;</span>
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="rem">// &hellip;</span></pre>
+
+<p>В этой структуре нас будет интересовать единственное поле <span class="cpp">On</span>, имеющее значение
+<span class="cpp">TRUE</span> для работающего таймера и <span class="cpp">FALSE</span> для остановленного.
+Реакцию модели на такт расчета перепишем следующим образом (изменения выделены <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+        <span class="changes">  <span class="rem">// Запрашиваем параметры таймера      </span></span>
+        <span class="changes">  descr.servSize=<span class="kw">sizeof</span>(descr);         </span>
+        <span class="changes">  <a class="hidden" href="rdsGetBlockTimerDescr.htm" title="А.5.12.2. rdsGetBlockTimerDescr &ndash; получить описание таймера">rdsGetBlockTimerDescr</a>(*data,&amp;descr);  </span>
+          <span class="kw">if</span>(Flash) <span class="rem">// Включаем мигание, если таймер остановлен</span>
+            { <span class="changes"><span class="kw">if</span>(!descr.On) <span class="rem">// Таймер остановлен </span></span>
+                <span class="changes">{</span> <a class="hidden" href="rdsRestartBlockTimer.htm" title="А.5.12.3. rdsRestartBlockTimer &ndash; перезапустить таймер">rdsRestartBlockTimer</a>(*data,<span class="const">500</span>);
+                  State=<span class="const">1</span>;
+                <span class="changes">}</span>
+            }
+          <span class="kw">else</span> <span class="rem">// Выключаем мигание, если таймер работает</span>
+            { <span class="changes"><span class="kw">if</span>(descr.On) <span class="rem">// Таймер работает </span></span>
+                <span class="changes">{</span> <a class="hidden" href="rdsStopBlockTimer.htm" title="А.5.12.5. rdsStopBlockTimer &ndash; остановить таймер">rdsStopBlockTimer</a>(*data);
+                  State=<span class="const">0</span>;
+                <span class="changes">}</span>
+            }
+          <span class="kw">break</span>;</pre>
+
+<p>Прежде всего мы присваиваем полю <span class="cpp">servSize</span> структуры описания таймера
+<span class="cpp">descr</span> размер этой структуры в байтах &ndash;
+<span class="cpp">sizeof(descr)</span>. Без этого функция чтения параметров таймера, как и многие другие
+сервисные функции RDS, откажется работать. Далее мы вызываем функцию
+<span class="cpp"><a class="hidden" href="rdsGetBlockTimerDescr.htm" title="А.5.12.2. rdsGetBlockTimerDescr &ndash; получить описание таймера">rdsGetBlockTimerDescr</a></span>, которая заполнит структуру <span class="cpp">descr</span> описанием
+таймера, идентификатор которого находится в <span class="cpp">*data</span>. Затем мы запускаем таймер в
+том случае, если <span class="cpp">Flash</span> &ndash; истина, и таймер не работает в данный момент
+(<span class="cpp">descr.On</span> имеет значение <span class="cpp">FALSE</span>), и останавливаем его, если
+<span class="cpp">Flash</span> &ndash; ложь, и таймер работает (<span class="cpp">descr.On</span> имеет значение
+<span class="cpp">TRUE</span>). Теперь многократные повторные передачи значения 1 на вход <span class="cpp">Flash</span>
+никак не повлияют на мигание нашего блока.</p>
+
+<p>Можно заметить, что блок будет мигать только в режиме расчета, т.к. таймеры с параметром
+<span class="cpp"><a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref8" title="RDS_TIMERS_TIMER">RDS_TIMERS_TIMER</a></span> останавливаются вместе с расчетом. Если требуется, чтобы
+при остановленном расчете блок продолжал мигать, следует заменить константу
+<span class="cpp"><a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref8" title="RDS_TIMERS_TIMER">RDS_TIMERS_TIMER</a></span> на <span class="cpp"><a href="RDS_TIMERDESCRIPTION.htm#light_ref10" title="RDS_TIMERS_SYSTIMER">RDS_TIMERS_SYSTIMER</a></span>. В этом случае таймер
+продолжит считать и при остановке расчета, и изображение блока будет мигать и в
+<a href="pm_1_3.htm#ref2" title="Режим моделирования">режиме моделирования</a>. В
+<a href="pm_1_3.htm#ref1" title="Режим редактирования">режиме редактирования</a> изображение мигать не будет &ndash; хотя модель
+будет вызываться по таймеру и значение переменной <span class="cpp">State</span> будет инвертироваться, в
+режиме редактирования векторная картинка блока не отражает состояния его переменных, то есть значение переменной
+<span class="cpp">State</span> не будет влиять на внешний виде блока. Если бы вместо векторной картинки мы задали
+для блока <a href="pm_2_10_1.htm" title="&sect;2.10.1. Рисование изображения блока в окне подсистемы">программное рисование</a>, добавив в его модель соответствующую
+реакцию, он мигал бы и в режиме редактирования.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_9_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_9_3.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_9_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

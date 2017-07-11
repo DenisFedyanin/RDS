@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.12.6. Добавление пунктов в контекстное меню блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_12">&sect;2.12. Реакция блоков на действия пользователя</a></p>
+<div class="level"><p>&sect;2.12.6. Добавление пунктов в контекстное меню блока</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_12_5.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_7.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_6">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_12_6_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.12. Реакция блоков на действия пользователя</h3>
+<h4>&sect;2.12.6. Добавление пунктов в контекстное меню блока</h4>
+<p class="abstract">Рассматривается добавление дополнительных (постоянных и временных) пунктов в контекстное меню блока,
+                вызываемое по правой кнопке мыши. В созданный ранее блок, имитирующий двухкоординатную рукоятку, добавляется
+                возможность фиксировать одну из координат рукоятки, включаемая и выключаемая через контекстное меню.
+                В другой блок, управляющий полем ввода, также добавляется возможность переключения состояния блока пунктом
+                контекстного меню.</p>
+
+
+<p>Контекстное меню в RDS, как и в большинстве
+других программ в Windows, вызывается при щелчке правой кнопкой мыши на выделенном объекте или группе объектов.
+Нас, в данном случае, будет интересовать <a href="um_2_6.htm#pic3" title="Контекстное меню блока (поля ввода)">контекстное меню блока</a>,
+вызываемое щелчком правой кнопкой мыши на его изображении в окне подсистемы. В этом меню содержатся как пункты
+общего назначения (переключение режимов RDS, управление масштабом подсистемы), так и пункты,
+относящиеся к выбранному блоку (вызов окон <a href="um_2_6.htm#ref3" title="Настройка блока">настройки</a>
+и <a href="um_2_9_1.htm#ref2" title="окно параметров простого блока">параметров</a> блока, копирование блока в буфер обмена, смена
+<a href="um_2_12.htm" title="&sect;2.12.1. Использование слоев">слоя</a>
+и т.п.) Состав пунктов контекстного меню зависит от текущего режима RDS: в режимах
+<a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a> и <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a>, например, в
+меню не будет пунктов, позволяющих изменить какие-либо параметры блока. На самом деле, в этих
+режимах в контекстном меню по умолчанию будут только пункты общего назначения, поскольку все стандартные пункты
+меню, относящиеся к конкретному блоку, предназначены для изменения тех или иных его параметров.</p>
+
+<p>RDS позволяет моделям блоков добавлять собственные пункты в контекстное меню. Таким образом
+модель может предоставить пользователю быстрый доступ к различным функциям блока, причем возможность выбора этих
+пунктов меню пользователем может не зависеть от текущего режима RDS. В отличие от пункта
+контекстного меню, специально предназначенного для
+<a href="pm_2_7_1.htm" title="&sect;2.7.1. Функция настройки блока и открытие модальных окон">вызова окна настройки блока</a>, дополнительные пункты, добавленные
+моделью блока, могут вызываться не только из режима <a href="pm_1_3.htm#ref1" title="Режим редактирования">редактирования</a>.
+Модель, при необходимости, может самостоятельно управлять их видимостью, разрешать и запрещать их,
+оперативно менять их названия и т.п.</p>
+
+<p>Пункты, добавляемые моделью блока в контекстное меню, могут быть как постоянными, так и временными.
+Постоянные пункты могут добавляться в меню в любой момент и существуют до тех пор, пока не будут удалены
+из меню вызовом специальной сервисной функции, либо до тех пор, пока существует блок, модель которого
+их создала. Временные пункты могут добавляться в контекстное меню только в момент его открытия (для
+этого предусмотрен специальный <a href="RDS_BFM_CONTEXTPOPUP.htm" title="А.2.6.2. RDS_BFM_CONTEXTPOPUP &ndash; вызов контекстного меню блока">вызов модели</a>) и
+автоматически уничтожаются после закрытия меню.
+У каждого из двух этих типов есть свои достоинства и недостатки. Использование постоянных пунктов меню
+несколько облегчает работу программиста: в модель не нужно включать реакцию на открытие
+контекстного меню и размещать создание пунктов именно в ней, кроме того, в любом месте модели можно
+управлять видимостью и внешним видом пунктов меню. Однако, каждый постоянный пункт меню занимает место
+в памяти в течение всего времени своей жизни, и, если в системе будет несколько тысяч блоков, каждый из
+которых создаст один или несколько пунктов меню, общие потери памяти могут стать ощутимыми. При этом
+тот факт, что тысяча блоков имеет одну и ту же модель, создающую для каждого из этих блоков один и
+тот же дополнительный пункт меню, не поможет сэкономить память: физически это будут разные пункты меню,
+иначе блоки не смогли бы управлять своими пунктами независимо.</p>
+
+<p>Временные пункты меню не занимают много памяти, поскольку немедленно уничтожаются при закрытии
+меню, но создавать их можно только в специально предусмотренной для этого реакции модели на
+открытие контекстного меню. Управлять внешним видом временных пунктов нельзя &ndash; вместо этого их
+нужно создавать сразу в том виде, в котором их должен увидеть пользователь в данный
+момент (то есть в текущем режиме, в текущем состоянии блока и т.п.)</p>
+
+<p>Рассмотрим сначала работу с постоянными пунктами меню.
+В <a href="pm_2_12_2.htm#ref2" title="Пример модели двухкоординатной рукоятки">&sect;2.12.2</a> мы создали блок, имитирующий
+двухкоординатную рукоятку. Добавим в него возможность фиксировать одну из координат, разрешая
+пользователю перемещать рукоятку только по другой координате. Зафиксировав координату <i>X</i>,
+он сможет перемещать рукоятку только по вертикали, зафиксировав <i>Y</i> &ndash; только по горизонтали.
+Для управления этими функциями добавим в контекстное меню блока пункты
+&laquo;<span class="menu">Фиксировать X</span>&raquo; и &laquo;<span class="menu">Фиксировать Y</span>&raquo;, причем около пункта, соответствующего
+включенной в данный момент функции, должна ставиться галочка. Первый выбор пункта будет включать
+фиксацию соответствующей координаты (одновременно отключая фиксацию другой, если она была выбрана:
+если зафиксировать обе координаты, перемещать рукоятку будет вообще невозможно), второй &ndash;
+выключать. Для того, чтобы по внешнему виду блока пользователь сразу мог определить, что одна
+из координат зафиксирована, будем закрашивать серым цветом ту часть прямоугольника, в которую пользователь
+не сможет переместить рукоятку.</p>
+
+<p>Прежде всего, необходимо внести <span class="changes">изменения</span> в описание класса блока: нам
+потребуется несколько новых полей и функция реакции на выбор пункта меню.</p>
+
+<pre class="cpp">  <span class="rem">//====== Класс личной области данных ======</span>
+  <span class="kw">class</span> TSimpleJoystick
+  { <span class="kw">private</span>:
+      <span class="rem">// Центр круга (рукоятки) до начала перетаскивания</span>
+      <span class="kw">int</span> OldHandleX,OldHandleY;
+      <span class="rem">// Координаты курсора на момент начала перетаскивания</span>
+      <span class="kw">int</span> OldMouseX,OldMouseY;
+<div class="changes">      <span class="rem">// Флаги фиксации одной из координат</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> LockX,LockY;
+      <span class="rem">// Идентификаторы добавленных пунктов меню</span>
+      <span id="light_ref1"><a class="hidden" href="app_ids.htm#light_ref4" title="Идентификатор пункта меню">RDS_MENUITEM</a></span> MenuLockX,MenuLockY;</div>
+    <span class="kw">public</span>:
+      <span class="rem">// Настроечные параметры блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> BorderColor;       <span class="rem">// Цвет рамки блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> FieldColor;        <span class="rem">// Цвет прямоугольника</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> HandleColor;       <span class="rem">// Цвет круга в покое</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> MovingHandleColor; <span class="rem">// Цвет круга при таскании</span>
+
+<div class="changes">      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> GrayedColor;       <span class="rem">// Цвет недоступной области</span></div>
+      <span class="kw">int</span> HandleSize;             <span class="rem">// Диаметр круга</span>
+
+      <span class="rem">// Реакция на нажатие кнопки мыши</span>
+      <span class="kw">int</span> MouseDown(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,<span class="kw">double</span> x,<span class="kw">double</span> y,<a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> *pFlags);
+      <span class="rem">// Реакция на перемещение курсора мыши</span>
+      <span class="kw">void</span> MouseMove(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,<span class="kw">double</span> *px,<span class="kw">double</span> *py);
+      <span class="rem">// Рисование изображения блока</span>
+      <span class="kw">void</span> Draw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw,<span class="kw">double</span> x,<span class="kw">double</span> y,BOOL moving);
+
+<div class="changes">      <span class="rem">// Реакция на выбор добавленного пункта меню</span>
+      <span class="kw">void</span> MenuFunction(<span id="light_ref2"><a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a></span> MenuData);</div>
+      <span class="rem">// Конструктор класса</span>
+      TSimpleJoystick(<span class="kw">void</span>)
+        { BorderColor=<span class="const">0</span>;          <span class="rem">// Черная рамка</span>
+          FieldColor=<span class="const">0xffffff</span>;    <span class="rem">// Белое поле</span>
+          HandleColor=<span class="const">0xff0000</span>;   <span class="rem">// Синий круг</span>
+          MovingHandleColor=<span class="const">0xff</span>; <span class="rem">// Красный при таскании</span>
+
+<div class="changes">          GrayedColor=<span class="const">0x7f7f7f</span>;   <span class="rem">// Серый</span>
+          LockX=LockY=FALSE;      <span class="rem">// Фиксация выключена</span></div>
+          HandleSize=<span class="const">20</span>;          <span class="rem">// Диаметр круга</span>
+<div class="changes">          <span class="rem">// Создание пунктов меню</span>
+          MenuLockX=<span id="light_ref3"><a class="hidden" href="rdsRegisterContextMenuItem.htm" title="А.5.17.6. rdsRegisterContextMenuItem &ndash; создать постоянный пункт контекстного меню блока">rdsRegisterContextMenuItem</a></span>(<span class="str">"Фиксировать X"</span>,<span class="const">1</span>,<span class="const">0</span>);
+          MenuLockY=<a class="hidden" href="rdsRegisterContextMenuItem.htm" title="А.5.17.6. rdsRegisterContextMenuItem &ndash; создать постоянный пункт контекстного меню блока">rdsRegisterContextMenuItem</a>(<span class="str">"Фиксировать Y"</span>,<span class="const">2</span>,<span class="const">0</span>);</div>
+        };
+
+<div class="changes">        <span class="rem">// Деструктор класса</span>
+        ~TSimpleJoystick()
+        { <span class="rem">// Уничтожение пунктов меню</span>
+          <span id="light_ref4"><a class="hidden" href="rdsUnregisterMenuItem.htm" title="А.5.17.10. rdsUnregisterMenuItem &ndash; удалить постоянный пункт меню">rdsUnregisterMenuItem</a></span>(MenuLockX);
+          <a class="hidden" href="rdsUnregisterMenuItem.htm" title="А.5.17.10. rdsUnregisterMenuItem &ndash; удалить постоянный пункт меню">rdsUnregisterMenuItem</a>(MenuLockY);
+        };</div>
+  };
+  <span class="rem">//=========================================</span></pre>
+
+<p>В закрытую область класса добавлены два логических поля <span class="cpp">LockX</span> и <span class="cpp">LockY</span>,
+которые будут отвечать за фиксацию горизонтальной и вертикальной координаты соответственно. Там же находятся поля
+<span class="cpp">MenuLockX</span> и <span class="cpp">MenuLockY</span>, в которых будут храниться
+идентификаторы созданных моделью дополнительных пунктов меню. Эти идентификаторы имеют тип
+<span class="cpp"><a href="app_ids.htm#light_ref4" title="Идентификатор пункта меню">RDS_MENUITEM</a></span> (он описан в &laquo;<span class="file"></span>&raquo;), мы будем использовать их при
+вызове сервисных функций RDS для установки и снятия галочек рядом с этими пунктами меню.
+В настроечные параметры блока добавлено новое поле <span class="cpp">GrayedColor</span> для хранения цвета,
+которым мы будем закрашивать недоступную для рукоятки область прямоугольника блока. Также добавлена
+новая функция-член класса <span class="cpp">MenuFunction</span> для реакции на выбор пользователем одного
+из добавленных пунктов меню (позднее мы рассмотрим ее подробно), внесены изменения в конструктор класса
+и добавлен деструктор.</p>
+
+<p>Самое важное изменение в конструкторе класса &ndash; это создание в нем двух постоянных
+пунктов контекстного меню при помощи сервисной функции RDS
+<span class="cpp"><a href="rdsRegisterContextMenuItem.htm" title="А.5.17.6. rdsRegisterContextMenuItem &ndash; создать постоянный пункт контекстного меню блока">rdsRegisterContextMenuItem</a></span>. Эта функция принимает три параметра:
+строку названия пункта меню (именно эту строку пользователь увидит в меню) и два произвольных целых
+числа, которые связываются с создаваемым пунктом. Когда пользователь выберет в меню дополнительный пункт,
+эти два числа будут переданы в модель блока, и по ним она сможет определить, какой именно пункт выбран.
+Первое число обычно называется номером (или идентификатором) функции меню, второе &ndash; данными меню.
+В нашем случае пункт &laquo;<span class="menu">Фиксация X</span>&raquo; связывается с парой (1,0),
+&laquo;<span class="menu">Фиксация Y</span>&raquo; &ndash; с парой (2,0). На самом деле, практически всегда для точной идентификации
+выбранного пункта достаточно одного целого числа, второе число связывается с пунктом меню для удобства
+программиста: например, группа сходных по смыслу пунктов меню может иметь одинаковый номер функции меню,
+но разные данные. В нашей модели при выборе пункта меню мы будем анализировать только первое число
+(номер функции), второе будет игнорироваться.</p>
+
+<p>Функция <span class="cpp"><a class="hidden" href="rdsRegisterContextMenuItem.htm" title="А.5.17.6. rdsRegisterContextMenuItem &ndash; создать постоянный пункт контекстного меню блока">rdsRegisterContextMenuItem</a></span> возвращает идентификатор созданного пункта
+меню типа <span class="cpp"><a class="hidden" href="app_ids.htm#light_ref4" title="Идентификатор пункта меню">RDS_MENUITEM</a></span> (на самом деле, этот идентификатор является
+указателем на внутренний объект RDS, в котором хранятся данные пункта меню, но
+модель блока не может работать с ним напрямую, не используя сервисные функции). Идентификаторы пунктов
+&laquo;<span class="menu">Фиксация Х</span>&raquo; и &laquo;<span class="menu">Фиксация Y</span>&raquo; присваиваются полям класса
+<span class="cpp">MenuLockX</span> и <span class="cpp">MenuLockY</span> соответственно.</p>
+
+<p>В деструкторе класса созданные пункты меню уничтожаются сервисной функцией
+<span class="cpp"><a href="rdsUnregisterMenuItem.htm" title="А.5.17.10. rdsUnregisterMenuItem &ndash; удалить постоянный пункт меню">rdsUnregisterMenuItem</a></span>. Можно было бы и не уничтожать их &ndash; при отключении модели
+от блока они уничтожатся сами &ndash; но хороший стиль программирования требует явно уничтожать все то,
+что было создано.</p>
+
+<p>Теперь внесем <span class="changes">изменения</span> в функцию рисования блока <span class="cpp">Draw</span>. Если одна из
+координат зафиксирована (то есть если одна из переменных <span class="cpp">LockX</span> или
+<span class="cpp">LockY</span> имеет значение <span class="cpp">TRUE</span>), нужно закрасить серым
+цветом недоступную для рукоятки область. Если зафиксирована горизонтальная координата, следует
+нарисовать слева и справа от рукоятки два серых прямоугольника, так что белой останется только узкая вертикальная
+полоса шириной с рукоятку, по которой круг рукоятки сможет перемещаться. Если зафиксирована вертикальная координата,
+белая полоса должна быть горизонтальной, то есть нужно рисовать серые прямоугольники выше и ниже
+рукоятки. Изменения в функции выглядят следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Рисование изображения блока</span>
+  <span class="kw">void</span> TSimpleJoystick::Draw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw,
+                             <span class="kw">double</span> x,<span class="kw">double</span> y,<a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> moving)
+  { <span class="rem">// &hellip;</span>
+    <span class="rem">// &hellip;(начало функции без изменений)&hellip;</span>
+    <span class="rem">// &hellip;</span>
+
+    <span class="rem">// Установка области отсечения</span>
+    r.left=draw-&gt;Left+<span class="const">1</span>;
+    r.top=draw-&gt;Top+<span class="const">1</span>;
+    r.right=draw-&gt;Left+draw-&gt;Width-<span class="const">1</span>;
+    r.bottom=draw-&gt;Top+draw-&gt;Height-<span class="const">1</span>;
+    <a class="hidden" href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a>(&amp;r);
+
+<div class="changes">    <span class="rem">// Рисование ограничений</span>
+    <span class="kw">if</span>(LockX||LockY) <span class="rem">// Фиксируется одна из координат</span>
+      { <span class="rem">// Установка серого цвета заливки</span>
+        <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,GrayedColor);
+        <span class="kw">if</span>(LockX) <span class="rem">// Фиксируется X</span>
+          { <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(r.left,r.top,hx-hR,r.bottom);  <span class="rem">// Слева</span>
+            <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(hx+hR,r.top,r.right,r.bottom); <span class="rem">// Справа</span>
+          }
+        <span class="kw">else</span> <span class="rem">// Фиксируется Y</span>
+          { <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(r.left,r.top,r.right,hy-hR);   <span class="rem">// Сверху</span>
+            <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(r.left,hy+hR,r.right,r.bottom);<span class="rem">// Снизу</span>
+          }
+      }</div>
+    <span class="rem">// Линии перекрестия</span>
+    <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(cx,draw-&gt;Top);
+    <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(cx,draw-&gt;Top+draw-&gt;Height);
+    <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(draw-&gt;Left,cy);
+    <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(draw-&gt;Left+draw-&gt;Width,cy);
+
+    <span class="rem">// &hellip;(далее без изменений)&hellip;</span></pre>
+
+<p>Если <span class="cpp"></span> или <span class="cpp">LockY</span> &minus; <span class="cpp">TRUE</span>,
+устанавливается серый (<span class="cpp">GrayedColor</span> из настроек блока) цвет заливки и функцией
+<span class="cpp"><a href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a></span> рисуются два вертикальных или горизонтальных, в зависимости от
+зафиксированной координаты, прямоугольника. Разрыв между прямоугольниками вычисляется по координатам
+центра рукоятки (<span class="cpp">hx</span>,<span class="cpp">hy</span>) и радиусу рукоятки
+<span class="cpp">hR</span>.</p>
+
+<p>В функцию реакции на перемещение курсора мыши тоже необходимо внести <span class="changes">изменения</span>:
+при зафиксированной координате перемещение рукоятки по соответствующей оси должно быть запрещено:</p>
+
+<pre class="cpp">  <span class="rem">// Реакция на перемещение курсора мыши</span>
+  <span class="kw">void</span> TSimpleJoystick::MouseMove(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,
+                                  <span class="kw">double</span> *px,<span class="kw">double</span> *py)
+  { <span class="rem">// &hellip;</span>
+    <span class="rem">// &hellip;(начало функции без изменений)&hellip;</span>
+    <span class="rem">// &hellip;</span>
+
+    <span class="rem">// По новым координатам центра рукоятки вычисляем соответствующие</span>
+    <span class="rem">// им вещественные значения выходов, ограничивая их</span>
+    <span class="rem">// диапазоном [-1...1]</span>
+    <span class="changes"><span class="kw">if</span>(!LockX)</span>
+      <span class="changes">{</span> *px=<span class="const">2.0</span>*(hx-cx)/mouse-&gt;Width;
+        <span class="kw">if</span>(*px&gt;<span class="const">1.0</span>) *px=<span class="const">1.0</span>;
+        <span class="kw">else</span> <span class="kw">if</span>(*px&lt;-<span class="const">1.0</span>) *px=-<span class="const">1.0</span>;
+      <span class="changes">}</span>
+    <span class="changes"><span class="kw">if</span>(!LockY)</span>
+      <span class="changes">{</span> *py=-<span class="const">2.0</span>*(hy-cy)/mouse-&gt;Height;
+        <span class="kw">if</span>(*py&gt;<span class="const">1.0</span>) *py=<span class="const">1.0</span>;
+        <span class="kw">else</span> <span class="kw">if</span>(*py&lt;-<span class="const">1.0</span>) *py=-<span class="const">1.0</span>;
+      <span class="changes">}</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Наконец, добавим в модель реакцию на выбор пользователем пункта меню
+(<span class="cpp"><a href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a></span>) и напишем функцию-член класса, которая будет вызываться
+в этой реакции. В оператор <span class="cpp">switch(CallMode)</span> внутри функции модели нужно
+вставить вызов функции <span class="cpp">MenuFunction</span>:</p>
+
+<pre class="cpp">        <span class="rem">// &hellip;</span>
+
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a>:
+          data-&gt;Draw((<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a>)ExtParam,x,y,
+          BlockData-&gt;Flags &amp; <a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>);
+          <span class="kw">break</span>;
+
+<div class="changes">        <span class="rem">// Выбор пользователем добавленного пункта меню</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a>:
+          data-&gt;MenuFunction((<a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a>)ExtParam);
+          <span class="kw">break</span>;</div>
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="rem">// &hellip;</span></pre>
+
+<p><span id="ref5">При</span>
+вызове функции модели в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a></span> в параметре
+<span class="cpp">ExtParam</span> передается указатель на <span id="light_ref5">структуру
+<span class="cpp"><span id="light_ref6"><a href="RDS_BFM_MENUFUNCTION.htm#ref1" title="Структура RDS_MENUFUNCDATA">RDS_MENUFUNCDATA</a></span></span></span>, описанную в &laquo;<span class="file">RdsDef.h</span>&raquo; следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="kw">int</span> Function; <span class="rem">// Номер функции меню (первое целое число,</span>
+                  <span class="rem">// указанное при создании пункта меню)</span>
+    <span class="kw">int</span> MenuData; <span class="rem">// Данные меню (второе целое число, указанное</span>
+                  <span class="rem">// при создании пункта меню)</span>
+  } <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref1" title="Структура RDS_MENUFUNCDATA">RDS_MENUFUNCDATA</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref1" title="Структура RDS_MENUFUNCDATA">RDS_MENUFUNCDATA</a> *<a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a>;</pre>
+
+<p>Структура содержит всего два поля, в которые записываются целые числа, связанные с выбранным
+пользователем пунктом меню при его создании. Например, если пользователь выберет пункт
+&laquo;<span class="menu">Фиксировать X</span>&raquo;, в поле <span class="cpp">Function</span> структуры будет записано значение 1,
+а в поле <span class="cpp">MenuData</span> &ndash; 0. Указатель на эту структуру, приведенный к
+правильному типу, передается в функцию <span class="cpp">MenuFunction</span>, которую мы сейчас напишем:</p>
+
+<pre class="cpp">  <span class="rem">// Функция реакции на выбор одного из пунктов меню</span>
+  <span class="kw">void</span> TSimpleJoystick::MenuFunction(<a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a> MenuData)
+  { <span class="kw">switch</span>(MenuData-&gt;Function)
+      { <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Выбран пункт "Фиксировать X"</span>
+          LockX=!LockX; <span class="rem">// Переключаем флаг фиксации X</span>
+          LockY=FALSE;  <span class="rem">// Отключаем фиксацию Y</span>
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Выбран пункт "Фиксировать Y"</span>
+          LockY=!LockY; <span class="rem">// Переключаем флаг фиксации Y</span>
+          LockX=FALSE;  <span class="rem">// Отключаем фиксацию X</span>
+          <span class="kw">break</span>;
+      }
+    <span class="rem">// Установка галочек у пунктов меню в зависимости от</span>
+    <span class="rem">// флагов фиксации координат</span>
+    <span id="light_ref7"><a class="hidden" href="rdsSetMenuItemOptions.htm" title="А.5.17.9. rdsSetMenuItemOptions &ndash; установить флаги пункта меню">rdsSetMenuItemOptions</a></span>(MenuLockX,LockX?<span id="light_ref8"><a class="hidden" href="rdsChangeMenuItem.htm#light_ref3" title="RDS_MENU_CHECKED">RDS_MENU_CHECKED</a></span>:<span class="const">0</span>);
+    <a class="hidden" href="rdsSetMenuItemOptions.htm" title="А.5.17.9. rdsSetMenuItemOptions &ndash; установить флаги пункта меню">rdsSetMenuItemOptions</a>(MenuLockY,LockY?<a class="hidden" href="rdsChangeMenuItem.htm#light_ref3" title="RDS_MENU_CHECKED">RDS_MENU_CHECKED</a>:<span class="const">0</span>);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции мы опознаем выбранный пользователем пункт меню по полю <span class="cpp">Function</span>
+переданной структуры: оно может иметь значения 1 (&laquo;<span class="menu">Фиксировать Х</span>&raquo;) или 2
+(&laquo;<span class="menu">Фиксировать Y</span>&raquo;). В зависимости от выбранного пункта мы инвертируем флаг фиксации
+соответствующей координаты и сбрасываем флаг фиксации другой, чтобы не допустить одновременной фиксации
+обеих координат. Затем, в зависимости от текущего состояния флагов, сервисной функцией
+<span class="cpp"><a href="rdsSetMenuItemOptions.htm" title="А.5.17.9. rdsSetMenuItemOptions &ndash; установить флаги пункта меню">rdsSetMenuItemOptions</a></span> устанавливается галочка у пункта меню, соответствующего
+зафиксированной координате. В RDS есть и <a href="app_index.htm#light_htm:app_a_5_17" title="А.5.17. Системное меню и контекстное меню блока">другие</a>
+сервисные функции, позволяющие управлять параметрами пунктов меню (например, оперативно изменять
+название пункта или связанные с ним целые числа), но в данном примере нам нужно
+только ставить и убирать галочку.</p>
+
+<p>Функция <span class="cpp"><a class="hidden" href="rdsSetMenuItemOptions.htm" title="А.5.17.9. rdsSetMenuItemOptions &ndash; установить флаги пункта меню">rdsSetMenuItemOptions</a></span> позволяет изменить видимость пункта
+меню, разрешить или запретить его (запрещенные пункты меню отображаются серым цветом), а также
+установить или сбросить галочку слева от его названия. Она принимает два параметра: первый &ndash;
+идентификатор пункта меню, второй &ndash; целое число, представляющее собой набор битовых флагов,
+управляющих состоянием этого пункта. Для пунктов контекстного меню можно использовать любое
+сочетание следующих флагов:</p>
+
+<ul>
+  <li><span class="cpp"><a href="rdsChangeMenuItem.htm#light_ref3" title="RDS_MENU_CHECKED">RDS_MENU_CHECKED</a></span> &ndash; если флаг установлен, слева от названия пункта меню
+  будет изображаться галочка;</li>
+  <li><span class="cpp"><span id="light_ref9"><a href="rdsChangeMenuItem.htm#light_ref2" title="RDS_MENU_DISABLED">RDS_MENU_DISABLED</a></span></span> &ndash; если флаг установлен, пункт меню
+  будет запрещен (изображается серым, не может быть выбран пользователем);</li>
+  <li><span class="cpp"><span id="light_ref10"><a href="rdsChangeMenuItem.htm#light_ref5" title="RDS_MENU_HIDDEN">RDS_MENU_HIDDEN</a></span></span> &ndash; если флаг установлен, пункт меню будет
+  невидимым для пользователя;</li>
+  <li><span class="cpp"><span id="light_ref11"><a href="rdsChangeMenuItem.htm#light_ref4" title="RDS_MENU_DIVIDER">RDS_MENU_DIVIDER</a></span></span> &minus; если флаг установлен, вместо пункта
+  меню будет создан горизонтальный разделитель, при этом переданное название пункта игнорируется,
+  и выбор этого пункта пользователем будет невозможен.</li>
+</ul>
+
+<p class="noindent">В нашей функции мы используем единственный флаг для управления галочкой. Если
+координата зафиксирована, мы передаем в функцию значение <span class="cpp"><a class="hidden" href="rdsChangeMenuItem.htm#light_ref3" title="RDS_MENU_CHECKED">RDS_MENU_CHECKED</a></span> (флаг
+галочки взведен, остальные сброшены), это сделает пункт меню видимым, разрешенным и отмеченным галочкой). В
+противном случае мы передаем значение 0 (все три флага сброшены), что также сделает пункт меню видимым
+и разрешенным, но уже без галочки.</p>
+
+<p>После внесения изменений в модель блока никакие дополнительные настройки не требуются: во
+всех режимах в контекстном меню блока должны появиться дополнительные пункты
+(<a href="#pic1" title="Дополнительные пункты контекстного меню блока-рукоятки в режимах редактирования (а) и моделирования (б)">рис.&nbsp;82</a>).</p>
+
+<div class="pic"><div class="container" id="pic1">
+<div class="multi" id="pic1_0"><img src="../img/MouseHandle_Menu1.png" width="339" height="412" alt="Дополнительные пункты контекстного меню блока-рукоятки в режимах редактирования (а) и моделирования (б) 1" /><p id="light_pic1_0">(а)</p></div><div class="multi" id="pic1_1"><img src="../img/MouseHandle_Menu2.png" width="305" height="168" alt="Дополнительные пункты контекстного меню блока-рукоятки в режимах редактирования (а) и моделирования (б) 2" /><p id="light_pic1_1">(б)</p></div><p id="light_pic1">Рис.&nbsp;82. Дополнительные пункты контекстного меню блока-рукоятки в режимах редактирования (а) и моделирования (б)</p>
+</div></div>
+
+
+<p>Приведенный пример демонстрирует работу с постоянными пунктами меню: мы создаем их
+при инициализации блока в конструкторе класса
+<a href="pm_1_4.htm#ref8" title="Личная область данных блока">личной области данных</a>, а затем меняем их параметры
+(устанавливаем и сбрасываем галочки) в процессе работы блока. Теперь рассмотрим работу
+с временными пунктами контекстного меню.</p>
+
+<p>В <a href="pm_2_12_3.htm#ref3" title="Пример модели блока с прозрачной областью">&sect;2.12.3</a> мы создали блок для управления полем ввода,
+который может находиться в двух состояниях: открытом (при этом сквозь прозрачное окно в прямоугольнике блока
+видно лежащее под ним поле ввода) и закрытом. Состояния блока переключались щелчком левой кнопкой
+мыши. Добавим в этот пример возможность открывать и закрывать блок пунктом контекстного меню &ndash;
+в этом случае переключать состояние блока можно будет и в режиме редактирования, что ранее было невозможно: в
+режиме редактирования нажатия кнопок мыши не передаются в модель. И для открытия, и для закрытия блока
+будем использовать один и тот же пункт меню, меняя его название в зависимости от текущего состояния:
+при закрытом блоке пункт будет называться &laquo;<span class="menu">Открыть</span>&raquo;, при открытом &ndash; &laquo;<span class="menu">Закрыть</span>&raquo;.
+И, поскольку полей ввода, а, значит, и блоков для их управления, в схеме может быть достаточно много,
+не будем зря тратить память и сделаем этот пункт контекстного меню временным.</p>
+
+<p>Для реализации задуманного в модель нужно добавить две реакции: во-первых, реакцию на
+открытие контекстного меню <span class="cpp"><span id="light_ref12"><a href="RDS_BFM_CONTEXTPOPUP.htm" title="А.2.6.2. RDS_BFM_CONTEXTPOPUP &ndash; вызов контекстного меню блока">RDS_BFM_CONTEXTPOPUP</a></span></span>, в которой мы будем
+создавать временный пункт, во-вторых, уже знакомую нам реакцию на выбор пункта меню пользователем
+<span class="cpp"><a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a></span> &ndash; реакция на временные пункты меню
+ничем не отличается от реакции на постоянные. Внутрь оператора <span class="cpp">switch(CallMode)</span>
+в функции модели добавляются два новых оператора <span class="cpp">case</span>:</p>
+
+<pre class="cpp">        <span class="rem">// Открытие контекстного меню блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CONTEXTPOPUP.htm" title="А.2.6.2. RDS_BFM_CONTEXTPOPUP &ndash; вызов контекстного меню блока">RDS_BFM_CONTEXTPOPUP</a>:
+          <span class="rem">// Добавление временного пункта меню</span>
+          <span id="light_ref13"><a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a></span>(bypass?<span class="str">"Открыть"</span>:<span class="str">"Закрыть"</span>,<span class="const">0</span>,<span class="const">1</span>,<span class="const">2</span>);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Выбор пункта меню пользователем</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a>:
+          bypass=!bypass; <span class="rem">// Переключить режим</span>
+          out=bypass?x_ext:x_int; <span class="rem">// Подать на выход один из входов</span>
+          Ready=<span class="const">1</span>; <span class="rem">// Взвести флаг готовности</span>
+          <span class="kw">break</span>;</pre>
+
+<p>В реакции на открытие контекстного меню (<span class="cpp"><a class="hidden" href="RDS_BFM_CONTEXTPOPUP.htm" title="А.2.6.2. RDS_BFM_CONTEXTPOPUP &ndash; вызов контекстного меню блока">RDS_BFM_CONTEXTPOPUP</a></span>) вызывается функция
+<span class="cpp"><a href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a></span>, которая и создает нужный нам временный пункт меню.
+Функция принимает четыре параметра: строку с названием пункта (в нашем случае
+&laquo;Открыть&raquo; или &laquo;Закрыть&raquo;, в зависимости от значения переменной состояния
+<span class="cpp">bypass</span>), битовые флаги, указывающие состояние пункта (у нас &ndash; 0,
+то есть видимый, разрешенный пункт меню без галочки) и, как и для постоянного пункта меню, два целых
+числа, которые будут переданы в модель при выборе этого пункта пользователем. В нашей модели всего
+один пункт контекстного меню, поэтому в реакции на выбор пункта пользователем мы не будем
+анализировать эти числа &ndash; если бы у нас было несколько пунктов меню, как в предыдущем примере,
+нам нужно было бы отличать один от другого, а с единственным пунктом такой необходимости нет.
+В вызове функции с пунктом меню связывается пара чисел (1,2), но можно
+было бы указать любые другие числа.</p>
+
+<p>Следует отметить, что функция <span class="cpp"><a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a></span>, в отличие
+от использованной в предыдущем примере <span class="cpp"><a class="hidden" href="rdsRegisterContextMenuItem.htm" title="А.5.17.6. rdsRegisterContextMenuItem &ndash; создать постоянный пункт контекстного меню блока">rdsRegisterContextMenuItem</a></span>, не
+возвращает уникальный идентификатор пункта меню. У временных пунктов меню вообще нет идентификаторов,
+и после их создания модель никак не может изменить их параметры. Этого и не требуется,
+поскольку временные пункты контекстного меню существуют только до момента закрытия этого меню,
+и каждый раз создаются заново в момент его открытия. Именно в момент создания временного пункта модель
+указывает его название и битовые флаги, определяющие внешний вид пункта на данный момент. В данном
+примере мы, вместо того, чтобы изменять название постоянного пункта меню в зависимости от
+текущего состояния блока (значения переменной <span class="cpp">bypass</span>), в момент открытия
+меню создаем временный пункт сразу с нужным нам названием.</p>
+
+<p>Во втором параметре функции <span class="cpp"><a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a></span> можно использовать уже
+описанные выше битовые флаги <span class="cpp"><a class="hidden" href="rdsChangeMenuItem.htm#light_ref3" title="RDS_MENU_CHECKED">RDS_MENU_CHECKED</a></span>, <span class="cpp"><a class="hidden" href="rdsChangeMenuItem.htm#light_ref2" title="RDS_MENU_DISABLED">RDS_MENU_DISABLED</a></span>
+и <span class="cpp"><a class="hidden" href="rdsChangeMenuItem.htm#light_ref5" title="RDS_MENU_HIDDEN">RDS_MENU_HIDDEN</a></span>. На самом деле, использование флага
+<span class="cpp"><a class="hidden" href="rdsChangeMenuItem.htm#light_ref5" title="RDS_MENU_HIDDEN">RDS_MENU_HIDDEN</a></span> при создании временного пункта меню бессмысленно, поскольку
+этот пункт не будет виден пользователю на протяжении всего своего существования &ndash; проще вообще
+не создавать этот пункт. Может показаться, что создание временного пункта с флагом
+<span class="cpp"><a class="hidden" href="rdsChangeMenuItem.htm#light_ref2" title="RDS_MENU_DISABLED">RDS_MENU_DISABLED</a></span> тоже не имеет особого смысла &ndash; пункт также
+все время будет запрещенным до момента своего уничтожения, и модель не сможет разрешить его. Однако,
+этот пункт будет показан в меню и изображен серым цветом, что даст пользователю понять, что в
+других режимах этот пункт, вероятно, доступен для выбора. Это дает разработчику модели блока выбор:
+менять ли состав и названия пунктов меню в зависимости от состояния блока, или запрещать недоступные в
+данный момент пункты, оставляя их видимыми для пользователя. Какой вариант будет выглядеть лучше с
+точки зрения построения интерфейса &ndash; решать программисту.</p>
+
+<p>В реакции на выбор пункта меню (<span class="cpp"><a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a></span>), как и было
+указано выше, не анализируются переданные в модель целые числа, связанные с выбранным пунктом. Наш
+единственный пункт меню должен инвертировать состояние блока, то есть, выполнять те же самые действия,
+что и при щелчке левой кнопкой мыши. Именно это и выполняется в реакции на событие
+<span class="cpp"><a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a></span>: значение переменной <span class="cpp">bypass</span>
+инвертируется, на выход блока <span class="cpp">out</span> подается один из входов (в зависимости от
+значения <span class="cpp">bypass</span>) и взводится сигнал готовности
+<span class="cpp"><a href="um_1_4.htm#ref27" title="Сигнал готовности блока">Ready</a></span>, чтобы в ближайшем такте расчета новое значение выхода было
+передано по связям. На самом деле, оператор <span class="cpp">case</span> реакции на выбор пункта
+меню можно было бы вставить внутрь реакции на нажатие кнопки мыши перед оператором
+&laquo;<span class="cpp">bypass=!bypass;</span>&raquo;, поскольку выполняемые ими действия совпадают:</p>
+
+<pre class="cpp">          <span class="rem">// &hellip;</span>
+
+          <span class="kw">if</span>(mouse-&gt;Button!=<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a>)
+            <span class="kw">return</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm#light_ref2" title="RDS_BFR_SHOWMENU">RDS_BFR_SHOWMENU</a>;
+          <span class="rem">// Нажата левая кнопка мыши, причем курсор попал</span>
+          <span class="rem">// в рамку или блок в закрытом состоянии</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a>:
+          bypass=!bypass; <span class="rem">// Переключаем состояние</span>
+          Ready=<span class="const">1</span>; <span class="rem">// Взводим сигнал готовности</span>
+          <span class="rem">// Здесь намеренно не поставлен оператор break: необходимо</span>
+          <span class="rem">// выполнить действия в следующем case (такт расчета)</span>
+
+          <span class="rem">// &hellip;</span></pre>
+
+<p>Этого не было сделано только для большей понятности примера.</p>
+
+<p> Посмотрев на тексты моделей двух рассмотренных примеров, можно заметить, что реакция на выбор
+пункта меню пользователем не зависит от того, временный это пункт или постоянный. В обоих случаях
+в модель передаются два целых числа, связанных с выбранным пунктом меню. Технически, создание
+временных пунктов меню предпочтительнее, поскольку они не занимают лишнего места в памяти,
+немного проигрывая постоянным только в необходимости включения в модель дополнительной реакции
+<span class="cpp"><a class="hidden" href="RDS_BFM_CONTEXTPOPUP.htm" title="А.2.6.2. RDS_BFM_CONTEXTPOPUP &ndash; вызов контекстного меню блока">RDS_BFM_CONTEXTPOPUP</a></span>. Использовать для расширения контекстного меню
+блока постоянные или временные пункты &ndash; решать программисту.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_12_5.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_7.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_6">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

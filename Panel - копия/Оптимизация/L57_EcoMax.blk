@@ -1,0 +1,97 @@
+EXPBLKTXT
+version 1 rev 0 4016.5.18.20.17.0
+
+dllblock name "L57_EcoMax1"
+ begin
+  name hidden
+  options sizeable
+  vars
+   begin
+    signal name "_Start" in run default 1
+    signal name "Ready" out default 0
+    logical name "ParamReady" default 0
+    matrix double oneindex name "P" out menu comment "(перебираемые параметры)" default "[ ] ?"
+    signal name "DiapArrayChg" default 1
+    matrix double oneindex name "Pmin" in run comment "(нижние границы диапазонов)" default "[ ] ?"
+    matrix double oneindex name "Pmax" in run comment "(верхние границы диапазонов)" default "[ ] ?"
+    matrix double oneindex name "Pstep" in run comment "(начальные шаги)" default "[ ] ?"
+    matrix double oneindex name "Pendstep" in run comment "(конечные шаги)" default "[ ] ?"
+    signal name "CritReady" in menu run comment "(критерий готов)" default 0
+    double name "Crit" in menu run comment "(значение критерия)" default "0"
+    signal name "CritChg" default 0
+    signal name "Restart" in run comment "(принудительный перезапуск)" default 1
+    int name "stage" out default 0
+    int name "substage" out default 0
+    double name "debug" out default "0"
+    signal name "Go" out menu comment "(параметры готовы)" default 0
+    matrix double name "Max" out menu comment "(результат)" default "[ ] ?"
+    logical name "MaxReady" default 0
+    matrix double name "Arg1Max" out menu comment "(одномерная таблица 1-го аргумента)" default "[ ] ?"
+    int name "Arg1Index" out comment "(индекс 1-го аргумента)" default -1
+    matrix double name "Arg2Max" out menu comment "(одномерная таблица 2-го аргумента)" default "[ ] 0"
+    double name "Arg2Index" out comment "(индекс 2-го аргумента)" default "-1"
+    matrix matrix double oneindex name "ArgArg" out menu comment "(двумерные таблицы)" default "[ ] [ ] ?"
+    double name "Progress" out menu comment "(ход выполнения, 0...1)" default "0"
+    matrix logical oneindex name "FlagArg" in run comment "(признак аргумента табличной функции)" default "[ ] 0"
+    matrix double name "PMatr" in run comment "(все диапазоны в одной матрице)" default "[ ] ?"
+    signal name "PMatrChg" default 0
+    logical name "Complete" out menu default 0
+    logical name "Error" out default 0
+    signal name "Finished" out menu default 0
+    matrix logical oneindex name "Enabled" in menu run default "[ ] 0"
+    signal name "Enabled_chg" default 1
+    matrix double oneindex name "A" in run default "[ ] 0"
+    signal name "A_chg" default 1
+    matrix matrix double oneindex name "F" in run default "[ ] [ ] 0"
+    signal name "F_chg" default 1
+    matrix matrix double oneindex name "FS" default "[ ] [ ] 0"
+    matrix double oneindex name "A_old" default "[ ] 0"
+    signal name "Start" in menu run comment "(запуск по команде)" default 0
+    matrix double oneindex name "MaxSoFar" out default "[ ] ?"
+    matrix double name "Surface" out comment "(поверхность от двух аргументов)" default "[ ] ?"
+    signal name "SurfaceReady" default 0
+   end
+  auto
+   begin
+    var "P" ctrl "ParamReady"
+    var "Pmin" ctrl "DiapArrayChg"
+    var "Pmax" ctrl "DiapArrayChg"
+    var "Pstep" ctrl "DiapArrayChg"
+    var "Pendstep" ctrl "DiapArrayChg"
+    var "Crit" ctrl "CritChg"
+    var "Max" ctrl "MaxReady"
+    var "Arg1Max" ctrl "MaxReady"
+    var "Arg1Index" ctrl "MaxReady"
+    var "Arg2Max" ctrl "MaxReady"
+    var "Arg2Index" ctrl "MaxReady"
+    var "ArgArg" ctrl "MaxReady"
+    var "FlagArg" ctrl "DiapArrayChg"
+    var "PMatr" ctrl "PMatrChg"
+    var "Enabled" ctrl "Enabled_chg"
+    var "A" ctrl "A_chg"
+    var "F" ctrl "F_chg"
+    var "Surface" ctrl "SurfaceReady"
+   end
+  layout rect 190 90 fill 16777215 line 0 text "Внешний\r\nмаксимизатор" font "Arial" height 13 color 0
+  dll file "$DLL$\\L57.dll" func "EcoMax" setup "" auto
+  dlldata text
+   [Main]
+   ChunkMb=10
+   DeepSearch=1
+   Func1d=0
+   Func2d=0
+   RecalcFunc=1
+   CritReadyCycles=10
+   CritReadyAuto=0
+   EndStepsOn=1
+   DfOn=1
+   Df=0.0010000000000000000208
+   CyclesInDf=10
+   EqualMaxDelta=0.0010000000000000000208
+   Prec_Size=0
+   ByCommandOnly=0
+   NoPlateau=1
+   LastPassWithOpt=1
+   Params=0
+  enddlldata
+ end

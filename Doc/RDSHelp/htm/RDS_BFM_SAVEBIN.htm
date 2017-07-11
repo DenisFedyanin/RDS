@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.2.5.6. RDS_BFM_SAVEBIN &ndash; запись данных блока в двоичном формате</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2">А.2. События блока и связанные с ними описания</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2_5">А.2.5. События загрузки и сохранения схемы и отдельных блоков</a></p>
+<div class="level"><p>А.2.5.6. <span class="cpp">RDS_BFM_SAVEBIN</span> &ndash; запись данных блока в двоичном формате</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_BFM_LOADTXT.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_SAVETXT.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_SAVEBIN">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.2. События блока и связанные с ними описания</h3>
+<h4 class="off">А.2.5. События загрузки и сохранения схемы и отдельных блоков</h4>
+<h5>А.2.5.6. <span class="cpp">RDS_BFM_SAVEBIN</span> &ndash; запись данных блока в двоичном формате</h5>
+
+
+<p class="apphdr">Поток, в котором вызывается <a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функция модели</a></p>
+<p>Главный поток RDS.</p>
+
+<p class="apphdr">Первый параметр функции модели (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_BFM_SAVEBIN</span>.</p>
+
+<p class="apphdr">Третий параметр функции модели (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Не используется (<span class="cpp">NULL</span>).</p>
+
+<p class="apphdr">Возвращаемое функцией модели значение</p>
+    <div class="tableshift"><div class="tcont">
+    <table>
+      <tr>
+        <td><span class="cpp">RDS_BFR_DONE</span></td>
+        <td>Данные записаны успешно.</td>
+      </tr>
+      <tr>
+        <td><span class="cpp"><span id="light_ref1">RDS_BFR_ERROR</span></span></td>
+        <td>При записи произошла ошибка.</td>
+      </tr>
+    </table>
+    </div></div>
+
+<p class="apphdr">Примечания</p>
+<p>Реакция на событие <span class="cpp">RDS_BFM_SAVEBIN</span> вызывается для записи параметров блока в
+двоичном формате при сохранении схемы или отдельного блока. В современных версиях RDS событие
+<span class="cpp">RDS_BFM_SAVEBIN</span> возникает в одном из двух случаев:</p>
+
+<ul>
+  <li>при записи блока в буфер обмена;</li>
+  <li>при сохранении схемы или отдельного блока, если модель отказалась записывать данные в текстовом формате.</li>
+</ul>
+
+<p class="noindent">Если модель блока, вызванная для реакции на событие <span class="cpp">RDS_BFM_SAVEBIN</span>,
+не сохранит никаких данных (то есть ни разу не вызовет функцию <span class="cpp"><a href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a></span>), она будет
+повторно вызвана для сохранения данных, но уже в текстовом формате. Таким образом, в функции модели достаточно
+достаточно предусмотреть запись (и загрузку) параметров только в одном из форматов. Сохранение и загрузка данных
+блока подробно рассматриваются в
+<a href="pm_index.htm#light_htm:pm_2_8" title="&sect;2.8. Сохранение и загрузка параметров блока">&sect;2.8 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a></span>,
+<span class="cpp"><a href="RDS_BFM_LOADBIN.htm" title="А.2.5.4. RDS_BFM_LOADBIN &ndash; загрузка данных блока в двоичном формате">RDS_BFM_LOADBIN</a></span>,
+<span class="cpp"><a href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_BFM_LOADTXT.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_SAVETXT.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_SAVEBIN">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

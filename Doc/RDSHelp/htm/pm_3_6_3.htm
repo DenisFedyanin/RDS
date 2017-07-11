@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.6.3. Смена отображаемой в порте подсистемы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3">Глава 3. Управление RDS из других приложений</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3_6">&sect;3.6. Отображение схемы RDS в собственном окне приложения</a></p>
+<div class="level"><p>&sect;3.6.3. Смена отображаемой в порте подсистемы</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_3_6_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_6_4.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_6_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_3_6_3_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 3. Управление RDS из других приложений</h2>
+<h3 class="off">&sect;3.6. Отображение схемы RDS в собственном окне приложения</h3>
+<h4>&sect;3.6.3. Смена отображаемой в порте подсистемы</h4>
+<p class="abstract">В описываемый пример программы добавляются функции, позволяющие пользователю переходить от подсистемы 
+                к подсистеме в одном и том же порте вывода.</p>
+
+
+<p>Следующее, что мы добавим в нашу программу &ndash; это возможность переходить из
+<a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистемы</a> в подсистему.
+Для этого у нас предусмотрены две функции:
+<span class="cpp">SubSystemToViewport</span>, которая вызывается по двойному щелчку и заменяет привязанную к порту
+подсистему на подсистему, изображение которой находится под курсором мыши, и
+<span class="cpp">BackButtonClick</span>, которая вызывается при нажатии кнопки &laquo;<span class="menu">Назад</span>&raquo;
+и привязывает к порту подсистему,
+<a href="pm_1_2.htm#ref7" title="Родительская подсистема">родительскую</a> по отношению к текущей. С помощью этих двух функций мы
+даем пользователю возможность перемещаться по подсистемам загруженной схемы примерно так же, как он
+перемещается из папки в папку в &laquo;Проводнике&raquo; Windows: двойной щелчок на подсистеме открывает
+ее в этом же порте вывода, нажатие кнопки &laquo;<span class="menu">Назад</span>&raquo; возвращает обратно в родительскую.</p>
+
+<p>Начнем с функции <span class="cpp">SubSystemToViewport</span> &ndash; в нее передаются координаты точки окна,
+в которой произошел двойной щелчок. В процедуре окна нашей программы мы вызываем эту функцию только в том случае,
+если функция <span class="cpp">RdsMouseOperation</span> вернула <span class="cpp">FALSE</span> (мы еще
+не делали в нашей программе реакцию на мышь, поэтому на данный момент эта функция всегда возвращает
+<span class="cpp">FALSE</span>), то есть если двойной щелчок не обработан блоком схемы. Это в точности повторяет
+поведение RDS.</p>
+
+<pre class="cpp">  <span class="rem">// Открыть в порте вывода подсистему под курсором мыши</span>
+  <span class="kw">void</span> SubSystemToViewport(<span class="kw">int</span> x,<span class="kw">int</span> y)
+  { <a class="hidden" href="pm_3_3.htm#ref3" title="Вспомогательный класс для хранения строк">TDynString</a> blockname; <span class="rem">// Имя подсистемы</span>
+    <span class="rem">// Проверяем наличие связи с RDS и существование порта</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+    <span class="rem">// Получаем имя блока в точке (x,y)</span>
+    <span class="kw">if</span>(!<span id="light_ref1"><a class="hidden" href="rdsctrlViewportBlockAtPos.htm" title="Б.3.7.11. rdsctrlViewportBlockAtPos &ndash; получить имя блока в указанной точке порта вывода">rdsctrlViewportBlockAtPos</a></span>(RdsLink,Viewport,x,y,&amp;blockname))
+      <span class="kw">return</span>;
+    <span class="rem">// Если блока нет, ничего не делаем</span>
+    <span class="kw">if</span>(blockname.IsEmpty())
+      <span class="kw">return</span>;
+    <span class="rem">// Привязываем подсистему blockname к порту вывода</span>
+    SetViewport(blockname.c_str);
+    <span class="rem">// Выводим ее полное имя в верхней части окна</span>
+    DisplayText(blockname.c_str);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Прежде всего нам нужно получить полное имя блока, изображение которого находится под курсором мыши, то
+есть в точке (<span class="cpp">x</span>,<span class="cpp">y</span>). Для этого мы вызываем функцию
+<span class="cpp"><a href="rdsctrlViewportBlockAtPos.htm" title="Б.3.7.11. rdsctrlViewportBlockAtPos &ndash; получить имя блока в указанной точке порта вывода">rdsctrlViewportBlockAtPos</a></span>, передавая в нее идентификатор связи с RDS
+<span class="cpp">RdsLink</span>, идентификатор порта вывода <span class="cpp">Viewport</span>, координаты
+<span class="cpp">x</span> и <span class="cpp">y</span> и указатель на объект
+<span class="cpp">blockname</span>, в который функция должна записать строку с полным именем блока (механизм
+возврата строк произвольной длины в RdsCtrl.dll был подробно рассмотрен
+в <a href="pm_3_1.htm#light_ref4" title="Возврат строк в RdsCtrl.dll">&sect;3.1</a>). Эта функция вернет нам в объекте либо полное имя
+блока, либо пустую строку &ndash; она не даст нам никакой информации, подсистема это или блок другого типа.
+Но нам это и не нужно: мы привязываем блок с этим именем к порту вывода вызовом
+<span class="cpp">SetViewport</span> &ndash; если это не подсистема, RDS просто проигнорирует вызов.
+Таким образом, вызвав эту функцию с координатами курсора мыши мы перейдем в подсистему, находящуюся под курсором,
+а если такой подсистемы нет, никаких действий выполнено не будет.</p>
+
+<p>Теперь напишем реакцию на нажатие кнопки &laquo;<span class="menu">Назад</span>&raquo;:</p>
+
+<pre class="cpp">  <span class="rem">// Реакция на кнопку "Назад"</span>
+  <span class="kw">void</span> BackButtonClick(<span class="kw">void</span>)
+  { <a class="hidden" href="pm_3_3.htm#ref3" title="Вспомогательный класс для хранения строк">TDynString</a> sysname; <span class="rem">// Имя текущей подсистемы</span>
+    <span class="kw">char</span> *s;
+    <span class="rem">// Проверяем наличие связи с RDS и существование порта</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+    <span class="rem">// Получаем имя подсистемы, привязанной к порту</span>
+    <span id="light_ref2"><a class="hidden" href="rdsctrlViewportSystem.htm" title="Б.3.7.15. rdsctrlViewportSystem &ndash; получить имя подсистемы в порте вывода">rdsctrlViewportSystem</a></span>(RdsLink,Viewport,&amp;sysname);
+    <span class="kw">if</span>(sysname.IsEmpty()) <span class="rem">// Строка пустая</span>
+      <span class="kw">return</span>;
+    <span class="rem">// Ищем последнее двоеточие в строке полного имени</span>
+    <span class="rem">// и заменяем его на 0</span>
+    s=strrchr(sysname.c_str,<span class="str">':'</span>);
+    <span class="kw">if</span>(s==NULL) <span class="rem">// Нет двоеточия – некуда возвращаться</span>
+      <span class="kw">return</span>;
+    *s=<span class="const">0</span>;
+    <span class="rem">// Теперь из полного имени подсистемы выброшено имя</span>
+    <span class="rem">// последнего блока, то есть мы получили имя</span>
+    <span class="rem">// родительской подсистемы</span>
+
+    <span class="rem">// Привязываем к порту родительскую подсистему</span>
+    SetViewport(sysname.c_str);
+    <span class="rem">// Выводим ее полное имя в верхней части окна</span>
+    DisplayText(sysname.c_str);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Задача этой функции &ndash; получить имя подсистемы, привязанной к порту в данный момент, выбросить
+из него последнее имя блока, после чего привязать к порту подсистему с получившимся именем. Поскольку
+<a href="pm_1_4.htm#light_ref2" title="Полное имя блока">полное имя</a> любого блока в RDS состоит из цепочки имен подсистем на
+пути от <a href="pm_1_2.htm#ref5" title="Корневая подсистема">корневой подсистемы</a> до этого блока, разделенных двоеточиями,
+выбросив из строки полного имени все после самого последнего двоеточия, мы получим имя
+родительской подсистемы.</p>
+
+<p>Для получения полного имени текущей подсистемы порта вывода мы используем функцию
+<span class="cpp"><a href="rdsctrlViewportSystem.htm" title="Б.3.7.15. rdsctrlViewportSystem &ndash; получить имя подсистемы в порте вывода">rdsctrlViewportSystem</a></span>, которая запишет это имя в строку sysname типа
+<span class="cpp"><a href="pm_3_3.htm#ref3" title="Вспомогательный класс для хранения строк">TDynString</a></span>. Затем мы используем стандартную библиотечную функцию
+<span class="cpp">strrchr</span> для того, чтобы найти в этой строке двоеточие, и, если оно есть,
+заменяем его нулевым байтом, то есть &laquo;обрезаем&raquo; строку в этой точке. Теперь в
+<span class="cpp">sysname</span> находится имя родительской подсистемы, и мы привязываем ее к порту функцией
+<span class="cpp">SetViewport</span>.</p>
+
+<p>Внесенные в программу изменения позволяют пользователю перемещаться из подсистемы в подсистему, причем,
+поскольку для каждой подсистемы порт вывода запоминает положение прокрутки и масштаб, пользователь, вернувшись
+в какую-либо подсистему, увидит ее в том же масштабе и положении, в котором он ее оставил.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_3_6_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_6_4.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_6_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

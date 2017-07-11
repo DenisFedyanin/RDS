@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.12.7. Добавление пунктов в системное меню RDS</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_12">&sect;2.12. Реакция блоков на действия пользователя</a></p>
+<div class="level"><p>&sect;2.12.7. Добавление пунктов в системное меню RDS</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_12_6.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_8.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_7">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_12_7.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделью блока,
+добавляющего в главное меню RDS пункт для открытия родительской
+подсистемы.</p>
+
+<pre class="cpp">  <span class="rem">// Добавление пунктов в системное меню</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+  <span class="rem">// Класс личной области данных блока</span>
+  <span class="kw">class</span> TOpenSysWinData
+  { <span class="kw">public</span>:
+      <a class="hidden" href="app_ids.htm#light_ref4" title="Идентификатор пункта меню">RDS_MENUITEM</a> MenuItem; <span class="rem">// Идентификатор созданного пункта меню</span>
+      <span class="rem">// Настроечные параметры</span>
+      <span class="kw">char</span> *Caption;   <span class="rem">// Название пункта</span>
+      <span class="kw">int</span> Key;         <span class="rem">// Клавиша (или 0,если ее нет)</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> KeyShifts; <span class="rem">// Состояние Ctrl, Alt и Shift</span>
+
+      <span class="rem">// Создание пункта меню с заданными параметрами или</span>
+      <span class="rem">// изменение параметров уже созданного пункта</span>
+      <span class="kw">void</span> RegisterMenuItem(<span class="kw">void</span>);
+
+      <span class="kw">int</span> Setup(<span class="kw">void</span>);    <span class="rem">// Открыть окно настройки</span>
+      <span class="kw">void</span> SaveBin(<span class="kw">void</span>); <span class="rem">// Сохранить параметры</span>
+      <span class="kw">int</span> LoadBin(<span class="kw">void</span>);  <span class="rem">// Загрузить параметры</span>
+
+      <span class="rem">// Конструктор класса</span>
+      TOpenSysWinData(<span class="kw">void</span>)
+        { Caption=NULL;
+          Key=<span class="const">0</span>; KeyShifts=<span class="const">0</span>;
+          MenuItem=NULL;
+        };
+      <span class="rem">// Деструктор класса</span>
+      ~TOpenSysWinData()
+        { <span class="rem">// Освободить память, занятую строкой Caption</span>
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(Caption);
+          <span class="rem">// Удалить пункт меню</span>
+          <a class="hidden" href="rdsUnregisterMenuItem.htm" title="А.5.17.10. rdsUnregisterMenuItem &ndash; удалить постоянный пункт меню">rdsUnregisterMenuItem</a>(MenuItem);
+        };
+  };
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Создание или модификация пункта меню</span>
+  <span class="kw">void</span> TOpenSysWinData::RegisterMenuItem(<span class="kw">void</span>)
+  { <span class="rem">// Вспомогательная переменная для заголовка пункта меню:</span>
+    <span class="rem">// если Caption==NULL, пункт получит заголовок "Открыть окно"</span>
+    <span class="kw">char</span> *text=Caption?Caption:<span class="str">"Открыть окно"</span>;
+    <span class="rem">// Флаги пункта меню: если клавиша определена (Key!=0),</span>
+    <span class="rem">// пункт будет иметь "горячую клавишу"</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> options=Key?<a class="hidden" href="rdsChangeMenuItem.htm#light_ref6" title="RDS_MENU_SHORTCUT">RDS_MENU_SHORTCUT</a>:<span class="const">0</span>;
+
+    <span class="kw">if</span>(MenuItem) <span class="rem">// Пункт уже есть - изменяем</span>
+      <a class="hidden" href="rdsChangeMenuItem.htm" title="А.5.17.3. rdsChangeMenuItem &ndash; изменить параметры пункта меню">rdsChangeMenuItem</a>(MenuItem,text,options,Key,KeyShifts,<span class="const">0</span>,<span class="const">0</span>);
+    <span class="kw">else</span> <span class="rem">// Пункта еще нет - создаем</span>
+      MenuItem=<a class="hidden" href="rdsRegisterMenuItem.htm" title="А.5.17.8. rdsRegisterMenuItem &ndash; создать пункт системного меню RDS">rdsRegisterMenuItem</a>(text,options,Key,KeyShifts,<span class="const">0</span>,<span class="const">0</span>);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Запись параметров блока</span>
+  <span class="kw">void</span> TOpenSysWinData::SaveBin(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref12" title="Однобайтовая переменная">BYTE</a> tag; <span class="rem">// Переменная для байта тега</span>
+    <span class="kw">int</span> len=Caption?strlen(Caption):<span class="const">0</span>; <span class="rem">// Длина строки Caption</span>
+
+    tag=<span class="const">1</span>; <span class="rem">// Тег 1 – название пункта меню</span>
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;len,<span class="kw">sizeof</span>(len));	<span class="rem">// Длина строки</span>
+    <span class="kw">if</span>(len) <span class="rem">// При ненулевой длине – запись самой строки</span>
+      <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(Caption,len);
+
+    tag=<span class="const">2</span>; <span class="rem">// Тег 2 – "горячая клавиша"</span>
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;Key,<span class="kw">sizeof</span>(Key));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;KeyShifts,<span class="kw">sizeof</span>(KeyShifts));
+
+    tag=<span class="const">0</span>;; <span class="rem">// Тег 0 – конец данных</span>
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag));
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Загрузка параметров блока</span>
+  <span class="kw">int</span> TOpenSysWinData::LoadBin(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref12" title="Однобайтовая переменная">BYTE</a> tag; <span class="rem">// Переменная для байта тега</span>
+    <span class="kw">int</span> len;
+
+    <span class="rem">// Прежде всего, освобождаем память, которую занимало старое</span>
+    <span class="rem">// название пункта меню – сейчас загрузится новое</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(Caption);
+    Caption=NULL;
+
+    <span class="kw">for</span>(;;)
+      { <span class="kw">if</span>(!<a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag)))
+          <span class="kw">break</span>; <span class="rem">// Тег не считан – данные неожиданно кончились</span>
+        <span class="kw">switch</span>(tag)
+          { <span class="kw">case</span> <span class="const">0</span>: <span class="rem">// Конец данных</span>
+              RegisterMenuItem(); <span class="rem">// Создаем или изменяем пункт меню</span>
+              <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+            <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Название пункта</span>
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;len,<span class="kw">sizeof</span>(len));	<span class="rem">// Читаем длину</span>
+              <span class="kw">if</span>(len) <span class="rem">// Длина ненулевая – читаем len байтов строки</span>
+                { <span class="rem">// Отводим место с учетом нуля в конце строки</span>
+                  Caption=(<span class="kw">char</span>*)<a class="hidden" href="rdsAllocate.htm" title="А.5.4.2. rdsAllocate &ndash; динамическое отведение области памяти">rdsAllocate</a>(len+<span class="const">1</span>);
+                  <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(Caption,len);	<span class="rem">// Читаем строку</span>
+                  Caption[len]=<span class="const">0</span>;	<span class="rem">// Дописываем нулевой байт в конец</span>
+                }
+              <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Данные "горячей клавиши"</span>
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;Key,<span class="kw">sizeof</span>(Key));
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;KeyShifts,<span class="kw">sizeof</span>(KeyShifts));
+              <span class="kw">break</span>;
+            <span class="kw">default</span>: <span class="rem">// Тег не опознан – ошибка</span>
+              <span class="kw">return</span> RDS_BFR_ERROR;
+          }
+      }
+    <span class="rem">// Вышли из цикла из-за неожиданного конца данных блока - ошибка</span>
+    <span class="kw">return</span> RDS_BFR_ERROR;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Настройка параметров блока</span>
+  <span class="kw">int</span> TOpenSysWinData::Setup(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window; <span class="rem">// Идентификатор объекта-окна</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok; <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="rem">// Создание окна</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Открытие окна"</span>);
+    <span class="rem">// Поле ввода для строки названия</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">1</span>,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,
+        <span class="str">"Текст пункта меню:"</span>,<span class="const">200</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Caption);
+    <span class="rem">// Поле ввода для "горячей клавиши"</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<a class="hidden" href="app_a_fields.htm#light_ref10" title="RDS_FORMCTRL_HOTKEY">RDS_FORMCTRL_HOTKEY</a>,
+        <span class="str">"Клавиша:"</span>,<span class="const">150</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Key);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_HKSHIFTS.htm" title="А.5.28.16. Команда RDS_FORMVAL_HKSHIFTS &ndash; состояние Ctrl, Alt и Shift в поле ввода кода клавиши">RDS_FORMVAL_HKSHIFTS</a>,KeyShifts);
+    <span class="rem">// Открытие окна</span>
+    ok=<a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Нажата кнопка OK – запись параметров в блок</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(Caption); <span class="rem">// Уничтожение старой строки</span>
+        <span class="rem">// Создание динамической копии введенной строки</span>
+        Caption=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">1</span>,
+            <a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>));
+        <span class="rem">// Чтение параметров клавиши</span>
+        Key=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        KeyShifts=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_HKSHIFTS.htm" title="А.5.28.16. Команда RDS_FORMVAL_HKSHIFTS &ndash; состояние Ctrl, Alt и Shift в поле ввода кода клавиши">RDS_FORMVAL_HKSHIFTS</a>);
+        <span class="rem">// Создание пункта меню на основе изменившихся параметров</span>
+        RegisterMenuItem();
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="rem">// Возвращаемое значение</span>
+    <span class="kw">return</span> ok?<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Блок, открывающий окно родительской подсистемы</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> OpenSysWin(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Указатель на личную область данных блока,приведенный к</span>
+    <span class="rem">// правильному типу</span>
+    TOpenSysWinData *data=(TOpenSysWinData*)(BlockData-&gt;BlockData);
+    <span class="kw">switch</span>(CallMode)
+      { <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>: <span class="rem">// Инициализация</span>
+          BlockData-&gt;BlockData=data=<span class="kw">new</span> TOpenSysWinData();
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>: <span class="rem">// Очистка</span>
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>: <span class="rem">// Настройка</span>
+          <span class="kw">return</span> data-&gt;Setup();
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVEBIN.htm" title="А.2.5.6. RDS_BFM_SAVEBIN &ndash; запись данных блока в двоичном формате">RDS_BFM_SAVEBIN</a>: <span class="rem">// Сохранение параметров</span>
+          data-&gt;SaveBin();
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADBIN.htm" title="А.2.5.4. RDS_BFM_LOADBIN &ndash; загрузка данных блока в двоичном формате">RDS_BFM_LOADBIN</a>: <span class="rem">// Загрузка параметров</span>
+          <span class="kw">return</span> data-&gt;LoadBin();
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a>:<span class="rem">// Выбор пункта меню</span>
+          <a class="hidden" href="rdsOpenSystemWindow.htm" title="А.5.8.12. rdsOpenSystemWindow &ndash; открыть окно подсистемы">rdsOpenSystemWindow</a>(BlockData-&gt;Parent);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_12_6.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_8.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_7">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

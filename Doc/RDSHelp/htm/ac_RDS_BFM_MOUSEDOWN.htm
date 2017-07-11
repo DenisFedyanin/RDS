@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.8.4.1. Нажатие кнопки мыши</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8_4">&sect;3.8.4. Реакции блока на мышь и клавиатуру</a></p>
+<div class="level"><p>&sect;3.8.4.1. Нажатие кнопки мыши</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_DYNVARCHANGE.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_MOUSEUP.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_MOUSEDOWN">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</h3>
+<h4>&sect;3.8.4. Реакции блока на мышь и клавиатуру</h4>
+<p class="abstract">Рассматриваются реакции на события, связанные с действиями пользователя в режимах моделирования и расчета: движение курсора мыши, нажатие кнопок и т.п. Такие реакции позволяют создавать интерактивные блоки.</p>
+<h5>&sect;3.8.4.1. Нажатие кнопки мыши</h5>
+
+
+<p>Это событие возникает в режимах
+<a href="um_1_3.htm#ref2" title="Режим моделирования">моделирования</a> и
+<a href="um_1_3.htm#ref3" title="Режим расчета">расчета</a> при нажатии пользователем любой кнопки мыши
+в момент нахождения курсора в пределах изображения блока, если этот блок находится на видимом
+<a href="um_2_12.htm" title="&sect;2.12.1. Использование слоев">слое</a>, редактирование которого разрешено, и в
+параметрах этого блока разрешена реакция на мышь
+(см. <a href="um_3_7_10.htm#pic2" title="Разрешение реакции на мышь в окне параметров блока">рис.&nbsp;448</a>). Реакция на нажатие
+кнопки мыши вводится на вкладке &laquo;<span class="menu"><a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">события</a></span>&raquo; левой панели
+редактора модели: раздел &laquo;<span class="menu">мышь и клавиатура</span>&raquo;, подраздел
+&laquo;<span class="menu">нажатие кнопки мыши</span>&raquo;
+(см. <a href="um_3_7_10.htm#pic1" title="Реакции на мышь в списке событий">рис.&nbsp;447</a>). Эта реакция часто используется в моделях
+блоков пользовательского интерфейса: кнопок, рукояток и т.п.</p>
+
+<p><span id="ref1">В</span> классе блока для этого события создается функция с именем
+<span class="cpp" id="light_ref1">rdsbcppMouseDown</span> следующего вида:</p>
+
+<pre class="cpp">  // <span id="ref2">Нажатие</span> кнопки мыши
+  void rdsbcppBlockClass::rdsbcppMouseDown(
+                            <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> <span id="light_ref2">MouseData</span>,int &amp;Result)
+  {
+    <span class="changes"><i>&nbsp;&hellip; пользовательский текст реакции &hellip;&nbsp;</i></span>
+  }</pre>
+
+<p>У этой функции два параметра. Параметр <span class="cpp">MouseData</span> &ndash; это указатель на структуру
+описания события <span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a></span>:</p>
+
+<pre class="cpp">  typedef struct {
+    int x,y;           // Координаты курсора мыши
+    int BlockX,BlockY; // Координаты точки привязки блока
+    int Left,Top;      // Верхний левый угол изображения блока
+    int Width,Height;  // Размеры изображения блока
+    int IntZoom;       // Масштаб окна подсистемы в %
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Button;      // Кнопка мыши (RDS_M*)
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Shift;       // Флаги мыши и клавиатуры (RDS_M*, RDS_K*)
+    double DoubleZoom; // Масштабный к-т окна (в долях единицы)
+    int MouseEvent;    // Событие
+    int Viewport;      // Номер порта вывода или -1
+  } <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a>;
+  typedef <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a> *<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>;</pre>
+
+<p>Поля структуры имеют следующий смысл:</p>
+<dl>
+  <dt><span class="cpp">x</span>,&nbsp;<span class="cpp">y</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Координаты курсора мыши на рабочем поле окна подсистемы на момент возникновения события (уже
+  с учетом масштаба подсистемы).</dd>
+
+  <dt><span class="cpp">BlockX</span>,&nbsp;<span class="cpp">BlockY</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Координаты точки привязки блока на рабочем поле с учетом масштаба и возможной связи положения этого блока
+  с переменными. Для блоков с <a href="um_1_2.htm#light_ref22">векторной картинкой</a> точка привязки &ndash;
+  это положение начала координат этой картинки, для всех остальных &ndash; левый верхний угол прямоугольной области.</dd>
+
+  <dt><span class="cpp">Left</span>,&nbsp;<span class="cpp">Top</span>,&nbsp;<span class="cpp">Width</span>,&nbsp;<span class="cpp">Height</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Координаты левого верхнего угла (<span class="cpp">Left</span>, <span class="cpp">Top</span>) прямоугольной
+  области, занимаемой блоком, ее ширина (<span class="cpp">Width</span>) и высота (<span class="cpp">Height</span>)
+  в текущем масштабе с учетом возможной связи положения и размеров блока с его переменными.</dd>
+
+  <dt><span class="cpp">IntZoom</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Текущий масштаб окна подсистемы в процентах (используется крайне редко).</dd>
+
+  <dt><span class="cpp">Button</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</dt>
+  <dd>Кнопка мыши, нажатие которой вызвало событие: <span class="cpp"><span id="light_ref3">RDS_MLEFTBUTTON</span></span>
+  &ndash; левая кнопка, <span class="cpp"><span id="light_ref4">RDS_MRIGHTBUTTON</span></span> &ndash; правая кнопка,
+  <span class="cpp"><span id="light_ref5">RDS_MMIDDLEBUTTON</span></span> &ndash; средняя кнопка.</dd>
+
+  <dt><span class="cpp">Shift</span>&emsp;(<span class="cpp"><i>DWORD</i></span>)</dt>
+  <dd>Набор битовых флагов, описывающих клавиши и кнопки, которые были нажатыми в момент возникновения события:
+  <span class="cpp">RDS_MLEFTBUTTON</span>, <span class="cpp">RDS_MRIGHTBUTTON</span>, <span class="cpp">RDS_MMIDDLEBUTTON</span>
+  &ndash; нажатые кнопки мыши (см. выше),
+  <span class="cpp"><span id="light_ref6">RDS_KSHIFT</span></span> &ndash; нажата клавиша <span class="keys">Shift</span>,
+  <span class="cpp"><span id="light_ref7">RDS_KALT</span></span> &ndash; нажата клавиша <span class="keys">Alt</span>,
+  <span class="cpp"><span id="light_ref8">RDS_KCTRL</span></span> &ndash; нажата клавиша <span class="keys">Ctrl</span>.</dd>
+
+  <dt><span class="cpp">DoubleZoom</span>&emsp;(<span class="cpp"><i>double</i></span>)</dt>
+  <dd>Nекущий масштаб окна родительской подсистемы блока в долях единицы: 1 &ndash; 100%, 0.5 &ndash; 50%,
+  2 &ndash; 200% и т.п.</dd>
+
+  <dd>Константа, указывающая на произошедшее событие (нажатие, отпускание, перемещение курсора и т.п.)
+  Поскольку в автокомпилируемых моделях для каждого события создается независимая функция, в них это поле
+  структуры используется крайне редко. Подробнее о его возможных значениях можно прочесть
+  в <a href="RDS_BFM_MOUSEDBLCLICK.htm" title="А.2.6.8. RDS_BFM_MOUSEDBLCLICK &ndash; двойной щелчок мыши">А.2.6.8 приложений</a>.</dd>
+
+  <dt><span class="cpp">Viewport</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Номер <a href="pm_index.htm#light_htm:pm_3_6" title="&sect;3.6. Отображение схемы RDS в собственном окне приложения">порта вывода</a>, из которого пришла информация о событии
+  (нажатии, отпускании кнопки, перемещении курсора и т.п.), или &minus;1, если событие произошло в
+  обычном окне подсистемы.</dd>
+</dl>
+
+<p class="noindent">Из этой структуры можно узнать, какая именно кнопка мыши нажата, где в
+пределах изображения блока находился курсор в момент нажатия, и т.п.</p>
+
+<p>Второй параметр функции реакции &ndash; это ссылка на целую переменную <span class="cpp">Result</span>.
+Через этот параметр модель может сообщить RDS, обработала ли она нажатие кнопки. Для этого параметру
+<span class="cpp">Result</span> нужно присвоить одну из трех стандартных констант:</p>
+
+<ul>
+  <li><span class="cpp"><span id="light_ref9">RDS_BFR_DONE</span></span> &ndash; блок среагировал на мышь, никаких
+  дальнейших действий не требуется;</li>
+
+  <li><span class="cpp"><span id="light_ref10">RDS_BFR_NOTPROCESSED</span></span> &ndash; блок отказался реагировать на мышь,
+  необходимо вызвать реакцию блока, находящегося под ним, если такой есть, или реакцию всей подсистемы;</li>
+
+  <li><span class="cpp"><span id="light_ref11">RDS_BFR_SHOWMENU</span></span> &ndash; модель успешно обработала
+  нажатие кнопки мыши, но, несмотря на это, если нажатая кнопка была правой, необходимо показать стандартное
+  контекстное меню RDS.</li>
+</ul>
+
+<p class="noindent">Манипулируя значением <span class="cpp">Result</span>, можно, например, сделать блок в
+некоторых его состояниях &laquo;прозрачным&raquo; для щелчков мыши, возвращая
+<span class="cpp">RDS_BFR_NOTPROCESSED</span> (реагировать на нажатие будет блок под данным). Если блок
+реагирует только на щелчки левой кнопки, при щелчках правой желательно присваивать <span class="cpp">Result</span>
+значение <span class="cpp">RDS_BFR_SHOWMENU</span>, иначе контекстное меню блока в режимах
+моделирования и расчета не будет выведено. По умолчанию в <span class="cpp">Result</span> записано значение
+<span class="cpp">RDS_BFR_DONE</span>, поэтому, если в реакции на событие этому параметру ничего не
+будет присвоено, блок будет считаться успешно обработавшим нажатие.</p>
+
+<p>Пример реакции на это событие приведен в <a href="um_3_7_10.htm" title="&sect;3.7.11. Реакция блока на мышь">&sect;3.7.11</a>. При написании
+моделей блоков без использования модуля автокомпиляции нажатию кнопки мыши соответствует
+константа RDS <span class="cpp"><a href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>.</p>
+
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_DYNVARCHANGE.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_MOUSEUP.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_MOUSEDOWN">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

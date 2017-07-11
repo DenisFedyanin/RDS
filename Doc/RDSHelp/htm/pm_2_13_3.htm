@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.13.3. Прямой вызов функции всех блоков подсистемы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_13">&sect;2.13. Вызов функций блоков</a></p>
+<div class="level"><p>&sect;2.13.3. Прямой вызов функции всех блоков подсистемы</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_13_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_4.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_13_3_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.13. Вызов функций блоков</h3>
+<h4>&sect;2.13.3. Прямой вызов функции всех блоков подсистемы</h4>
+<p class="abstract">Рассматривается вызов функции всех блоков одной подсистемы. В созданную ранее модель блока,
+                управляющего полем ввода, добавляется возможность одновременного открытия, закрытия и переключения состояния
+                всех таких блоков, находящихся в одной и той же подсистеме.</p>
+
+
+<p>В <a href="pm_2_12_3.htm#ref3" title="Пример модели блока с прозрачной областью">&sect;2.12.3</a>
+мы создали модель блока, управляющего полем ввода, а затем добавили в его
+контекстное меню пункт, позволяющий переключать его состояние, то есть разрешать или запрещать работу поля
+ввода, поверх которого расположен наш блок (см. <a href="pm_2_12_6.htm" title="&sect;2.12.6. Добавление пунктов в контекстное меню блока">&sect;2.12.6</a>). Введем
+в эту модель еще одну модификацию: сделаем так, чтобы через контекстное меню блока можно было управлять
+всеми такими блоками в подсистеме. Пункт меню
+&laquo;<span class="menu">Открыть все</span>&raquo; будет разрешать работу всех полей ввода, связанных с управляющими блоками,
+пункт &laquo;<span class="menu">Закрыть все</span>&raquo; &ndash; запрещать работу таких полей, а пункт
+&laquo;<span class="menu">Переключить все</span>&raquo; &ndash; менять режим всех управляющих блоков на противоположный, то
+есть все открытые блоки должны закрыться, а все закрытые &ndash; открыться.</p>
+
+<p>Для того, чтобы открывать, закрывать или переключать все блоки подсистемы, будем использовать вызов функции
+блока. При выборе пользователем одного из трех перечисленных выше пунктов меню, модель блока, контекстное
+меню которого открыто, будет вызывать эту функцию у всех блоков своей подсистемы, при этом в параметрах
+функции будет каким-то образом указываться, что именно должен сделать вызванный блок: открыться,
+закрыться или переключиться. Название и структуру параметров функции нам предстоит придумать.</p>
+
+<p>Поскольку эта функция нужна нам для примера в
+<a href="pm_index.htm" title="Руководство программиста">руководстве программиста</a>, реагировать
+на нее будут только блоки управления полями ввода (мы назвали функцию модели этих блоков
+<span class="cpp">EditControlFrame</span>), и предназначена она для установки режима работы блока,
+мы отразим в ее названии три этих момента: назовем ее
+&laquo;ProgrammersGuide.EditCtrlFrame.Set&raquo;. Параметры этой функции мы оформим как структуру
+из двух полей: первое будет содержать размер этой структуры для проверки правильности передачи параметров
+(см. <a href="pm_2_13_1.htm" title="&sect;2.13.1. Общие принципы вызова функций блоков">&sect;2.13.1</a>), во втором будет находиться целое число,
+указывающее на действие, которое должен выполнить блок: 0 &ndash; закрыться, 1 &ndash; открыться,
+2 &ndash; переключиться. Таким образом, для работы с функцией нам потребуются следующие описания:</p>
+
+<pre class="cpp">  <span class="rem">//=========================================</span>
+  <span class="rem">// Функция управления состоянием блока</span>
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Имя функции</span>
+  <span class="preproc">#define PROGGUIDEEDITCTRLFUNC_SET \</span>
+<span class="preproc">            "ProgrammersGuide.EditCtrlFrame.Set"</span>
+  <span class="rem">// Структура параметров функции</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize; <span class="rem">// Размер этой структуры для проверки</span>
+    <span class="kw">int</span> Command;    <span class="rem">// Команда блоку (0, 1 или 2)</span>
+  } TProgGuideEditCtrlSetParams;
+  <span class="rem">//=========================================</span></pre>
+
+<p>Для строки имени функции мы вводим константу <span class="cpp">PROGGUIDEEDITCTRLFUNC_SET</span>.
+Использование этой константы позволит избежать ошибок, если мы когда-либо захотим ввести поддержку этой
+функции в другие модели блоков. Набирая тексте каждой модели имя функции вручную или копируя его через
+буфер обмена, можно случайно пропустить в нем один символ или как-то еще исказить его, что приведет к
+трудно выявляемым ошибкам: RDS просто зарегистрирует еще одну функцию, в результате чего в схеме
+будет одновременно зарегистрировано две независимые функции &ndash; одна с правильным именем, а другая
+&ndash; с искаженным, и их целые идентификаторы, естественно, будут различаться. Если же мы
+будем использовать вместо строки имени функции введенную для нее константу, и случайно исказим имя этой константы,
+такая ошибка будет обнаружена на этапе компиляции. Вообще, если создаваемую функцию предполагается в
+будущем использовать и в других моделях, целесообразно вынести необходимые для нее описания в файл
+заголовка, чтобы другие программисты могли просто включить его в свои тексты моделей.
+<span id="ref1">Например</span>, имена и
+описания всех функций блоков из стандартной библиотеки &laquo;<span class="file">Common.dll</span>&raquo; находятся в файле
+&laquo;<span class="file"><span id="light_ref1">CommonBl.h</span></span>&raquo;, поэтому в предыдущих примерах
+можно было, включив этот файл, <span id="ref2">вместо</span>
+строки имени функции &laquo;Common.ControlValueChanged&raquo; использовать константу
+<span id="light_ref2" class="cpp">COMBL_F_CONTROLCHANGED_NAME</span>.</p>
+
+<p>Кроме константы для имени функции мы также описываем структуру ее параметров
+<span class="cpp">TProgGuideEditCtrlSetParams</span>. Полю <span class="cpp">servSize</span> этой структуры
+перед вызовом функции необходимо будет присвоить ее размер, полученный оператором <span class="cpp"></span>,
+а в реакции на ее вызов сравнить это поле с этим же размером, и, если значение поля окажется меньше,
+не выполнять никаких действий, поскольку это говорит о том, что функции переданы какие-то неправильные
+параметры. В поле <span class="cpp">Command</span> нужно будет записать команду блоку.</p>
+
+<p>Нам также потребуется глобальная переменная для хранения идентификатора этой функции, полученного при
+регистрации:</p>
+
+<pre class="cpp">  <span class="rem">// Идентификатор функции PROGGUIDEEDITCTRLFUNC_SET</span>
+  <span class="kw">int</span> EditCtrlFuncSet=<span class="const">0</span>;</pre>
+
+<p>Теперь можно вносить изменения в функцию модели блока. Нам потребуется добавить в нее регистрацию
+функции, реакцию на эту функцию, а также три новых пункта контекстного меню, при выборе которых описанная
+нами функция будет вызываться у всех блоков подсистемы.</p>
+
+<p>Прежде всего, в функции модели нам понадобятся <span class="changes">дополнительные переменные</span>
+для работы с функцией и ее параметрами:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> EditControlFrame(<span class="kw">int</span> CallMode,
+            <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+            <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x_ext  (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define x_int  (*((double *)(pStart+10)))</span>
+  <span class="preproc">#define out    (*((double *)(pStart+18)))</span>
+  <span class="preproc">#define bypass (*((char *)(pStart+26)))</span>
+    <span class="kw">const</span> <span class="kw">int</span> fr=<span class="const">20</span>; <span class="rem">// Толщина рамки</span>
+    <span class="rem">// Вспомогательные переменные</span>
+    <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse;
+    <a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw;
+    <span class="kw">int</span> frz,x1,y1,x2,y2,xi1,yi1,xi2,yi2;
+
+<div class="changes">    <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a> func; <span class="rem">// Описание вызванной функции</span>
+    <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a> menu;     <span class="rem">// Описание выбранного пункта меню</span>
+    TProgGuideEditCtrlSetParams callparams; <span class="rem">// Параметры функции</span></div>
+    <span class="kw">switch</span>(CallMode)
+    <span class="rem">// &hellip;</span></pre>
+
+<p>Теперь нужно добавить внутрь оператора <span class="cpp">switch(CallMode)</span> новые реакции и внести
+изменения в уже существующие там, где это необходимо. Регистрацию функции добавим в реакцию на подключение
+модели к блоку. У этого блока нет личной области данных, и этой реакции в нем раньше не было:</p>
+
+<pre class="cpp">        <span class="rem">// Инициализация блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="kw">if</span>(!EditCtrlFuncSet)
+            EditCtrlFuncSet=
+              <span id="light_ref3"><a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a></span>(PROGGUIDEEDITCTRLFUNC_SET);
+          <span class="kw">break</span>;</pre>
+
+<p>Как и в предыдущих примерах, мы регистрируем функцию только в том случае, если глобальная переменная
+<span class="cpp">EditCtrlFuncSet</span> сохранила свое нулевое значение по умолчанию, то есть если функции еще
+не присвоен идентификатор.</p>
+
+<p>В контекстное меню мы <span class="changes">добавляем</span> три новых пункта:</p>
+
+<pre class="cpp">        <span class="rem">// Открытие контекстного меню блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CONTEXTPOPUP.htm" title="А.2.6.2. RDS_BFM_CONTEXTPOPUP &ndash; вызов контекстного меню блока">RDS_BFM_CONTEXTPOPUP</a>:
+          <span class="rem">// Добавление временных пунктов меню</span>
+          <span id="light_ref4"><a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a></span>(bypass?<span class="str">"Открыть"</span>:<span class="str">"Закрыть"</span>,
+                                         <span class="const">0</span>,<span class="const">1</span>,<span class="const">2</span>);
+<div class="changes">          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(NULL,<span id="light_ref5"><a class="hidden" href="rdsChangeMenuItem.htm#light_ref4" title="RDS_MENU_DIVIDER">RDS_MENU_DIVIDER</a></span>,<span class="const">0</span>,<span class="const">0</span>);
+          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(<span class="str">"Открыть все"</span>,<span class="const">0</span>,<span class="const">2</span>,<span class="const">1</span>);
+          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(<span class="str">"Закрыть все"</span>,<span class="const">0</span>,<span class="const">2</span>,<span class="const">0</span>);
+          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(<span class="str">"Переключить все"</span>,<span class="const">0</span>,<span class="const">2</span>,<span class="const">2</span>);</div>
+          <span class="kw">break</span>;</pre>
+
+<p>Первый из четырех добавленных вызовов <span class="cpp"><a href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a></span>, с флагом
+<span class="cpp"><a class="hidden" href="rdsChangeMenuItem.htm#light_ref4" title="RDS_MENU_DIVIDER">RDS_MENU_DIVIDER</a></span> и <span class="cpp">NULL</span> вместо названия, добавляет в
+меню горизонтальный разделитель, чтобы визуально отделить старый пункт меню, меняющий режим этого блока,
+от новых, управляющих всеми блоками подсистемы. Три следующих вызова добавляют новые пункты меню,
+задавая для всех них номер функции меню 2. В качестве данных меню (второго целого числа, связанного с
+пунктом) используется номер команды, которую, как мы решили, мы будем давать блоку: 0 для закрытия, 1
+для открытия и 2 для переключения.</p>
+
+<p>Реакцию на выбор пункта меню необходимо изменить следующим образом:</p>
+
+<pre class="cpp">        <span class="rem">// Выбор пункта меню пользователем</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a>:
+<div class="changes">          menu=(<a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a>)ExtParam; <span class="rem">// Данные пункта меню</span>
+          <span class="kw">switch</span>(menu-&gt;Function)
+            { <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Открыть/закрыть</span></div>
+                bypass=!bypass;         <span class="rem">// Переключить режим</span>
+                out=bypass?x_ext:x_int; <span class="rem">// Подать на выход</span>
+                Ready=<span class="const">1</span>;                <span class="rem">// Взвести флаг готовности</span>
+
+<div class="changes">                <span class="kw">break</span>;
+              <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Один из новых пунктов</span>
+                <span class="rem">// Заполняем структуру параметров функции</span>
+                callparams.Command=menu-&gt;MenuData;
+                callparams.servSize=<span class="kw">sizeof</span>(callparams);
+                <span class="rem">// Вызываем у всех блоков родительской подсистемы</span>
+                <span id="light_ref6"><a class="hidden" href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a></span>(BlockData-&gt;Parent,
+                                            EditCtrlFuncSet,
+                                            &amp;callparams,
+                                            <span class="const">0</span>);
+                <span class="kw">break</span>;
+            }</div>
+          <span class="kw">break</span>;</pre>
+
+<p>Раньше выбранный пункт меню не анализировался: он был единственным, и проверять, какой именно
+пункт выбран пользователем, не имело смысла. Теперь у нас четыре дополнительных пункта меню &ndash;
+старый, как и раньше, имеет номер функции, равный единице, три новых &ndash; равный двум. Переданный в
+параметре <span class="cpp">ExtParam</span> указатель на структуру данных выбранного пункта меню
+приводится к правильному типу и записывается во вспомогательную переменную <span class="cpp">menu</span>,
+после чего оператором <span class="cpp">switch</span> проверяется номер функции этого пункта
+<span class="cpp">menu-&gt;Function</span>. Для номера 1 (старый пункт
+&laquo;<span class="menu">Открыть/Закрыть</span>&raquo;) выполняются те же действия, что и в старой модели: состояние блока
+переключается, значение нужного входа подается на выход, взводится сигнал готовности. Для номера 2
+(три новых пункта) данные меню <span class="cpp">menu-&gt;Data</span> записываются в поле
+<span class="cpp">Command</span> структуры параметров функции <span class="cpp">callparams</span> &ndash;
+при добавлении пунктов в контекстное меню мы специально сделали так, чтобы данные пункта меню соответствовали
+команде, которую нужно передать блокам при его выборе. В поле <span class="cpp">servSize</span> структуры
+параметров записывается ее размер, после чего вызывается сервисная функция RDS
+<span class="cpp"><a href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a></span>, которая вызовет функцию, идентификатор которой хранится в
+глобальной переменной <span class="cpp">EditCtrlFuncSet</span>, у всех блоков родительской для данного
+блока подсистемы (<span class="cpp">BlockData-&gt;Parent</span>), передав им в качестве параметра функции
+указатель на структуру <span class="cpp">callparams</span>. Нам не нужно вызывать функцию у
+блоков вложенных подсистем или останавливать дальнейшие вызовы по желанию одного из вызванных блоков,
+поэтому мы не указываем в вызове никаких флагов (последний параметр функции
+<span class="cpp"><a class="hidden" href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a></span> равен нулю).</p>
+
+<p>Осталось только добавить в <span class="cpp">switch</span> реакцию на вызов функции, и модель готова:</p>
+
+<pre class="cpp">        <span class="rem">// Вызов функции блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a>:
+          <span class="rem">// Приведение ExtParam к правильному типу</span>
+          func=(<a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a>)ExtParam;
+          <span class="rem">// Проверяем, какая функция вызвана</span>
+          <span class="kw">if</span>(func-&gt;Function==EditCtrlFuncSet)
+            { <span class="rem">// Вызвана нужная нам функция</span>
+              TProgGuideEditCtrlSetParams *params;
+              <span class="rem">// Приводим указатель на параметры к нужному типу</span>
+              <span class="rem">// и проверяем размер переданной структуры</span>
+              params=(TProgGuideEditCtrlSetParams*)(func-&gt;Data);
+              <span class="kw">if</span>(params-&gt;servSize&lt;
+          <span class="kw">sizeof</span>(TProgGuideEditCtrlSetParams))
+                <span class="kw">break</span>; <span class="rem">// Размер недостаточен</span>
+              <span class="rem">// В зависимости от Command меняем режим блока</span>
+              <span class="kw">switch</span>(params-&gt;Command)
+                { <span class="kw">case</span> <span class="const">0</span>: bypass=<span class="const">1</span>; <span class="kw">break</span>;       <span class="rem">// Закрыть</span>
+                  <span class="kw">case</span> <span class="const">1</span>: bypass=<span class="const">0</span>; <span class="kw">break</span>;       <span class="rem">// Открыть</span>
+                  <span class="kw">case</span> <span class="const">2</span>: bypass=!bypass; <span class="kw">break</span>; <span class="rem">// Переключить</span>
+                  <span class="kw">default</span>: <span class="kw">return</span> RDS_BFR_DONE;  <span class="rem">// Ошибка</span>
+                }
+              <span class="rem">// Взводим сигнал готовности и передаем нужный вход на выход</span>
+              Ready=<span class="const">1</span>;
+              out=bypass?x_ext:x_int;
+            }
+          <span class="kw">break</span>;</pre>
+
+<p>В этой реакции прежде всего проверяется, совпадает ли идентификатор вызванной функции с
+<span class="cpp">EditCtrlFuncSet</span>. Если совпадает, переданный указатель на параметры функции приводится
+к типу &laquo;указатель на <span class="cpp">TProgGuideEditCtrlSetParams</span>&raquo;, после
+чего значение поля <span class="cpp">servSize</span> переданной структуры параметров сравнивается с размером
+типа <span class="cpp">TProgGuideEditCtrlSetParams</span>. Если размер переданной структуры больше ожидаемого значения
+или равен ему, значит, блок может выполнять функцию &ndash; параметры, вероятнее всего, переданы верно.
+В зависимости от поля <span class="cpp">Command</span> переданной структуры параметров переменной состояния
+блока <span class="cpp">bypass</span> присваивается нужное значение, взводится сигнал готовности блока
+и значение выбранного согласно состоянию блока входа передается на его выход.</p>
+
+<p>Рассмотрим работу измененной нами модели подробнее. Допустим, в какой-либо подсистеме есть несколько блоков
+с моделью <span class="cpp">EditControlFrame</span>, управляющих какими-то полями ввода. Представим себе,
+что пользователь щелкнул на одном из них правой кнопкой мыши, и выбрал в контекстном меню пункт
+&laquo;<span class="menu">Закрыть все</span>&raquo;. Модель этого блока будет вызвана в режиме
+<span class="cpp"><a href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a></span>, при этом в <span class="cpp">ExtParam</span> ей будет передан
+указатель на структуру с данными выбранного пункта, в которой поле <span class="cpp">Function</span> будет равно 2,
+а MenuData &ndash; 0. Реагируя на этот вызов, модель запишет в поле
+<span class="cpp">Command</span> структуры <span class="cpp">callparams</span> значение 0, взятое из
+<span class="cpp">MenuData</span>, и запустит вызов функции с идентификатором
+<span class="cpp">EditCtrlFuncSet</span> у всех блоков подсистемы &ndash; все они будут по очереди вызываться в
+режиме <span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span>. Блоки с моделью <span class="cpp">EditControlFrame</span>, включая
+и тот блок, контекстное меню которого открыл пользователь, среагируют на вызов функции, присвоив переменной
+<span class="cpp">bypass</span> значение 1 (поскольку <span class="cpp">Command==0</span>) и
+&laquo;закрыв&raquo; тем самым поле ввода. Модели же, в которых не предусмотрена реакция на эту функцию,
+не опознают переданный им идентификатор, и завершатся, ничего не выполнив. Таким образом выбор пункта меню
+&laquo;<span class="menu">Закрыть все</span>&raquo; в одном из блоков приведет к закрытию всех таких же блоков подсистемы.</p>
+
+<p>В этом примере мы создали модель, которая сама вызывает функцию, и сама же на нее реагирует.
+Но удобство использования функций блоков в том, что в будущем мы можем создать другие модели, реагирующие на эту
+же функцию или вызывающие ее, и блоки с этими моделями смогут открываться, закрываться и переключаться вместе с
+нашими блоками, или, при необходимости, управлять нашими блоками через эту функцию.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_13_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_4.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.4.12. rdsProcessText &ndash; обработка строки</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_4">А.5.4. Отведение памяти и преобразование строк</a></p>
+<div class="level"><p>А.5.4.12. <span class="cpp">rdsProcessText</span> &ndash; обработка строки</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsItoA.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsStringReplace.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsProcessText">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.4. Отведение памяти и преобразование строк</h4>
+<h5>А.5.4.12. <span class="cpp">rdsProcessText</span> &ndash; обработка строки</h5>
+
+
+<p>Функция <span class="cpp">rdsProcessText</span> выполняет над переданной ей строкой указанную операцию
+и возвращает результат в виде динамически созданной строки.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsProcessText(
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> String,     <span class="rem">// Исходная строка</span>
+      <span class="kw">int</span> Operation,    <span class="rem">// Операция (RDS_PT_*)</span>
+      <span class="kw">int</span> *pLength      <span class="rem">// Возвращаемая длина строки</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_SSIpI</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">String</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на исходную строку.</dd>
+
+  <dt><span class="cpp">Operation</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Выполняемое над строкой преобразование:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref1">RDS_PT_TEXTTOSTRING</span></span></td>
+          <td>Непечатаемые символы в строке <span class="cpp">String</span> заменяются на их символические обозначения
+          (возврат каретки заменяется на &laquo;\r&raquo;, перед знаком кавычки вставляется обратная косая черта,
+          нестандартные коды заменяются на их шестнадцатеричное представление с префиксом &laquo;\x&raquo; и т.д.).
+          После такого преобразования строка гарантированно содержит только печатаемые коды символов и ее можно,
+          например, записать в INI-файл. Такая строка может быть однозначно преобразована обратно вызовом этой
+          же функции с параметром <span class="cpp">RDS_PT_STRINGTOTEXT</span>.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref2">RDS_PT_STRINGTOTEXT</span></span></td>
+          <td>Символические представления непечатаемых символов в строке <span class="cpp">String</span>
+          заменяются на коды этих символов. Это операция, обратная операции <span class="cpp">RDS_PT_TEXTTOSTRING</span>.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref3">RDS_PT_VARTYPETEXT</span></span></td>
+          <td>Формируется строка, содержащая текстовое описание типа переменной, которое соответствует первому
+          символу строки <span class="cpp">String</span>, если считать его однобайтовой константой типа
+          <span class="cpp"><a href="RDS_BFM_VARCHECK.htm#ref4" title="Константы типов переменных блока">RDS_VARTYPE_*</a></span>. Полученные в результате этой операции строки
+          можно показывать пользователю при редактировании переменных блоков.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref4">RDS_PT_VARTYPECHAR</span></span></td>
+          <td>Текстовое описание переменной из строки <span class="cpp">String</span> преобразуется в строку,
+          состоящую из единственного символа типа этой переменной <span class="cpp"><a href="RDS_BFM_VARCHECK.htm#ref4" title="Константы типов переменных блока">RDS_VARTYPE_*</a></span>.
+          Это операция, обратная операции <span class="cpp">RDS_PT_VARTYPETEXT</span>.</td>
+        </tr>
+      </table>
+    </div></div>
+    Любое другое значение параметра <span class="cpp">Operation</span> приводит к возврату значения <span class="cpp">NULL</span>.
+  </dd>
+
+  <dt><span class="cpp">pLength</span>&emsp;(<span class="cpp"><i>int*</i></span>)</dt>
+  <dd>Указатель на целую переменную, в которую функция запишет длину созданной динамической строки.
+  Если вызвавшей программе не нужно это значение, в <span class="cpp">pLength</span> можно передать <span class="cpp">NULL</span>.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Указатель на созданную в динамической памяти строку, являющуюся результатом преобразования <span class="cpp">Operation</span>,
+примененного к строке <span class="cpp">String</span>. В случае недопустимой операции возвращается <span class="cpp">NULL</span>.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Динамическая строка, созданная функцией <span class="cpp">rdsProcessText</span>, должна быть <span class="emph">обязательно</span>
+освобождена функцией <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p><span id="ref5">Операция</span>
+<span class="cpp">RDS_PT_TEXTTOSTRING</span> переводит произвольную строку в
+текст, пригодный для сохранения, записи или вставки в программу путем
+замены символов на их <span id="light_ref5">условные обозначения</span>
+по правилам языка C согласно следующей таблице:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Символ или его код</th>
+    <th>Условное обозначение (по правилам языка C)</th>
+  </tr>
+  <tr>
+    <td>Пробел, печатаемые спецсимволы, символы латинского и русского алфавитов</td>
+    <td>Условного обозначения нет, символ не изменяется</td>
+  </tr>
+  <tr>
+    <td>Код 7 (код звукового сигнала)</td>
+    <td>\a</td>
+  </tr>
+  <tr>
+    <td>Код 8 (Backspace)</td>
+    <td>\b</td>
+  </tr>
+  <tr>
+    <td>Код 12 (перевод страницы)</td>
+    <td>\f</td>
+  </tr>
+  <tr>
+    <td>Код 10 (перевод строки)</td>
+    <td>\n</td>
+  </tr>
+  <tr>
+    <td>Код 13 (возврат каретки, Enter)</td>
+    <td>\r</td>
+  </tr>
+  <tr>
+    <td>Код 9 (табуляция)</td>
+    <td>\t</td>
+  </tr>
+  <tr>
+    <td>Код 11 (вертикальная табуляция)</td>
+    <td>\v</td>
+  </tr>
+  <tr>
+    <td>Обратная косая черта</td>
+    <td>Удвоенная обратная косая черта (&laquo;\\&raquo;)</td>
+  </tr>
+  <tr>
+    <td>' (апостроф, код 39)</td>
+    <td>\' (обратная  косая черта, за которой следует апостроф)</td>
+  </tr>
+  <tr>
+    <td>" (кавычка, код 34)</td>
+    <td>\" (обратная  косая черта, за которой следует кавычка)</td>
+  </tr>
+  <tr>
+    <td>Прочие непечатаемые символы</td>
+    <td>\x<i>NN</i>, где <i>NN</i> &ndash; шестнадцатеричный код символа. Например, символ с кодом 255 будет
+    преобразован в &laquo;\xff&raquo;.</td>
+  </tr>
+</table>
+</div></div>
+
+<p>Обратная операция, <span class="cpp">RDS_PT_STRINGTOTEXT</span>, преобразует строку с условными обозначениями
+символов в строку с кодами этих символов.</p>
+
+<p><span id="ref6">Операция</span> <span class="cpp">RDS_PT_VARTYPETEXT</span>
+переводит однобайтовый тип переменной в его
+<span id="light_ref6">название</span>, пригодное для показа пользователю:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Символ</th>
+    <th>Константа типа в RDS</th>
+    <th>Название типа согласно <span class="cpp">RDS_PT_VARTYPETEXT</span></th>
+  </tr>
+  <tr>
+    <td class="center">S</td>
+    <td><span class="cpp"><span id="light_ref7">RDS_VARTYPE_SIGNAL</span></span></td>
+    <td>&laquo;double&raquo;</td>
+  </tr>
+  <tr>
+    <td class="center">L</td>
+    <td><span class="cpp"><span id="light_ref8">RDS_VARTYPE_LOGICAL</span></span></td>
+    <td>&laquo;Логический&raquo;</td>
+  </tr>
+  <tr>
+    <td class="center">C</td>
+    <td><span class="cpp"><span id="light_ref9">RDS_VARTYPE_CHAR</span></span></td>
+    <td>&laquo;char&raquo;</td>
+  </tr>
+  <tr>
+    <td class="center">H</td>
+    <td><span class="cpp"><span id="light_ref10">RDS_VARTYPE_SHORT</span></span></td>
+    <td>&laquo;short&raquo;</td>
+  </tr>
+  <tr>
+    <td class="center">I</td>
+    <td><span class="cpp"><span id="light_ref11">RDS_VARTYPE_INT</span></span></td>
+    <td>&laquo;int&raquo;</td>
+  </tr>
+  <tr>
+    <td class="center">F</td>
+    <td><span class="cpp"><span id="light_ref12">RDS_VARTYPE_FLOAT</span></span></td>
+    <td>&laquo;float&raquo;</td>
+  </tr>
+  <tr>
+    <td class="center">D</td>
+    <td><span class="cpp"><span id="light_ref13">RDS_VARTYPE_DOUBLE</span></span></td>
+    <td>&laquo;double&raquo;</td>
+  </tr>
+  <tr>
+    <td class="center">A</td>
+    <td><span class="cpp"><span id="light_ref14">RDS_VARTYPE_STRING</span></span></td>
+    <td>&laquo;Строка&raquo;</td>
+  </tr>
+  <tr>
+    <td class="center">V</td>
+    <td><span class="cpp"><span id="light_ref15">RDS_VARTYPE_RUNTIME</span></span></td>
+    <td>&laquo;произвольный&raquo; (при обратном преобразовании допускается &laquo;Произв.&raquo;)</td>
+  </tr>
+  <tr>
+    <td class="center">M</td>
+    <td><span class="cpp"><span id="light_ref16">RDS_VARTYPE_ARRAY</span></span></td>
+    <td>&laquo;Матрица&raquo; (при обратном преобразовании допускается &laquo;Массив&raquo;)</td>
+  </tr>
+</table>
+</div></div>
+
+<p><span id="ref17">Остальные</span> типы после выполнения операция <span class="cpp">RDS_PT_VARTYPETEXT</span> дают пустую строку.
+Обратная операция, <span class="cpp">RDS_PT_VARTYPECHAR</span>, переводит название типа (включая альтернативные
+варианты, указанные в скобках) в строку с константой этого типа. Если название типа не опознано, тип считается
+структурой и возвращается строка из одного символа &laquo;{&raquo;
+(<span class="cpp" id="light_ref17">RDS_VARTYPE_STRUCT</span>).</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><a href="RDS_BFM_VARCHECK.htm#ref4" title="Константы типов переменных блока">Типы переменных RDS</a>,
+<span class="cpp"><a href="rdsListVarTypes.htm" title="А.5.2.27. rdsListVarTypes &ndash; список названий типов переменных">rdsListVarTypes</a></span>,
+<span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>,
+<span class="cpp"><a href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a></span>,
+<span class="cpp"><a href="rdsGetRelFilePath.htm" title="А.5.4.10. rdsGetRelFilePath &ndash; полный путь к файлу в сокращенный">rdsGetRelFilePath</a></span>,
+<span class="cpp"><a href="rdsStringReplace.htm" title="А.5.4.13. rdsStringReplace &ndash; замена фрагментов строки">rdsStringReplace</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsItoA.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsStringReplace.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsProcessText">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.8.3.2. Запуск расчета</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8_3">&sect;3.8.3. Моделирование и переключение режимов</a></p>
+<div class="level"><p>&sect;3.8.3.2. Запуск расчета</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_MODEL.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_STOPCALC.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_STARTCALC">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</h3>
+<h4 class="off">&sect;3.8.3. Моделирование и переключение режимов</h4>
+<h5>&sect;3.8.3.2. Запуск расчета</h5>
+
+
+<p>Это событие возникает при переходе RDS в
+режим
+<a href="um_1_3.htm#ref3" title="Режим расчета">расчета</a>
+из режима
+<a href="um_1_3.htm#ref2" title="Режим моделирования">моделирования</a>
+(при запуске расчета из режима
+<a href="um_1_3.htm#ref1" title="Режим редактирования">редактирования</a>
+RDS сначала переходит в режим моделирования, а уже потом &ndash; в режим расчета).
+<span id="ref1">Реакция</span>
+на него вводится на вкладке &laquo;<span class="menu"><a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">события</a></span>&raquo; левой панели редактора
+модели: раздел &laquo;<span class="menu">моделирование и режимы</span>&raquo;, подраздел
+&laquo;<span class="menu">запуск расчета</span>&raquo;
+(см. <a href="um_3_7_11.htm#pic3" title="Запуск и остановка расчета в списке событий">рис.&nbsp;458</a>).
+В классе блока для нее создается функция с именем
+<span class="cpp" id="light_ref1">rdsbcppStartCalc</span> с введенным пользователем текстом программы внутри:</p>
+
+
+<pre class="cpp">  // <span id="ref2">Запуск</span> расчета
+  void rdsbcppBlockClass::rdsbcppxxxx(<a class="hidden" href="RDS_BFM_STARTCALC.htm#ref2" title="Указатель на RDS_STARTSTOPDATA">RDS_PSTARTSTOPDATA</a> <span id="light_ref2">StartStopData</span>)
+  {
+    <span class="changes"><i>&nbsp;&hellip; пользовательский текст реакции &hellip;&nbsp;</i></span>
+  }</pre>
+
+<p>В функцию передается параметр <span class="cpp">StartStopData</span>, представляющий собой указатель на структуру
+описания события <span class="cpp"><a href="RDS_BFM_STARTCALC.htm#ref1" title="Структура RDS_STARTSTOPDATA">RDS_STARTSTOPDATA</a></span>:</p>
+
+<pre class="cpp">  typedef struct {
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> FirstStart;  // Расчет запущен с самого начала
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Loop;        // Расчет будет работать непрерывно
+  } <a class="hidden" href="RDS_BFM_STARTCALC.htm#ref1" title="Структура RDS_STARTSTOPDATA">RDS_STARTSTOPDATA</a>;
+  typedef <a class="hidden" href="RDS_BFM_STARTCALC.htm#ref1" title="Структура RDS_STARTSTOPDATA">RDS_STARTSTOPDATA</a> *<a class="hidden" href="RDS_BFM_STARTCALC.htm#ref2" title="Указатель на RDS_STARTSTOPDATA">RDS_PSTARTSTOPDATA</a>;</pre>
+
+<p>Поля структуры имеют следующий смысл:</p>
+<dl>
+  <dt><span class="cpp">FirstStart</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если расчет запущен с самого начала (сразу после загрузки схемы или
+  <a href="um_1_3.htm#ref9" title="Сброс расчета">сброса расчета</a>), или <span class="cpp">FALSE</span>, если расчет повторно
+  запущен после остановки.</dd>
+
+  <dt><span class="cpp">Loop</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если расчет запущен в нормальном, циклическом, режиме, или
+  <span class="cpp">FALSE</span>, если после выполнения одного такта он будет автоматически остановлен (пользователь
+  нажал кнопку &laquo;<span class="menu">выполнить один такт</span>&raquo;).</dd>
+</dl>
+
+<p class="noindent">Следует помнить, что это событие возникает не только при первом запуске расчета, но и при его запуске после
+остановки, поэтому использовать реакцию на него для инициализации расчета без анализа поля
+<span class="cpp">FirstStart</span> структуры описания события нельзя.</p>
+
+<p>Пример реакции на это событие приведен
+в <a href="um_3_7_11.htm" title="&sect;3.7.12. Добавление пунктов в контекстное и системное меню">&sect;3.7.12</a>. При написании моделей блоков без использования модуля
+автокомпиляции событию запуска расчета соответствует
+константа RDS <span class="cpp"><a href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_MODEL.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_STOPCALC.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_STARTCALC">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

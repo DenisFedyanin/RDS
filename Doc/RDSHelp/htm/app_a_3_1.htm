@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.3.1. Функция модуля автокомпиляции</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_3">А.3. События модуля автокомпиляции и связанные с ними структуры</a></p>
+<div class="level"><p>А.3.1. Функция модуля автокомпиляции</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_BFM_NETERROR.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_COMPMODULEDATA.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:app_a_3_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3>А.3. События модуля автокомпиляции и связанные с ними структуры</h3>
+<p class="abstract">Описываются все события, на которые может реагировать модуль автоматической компиляции моделей блоков (см. <a href="pm_index.htm#light_htm:pm_4" title="Глава 4. Создание модулей автоматической компиляции">главу 4 руководства программиста</a>), а также структуры данных, связанные с этими событиями.</p>
+<h4>А.3.1. Функция модуля автокомпиляции</h4>
+
+
+<p>Функция модуля автокомпиляции &ndash; это функция, которая вызывается 
+RDS в ответ на различные события, относящиеся к блокам, для которых включена 
+автоматическая компиляция моделей
+при помощи данного модуля. Принципы и способы автоматической компиляции моделей подробно рассмотрены в 
+<a href="pm_index.htm#light_htm:pm_4" title="Глава 4. Создание модулей автоматической компиляции">главе 4 руководства программиста</a>. Функции модулей автокомпиляции должны размещаться в 
+динамически подключаемых библиотеках (DLL) и регистрироваться в RDS в 
+<a href="um_2_19_1.htm" title="&sect;2.19.1. Подключение модулей автоматической компиляции моделей блоков">окне настроек автокомпиляции</a>. Все функции модулей 
+автокомпиляции имеют тип вызова <span class="cpp"><a href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a></span>, описанный в файле 
+&laquo;<span class="file">RdsDef.h</span>&raquo; &ndash; ему полностью соответствует тип 
+<span class="cpp">CALLBACK</span> в Windows API: аргументы функции передаются в стеке справа налево, 
+стек освобождается вызванной функцией. В отличие от моделей блоков, функции модулей автокомпиляции 
+всегда вызываются в главном потоке RDS, обслуживающем интерфейс пользователя. Функция модуля имеет 
+следующий вид:</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции_модуля</i>(
+    <span class="kw">int</span> CallMode,                    <span class="rem">// Режим вызова (событие)</span>
+    <a class="hidden" href="RDS_COMPMODULEDATA.htm#ref2" title="Указатель на RDS_COMPMODULEDATA">RDS_PCOMPMODULEDATA</a> ModuleData,  <span class="rem">// Данные модуля</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam                  <span class="rem">// Дополнительные параметры</span>
+  );</pre>
+
+<p class="apphdr">Параметры функции</p>
+
+<dl>
+  <dt><span class="cpp">CallMode</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Событие, для реакции на которое вызывается функция модуля. Это одна из целых констант 
+  <span class="cpp">RDS_COMPM_*</span>, описанных далее.</dd>
+  
+  <dt><span class="cpp">ModuleData</span>&emsp;(<span class="cpp"><i>RDS_PCOMPMODULEDATA</i></span>)</dt>
+  <dd>Указатель на структуру данных модуля (<span class="cpp"><a href="RDS_COMPMODULEDATA.htm" title="А.3.2. RDS_COMPMODULEDATA &ndash; структура данных модуля">RDS_COMPMODULEDATA</a></span>). В этой структуре 
+  хранятся общие данные модуля и его настроечные параметры.</dd>
+
+  <dt><span class="cpp">ExtParam</span>&emsp;(<span class="cpp"><i>LPVOID</i></span>)</dt>
+  <dd>Указатель на дополнительные параметры события. Формат данных, на которые ссылается этот указатель 
+  общего вида, зависит от конкретного события, то есть от значения параметра 
+  <span class="cpp">CallMode</span>.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемые значения</p>
+<p>Функция возвращает целое число, указывающее RDS на результат реакции на событие. 
+В зависимости от события эти числа интерпретируются по-разному.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Как и <a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функция модели блока</a>, функция модуля 
+автокомпиляции чаще всего содержит внутри оператор <span class="cpp">switch</span>, в котором, в 
+зависимости от произошедшего события (то есть от значения параметра 
+<span class="cpp">CallMode</span>), выполняются различные действия:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> имя_модуля(
+    <span class="kw">int</span> CallMode,
+    <a class="hidden" href="RDS_COMPMODULEDATA.htm#ref2" title="Указатель на RDS_COMPMODULEDATA">RDS_PCOMPMODULEDATA</a> ModuleData,
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+    <span class="kw">switch</span>(CallMode)
+      { <span class="kw">case</span> <i>событие_1</i>:
+          <i>действия</i>
+          <span class="kw">return</span> <i>результат</i>;
+        <span class="kw">case</span> <i>событие_2</i>:
+          <i>действия</i>
+          <span class="kw">return</span> <i>результат</i>;
+        ...
+      }
+  }</pre>
+
+<p>Если модуль имеет личную область данных, то есть область памяти, в которой хранятся его 
+внутренние параметры, не обрабатываемые RDS, эта область обычно отводится в реакции на 
+событие инициализации <span class="cpp"><a href="RDS_COMPM_INIT.htm" title="А.3.4.10. RDS_COMPM_INIT &ndash; инициализация модуля">RDS_COMPM_INIT</a></span> и освобождается в реакции на событие 
+<span class="cpp"><a href="RDS_COMPM_CLEANUP.htm" title="А.3.4.4. RDS_COMPM_CLEANUP &ndash; очистка данных модуля">RDS_COMPM_CLEANUP</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_BFM_NETERROR.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_COMPMODULEDATA.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:app_a_3_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

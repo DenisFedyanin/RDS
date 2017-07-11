@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>Б.3.5.5. rdsctrlGetSystemContent &ndash; получить полный текст схемы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b_3">Б.3. Б.3 Функции библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b_3_5">Б.3.5. Функции загрузки и сохранения схемы</a></p>
+<div class="level"><p>Б.3.5.5. <span class="cpp">rdsctrlGetSystemContent</span> &ndash; получить полный текст схемы</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsctrlGetBlockByBlockSavePiece.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsctrlLoadSystemFromFile.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsctrlGetSystemContent">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</h2>
+<h3 class="off">Б.3. Б.3 Функции библиотеки RdsCtrl.dll</h3>
+<h4 class="off">Б.3.5. Функции загрузки и сохранения схемы</h4>
+<h5>Б.3.5.5. <span class="cpp">rdsctrlGetSystemContent</span> &ndash; получить полный текст схемы</h5>
+
+
+<p>Функция <span class="cpp">rdsctrlGetSystemContent</span> возвращает схему, загруженную в данный
+момент в управляемую копию RDS, в текстовом формате.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsctrlGetSystemContent(
+    <span class="kw">int</span> Link,                    <span class="rem">// Идентификатор связи</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ReturnText,           <span class="rem">// Возвращаемый текст</span>
+    <span class="kw">int</span> Mode,                    <span class="rem">// Способ передачи (RDSCTRL_GSC_*)</span>
+    RDSCTRL_RETURNSTRING Func    <span class="rem">// Функция возврата</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDSCTRL_BIpVIRs</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Link</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Идентификатор связи с RDS, присвоенный ей при создании функцией
+  <span class="cpp"><a href="rdsctrlCreateLink.htm" title="Б.3.2.3. rdsctrlCreateLink &ndash; создать связь с RDS">rdsctrlCreateLink</a></span>.</dd>
+
+  <dt><span class="cpp">ReturnText</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></i></span>)</dt>
+  <dd>Указатель на объект управляющего приложения, в который функция обратного вызова, зарегистрированная при
+  помощи <span class="cpp"><a href="rdsctrlSetStringCallback.htm" title="Б.3.2.10. rdsctrlSetStringCallback &ndash; регистрация функции возврата строки">rdsctrlSetStringCallback</a></span> или переданная в параметре <span class="cpp">Func</span>, запишет текст схемы.</dd>
+
+  <dt><span class="cpp">Mode</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Способ передачи текста схемы между RDS и управляющим приложением:<br />
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref1">RDSCTRL_GSC_TRANSFILE</span></span></td>
+          <td>текст схемы будет записан во временный файл, а затем загружен
+          библиотекой &laquo;<span class="file">RdsCtrl.dll</span>&raquo; в память;</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref2">RDSCTRL_GSC_TRANSPIPE</span></span></td>
+          <td>текст схемы будет передан в &laquo;<span class="file">RdsCtrl.dll</span>&raquo; через
+          &laquo;трубу&raquo; (одно из средств взаимодействия процессов в Windows).</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp">Func</span>&emsp;(<span class="cpp"><i>RDSCTRL_RETURNSTRING</i></span>)</dt>
+  <dd>Указатель на функцию обратного вызова, которую нужно использовать для записи текста в
+  <span class="cpp">ReturnText</span>, или <span class="cpp">NULL</span>, если следует использовать стандартную
+  функцию, зарегистрированную при помощи <span class="cpp">rdsctrlSetStringCallback</span>. Вид функции,
+  указатель на которую передан в параметре <span class="cpp">Func</span>, должен совпадать с
+  видом <span class="cpp"><a href="rdsctrlSetStringCallback.htm" title="Б.3.2.10. rdsctrlSetStringCallback &ndash; регистрация функции возврата строки">rdsctrlSetStringCallback</a></span>.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p><span class="cpp">TRUE</span> &ndash; текст схемы успешно передан,
+<span class="cpp">FALSE</span> &ndash; при передаче возникла ошибка.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция записывает в объект, указатель на который передан через параметр <span class="cpp">ReturnText</span>,
+всю схему, загруженную на данный момент в копию RDS, управляемую через связь
+<span class="cpp"></span>. Схема преобразуется в текстовый формат, который используется в RDS
+для хранения блоков и схем в файлах. Таким образом, если записать текст, полученный объектом
+<span class="cpp">ReturnText</span>, в отдельный файл, схему из этого файла можно будет загрузить средствами
+RDS.</p>
+
+<p>Параметр <span class="cpp">Mode</span> управляет способом передачи текста схемы из RDS
+в управляющее приложение. Разработчик может использовать любое из двух его значений в зависимости
+от специфики работы управляющего приложения (передача через файл может быть медленнее, но экономнее по памяти). В
+большинстве случаев целесообразно использовать способ <span class="cpp">RDSCTRL_GSC_TRANSPIPE</span>.</p>
+
+<p>Данные схемы, переданные в управляющее приложение функцией <span class="cpp">rdsctrlGetSystemContent</span>,
+могут быть потом переданы обратно в RDS парной к ней функцией
+<span class="cpp"><a href="rdsctrlLoadSystemFromMem.htm" title="Б.3.5.7. rdsctrlLoadSystemFromMem &ndash; загрузить схему из области памяти">rdsctrlLoadSystemFromMem</a></span>. Следует помнить, что текст схемы с большим количеством
+блоков и связей занимает значительный объем памяти.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsctrlCreateLink.htm" title="Б.3.2.3. rdsctrlCreateLink &ndash; создать связь с RDS">rdsctrlCreateLink</a></span>,
+<span class="cpp"><a href="rdsctrlSetStringCallback.htm" title="Б.3.2.10. rdsctrlSetStringCallback &ndash; регистрация функции возврата строки">rdsctrlSetStringCallback</a></span>,
+<span class="cpp"><a href="rdsctrlLoadSystemFromMem.htm" title="Б.3.5.7. rdsctrlLoadSystemFromMem &ndash; загрузить схему из области памяти">rdsctrlLoadSystemFromMem</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsctrlGetBlockByBlockSavePiece.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsctrlLoadSystemFromFile.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsctrlGetSystemContent">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

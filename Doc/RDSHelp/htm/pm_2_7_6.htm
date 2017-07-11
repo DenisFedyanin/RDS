@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.7.6. Открытие модальных окон в режиме расчета</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_7">&sect;2.7. Настройка параметров блока</a></p>
+<div class="level"><p>&sect;2.7.6. Открытие модальных окон в режиме расчета</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_7_5.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_8_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_6">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_7_6_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.7. Настройка параметров блока</h3>
+<h4>&sect;2.7.6. Открытие модальных окон в режиме расчета</h4>
+<p class="abstract">Рассматриваются особенности открытия модальных окон в <a href="pm_1_3.htm#ref3" title="Режим расчета">режиме расчета</a>.
+                Блок из предыдущего примера модифицируется так, чтобы модальное окно в режиме расчета не вызывало проблем.
+                Описывается сервисная функция RDS <span class="cpp"><a href="rdsUnlockAndCall.htm" title="А.5.3.4. rdsUnlockAndCall &ndash; вызвать функцию, сняв блокировку данных">rdsUnlockAndCall</a></span>.</p>
+
+
+<p>Изменим <a href="pm_2_7_5.htm#light_ref1" title="Пример открытия модального окна средствами Windows">пример из &sect;2.7.5</a>
+так, чтобы в режимах <a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a>
+и <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a> можно было по щелчку мыши изменить цвет блока (значение переменной
+&laquo;<span class="rdsvar">Color</span>&raquo;), но при
+<a href="um_1_3.htm#ref9" title="Сброс расчета">сбросе</a>
+расчета значение переменной &laquo;<span class="rdsvar">Color</span>&raquo; возвращалось бы к исходному, заданному в функции
+настройки. Может показаться, что для этого достаточно добавить в модель блока реакцию на нажатие кнопки мыши,
+в которой выполнить ту же последовательность действий, что и в функции настройки, кроме установки значения
+переменной &laquo;<span class="rdsvar">Color</span>&raquo; по умолчанию. Попробуем сделать так и посмотрим, к
+каким проблемам это приведет.</p>
+
+<p>Добавим рядом с оператором <span class="cpp">case</span> для события
+<span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span> еще один <span class="cpp">case</span> для нажатия кнопки мыши
+(<span class="cpp"><span id="light_ref1"><a href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span></span>) &ndash; в обоих случаях модель будет открывать одно и
+то же модальное окно. Эта часть модели блока будет выглядеть следующим образом (изменения выделены
+<span class="changes">цветом</span>):</p>
+
+<pre class="cpp">      <span class="rem">// Функция настройки</span><span class="changes"><span class="rem"> или нажатие кнопки мыши </span></span>
+      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+      <span class="changes"><span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a>:</span>
+        <span class="rem">// Установка параметров структуры для работы с диалогом</span>
+        memset(&amp;cc,<span class="const">0</span>,<span class="kw">sizeof</span>(cc));
+        cc.lStructSize=<span class="kw">sizeof</span>(cc);
+        cc.hwndOwner=<a class="hidden" href="rdsGetAppWindowHandle.htm" title="А.5.2.18. rdsGetAppWindowHandle &ndash; дескриптор главного окна RDS">rdsGetAppWindowHandle</a>();
+        cc.lpCustColors=CustomColors;
+        cc.rgbResult=Color;
+        cc.Flags=CC_RGBINIT;
+        <span class="rem">// Уведомление RDS об открытии модального окна</span>
+        <a class="hidden" href="rdsBlockModalWinOpen.htm" title="А.5.2.8. rdsBlockModalWinOpen &ndash; сообщение об открытии модального окна">rdsBlockModalWinOpen</a>(NULL);
+        <span class="rem">// Вызов диалога</span>
+        ok=ChooseColor(&amp;cc);
+        <span class="rem">// Уведомление RDS о закрытии модального окна</span>
+        <a class="hidden" href="rdsBlockModalWinClose.htm" title="А.5.2.7. rdsBlockModalWinClose &ndash; сообщение о закрытии модального окна">rdsBlockModalWinClose</a>(NULL);
+        <span class="kw">if</span>(ok) <span class="rem">// Пользователь выбрал цвет</span>
+          { <span class="rem">// Запись цвета в Color</span>
+            Color=cc.rgbResult;
+            <span class="changes"><span class="kw">if</span>(CallMode==<a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>) <span class="rem">// Функция настройки </span></span>
+              <span class="changes">{</span> <span class="rem">// Установка этого значения Color по умолчанию</span>
+                <span class="rem">// (2 – порядковый номер переменной Color в блоке)</span>
+                <a class="hidden" href="rdsSetBlockVarDefValueByCur.htm" title="А.5.14.16. rdsSetBlockVarDefValueByCur &ndash; сделать текущее значение переменной блока значением по умолчанию">rdsSetBlockVarDefValueByCur</a>(BlockData-&gt;Block,<span class="const">2</span>);
+                <span class="rem">// Возвращаемое значение должно сигнализировать</span>
+                <span class="rem">// о наличии изменений в схеме</span>
+                result=<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>;
+              <span class="changes">}</span>
+            <span class="changes"><span class="kw">else</span> <span class="rem">// Нажатие кнопки мыши </span></span>
+            <span class="changes">  <span class="rem">// Нужно перерисовать окно подсистемы </span></span>
+            <span class="changes">  <span id="light_ref2"><a class="hidden" href="rdsRefreshBlockWindows.htm" title="А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна">rdsRefreshBlockWindows</a></span>(BlockData-&gt;Parent,FALSE);</span>
+          }
+        <span class="kw">break</span>;
+      <span class="rem">// &hellip;</span></pre>
+
+<p>Если пользователь закрыл окно кнопкой &laquo;<span class="menu">OK</span>&raquo; (значение <span class="cpp">ok</span> истинно),
+выбранный цвет переписывается в переменную <span class="cpp">Color</span> независимо от того, произошло это
+в функции настройки в режиме <a href="pm_1_3.htm#ref1" title="Режим редактирования">редактирования</a> или в реакции на нажатие кнопки
+мыши в режимах моделирования и расчета. Однако, дальнейшие действия будут зависеть от режима, в котором
+находится RDS.</p>
+
+<p>Если окно было открыто в функции настройки блока (параметр <span class="cpp">CallMode</span> равен
+<span class="cpp"><a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>), необходимо выполнить в точности те же действия, что и
+в предыдущем варианте этого примера: установить значение <span class="cpp">Color</span> по умолчанию и вернуть в
+RDS константу <span class="cpp"><a href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a></span>. Если же окно было открыто внутри реакции блока на
+нажатие кнопки мыши (параметр <span class="cpp">CallMode</span> равен
+<span class="cpp"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>), ничего этого делать не нужно, но необходимо перерисовать окно
+подсистемы, чтобы изменившееся значение переменной <span class="cpp">Color</span> немедленно отразилось на
+изображении блока (при условии, что для блока задана векторная картинка, как было указано
+в <a href="pm_2_7_5.htm#light_ref1" title="Пример открытия модального окна средствами Windows">&sect;2.7.5</a>). Если этого не сделать, значение переменной
+<span class="cpp">Color</span> изменится, но изображение блока в окне подсистемы сохранит свой прежний
+цвет до тех пор, пока Windows не потребуется обновить это окно. Для перерисовки окна используется сервисная
+функция <span class="cpp"><a href="rdsRefreshBlockWindows.htm" title="А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна">rdsRefreshBlockWindows</a></span>:</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsRefreshBlockWindows.htm" title="А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна">rdsRefreshBlockWindows</a>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,  <span class="rem">// Блок или подсистема</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Recursive);    <span class="rem">// Перерисовывать окна вложенных</span></pre>
+
+<p>Первый параметр функции указывает блок или подсистему, чьи окна должны быть перерисованы. Изображение
+блока находится в окне его <a href="pm_1_2.htm#ref7" title="Родительская подсистема">родительской подсистемы</a>, поэтому в качестве
+первого параметра передается поле <span class="cpp">Parent</span> (идентификатор родительской подсистемы)
+<a href="RDS_BLOCKDATA.htm#ref3" title="Структура RDS_BLOCKDATA">структуры данных блока</a>
+<span class="cpp">BlockData</span>. Второй параметр функции указывает на необходимость обновить окна
+всех блоков и подсистем, вложенных в указанную &ndash; в данном случае этого не нужно, поэтому этот параметр равен
+<span class="cpp">FALSE</span>.</p>
+
+<p>Следует отметить, что обычно в реакции на нажатие кнопок мыши не требуется вызывать функцию для
+обновления окна подсистемы, блок которой получил сообщение о нажатии &ndash; RDS делает это автоматически.
+Однако, в данном случае этого недостаточно: после нажатия кнопки мыши RDS обновит окно тогда, когда
+снова начнет работать цикл обработки сообщений приложения (принципы обработки сообщений Windows
+подробно описаны в литературе по Windows API), то есть сразу после открытия модального окна диалога.
+Но переменная <span class="cpp">Color</span> изменяется только после закрытия диалога, когда автоматическое
+обновление окна подсистемы уже выполнено. Поэтому необходимо перерисовать окно еще раз, уже с новым значением
+переменной <span class="cpp">Color</span>.</p>
+
+<p>Для того, чтобы модель блока начала получать информацию о нажатии кнопок мыши, необходимо включить в
+окне параметров блока флаг &laquo;<span class="menu">блок реагирует на мышь</span>&raquo;
+(см. <a href="pm_1_4.htm#pic3" title="Параметры блока &ndash; модель и реакции">рис.&nbsp;7</a>). После этого можно перейти в
+режим моделирования и щелкнуть на изображении блока какой-нибудь кнопкой мыши. Должно открыться такое
+же окно диалога выбора цвета, как и при вызове функции настройки
+(<a href="pm_2_7_5.htm#pic1" title="Вызов модального диалога из функции настройки блока">рис.&nbsp;53</a>), и, если выбрать в нем какой-нибудь цвет,
+картинка блока должна изменить свой цвет на выбранный.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/ColorDialog_CalcStop.png" width="391" height="407" alt="Пока модальное окно открыто, расчет работать не будет" />
+<p id="light_pic1">Рис.&nbsp;54. Пока модальное окно открыто,<br />расчет работать не будет</p>
+</div></div>
+
+
+<p>В режиме моделирования все работает, как и планировалось, однако в режиме расчета начнутся проблемы. Поместим
+в систему блок-<a href="pm_2_6_1.htm#ref10" title="Блок управления динамическим расчетом (планировщик)">планировщик</a>
+динамического расчета и подключим числовой индикатор к его выходу &laquo;<span class="rdsvar">Time</span>&raquo; &ndash; по изменению
+числа на индикаторе мы сможем проверить, работает ли расчет
+(<a href="#pic1" title="Пока модальное окно открыто, расчет работать не будет">рис.&nbsp;54</a>).
+Выход &laquo;<span class="rdsvar">Time</span>&raquo; планировщика не отображается в меню при создании связи, поэтому придется сначала
+выбрать в меню пункт &laquo;<span class="menu">список</span>&raquo;, а потом уже выбрать выход &laquo;<span class="rdsvar">Time</span>&raquo; в
+<a href="um_2_7_1.htm#pic3" title="Полный список переменных блока">полном списке переменных</a>. Запустим расчет &ndash; число на
+индикаторе начнет увеличиваться, значит, расчет идет. Если теперь щелкнуть какой-нибудь кнопкой
+мыши на изображении блока выбора цвета, откроется окно диалога, но число на индикаторе перестанет изменяться
+&ndash; открытие модального окна вызвало остановку расчета. Если закрыть окно, расчет продолжится, но пока
+окно открыто, он будет стоять.</p>
+
+<p>Все дело в том, что в режиме расчета обычно работает два потока команд. В главном потоке приложения
+обслуживается пользовательский интерфейс (включая реакции блоков на нажатие кнопок мыши), а в потоке расчета
+циклически вызываются модели простых блоков и производится передача данных по связям. Чтобы эти два потока
+не пытались одновременно обратиться к одним и тем же данным, перед вызовом функции модели в любом из потоков
+данные блоков блокируются. Другой поток, попытавшись получить доступ к этим данным, будет остановлен до тех
+пор, пока функция модели в первом потоке не завершится и данные не будут разблокированы. Тогда второй поток
+сможет сам заблокировать данные, и его выполнение продолжится. При щелчке на блоке выбора цвета включается
+блокировка данных и модель блока вызывается в главном потоке с параметром <span class="cpp"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>.
+Поскольку внутри реакции на это событие открывается модальное окно, функция модели завершится только после
+закрытия этого окна, а, значит, и данные останутся заблокированными, пока окно не будет закрыто. Когда поток
+расчета, выполняя очередной такт, попытается получить доступ к данным блоков, он будет остановлен, пока данные
+не будут разблокированы, то есть до закрытия модального окна в главном потоке. Когда окно будет закрыто,
+функция модели в главном потоке завершится, данные будут разблокированы, и поток расчета сможет продолжить
+выполнение.</p>
+
+<p>Такая непреднамеренная остановка расчета может привести к неприятным, а главное &ndash; неожиданным для
+пользователя последствиям, особенно если идет моделирование какого-нибудь процесса с синхронизацией с
+реальным временем. Чтобы расчет не останавливался, необходимо снимать блокировку данных на время открытия
+модального окна. Окно диалога выбора цвета работает только с локальной переменной <span class="cpp">cc</span> и
+не обращается ни к каким данным блока, поэтому перед открытием окна можно без опасений снять блокировку, а
+после его закрытия &ndash; восстановить ее, поскольку цвет необходимо записать в переменную блока
+<span class="cpp">Color</span>, и обращаться к ней без блокировки нельзя.</p>
+
+<p><span id="ref3">Для</span>
+временного снятия блокировки данных с последующим ее восстановлением служит сервисная функция
+<span id="light_ref3" class="cpp"><a href="rdsUnlockAndCall.htm" title="А.5.3.4. rdsUnlockAndCall &ndash; вызвать функцию, сняв блокировку данных">rdsUnlockAndCall</a></span>:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsUnlockAndCall.htm" title="А.5.3.4. rdsUnlockAndCall &ndash; вызвать функцию, сняв блокировку данных">rdsUnlockAndCall</a>(
+    RDS_IpV Callback, <span class="rem">// Функция обратного вызова</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Arg,       <span class="rem">// Аргумент функции Callback</span>
+    <span class="kw">int</span> *pResult);    <span class="rem">// Результат функции Callback</span></pre>
+
+<p>Эта функция снимает блокировку данных, после чего вызывает функцию пользователя, указатель на
+которую передан в параметре <span class="cpp">Callback</span>. Функция пользователя должна иметь тип
+<span class="cpp">int <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> func(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a>)</span>, в
+качестве ее единственного параметра ей передается параметр <span class="cpp">Arg</span>, указанный при вызове
+<span class="cpp"><a class="hidden" href="rdsUnlockAndCall.htm" title="А.5.3.4. rdsUnlockAndCall &ndash; вызвать функцию, сняв блокировку данных">rdsUnlockAndCall</a></span>. После завершения пользовательской функции блокировка данных
+восстанавливается, и возвращенное функцией целое значение записывается по адресу
+<span class="cpp">pResult</span>, если в этом параметре не было передано значение <span class="cpp">NULL</span>.
+Таким образом, <span class="cpp"><a class="hidden" href="rdsUnlockAndCall.htm" title="А.5.3.4. rdsUnlockAndCall &ndash; вызвать функцию, сняв блокировку данных">rdsUnlockAndCall</a></span> позволяет вызвать произвольную
+функцию пользователя, сняв блокировку данных на время ее выполнения.</p>
+
+<p>Изменим модель блока выбора цвета таким образом, чтобы она не приводила к остановке расчета.
+Для этого необходимо вынести вызов <span class="cpp">ChooseColor</span> в отдельную функцию, имеющую
+совместимый с <span class="cpp"><a class="hidden" href="rdsUnlockAndCall.htm" title="А.5.3.4. rdsUnlockAndCall &ndash; вызвать функцию, сняв блокировку данных">rdsUnlockAndCall</a></span> формат:</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> ModalWindowTest2Callback(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> data)
+  {
+    <span class="kw">return</span> ChooseColor((CHOOSECOLOR*)data);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Внутри этой функции указатель общего вида <span class="cpp">data</span>, переданный как параметр,
+приводится к типу &laquo;указатель на структуру <span class="cpp">CHOOSECOLOR</span>&raquo;
+и подставляется в вызов <span class="cpp">ChooseColor</span>. Функция обратного вызова имеет тип
+<span class="cpp">int</span>, а возвращает она результат выполнения <span class="cpp">ChooseColor</span>, то есть
+<span class="cpp"><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></span> &ndash; в языке C это допустимо. Функция вернет нулевое значение, если
+<span class="cpp">ChooseColor</span> вернула <span class="cpp">FALSE</span>, и ненулевое, если
+<span class="cpp">TRUE</span>. В файлах заголовков Windows API тип <span class="cpp"><a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></span> определен
+как <span class="cpp">int</span>, а константы <span class="cpp">TRUE</span> и <span class="cpp">FALSE</span> как 0 и
+1, так что на самом деле возвращаемые функциями типы в точности совпадают. Но даже если бы они и не совпадали,
+такое приведение типов не вызвало бы проблем &ndash; в языке C истиной считается любое ненулевое значение.</p>
+
+<p>Теперь необходимо внести изменения в функцию модели блока (выделены
+<span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">// &hellip;</span>
+          <span class="rem">// Уведомление RDS об открытии модального окна</span>
+          <a class="hidden" href="rdsBlockModalWinOpen.htm" title="А.5.2.8. rdsBlockModalWinOpen &ndash; сообщение об открытии модального окна">rdsBlockModalWinOpen</a>(NULL);
+          <span class="rem">// Вызов диалога</span>
+          <span class="changes"><span class="kw">if</span>(<span id="light_ref4"><a class="hidden" href="rdsCalcProcessIsRunning.htm" title="А.5.2.10. rdsCalcProcessIsRunning &ndash; RDS в режиме расчета">rdsCalcProcessIsRunning</a></span>()) <span class="rem">// Идет расчет </span></span>
+          <span class="changes">  { <span class="rem">// Вызов со снятием блокировки </span></span>
+          <span class="changes">    <span class="kw">int</span> ret;</span>
+          <span class="changes">    <a class="hidden" href="rdsUnlockAndCall.htm" title="А.5.3.4. rdsUnlockAndCall &ndash; вызвать функцию, сняв блокировку данных">rdsUnlockAndCall</a>(ModalWindowTest2Callback,&amp;cc,&amp;ret);</span>
+          <span class="changes">    ok=ret;</span>
+          <span class="changes">  }</span>
+          <span class="changes"><span class="kw">else</span> <span class="rem">// Режим редактирования или моделирования </span></span>
+            ok=ChooseColor(&amp;cc);
+          <span class="rem">// Уведомление RDS о закрытии модального окна</span>
+          <a class="hidden" href="rdsBlockModalWinClose.htm" title="А.5.2.7. rdsBlockModalWinClose &ndash; сообщение о закрытии модального окна">rdsBlockModalWinClose</a>(NULL);
+          <span class="kw">if</span>(ok) <span class="rem">// Пользователь выбрал цвет</span>
+            { <span class="rem">// Запись цвета в Color</span>
+              Color=cc.rgbResult;
+  <span class="rem">// &hellip;</span></pre>
+
+<p>Вызывать диалог со снятием блокировки имеет смысл только в режиме расчета, поэтому сначала можно
+определить режим RDS. Для этого используется функция <span class="cpp"><a href="rdsCalcProcessIsRunning.htm" title="А.5.2.10. rdsCalcProcessIsRunning &ndash; RDS в режиме расчета">rdsCalcProcessIsRunning</a></span>, возвращающая
+<span class="cpp">TRUE</span>, если в данный момент RDS находится в режиме расчета. В этом случае
+вызывается <span class="cpp"><a class="hidden" href="rdsUnlockAndCall.htm" title="А.5.3.4. rdsUnlockAndCall &ndash; вызвать функцию, сняв блокировку данных">rdsUnlockAndCall</a></span>, в которую в качестве указателя на функцию обратного
+вызова передается <span class="cpp">ModalWindowTest2Callback</span>, в качестве аргумента функции &ndash;
+указатель на структуру <span class="cpp">cc</span>, а результат функции обратного вызова будет записан
+в целую переменную переменную <span class="cpp">ret</span>. Таким образом, вызов</p>
+
+<pre class="cpp">  <a class="hidden" href="rdsUnlockAndCall.htm" title="А.5.3.4. rdsUnlockAndCall &ndash; вызвать функцию, сняв блокировку данных">rdsUnlockAndCall</a>(ModalWindowTest2Callback,&amp;cc,&amp;ret);</pre>
+
+<p class="noindent">эквивалентен вызову</p>
+
+<pre class="cpp">  ret=ModalWindowTest2Callback(&amp;cc);</pre>
+
+<p class="noindent">со снятием блокировки перед вызовом и восстановлением ее после него.</p>
+
+<p>После закрытия диалога выбора цвета блокировка данных восстановится и <span class="cpp"><a class="hidden" href="rdsUnlockAndCall.htm" title="А.5.3.4. rdsUnlockAndCall &ndash; вызвать функцию, сняв блокировку данных">rdsUnlockAndCall</a></span>
+завершится. Теперь можно присвоить результат возврата функции обратного вызова (<span class="cpp">ret</span>)
+переменной <span class="cpp">ok</span>, которая будет анализироваться далее в модели. На
+самом деле, поскольку в Windows API типы <span class="cpp"><a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></span> и <span class="cpp">int</span>
+полностью эквивалентны, можно было бы написать</p>
+
+<pre class="cpp">  <a class="hidden" href="rdsUnlockAndCall.htm" title="А.5.3.4. rdsUnlockAndCall &ndash; вызвать функцию, сняв блокировку данных">rdsUnlockAndCall</a>(ModalWindowTest2Callback,&cc,<span class="changes">&amp;ok</span>);</pre>
+
+<p class="noindent">и обойтись без вспомогательной переменной <span class="cpp">ret</span> &ndash; здесь
+она введена для большей ясности примера.</p>
+
+<p>Если же функция <span class="cpp"><a class="hidden" href="rdsCalcProcessIsRunning.htm" title="А.5.2.10. rdsCalcProcessIsRunning &ndash; RDS в режиме расчета">rdsCalcProcessIsRunning</a></span> вернет <span class="cpp">FALSE</span>,
+это будет означать, что RDS находится в режимах редактирования или моделирования. В этом случае
+диалог можно открыть обычным образом, при помощи непосредственного вызова функции <span class="cpp">ChooseColor</span>.</p>
+
+<p>Теперь, если щелкнуть на блоке выбора цвета в режиме расчета, можно увидеть, что число на индикаторе,
+подсоединенном к блоку-планировщику
+(см. <a href="#pic1" title="Пока модальное окно открыто, расчет работать не будет">рис.&nbsp;54</a>), продолжает увеличиваться, несмотря
+на открытое модальное окно диалога, то есть поток расчета продолжает выполняться. Это не
+мешает работе самого блока &ndash; если выбрать в диалоге какой-нибудь цвет, изображение блока
+окрасится в него, как и планировалось.</p>
+
+<p>Все вышеизложенное справедливо только в том случае, если RDS работает в стандартном режиме, то
+есть с двумя потоками. Если в настройках RDS на
+<a href="um_2_18.htm#pic6" title="Окно настроек: вкладка совместимость и быстродействие">вкладке &laquo;<span class="menu">совместимость и быстродействие</span>&raquo;</a>
+будет установлен флаг &laquo;<span class="menu">производить расчет в главном потоке</span>&raquo;, открытие модального окна в любом
+случае будет останавливать расчет &ndash; главный поток будет занят окном и не сможет выполнять
+расчет до его закрытия. Снятие блокировки на время открытия окна никак не может помочь потоку расчета,
+потому что потока расчета просто не существует. К счастью, режим с единственным потоком используется крайне редко
+(в основном, для увеличения скорости расчета на медленных машинах), и в окне настроек содержится предупреждение о
+проблемах, возникающих при его включении, так что можно считать, что пользователь предупрежден, и знает,
+что делает, включая этот режим.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_7_5.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_8_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_6">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

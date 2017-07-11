@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.13.4. Пример использования функций блоков для поиска пути в графе</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_13">&sect;2.13. Вызов функций блоков</a></p>
+<div class="level"><p>&sect;2.13.4. Пример использования функций блоков для поиска пути в графе</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_13_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_13_4.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделью блока-узла графа,
+способного находить и показывать кратчайший путь между двумя заданными узлами.</p>
+
+<pre class="cpp">  <span class="rem">// Использование функций блоков для поиска пути в графе</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;math.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Функции общего назначения</span>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Вычисление длины кривой Безье численным интегрированием</span>
+  <span class="rem">// (метод Гаусса)</span>
+  <span class="kw">double</span> <a class="hidden" href="pm_2_13_4.htm#ref3" title="Функция вычисления длины кривой Безье">BezierLengthGauss</a>(<span class="kw">double</span> x1,<span class="kw">double</span> y1,<span class="kw">double</span> dx1,<span class="kw">double</span> dy1,
+      <span class="kw">double</span> x2,<span class="kw">double</span> y2,<span class="kw">double</span> dx2,<span class="kw">double</span> dy2,<span class="kw">double</span> delta)
+  { <span class="kw">double</span> ax,bx,cx,ay,by,cy;
+    <span class="kw">double</span> a,b,c,d,e,q,n,k,T,l,h,I,w;
+    <span class="kw">int</span> m;
+    <span class="kw">double</span> x[<span class="const">3</span>],s[<span class="const">3</span>];
+
+    <span class="rem">// Вычисление коэффициентов параметрического вида</span>
+    ax=<span class="const">2</span>*(x1-x2)+<span class="const">3</span>*(dx1-dx2);
+    bx=<span class="const">3</span>*(x2-x1+dx2-<span class="const">2</span>*dx1);
+    cx=<span class="const">3</span>*dx1;
+    ay=<span class="const">2</span>*(y1-y2)+<span class="const">3</span>*(dy1-dy2);
+    by=<span class="const">3</span>*(y2-y1+dy2-<span class="const">2</span>*dy1);
+    cy=<span class="const">3</span>*dy1;
+
+    <span class="rem">// Интегрирование</span>
+    b=<span class="const">1.0</span>;
+    n=delta*<span class="const">60.0</span>; m=<span class="const">1</span>; k=<span class="const">0</span>.<span class="const">0</span>;
+    <span class="kw">do</span>
+      { m*=<span class="const">2</span>; a=<span class="const">0</span>.<span class="const">0</span>; T=sqrt(<span class="const">0</span>.<span class="const">6</span>); I=<span class="const">0</span>.<span class="const">0</span>;
+        h=(b-a)/m;
+        <span class="kw">for</span>(<span class="kw">int</span> j=<span class="const">1</span>;j&lt;=m;j++)
+          { w=a+h;
+            c=(w+a)/<span class="const">2</span>; d=(w-a)/<span class="const">2</span>; e=d*<span class="const">5.0</span>/<span class="const">9.0</span>;
+            l=d*<span class="const">8.0</span>/<span class="const">9.0</span>; d*=T;
+            x[<span class="const">0</span>]=c-d; x[<span class="const">1</span>]=c; x[<span class="const">2</span>]=c+d;
+            s[<span class="const">0</span>]=e;   s[<span class="const">1</span>]=l; s[<span class="const">2</span>]=e;
+            <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;<span class="const">3</span>;i++)
+              { <span class="rem">// Вычисление подынтегральной функции (3 раза)</span>
+                <span class="kw">double</span> vx=<span class="const">3</span>*ax*x[i]*x[i]+<span class="const">2</span>*bx*x[i]+cx,
+                       vy=<span class="const">3</span>*ay*x[i]*x[i]+<span class="const">2</span>*by*x[i]+cy;
+                <span class="kw">double</span> f=sqrt(vx*vx+vy*vy);
+                I+=s[i]*f;
+              }
+            a=w;
+          }
+        l=k; k=I;
+      }
+    <span class="kw">while</span>(fabs(I-l)&gt;n);
+    <span class="kw">return</span> I;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Определение расстояния между точкой связи и геометрическим</span>
+  <span class="rem">// центром блока по структуре </span><a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION"><span class="rem">RDS_POINTDESCRIPTION</span></a>
+  <span class="kw">double</span> <a class="hidden" href="pm_2_13_4.htm#ref6" title="Функция вычисления расстояния от точки связи до центра блока">DistanceFromBlockCenterToPoint</a>(<a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> point)
+  { <a class="hidden" href="RDS_BLOCKDIMENSIONS.htm#ref1" title="Структура RDS_BLOCKDIMENSIONS">RDS_BLOCKDIMENSIONS</a> dim; <span class="rem">// Структура описания размеров блока</span>
+    <span class="kw">double</span> dx,dy,xc,yc,xp,yp;
+
+    <span class="kw">if</span>(point==NULL) <span class="rem">// Указатель не передан - ошибка</span>
+      <span class="kw">return</span> -<span class="const">1.0</span>;
+    <span class="rem">// Проверка – точка ли соединения с блоком передана?</span>
+    <span class="kw">if</span>(point-&gt;PointType!=<a class="hidden" href="RDS_POINTDESCRIPTION.htm#light_ref4" title="RDS_PTBLOCK">RDS_PTBLOCK</a>)
+      <span class="kw">return</span> -<span class="const">1.0</span>;
+
+    <span class="rem">// Определение размеров блока point-&gt;Block</span>
+    dim.servSize=<span class="kw">sizeof</span>(dim); <span class="rem">// Размер структуры</span>
+    <span class="kw">if</span>(!<a class="hidden" href="rdsGetBlockDimensionsEx.htm" title="А.5.6.18. rdsGetBlockDimensionsEx &ndash; получить размеры и положение блока">rdsGetBlockDimensionsEx</a>(point-&gt;Block,&amp;dim,<a class="hidden" href="rdsGetBlockDimensionsEx.htm#light_ref2" title="RDS_GBD_NONE">RDS_GBD_NONE</a>))
+      <span class="kw">return</span> -<span class="const">1.0</span>; <span class="rem">// Не удалось получить размеры блока</span>
+
+    <span class="rem">// Геометрический центр изображения блока</span>
+    xc=dim.Left+dim.Width/<span class="const">2.0</span>;
+    yc=dim.Top+dim.Height/<span class="const">2.0</span>;
+    <span class="rem">// Абсолютные координаты точки связи</span>
+    xp=dim.BlockX+point-&gt;x;
+    yp=dim.BlockY+point-&gt;y;
+    <span class="rem">// Вычисление расстояния между этими точками</span>
+    dx=xp-xc; dy=yp-yc;
+    <span class="kw">return</span> sqrt(dx*dx+dy*dy);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Проверка связи (должно быть два блока на концах) и вычисление</span>
+  <span class="rem">// длины дуги графа, соответствующей этой связи</span>
+  <span class="kw">double</span> <a class="hidden" href="pm_2_13_4.htm#ref11" title="Функция проверки допустимости и вычисления длины связи">CalcArcLength</a>(<a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> Conn)
+  { <a class="hidden" href="RDS_CONNDESCRIPTION.htm#ref1" title="Структура RDS_CONNDESCRIPTION">RDS_CONNDESCRIPTION</a> ConnDescr;   <span class="rem">// Структура описания связи</span>
+    <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">RDS_POINTDESCRIPTION</a> PointDescr; <span class="rem">// Структура описания точки</span>
+    <a class="hidden" href="RDS_LINEDESCRIPTION.htm#ref1" title="Структура RDS_LINEDESCRIPTION">RDS_LINEDESCRIPTION</a> LineDescr;   <span class="rem">// Структура описания линии</span>
+    <span class="kw">int</span> BlockCnt;
+    <span class="kw">double</span> len=<span class="const">0</span>.<span class="const">0</span>; <span class="rem">// Общая длина дуги</span>
+    <span class="kw">double</span> x1,y1,x2,y2;
+
+    <span class="rem">// Заполнение служебных полей размеров структур</span>
+    ConnDescr.servSize=<span class="kw">sizeof</span>(ConnDescr);
+    PointDescr.servSize=<span class="kw">sizeof</span>(PointDescr);
+    LineDescr.servSize=<span class="kw">sizeof</span>(LineDescr);
+
+    <span class="rem">// Получаем описание связи – нам нужно число точек и линий в ней</span>
+    <span class="kw">if</span>(!<a class="hidden" href="rdsGetConnDescription.htm" title="А.5.6.23. rdsGetConnDescription &ndash; получить описание связи">rdsGetConnDescription</a>(Conn,&amp;ConnDescr))
+      <span class="kw">return</span> -<span class="const">1.0</span>;
+
+    <span class="kw">if</span>(ConnDescr.ConnType!=<a class="hidden" href="RDS_CONNDESCRIPTION.htm#light_ref6" title="RDS_CTCONNECTION">RDS_CTCONNECTION</a>)
+      <span class="kw">return</span> -<span class="const">1.0</span>; <span class="rem">// Это не связь, а шина – шины нам не годятся</span>
+
+    <span class="rem">// Проверяем число блоков на концах связи (должно быть ровно 2)</span>
+    BlockCnt=<span class="const">0</span>;
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;ConnDescr.NumPoints;i++)
+      { <span class="rem">// Получаем описание точки связи i</span>
+        <a class="hidden" href="rdsGetPointDescription.htm" title="А.5.6.36. rdsGetPointDescription &ndash; получить описание точки связи">rdsGetPointDescription</a>(Conn,i,&amp;PointDescr);
+        <span class="rem">// Проверяем тип точки</span>
+        <span class="kw">switch</span>(PointDescr.PointType)
+          { <span class="kw">case</span> <a class="hidden" href="RDS_POINTDESCRIPTION.htm#light_ref5" title="RDS_PTBUS">RDS_PTBUS</a>: <span class="rem">// Соединение с шиной – связь не годится</span>
+              <span class="kw">return</span> -<span class="const">1.0</span>;
+            <span class="kw">case</span> <a class="hidden" href="RDS_POINTDESCRIPTION.htm#light_ref4" title="RDS_PTBLOCK">RDS_PTBLOCK</a>: <span class="rem">// Соединение с блоком</span>
+              BlockCnt++;
+              <span class="kw">if</span>(BlockCnt&gt;<span class="const">2</span>) <span class="rem">// Связь разветвлена</span>
+                <span class="kw">return</span> -<span class="const">1.0</span>;
+              <span class="rem">// Найдена точка соединения с блоком. Добавляем к len</span>
+              <span class="rem">// расстояние между точкой и центром блока</span>
+              len+=<a class="hidden" href="pm_2_13_4.htm#ref6" title="Функция вычисления расстояния от точки связи до центра блока">DistanceFromBlockCenterToPoint</a>(&amp;PointDescr);
+              <span class="kw">break</span>;
+          } <span class="rem">// switch(PointDescr.PointType)</span>
+      } <span class="rem">// for(int i=0;...)</span>
+    <span class="kw">if</span>(BlockCnt!=<span class="const">2</span>) <span class="rem">// Связь соединяет менее двух блоков</span>
+     <span class="kw">return</span> -<span class="const">1.0</span>;
+
+    <span class="rem">// Связь соединена ровно с двумя блоками – суммируем длину всех</span>
+    <span class="rem">// ее линий</span>
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;ConnDescr.NumLines;i++)
+      { <span class="rem">// Получаем описание линии связи i</span>
+        <a class="hidden" href="rdsGetLineDescription.htm" title="А.5.6.30. rdsGetLineDescription &ndash; получить описание отрезка связи">rdsGetLineDescription</a>(Conn,i,&amp;LineDescr,NULL,NULL);
+        <span class="rem">// Переводим целые координаты концов линии в double</span>
+        <span class="rem">// для большей точности вычисления</span>
+        x1=LineDescr.x1; y1=LineDescr.y1;
+        x2=LineDescr.x2; y2=LineDescr.y2;
+        <span class="rem">// В зависимости от типа линии, вычисляем ее длину и</span>
+        <span class="rem">// добавляем к len</span>
+        <span class="kw">switch</span>(LineDescr.LineType)
+          { <span class="kw">case</span> <a class="hidden" href="RDS_LINEDESCRIPTION.htm#light_ref4" title="RDS_LNLINE">RDS_LNLINE</a>: <span class="rem">// Отрезок прямой</span>
+              len+=sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
+              <span class="kw">break</span>;
+            <span class="kw">case</span> <a class="hidden" href="RDS_LINEDESCRIPTION.htm#light_ref5" title="RDS_LNBEZIER">RDS_LNBEZIER</a>: <span class="rem">// Кривая Безье</span>
+              len+=<a class="hidden" href="pm_2_13_4.htm#ref3" title="Функция вычисления длины кривой Безье">BezierLengthGauss</a>(x1,y1,
+                     LineDescr.dx1,LineDescr.dy1,
+                     x2,y2,
+                     LineDescr.dx2,LineDescr.dy2,
+                     <span class="const">2</span>);
+              <span class="kw">break</span>;
+          } <span class="rem">// switch(LineDescr.LineType)</span>
+      } <span class="rem">// for(int i=0;...)</span>
+    <span class="kw">return</span> len;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Визуально выделить связь</span>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref24" title="Функция визуального выделения связи">MarkConnection</a>(<a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> Conn)
+  { <span class="rem">// Определяем число альтернативных внешних видов</span>
+    <span class="kw">int</span> StylesCount=<a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a>(Conn,<a class="hidden" href="rdsAltConnAppearanceOp.htm#light_ref4" title="RDS_CAOCOUNT">RDS_CAOCOUNT</a>,<span class="const">0</span>,NULL);
+
+    <span class="kw">if</span>(StylesCount&lt;<span class="const">1</span>)
+      { <span class="rem">// Для связи еще не определено ни одного внешнего вида</span>
+        <span class="rem">// Создаем внешний вид 0 и делаем его толще текущего</span>
+        <a class="hidden" href="RDS_CONNAPPEARANCE.htm#ref1" title="Структура RDS_CONNAPPEARANCE">RDS_CONNAPPEARANCE</a> style; <span class="rem">// Структура описания стиля связи</span>
+        <span class="rem">// Получаем описание текущего внешнего вида связи</span>
+        style.servSize=<span class="kw">sizeof</span>(style);
+        <a class="hidden" href="rdsGetConnAppearance.htm" title="А.5.6.22. rdsGetConnAppearance &ndash; получить внешний вид связи">rdsGetConnAppearance</a>(Conn,&amp;style);
+        <span class="rem">// Увеличиваем толщину и размер стрелки</span>
+        style.LineWidth*=<span class="const">3</span>;
+        style.ArrowLength*=<span class="const">2</span>;
+        style.ArrowWidth*=<span class="const">3</span>;
+        <span class="rem">// Запоминаем эти параметры как альтернативный вид 0</span>
+        <a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a>(Conn,<a class="hidden" href="rdsAltConnAppearanceOp.htm#light_ref9" title="RDS_CAOSET">RDS_CAOSET</a>,<span class="const">0</span>,&amp;style);
+      }
+    <span class="rem">// Устанавливаем альтернативный вид 0</span>
+    <a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a>(Conn,<a class="hidden" href="rdsAltConnAppearanceOp.htm#light_ref10" title="RDS_CAOSETCURRENT">RDS_CAOSETCURRENT</a>,<span class="const">0</span>,NULL);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Снять выделение связи</span>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref34" title="Функция снятия визуального выделения связи">UnmarkConnection</a>(<a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> Conn)
+  { <span class="rem">// Восстанавливаем исходный внешний вид связи</span>
+    <a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a>(Conn,<a class="hidden" href="rdsAltConnAppearanceOp.htm#light_ref8" title="RDS_CAORESTORE">RDS_CAORESTORE</a>,<span class="const">0</span>,NULL);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Имена и параметры функций блоков</span>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция сброса параметров в узле графа</span>
+  <span class="preproc">#define PROGGUIDEGRAPHPATHFUNC_RESET \</span>
+<span class="preproc">          "ProgrammersGuide.GraphPath.Reset"</span>
+  <span class="rem">// Структура парметров функции</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;  <span class="rem">// Размер этой структуры</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ResetMark;  <span class="rem">// TRUE – сбросить метку узла</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ResetBegin; <span class="rem">// TRUE – сбросить флаг начала маршрута</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ResetEnd;   <span class="rem">// TRUE – сбросить флаг конца маршрута</span>
+  } <a class="hidden" href="pm_2_13_4.htm#ref35" title="Структура TProgGuideFuncResetParams">TProgGuideFuncResetParams</a>;
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция получения параметров узла графа</span>
+  <span class="preproc">#define PROGGUIDEGRAPHPATHFUNC_GETPARAMS \</span>
+<span class="preproc">          "ProgrammersGuide.GraphPath.GetParams"</span>
+  <span class="rem">// Среагировавший на функцию блок должен вернуть значение 1</span>
+  <span class="rem">// Структура парметров функции</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize; <span class="rem">// Размер этой структуры</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Marked;    <span class="rem">// В узле есть метка</span>
+    <span class="kw">double</span> Mark;    <span class="rem">// Значение метки</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Begin;     <span class="rem">// Этот узел – начало маршрута</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> End;       <span class="rem">// Этот узел – конец маршрута</span>
+  } <a class="hidden" href="pm_2_13_4.htm#ref37" title="Структура TProgGuideFuncGetParams">TProgGuideFuncGetParams</a>;
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция поиска начала и конца маршрута</span>
+  <span class="rem">// (вызывается у всех блоков подсистемы)</span>
+  <span class="preproc">#define PROGGUIDEGRAPHPATHFUNC_FIND \</span>
+<span class="preproc">          "ProgrammersGuide.GraphPath.Find"</span>
+  <span class="rem">// Структура параметров функции</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;         <span class="rem">// Размер этой структуры</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> BeginBlock; <span class="rem">// Найденный идентификатор начала</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> EndBlock;   <span class="rem">// Найденный идентификатор конца</span>
+  } <a class="hidden" href="pm_2_13_4.htm#ref39" title="Структура TProgGuideFuncFindParams">TProgGuideFuncFindParams</a>;
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Пометить узел графа указанным вещественным числом и вызвать</span>
+  <span class="rem">// эту же функцию у его соседей</span>
+  <span class="preproc">#define PROGGUIDEGRAPHPATHFUNC_MARK \</span>
+<span class="preproc">          "ProgrammersGuide.GraphPath.Mark"</span>
+  <span class="rem">// Структура параметров функции</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;      <span class="rem">// Размер этой структуры</span>
+    <span class="kw">double</span> Mark;         <span class="rem">// Устанавливаемое значение метки</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Previous;<span class="rem">// Блок, от которого пришла метка</span>
+  } <a class="hidden" href="pm_2_13_4.htm#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a>;
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Выделить маршрут от данного блока к началу</span>
+  <span class="preproc">#define PROGGUIDEGRAPHPATHFUNC_BACKTRACE \</span>
+<span class="preproc">          "ProgrammersGuide.GraphPath.BackTrace"</span>
+  <span class="rem">// Параметров у функции нет</span>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Глобальные переменные для хранения идентификаторов функций блоков</span>
+  <span class="kw">int</span> <a class="hidden" href="pm_2_13_4.htm#light_ref45" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Find">GraphFuncFind</a>=<span class="const">0</span>,      <span class="rem">// </span><a class="hidden" href="pm_2_13_4.htm#ref40" title="Функция блока ProgrammersGuide.GraphPath.Find"><span class="rem">ProgrammersGuide.GraphPath.Find</span></a>
+      <a class="hidden" href="pm_2_13_4.htm#light_ref46" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.GetParams">GraphFuncGetParams</a>=<span class="const">0</span>, <span class="rem">// </span><a class="hidden" href="pm_2_13_4.htm#ref38" title="Функция блока ProgrammersGuide.GraphPath.GetParams"><span class="rem">ProgrammersGuide.GraphPath.GetParams</span></a>
+      <a class="hidden" href="pm_2_13_4.htm#light_ref47" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">GraphFuncReset</a>=<span class="const">0</span>,     <span class="rem">// </span><a class="hidden" href="pm_2_13_4.htm#ref36" title="Функция блока ProgrammersGuide.GraphPath.Reset"><span class="rem">ProgrammersGuide.GraphPath.Reset</span></a>
+      <a class="hidden" href="pm_2_13_4.htm#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a>=<span class="const">0</span>,      <span class="rem">// </span><a class="hidden" href="pm_2_13_4.htm#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark"><span class="rem">ProgrammersGuide.GraphPath.Mark</span></a>
+      <a class="hidden" href="pm_2_13_4.htm#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a>=<span class="const">0</span>; <span class="rem">// </span><a class="hidden" href="pm_2_13_4.htm#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace"><span class="rem">ProgrammersGuide.GraphPath.BackTrace</span></a>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Функции-оболочки (для лучшей читаемости)</span>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Сбросить у узлов графа в заданной подсистеме заданные маркеры</span>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref50" title="Функция сброса маркеров в узле графа">GraphPath_Reset</a>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Sys, <span class="rem">// Подсистема</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> mark,       <span class="rem">// Сбросить метки узлов</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> begin,      <span class="rem">// Сбросить начало маршрута</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> end)        <span class="rem">// Сбросить конец маршрута</span>
+  { <span class="rem">// Структура параметров функции </span><a class="hidden" href="pm_2_13_4.htm#ref36" title="Функция блока ProgrammersGuide.GraphPath.Reset"><span class="rem">ProgrammersGuide.GraphPath.Reset</span></a>
+    <a class="hidden" href="pm_2_13_4.htm#ref35" title="Структура TProgGuideFuncResetParams">TProgGuideFuncResetParams</a> params;
+    <span class="rem">// Заполняем поле размера структуры парааметров</span>
+    params.servSize=<span class="kw">sizeof</span>(params);
+    <span class="rem">// Заполняем поля структуры параметров</span>
+    params.ResetMark=mark;
+    params.ResetBegin=begin;
+    params.ResetEnd=end;
+    <span class="rem">// Вызываем </span><a class="hidden" href="pm_2_13_4.htm#ref36" title="Функция блока ProgrammersGuide.GraphPath.Reset"><span class="rem">ProgrammersGuide.GraphPath.Reset</span></a><span class="rem"> у всех</span>
+    <span class="rem">// блоков подсистемы Sys</span>
+    <a class="hidden" href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a>(Sys,<a class="hidden" href="pm_2_13_4.htm#light_ref47" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">GraphFuncReset</a>,&amp;params,<span class="const">0</span>);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Найти блоки начала и конца маршрута в заданной подсистеме</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="pm_2_13_4.htm#ref51" title="Функция поиска начального и конечного блока">GraphPath_GetTerminalBlocks</a>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Sys,     <span class="rem">// Подсистема с графом</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> *pBegin, <span class="rem">// Возвращаемый идентификатор начала</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> *pEnd)   <span class="rem">// Возвращаемый идентификатор конца</span>
+  { <a class="hidden" href="pm_2_13_4.htm#ref39" title="Структура TProgGuideFuncFindParams">TProgGuideFuncFindParams</a> params;
+    <span class="rem">// Заполняем поле размера структуры паараметров</span>
+    params.servSize=<span class="kw">sizeof</span>(params);
+    <span class="rem">// Обнуляем поля идентификаторов начала и конца</span>
+    params.BeginBlock=params.EndBlock=NULL;
+    <span class="rem">// Вызываем </span><a class="hidden" href="pm_2_13_4.htm#ref40" title="Функция блока ProgrammersGuide.GraphPath.Find"><span class="rem">ProgrammersGuide.GraphPath.Find</span></a><span class="rem"> у всех блоков в</span>
+    <span class="rem">// подсистеме Sys, разрешая блокам остановить вызовы</span>
+    <a class="hidden" href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a>(Sys,<a class="hidden" href="pm_2_13_4.htm#light_ref45" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Find">GraphFuncFind</a>,&amp;params,
+        <a class="hidden" href="rdsBroadcastFuncCallsDelayed.htm#light_ref2" title="RDS_BCALL_ALLOWSTOP">RDS_BCALL_ALLOWSTOP</a>);
+    <span class="rem">// Копируем найденные идентификаторы в переданные указатели</span>
+    <span class="kw">if</span>(pBegin) *pBegin=params.BeginBlock;
+    <span class="kw">if</span>(pEnd) *pEnd=params.EndBlock;
+    <span class="rem">// Возвращаем TRUE, если установлены и начало, и конец</span>
+    <span class="kw">return</span> params.BeginBlock!=NULL &amp;&amp; params.EndBlock!=NULL;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Поиск маршрута в графе в заданной подсистеме</span>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref53" title="Функция поиска маршрута">GraphPath_FindPath</a>(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> System)
+  { <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> StartBlock,EndBlock;
+    <a class="hidden" href="pm_2_13_4.htm#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a> markparams;
+
+    <span class="rem">// Считаем, что маркировка всего графа сброшена</span>
+
+    <span class="rem">// Ищем начальную и конечную точку маршрута</span>
+    <span class="kw">if</span>(!<a class="hidden" href="pm_2_13_4.htm#ref51" title="Функция поиска начального и конечного блока">GraphPath_GetTerminalBlocks</a>(System,&amp;StartBlock,&amp;EndBlock))
+      <span class="kw">return</span>; <span class="rem">// Начало или конец не найдены</span>
+    <span class="rem">// Начало маршрута – StartBlock, конец - EndBlock</span>
+
+    <span class="rem">// Маркируем граф от начала маршрута</span>
+    markparams.servSize=<span class="kw">sizeof</span>(markparams);
+    markparams.Mark=<span class="const">0</span>.<span class="const">0</span>; <span class="rem">// Начало маркируется значением 0</span>
+    markparams.Previous=NULL;<span class="rem">// Это значение не пришло от какого-то</span>
+                             <span class="rem">// соседнего блока</span>
+    <span class="rem">// Вызываем функцию маркировки для начального блока</span>
+    <a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(StartBlock,<a class="hidden" href="pm_2_13_4.htm#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a>,&amp;markparams);
+
+    <span class="rem">// Теперь отслеживаем кратчайший путь в обратном направлении</span>
+    <span class="rem">// (от конечного блока)</span>
+    <a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(EndBlock,<a class="hidden" href="pm_2_13_4.htm#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a>,NULL);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Модель блока и дополнительные функции</span>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart    ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start     (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready     (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define sBegin    (*((char *)(pStart+2)))</span>
+  <span class="preproc">#define sEnd      (*((char *)(pStart+3)))</span>
+  <span class="preproc">#define sInPath   (*((char *)(pStart+4)))</span>
+  <span class="preproc">#define sMarked   (*((char *)(pStart+5)))</span>
+  <span class="preproc">#define sPathMark (*((double *)(pStart+6)))</span>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Сделать этот блок началом маршрута (прототип функции)</span>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref72" title="Сделать блок началом маршрута">GraphNode_SetBlockAsBegin</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData);
+  <span class="rem">// Сделать этот блок концом маршрута (прототип функции)</span>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref73" title="Сделать блок концом маршрута">GraphNode_SetBlockAsEnd</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData);
+  <span class="rem">// Реакция блока на функцию </span><a class="hidden" href="pm_2_13_4.htm#ref36" title="Функция блока ProgrammersGuide.GraphPath.Reset"><span class="rem">ProgrammersGuide.GraphPath.Reset</span></a><span class="rem"> (прототип функции)</span>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref70" title="Функция сброса выделения узла">GraphNode_OnReset</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="pm_2_13_4.htm#ref35" title="Структура TProgGuideFuncResetParams">TProgGuideFuncResetParams</a> *reset);
+  <span class="rem">// Реакция блока на функцию </span><a class="hidden" href="pm_2_13_4.htm#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark"><span class="rem">ProgrammersGuide.GraphPath.Mark</span></a><span class="rem"> (прототип функции)</span>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref75" title="Пометка узла графа и его соседей">GraphNode_OnMarkBlock</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="pm_2_13_4.htm#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a> *params);
+  <span class="rem">// Реакция блока на функцию </span><a class="hidden" href="pm_2_13_4.htm#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace"><span class="rem">ProgrammersGuide.GraphPath.BackTrace</span></a><span class="rem"> (прототип функции)</span>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref79" title="Функция выделения кратчайшего маршрута">GraphNode_OnBackTracePath</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData);
+  <span class="rem">// Программное рисование внешнего вида блока (прототип функции)</span>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref68" title="Функция рисования узла графа">GraphNode_Draw</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw);
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Модель блока-узла графа</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> GraphNode(<span class="kw">int</span> CallMode,
+            <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+            <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Вспомогательная - указатель на данные функции блока</span>
+    <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a> func;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Регистрация функций</span>
+          <span class="kw">if</span>(<a class="hidden" href="pm_2_13_4.htm#light_ref46" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.GetParams">GraphFuncGetParams</a>==<span class="const">0</span>)
+            <a class="hidden" href="pm_2_13_4.htm#light_ref46" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.GetParams">GraphFuncGetParams</a>=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(
+              PROGGUIDEGRAPHPATHFUNC_GETPARAMS);
+          <span class="kw">if</span>(<a class="hidden" href="pm_2_13_4.htm#light_ref47" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">GraphFuncReset</a>==<span class="const">0</span>)
+            <a class="hidden" href="pm_2_13_4.htm#light_ref47" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">GraphFuncReset</a>=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(
+              PROGGUIDEGRAPHPATHFUNC_RESET);
+          <span class="kw">if</span>(<a class="hidden" href="pm_2_13_4.htm#light_ref45" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Find">GraphFuncFind</a>==<span class="const">0</span>)
+            <a class="hidden" href="pm_2_13_4.htm#light_ref45" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Find">GraphFuncFind</a>=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(
+              PROGGUIDEGRAPHPATHFUNC_FIND);
+          <span class="kw">if</span>(<a class="hidden" href="pm_2_13_4.htm#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a>==<span class="const">0</span>)
+            <a class="hidden" href="pm_2_13_4.htm#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a>=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(
+              PROGGUIDEGRAPHPATHFUNC_MARK);
+          <span class="kw">if</span>(<a class="hidden" href="pm_2_13_4.htm#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a>==<span class="const">0</span>)
+            <a class="hidden" href="pm_2_13_4.htm#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a>=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(
+              PROGGUIDEGRAPHPATHFUNC_BACKTRACE);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strncmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSLLLLD"</span>,<span class="const">8</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Вызов контекстного меню блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CONTEXTPOPUP.htm" title="А.2.6.2. RDS_BFM_CONTEXTPOPUP &ndash; вызов контекстного меню блока">RDS_BFM_CONTEXTPOPUP</a>:
+          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(<span class="str">"Начало маршрута"</span>,
+            sBegin?<a class="hidden" href="rdsChangeMenuItem.htm#light_ref2" title="RDS_MENU_DISABLED">RDS_MENU_DISABLED</a>:<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>);
+          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(<span class="str">"Конец маршрута"</span>,
+            sEnd?<a class="hidden" href="rdsChangeMenuItem.htm#light_ref2" title="RDS_MENU_DISABLED">RDS_MENU_DISABLED</a>:<span class="const">0</span>,<span class="const">1</span>,<span class="const">0</span>);
+          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(<span class="str">"Сбросить все"</span>,<span class="const">0</span>,<span class="const">2</span>,<span class="const">0</span>);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Быбор пункта меню</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a>:
+          <span class="kw">switch</span>(((<a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a>)ExtParam)-&gt;Function)
+            { <span class="kw">case</span> <span class="const">0</span>: <span class="rem">// Начало маршрута</span>
+                <a class="hidden" href="pm_2_13_4.htm#ref72" title="Сделать блок началом маршрута">GraphNode_SetBlockAsBegin</a>(BlockData);
+                <a class="hidden" href="rdsRefreshBlockWindows.htm" title="А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна">rdsRefreshBlockWindows</a>(BlockData-&gt;Parent,FALSE);
+                <span class="kw">break</span>;
+              <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Конец маршрута</span>
+                <a class="hidden" href="pm_2_13_4.htm#ref73" title="Сделать блок концом маршрута">GraphNode_SetBlockAsEnd</a>(BlockData);
+                <a class="hidden" href="rdsRefreshBlockWindows.htm" title="А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна">rdsRefreshBlockWindows</a>(BlockData-&gt;Parent,FALSE);
+                <span class="kw">break</span>;
+              <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Сбросить все</span>
+                <a class="hidden" href="pm_2_13_4.htm#ref50" title="Функция сброса маркеров в узле графа">GraphPath_Reset</a>(BlockData-&gt;Parent,TRUE,TRUE,TRUE);
+                <a class="hidden" href="rdsRefreshBlockWindows.htm" title="А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна">rdsRefreshBlockWindows</a>(BlockData-&gt;Parent,FALSE);
+                <span class="kw">break</span>;
+            }
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов функции блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a>:
+          func=(<a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a>)ExtParam;
+          <span class="kw">if</span>(func-&gt;Function==<a class="hidden" href="pm_2_13_4.htm#light_ref47" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">GraphFuncReset</a>) <span class="rem">// Сброс параметров</span>
+            <a class="hidden" href="pm_2_13_4.htm#ref70" title="Функция сброса выделения узла">GraphNode_OnReset</a>(BlockData,
+              (<a class="hidden" href="pm_2_13_4.htm#ref35" title="Структура TProgGuideFuncResetParams">TProgGuideFuncResetParams</a>*)(func-&gt;Data));
+          <span class="kw">else</span> <span class="kw">if</span>(func-&gt;Function==GraphFuncGetParams)
+            { <span class="rem">// Получение параметров узла</span>
+              <a class="hidden" href="pm_2_13_4.htm#ref37" title="Структура TProgGuideFuncGetParams">TProgGuideFuncGetParams</a> *get=
+                (<a class="hidden" href="pm_2_13_4.htm#ref37" title="Структура TProgGuideFuncGetParams">TProgGuideFuncGetParams</a>*)(func-&gt;Data);
+              <span class="kw">if</span>(get!=NULL &amp;&amp;
+                 get-&gt;servSize&gt;=<span class="kw">sizeof</span>(<a class="hidden" href="pm_2_13_4.htm#ref37" title="Структура TProgGuideFuncGetParams">TProgGuideFuncGetParams</a>))
+                { <span class="rem">// Допустимый размер структуры параметров</span>
+                  get-&gt;Marked=(sMarked!=<span class="const">0</span>);
+                  get-&gt;Mark=sPathMark;
+                  get-&gt;Begin=(sBegin!=<span class="const">0</span>);
+                  get-&gt;End=(sEnd!=<span class="const">0</span>);
+                }
+              <span class="kw">return</span> <span class="const">1</span>; <span class="rem">// Блок является узлом графа</span>
+            }
+          <span class="kw">else</span> <span class="kw">if</span>(func-&gt;Function==<a class="hidden" href="pm_2_13_4.htm#light_ref45" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Find">GraphFuncFind</a>)
+            { <span class="rem">// Поиск начала и конца маршрута</span>
+              <a class="hidden" href="pm_2_13_4.htm#ref39" title="Структура TProgGuideFuncFindParams">TProgGuideFuncFindParams</a> *find=
+                (<a class="hidden" href="pm_2_13_4.htm#ref39" title="Структура TProgGuideFuncFindParams">TProgGuideFuncFindParams</a>*)(func-&gt;Data);
+              <span class="kw">if</span>(find==NULL) <span class="kw">break</span>; <span class="rem">// Нет параметров</span>
+              <span class="kw">if</span>(find-&gt;servSize&lt;<span class="kw">sizeof</span>(<a class="hidden" href="pm_2_13_4.htm#ref39" title="Структура TProgGuideFuncFindParams">TProgGuideFuncFindParams</a>))
+                <span class="kw">break</span>; <span class="rem">// Недопустимый размер структуры параметров</span>
+              <span class="kw">if</span>(sBegin) <span class="rem">// Этот блок – начало маршрута</span>
+                find-&gt;BeginBlock=BlockData-&gt;Block;
+              <span class="kw">if</span>(sEnd) <span class="rem">// Этот блок – конец маршрута</span>
+                find-&gt;EndBlock=BlockData-&gt;Block;
+              <span class="kw">if</span>(find-&gt;BeginBlock!=NULL &amp;&amp; find-&gt;EndBlock!=NULL)
+                func-&gt;Stop=TRUE; <span class="rem">// Оба конца маршрута найдены</span>
+            }
+          <span class="kw">else</span> <span class="kw">if</span>(func-&gt;Function==<a class="hidden" href="pm_2_13_4.htm#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a>) <span class="rem">// Пометить граф</span>
+            <a class="hidden" href="pm_2_13_4.htm#ref75" title="Пометка узла графа и его соседей">GraphNode_OnMarkBlock</a>(BlockData,
+              (TProgGuideFuncMarkParams*)(func-&gt;Data));
+          <span class="kw">else</span> <span class="kw">if</span>(func-&gt;Function==<a class="hidden" href="pm_2_13_4.htm#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a>)
+            <a class="hidden" href="pm_2_13_4.htm#ref79" title="Функция выделения кратчайшего маршрута">GraphNode_OnBackTracePath</a>(BlockData); <span class="rem">// Выделить маршрут</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Рисование</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a>:
+          <a class="hidden" href="pm_2_13_4.htm#ref68" title="Функция рисования узла графа">GraphNode_Draw</a>(BlockData,(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a>)ExtParam);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Рисование узла графа</span>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref68" title="Функция рисования узла графа">GraphNode_Draw</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw)
+  { <span class="kw">static</span> <span class="kw">char</span> beg[]=<span class="str">"Н"</span>,end[]=<span class="str">"К"</span>; <span class="rem">// Метки начала и конца</span>
+    <span class="kw">int</span> w,h;
+
+    <span class="rem">// Рисуем прямоугольник, цвет которого зависит от переменной</span>
+    <span class="rem">// блока sInPath</span>
+    <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,<span class="const">1</span>,<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+    <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,sInPath?<span class="const">0xff00</span>:<span class="const">0xffffff</span>);
+    <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(draw-&gt;Left,draw-&gt;Top,
+        draw-&gt;Left+draw-&gt;Width,draw-&gt;Top+draw-&gt;Height);
+
+    <span class="kw">if</span>(sBegin==<span class="const">0</span> &amp;&amp; sEnd==<span class="const">0</span>) <span class="rem">// Нет флагов начала и конца маршрута</span>
+      <span class="kw">return</span>;
+    <span class="rem">// Устанавливаем шрифт высотой в весь блок</span>
+    <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref5" title="RDS_GFS_EMPTY">RDS_GFS_EMPTY</a>,<span class="const">0</span>);
+    <a class="hidden" href="rdsXGSetFont.htm" title="А.5.18.22. rdsXGSetFont &ndash; установить шрифт">rdsXGSetFont</a>(<span class="const">0</span>,<span class="str">"Arial Cyr"</span>,
+      draw-&gt;Height,<span class="const">0</span>,<a class="hidden" href="RDS_SERVFONTPARAMS.htm#light_ref6" title="RUSSIAN_CHARSET">RUSSIAN_CHARSET</a>,<span class="const">0</span>,FALSE,FALSE,FALSE,FALSE);
+
+    <span class="kw">if</span>(sBegin) <span class="rem">// Рисуем метку начала</span>
+      { <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(beg,&amp;w,&amp;h);
+        <a class="hidden" href="rdsXGTextOut.htm" title="А.5.18.27. rdsXGTextOut &ndash; строка текста">rdsXGTextOut</a>(draw-&gt;Left+(draw-&gt;Width-w)/<span class="const">2</span>,
+                     draw-&gt;Top+(draw-&gt;Height-h)/<span class="const">2</span>,
+                     beg);
+      }
+    <span class="kw">if</span>(sEnd) <span class="rem">// Рисуем метку конца</span>
+      { <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(end,&amp;w,&amp;h);
+        <a class="hidden" href="rdsXGTextOut.htm" title="А.5.18.27. rdsXGTextOut &ndash; строка текста">rdsXGTextOut</a>(draw-&gt;Left+(draw-&gt;Width-w)/<span class="const">2</span>,
+                     draw-&gt;Top+(draw-&gt;Height-h)/<span class="const">2</span>,
+                     end);
+      }
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Реакция блока на функцию </span><a class="hidden" href="pm_2_13_4.htm#ref36" title="Функция блока ProgrammersGuide.GraphPath.Reset"><span class="rem">ProgrammersGuide.GraphPath.Reset</span></a>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref70" title="Функция сброса выделения узла">GraphNode_OnReset</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="pm_2_13_4.htm#ref35" title="Структура TProgGuideFuncResetParams">TProgGuideFuncResetParams</a> *reset)
+  { <span class="kw">if</span>(reset==NULL) <span class="kw">return</span>; <span class="rem">// Нет параметров функции</span>
+    <span class="kw">if</span>(reset-&gt;servSize&lt;<span class="kw">sizeof</span>(TProgGuideFuncResetParams))
+      <span class="kw">return</span>; <span class="rem">// Размер переданной структуры меньше ожидаемого</span>
+
+    <span class="kw">if</span>(reset-&gt;ResetMark)
+      { <span class="rem">// Сбрасываем выделение всех присоединенных к блоку связей</span>
+        <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> c=NULL;
+        <span class="kw">for</span>(;;) <span class="rem">// Перебираем все связи, подключенные к блоку</span>
+          { c=<a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a>(BlockData-&gt;Block,c,TRUE,TRUE,NULL);
+            <span class="kw">if</span>(c==NULL) <span class="kw">break</span>; <span class="rem">// Все связи перебраны</span>
+            <span class="rem">// Снимаем выделение связи c</span>
+            <a class="hidden" href="pm_2_13_4.htm#ref34" title="Функция снятия визуального выделения связи">UnmarkConnection</a>(c);
+          }
+        <span class="rem">// Сбрасываем флаги наличия метки и принадлежности</span>
+        <span class="rem">// к выделенному маршруту</span>
+        sMarked=sInPath=<span class="const">0</span>;
+      }
+
+    <span class="kw">if</span>(reset-&gt;ResetBegin) <span class="rem">// Сбрасываем флаг начала маршрута</span>
+      sBegin=<span class="const">0</span>;
+    <span class="kw">if</span>(reset-&gt;ResetEnd) <span class="rem">// Сбрасываем флаг конца маршрута</span>
+      sEnd=<span class="const">0</span>;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Сделать данный блок началом маршрута</span>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref72" title="Сделать блок началом маршрута">GraphNode_SetBlockAsBegin</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData)
+  { <span class="kw">if</span>(sBegin) <span class="rem">// Блок уже является началом маршрута</span>
+      <span class="kw">return</span>;
+    <span class="rem">// Сбрасываем старый флаг начала маршрута и разметку всего графа</span>
+    <a class="hidden" href="pm_2_13_4.htm#ref50" title="Функция сброса маркеров в узле графа">GraphPath_Reset</a>(BlockData-&gt;Parent,TRUE,TRUE,FALSE);
+    <span class="rem">// Устанавливаем флаг начала маршрута у данного блока</span>
+    sBegin=<span class="const">1</span>;
+    <span class="rem">// Ищем маршрут в графе</span>
+    <a class="hidden" href="pm_2_13_4.htm#ref53" title="Функция поиска маршрута">GraphPath_FindPath</a>(BlockData-&gt;Parent);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Сделать данный блок концом маршрута</span>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref73" title="Сделать блок концом маршрута">GraphNode_SetBlockAsEnd</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData)
+  { <span class="kw">if</span>(sEnd) <span class="rem">// Блок уже является концом маршрута</span>
+      <span class="kw">return</span>;
+    <span class="rem">// Сбрасываем старый флаг конца маршрута и разметку всего графа</span>
+    <a class="hidden" href="pm_2_13_4.htm#ref50" title="Функция сброса маркеров в узле графа">GraphPath_Reset</a>(BlockData-&gt;Parent,TRUE,FALSE,TRUE);
+    <span class="rem">// Устанавливаем флаг конца маршрута у данного блока</span>
+    sEnd=<span class="const">1</span>;
+    <span class="rem">// Ищем маршрут в графе</span>
+    <a class="hidden" href="pm_2_13_4.htm#ref53" title="Функция поиска маршрута">GraphPath_FindPath</a>(BlockData-&gt;Parent);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Прототип функции обратного вызова для перечисления соседей блока</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="pm_2_13_4.htm#ref78" title="Функция обратного вызова для пометки узла графа">GraphPath_MarkBlock_Callback</a>(
+      <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> src,
+      <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> dest,
+      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> data);
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Пометить данный блок и его соседей</span>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref75" title="Пометка узла графа и его соседей">GraphNode_OnMarkBlock</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="pm_2_13_4.htm#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a> *params)
+  { <span class="kw">if</span>(params==NULL) <span class="kw">return</span>; <span class="rem">// Нет параметров функции</span>
+    <span class="kw">if</span>(params-&gt;servSize&lt;<span class="kw">sizeof</span>(<a class="hidden" href="pm_2_13_4.htm#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a>))
+      <span class="kw">return</span>; <span class="rem">// Размер переданной структуры меньше ожидаемого</span>
+
+    <span class="kw">if</span>(sMarked!=<span class="const">0</span> &amp;&amp; sPathMark&lt;=params-&gt;Mark)
+      <span class="kw">return</span>; <span class="rem">// Блок уже помечен меньшим или таким же числом</span>
+
+    <span class="rem">// Блок не помечен вообще или помечен большим числом -</span>
+    <span class="rem">// помечаем его и его соседей новыми числами</span>
+    sMarked=<span class="const">1</span>; <span class="rem">// У блока есть метка</span>
+    sPathMark=params-&gt;Mark; <span class="rem">// Новая метка блока</span>
+
+    <span class="kw">if</span>(sEnd) <span class="rem">// Это – конец маршрута, дальше помечать незачем</span>
+      <span class="kw">return</span>;
+
+    <span class="rem">// Помечаем всех соседей блока, кроме params-&gt;Previous,</span>
+    <span class="rem">// суммой метки этого блока и длины дуги к соседу</span>
+    <a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a>(BlockData-&gt;Block,
+      <a class="hidden" href="rdsEnumConnectedBlocks.htm#light_ref3" title="RDS_BEN_INPUTS">RDS_BEN_INPUTS</a>|<a class="hidden" href="rdsEnumConnectedBlocks.htm#light_ref4" title="RDS_BEN_OUTPUTS">RDS_BEN_OUTPUTS</a>,
+      <a class="hidden" href="pm_2_13_4.htm#ref78" title="Функция обратного вызова для пометки узла графа">GraphPath_MarkBlock_Callback</a>,params);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция обратного вызова для GraphNode_OnMarkBlock</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="pm_2_13_4.htm#ref78" title="Функция обратного вызова для пометки узла графа">GraphPath_MarkBlock_Callback</a>(
+      <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> src,
+      <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> dest,<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> data)
+  { <a class="hidden" href="pm_2_13_4.htm#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a> *src_params=
+      (<a class="hidden" href="pm_2_13_4.htm#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a>*)data;
+    <a class="hidden" href="pm_2_13_4.htm#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a> dest_params;
+    <span class="kw">double</span> ArcLen;
+
+    <span class="rem">// Функция вызвана для пары блоков: src-&gt;Block – данный блок,</span>
+    <span class="rem">// dest-&gt;Block – его сосед. Их соединяет связь dest-&gt;Owner (или</span>
+    <span class="rem">// src-&gt;Owner – поля Owner у структур src и dest равны, поскольку</span>
+    <span class="rem">// обе точки принадлежат одной и той же связи)</span>
+
+    <span class="rem">// Сравниваем найденного соседа с блоком,</span>
+    <span class="rem">// который не нужно помечать</span>
+    <span class="kw">if</span>(src_params-&gt;Previous==dest-&gt;Block)
+      <span class="kw">return</span> TRUE;
+
+    <span class="rem">// Связь должна подходить ко входу блока dest-&gt;Block</span>
+    <span class="rem">// (движение в графе возможно только по стрелкам)</span>
+    <span class="kw">if</span>(dest-&gt;Source) <span class="rem">// Точка dest соединена с выходом блока</span>
+      <span class="kw">return</span> TRUE;
+
+    <span class="rem">// Является ли найденный сосед узлом графа?</span>
+    <span class="kw">if</span>(!<a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(dest-&gt;Block,<a class="hidden" href="pm_2_13_4.htm#light_ref46" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.GetParams">GraphFuncGetParams</a>,NULL))
+      <span class="kw">return</span> TRUE; <span class="rem">// Не является</span>
+
+    <span class="rem">// Вычисляем длину дуги между блоками</span>
+    ArcLen=<a class="hidden" href="pm_2_13_4.htm#ref11" title="Функция проверки допустимости и вычисления длины связи">CalcArcLength</a>(dest-&gt;Owner);
+    <span class="kw">if</span>(ArcLen&lt;<span class="const">0</span>.<span class="const">0</span>) <span class="rem">// Связь разветвленная или оборванная</span>
+      <span class="kw">return</span> TRUE; <span class="rem">// Такая связь не может быть дугой</span>
+
+    <span class="rem">// Помечаем найденный соседний блок суммой маркировки данного</span>
+    <span class="rem">//  блока (src_params-&gt;Mark) и длины дуги к найденному (ArcLen)</span>
+    dest_params.servSize=<span class="kw">sizeof</span>(dest_params);
+    dest_params.Mark=src_params-&gt;Mark+ArcLen;
+    dest_params.Previous=src-&gt;Block; <span class="rem">// Блок, от которого</span>
+                                        <span class="rem">// пришла метка</span>
+    <a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(dest-&gt;Block,<a class="hidden" href="pm_2_13_4.htm#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a>,&amp;dest_params);
+    <span class="kw">return</span> TRUE;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Проследить и выделить маршрут от данного блока в</span>
+  <span class="rem">// обратном направлении</span>
+  <span class="kw">void</span> <a class="hidden" href="pm_2_13_4.htm#ref79" title="Функция выделения кратчайшего маршрута">GraphNode_OnBackTracePath</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData)
+  { <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> PrevBlock;
+    <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> PrevConn,c;
+    <span class="kw">double</span> minMark;
+    <a class="hidden" href="RDS_CONNDESCRIPTION.htm#ref1" title="Структура RDS_CONNDESCRIPTION">RDS_CONNDESCRIPTION</a> conndescr;
+    <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">RDS_POINTDESCRIPTION</a> pointdescr;
+    <a class="hidden" href="pm_2_13_4.htm#ref37" title="Структура TProgGuideFuncGetParams">TProgGuideFuncGetParams</a> params;
+
+    <span class="kw">if</span>(!sMarked) <span class="rem">// У блока нет метки</span>
+      <span class="kw">return</span>;
+
+    sInPath=<span class="const">1</span>; <span class="rem">// Помечаем данный блок как принадлежащий маршруту</span>
+
+    <span class="kw">if</span>(sBegin) <span class="rem">// Это начало маршрута – мы выделили его весь</span>
+      <span class="kw">return</span>;
+
+    <span class="rem">// Заполняем служебные поля размера у всех структур,</span>
+    <span class="rem">// которые нам потребуются</span>
+    conndescr.servSize=<span class="kw">sizeof</span>(conndescr);
+    pointdescr.servSize=<span class="kw">sizeof</span>(pointdescr);
+    params.servSize=<span class="kw">sizeof</span>(params);
+
+    <span class="rem">// Ищем среди соседей данного блока блок с наименьшей меткой</span>
+    PrevBlock=NULL;
+    <span class="rem">// Перебираем все связи блока</span>
+    c=NULL;
+    <span class="kw">for</span>(;;)
+      { <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> connBlock;
+        <span class="kw">double</span> connMark;
+        <span class="kw">int</span> numBlocks;
+        <span class="rem">// Получаем очередную связь блока, соединенную с его входом</span>
+        c=<a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a>(BlockData-&gt;Block,c,TRUE,FALSE,NULL);
+        <span class="kw">if</span>(c==NULL) <span class="kw">break</span>; <span class="rem">// Связи кончились</span>
+        <span class="rem">// Получаем параметры этой связи</span>
+        <a class="hidden" href="rdsGetConnDescription.htm" title="А.5.6.23. rdsGetConnDescription &ndash; получить описание связи">rdsGetConnDescription</a>(c,&amp;conndescr);
+        <span class="rem">// Перебираем все точки связи c и ищем среди них соединение</span>
+        <span class="rem">// с узлом графа на другом ее конце</span>
+        connBlock=NULL;
+        numBlocks=<span class="const">0</span>;
+        <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;conndescr.NumPoints;i++)
+          { <span class="rem">// Получаем описание точки связи i</span>
+            <a class="hidden" href="rdsGetPointDescription.htm" title="А.5.6.36. rdsGetPointDescription &ndash; получить описание точки связи">rdsGetPointDescription</a>(c,i,&amp;pointdescr);
+            <span class="rem">// Проверяем тип точки</span>
+            <span class="kw">if</span>(pointdescr.PointType==<a class="hidden" href="RDS_POINTDESCRIPTION.htm#light_ref5" title="RDS_PTBUS">RDS_PTBUS</a>)
+              { <span class="rem">// Связь, соединенная с шиной, нам не годится</span>
+                connBlock=NULL;
+                <span class="kw">break</span>;
+              }
+            <span class="kw">if</span>(pointdescr.PointType!=<a class="hidden" href="RDS_POINTDESCRIPTION.htm#light_ref4" title="RDS_PTBLOCK">RDS_PTBLOCK</a>)
+              <span class="kw">continue</span>;
+            <span class="rem">// Найдена точка соединения с блоком</span>
+            numBlocks++;
+            <span class="kw">if</span>(numBlocks&gt;<span class="const">2</span>) <span class="rem">// Разветвленная связь – не годится</span>
+              { connBlock=NULL;
+                <span class="kw">break</span>;
+              }
+            <span class="kw">if</span>(pointdescr.Block==BlockData-&gt;Block)
+              <span class="kw">continue</span>; <span class="rem">// Это не сосед, а сам данный блок</span>
+            <span class="rem">// Получаем параметры узла блока-соседа</span>
+            <span class="kw">if</span>(!<a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(pointdescr.Block,
+                 <a class="hidden" href="pm_2_13_4.htm#light_ref46" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.GetParams">GraphFuncGetParams</a>,&amp;params))
+              { <span class="rem">// Блок не является узлом графа</span>
+                connBlock=NULL;
+                <span class="kw">break</span>;
+              }
+            <span class="rem">// Нашли соседний блок, являющийся узлом графа</span>
+            <span class="kw">if</span>(params.Marked) <span class="rem">// У соседнего узла есть метка</span>
+              { connBlock=pointdescr.Block; <span class="rem">// Запоминаем</span>
+                connMark=params.Mark;
+              }
+          } <span class="rem">// for(int i=0;...)</span>
+        <span class="rem">// Цикл перебора точек связи закончен. В cоnnBlock должен</span>
+        <span class="rem">// находиться идентификатор узла, который эта связь соединяет</span>
+        <span class="rem">// с данным блоком, а в connMark – его метка.</span>
+        <span class="kw">if</span>(connBlock) <span class="rem">// Есть узел графа на другом конце связи</span>
+          { <span class="kw">if</span>(PrevBlock==NULL || minMark&gt;connMark)
+              { <span class="rem">// Найден узел с меньшей маркировкой</span>
+                PrevBlock=connBlock;
+                minMark=connMark;
+                PrevConn=c;
+              }
+          }
+      } <span class="rem">// for(;;)</span>
+
+    <span class="rem">// Перебор связей данного блока закончен. В PrevBlock должен</span>
+    <span class="rem">// находиться идентификатор соседа с наименьшей меткой, из</span>
+    <span class="rem">// которого можно попасть в данный блок, а в PrevConn -</span>
+    <span class="rem">// идентификатор соединяющей их связи</span>
+
+   <span class="kw">if</span>(PrevBlock)
+     { <span class="rem">// Визуально выделяем связь</span>
+       <a class="hidden" href="pm_2_13_4.htm#ref24" title="Функция визуального выделения связи">MarkConnection</a>(PrevConn);
+       <span class="rem">// Вызываем функцию обратного прослеживания маршрута</span>
+       <span class="rem">// от найденного блока</span>
+       <a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(PrevBlock,<a class="hidden" href="pm_2_13_4.htm#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a>,NULL);
+     }
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Отмена макроопределений переменных блока</span>
+  <span class="preproc">#undef sPathMark</span>
+  <span class="preproc">#undef sMarked</span>
+  <span class="preproc">#undef sInPath</span>
+  <span class="preproc">#undef sEnd</span>
+  <span class="preproc">#undef sBegin</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_13_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

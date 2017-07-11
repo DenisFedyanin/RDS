@@ -1,0 +1,221 @@
+EXPSYSTXT
+version 1
+
+types
+ begin
+  struct type "Complex" 
+   begin
+    double name "Re" default 0
+    double name "Im" default 0
+   end
+ end
+
+pictures
+ begin
+  picture id 0
+   begin
+    rect from 0 0 size 29 29 solid color 0 fill 16777215
+    ellipse from 7 7 diameter 16 arc -0.4637339822548933732 3.926990816987241395 solid color 0
+    polygon points 3 solid color 0 fill 0 shape 25 19 20 16 19 22 end
+   end
+  picture id 1
+   begin
+    ellipse from 0 0 size 20 20 solid color 0 fill 16777215
+    line from 10 10 to 17 3 solid color 0
+    line from 17 17 to 3 3 solid color 0
+    ellipse from 0 0 size 20 20 sector -2.356194490192344837 -0.785398163397448279 fill 0
+   end
+ end
+
+styles
+ begin
+  style name "Стандартная связь" solid scalewidth color 0 arrow 10 2 dotsize 5 default conn all types
+  style name "Стандартная шина" solid width 5 scalewidth color 0 arrow 10 5 default bus
+ end
+
+system name "Sys1"
+ begin
+  layers
+   begin
+    layer id 1 name "Основные"
+    layer id 2 name "Вспомогательные"
+    config name "Все слои" current layers =1 *2 end
+    config name "Основные блоки" layers =1 -2 end
+   end
+  editor
+   begin
+    window pos 3 151 size 774 512 open printbar 592 2 layerbar 141 2 zoombar 452 2 displaybar 654 2 calcbar 11 2 status
+    field size 2000 2000
+    grid size 5 5 snap color 16711680
+    crosscolor 16711680
+    blocknames show spacing 7 font "Arial" height 12 color 0
+    varnames show font "Arial" height 10
+   end
+  print
+   begin
+   end
+  content
+   begin
+    dllblock name "RTP1" id 1
+     begin
+      pos 5 5
+      layer id 1
+      name hidden
+      vars
+       begin
+        signal name "Start" in run default 1
+        signal name "Ready" out default 0
+        signal name "DoStep" out menu default 0
+        signal name "NextStep" in menu run default 0
+        double name "Time" out default 0
+        double name "Load" out default 0
+        signal name "Stop" in menu default 0
+        signal name "Finish" out menu default 0
+        signal name "Suspend" in default 0
+        signal name "Resume" in run default 0
+        double name "StepVal" in run default 0
+        double name "SyncMul" in run default 0
+        signal name "CalcStart" out menu default 0
+        signal name "ResumeNoSync" in run default 0
+       end
+      picture id 0 end
+      dll file "$DLL$\\Common.dll" func "DynamicSync" setup "Настройка" auto
+      dlldata text
+       s "0.1" a 2 b 20 t "1" r 1 c 1 f "100" d 1 e 0 x 1
+      enddlldata
+     end
+    dllblock name "DEdit1" id 2
+     begin
+      pos 5 95
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run hide default 0
+        signal name "Ready" out hide default 0
+        double name "v" in run hide default 0
+        double name "edit" out menu hide default 0
+       end
+      dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh mouse setup "Настройка" auto
+      dlldata text
+       value prec 2 font "Arial" height 15 color 0 set 0
+       frame border 0 fill 16777215
+       input l inc 0.01 updown
+      enddlldata
+      rect 65 19
+     end
+    dllblock name "Diff1" id 3
+     begin
+      pos 90 95
+      layer id 1
+      name hidden
+      vars
+       begin
+        signal name "Start" in run default 0
+        signal name "Ready" out default 0
+        double name "x1" in menu run default 0
+        double name "x2" in menu run default 0
+        double name "y" out menu default 0
+       end
+      picture id 1 end
+      dll file "$DLL$\\Common.dll" func "Dif2Double" cycle
+     end
+    dllblock name "TimeGraph1" id 4
+     begin
+      pos 430 5
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run default 0
+        signal name "Ready" out default 0
+        double name "Time" in run default 0
+        double name "Value" in menu default 0
+       end
+      dll file "$DLL$\\Common.dll" func "SimpleTimeGraph" draw mouse pass hint setup "Настройка" auto
+      dlldata text
+       title text "" param font "Arial" height 13 charset 1 color 0
+       layout back 16777215 frame 0 border 16777215 color 0
+       line color 0 width 1
+       axisx
+       begin
+       title text "Время" param font "Arial" height 13 charset 1 color 0 show current 2
+       scale min 0 max 10 step 5 numbers dec 0 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+       lines show color 0 style dot
+       zero color 0 style solid
+       end
+       axisy
+       begin
+       title text "Y" param font "Arial" height 13 charset 1 color 0 show current 2
+       scale min 0 max 2 step 0.5 numbers dec 1 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+       lines show color 0 style dot
+       zero show color 0 style solid
+       end
+       vert auto 0.1
+       horz mode 1 array 1000 step 0
+       time dyn "DynTime"
+      enddlldata
+      rect 310 195
+     end
+    dllblock name "DDisplay1" id 6
+     begin
+      pos 430 205
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run hide default 0
+        signal name "Ready" out hide default 0
+        double name "v" in menu run hide default 0
+       end
+      dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+      dlldata text
+       value prec 2 font "Arial" height 15 color 0 set 0
+       frame border 0 fill 12632256
+      enddlldata
+      rect 65 19
+     end
+    dllblock name "DDisplay2" id 7
+     begin
+      pos 430 225
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run hide default 0
+        signal name "Ready" out hide default 0
+        double name "v" in menu run hide default 0
+       end
+      dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+      dlldata text
+       value prec 2 font "Arial" height 15 color 0 set 0
+       frame border 0 fill 12632256
+      enddlldata
+      rect 65 19
+     end
+    conn id 5
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "DEdit1" var "edit" out pos 65 10 name hidden
+        id 1 block "Diff1" var "x1" in pos 0 10 name left up
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+   end
+  end
+
+additional
+ begin
+  window layer pos 528 117 size 269 392
+  window system ""
+ end

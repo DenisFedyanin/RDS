@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.7.1. Функция настройки блока и открытие модальных окон</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_7">&sect;2.7. Настройка параметров блока</a></p>
+<div class="level"><p>&sect;2.7.1. Функция настройки блока и открытие модальных окон</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_6_5.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_2.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_7_1_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3>&sect;2.7. Настройка параметров блока</h3>
+<p class="abstract">Описываются способы предоставления пользователю интерфейса для настройки параметров блока.
+            Рассматриваются возможности открытия моделью блока модальных окон, возникающие при этом проблемы и их решения.
+            Рассматривается использование специальных вспомогательных объектов RDS, позволяющих без особых усилий
+            формировать модальные окна с полями ввода. Также рассматривается способ хранения параметров блока в файле
+            схемы, не требующий введение в модель дополнительных реакций &ndash; запись значений параметров значения
+            по умолчанию статических переменных блока.</p>
+<h4>&sect;2.7.1. Функция настройки блока и открытие модальных окон</h4>
+<p class="abstract">Описывается реакция модели на функцию настройки блока (<span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>),
+                возможность вызова которой встроена в пользовательский интерфейс RDS. С помощью этой реакции в блоки,
+                описанные в <a href="pm_2_6_3.htm" title="&sect;2.6.3. Создание и удаление динамической переменной">&sect;2.6.3</a> (приемник и передатчик, организующие
+                связь через динамическую переменную), добавлен интерфейс для настройки.</p>
+
+
+<p><span id="ref1">Функция</span>
+настройки обычно используется для того, чтобы организовать какой-либо диалог с пользователем, например,
+дать ему возможность задать значения параметров блока. Эта функция может вызываться только в
+<a href="pm_1_3.htm#ref1" title="Режим редактирования">режиме редактирования</a>, поэтому в ней можно открывать
+<span id="light_ref1">модальные окна</span>, не опасаясь зависания потока расчета (проблемы, возникающие
+при открытии модальных окон в режиме расчета,  описаны в
+<a href="pm_1_8.htm" title="&sect;1.8. Открытие окон в модели блока">&sect;1.8</a>). Для того, чтобы пользователь мог вызвать функцию настройки,
+необходимо разрешить ее, установив на
+вкладке &laquo;<span class="menu">DLL</span>&raquo; окна параметров блока флаг &laquo;<span class="menu">блок имеет функцию настройки</span>&raquo;
+(при этом можно указать название пункта
+<a href="um_2_6.htm#pic3" title="Контекстное меню блока (поля ввода)">контекстного меню</a>, при выборе которого будет вызываться эта функция,
+см. <a href="um_2_9_1.htm#pic10" title="Вкладка DLL окна параметров блока">рис.&nbsp;104</a>), и ввести в модель реакцию на событие
+<span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>. Модель, вызванная для реакции на это событие, должна самостоятельно открыть
+диалоговое окно (средствами Windows или с помощью
+<a href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">сервисных функций RDS</a>), и, после его закрытия, вернуть
+RDS одну из двух констант:</p>
+
+<ul>
+  <li><span class="cpp">RDS_BFR_DONE</span> &ndash; параметры блока не изменились;</li>
+  <li><span class="cpp"><span id="light_ref2"><a href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a></span></span> &ndash; введены новые параметры блока, схема будет считаться
+  измененной и при попытке выхода из RDS без сохранения схемы пользователю будет выдано предупреждение.</li>
+</ul>
+
+<p>Для открытия диалогового окна функция модели может использовать любые доступные ей библиотечные функции
+(например, функцию <span class="cpp">DialogBox</span> в Windows API, функцию-член
+<span class="cpp">ShowModal</span> потомков класса <span class="cpp">TForm</span> в Borland C++ Builder и т.п.).
+При этом, чтобы избежать проблем, описанных в <a href="pm_1_8.htm" title="&sect;1.8. Открытие окон в модели блока">&sect;1.8</a>, модель должна сообщать
+RDS об открытии и закрытии диалогового окна при помощи сервисных функций
+<span class="cpp"><span id="light_ref3"><a href="rdsBlockModalWinOpen.htm" title="А.5.2.8. rdsBlockModalWinOpen &ndash; сообщение об открытии модального окна">rdsBlockModalWinOpen</a></span></span> и
+<span class="cpp"><span id="light_ref4"><a href="rdsBlockModalWinClose.htm" title="А.5.2.7. rdsBlockModalWinClose &ndash; сообщение о закрытии модального окна">rdsBlockModalWinClose</a></span></span>. В RDS также предусмотрено несколько сервисных функций,
+позволяющих открывать диалоговые окна. Эти функции не предоставляют такой свободы в задании внешнего вида окна,
+как универсальные функции API, зато при их использовании можно не беспокоиться о синхронизации открытия и закрытия
+окон с RDS.</p>
+
+<p><span id="ref5">Если</span>
+модели требуется запросить у пользователя только один параметр, проще всего использовать для этого сервисную
+функцию <span id="light_ref5" class="cpp"><a href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a></span>, которая открывает
+диалоговое окно для ввода строки. Функция принимает следующие параметры:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsInputString(
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> WinCaption, <span class="rem">// Заголовок окна</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> StrCaption, <span class="rem">// Текст перед полем ввода</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Default,    <span class="rem">// Исходное значение</span>
+    <span class="kw">int</span> Width);       <span class="rem">// Ширина поля ввода</span></pre>
+
+<dl>
+  <dt><span class="cpp">WinCaption</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Заголовок диалогового окна.</dd>
+
+  <dt><span class="cpp">StrCaption</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Текст перед полем ввода (обычно он сообщает пользователю, какой параметр он вводит).</dd>
+
+  <dt><span class="cpp">Default</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Исходное значение строки, которое помещается в поле ввода перед редактированием.</dd>
+
+  <dt><span class="cpp">Width</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Ширина поля ввода строки в точках экрана.</dd>
+</dl>
+
+<p>Функция открывает диалоговое окно с единственным полем ввода и кнопками &laquo;<span class="menu">OK</span>&raquo; и
+&laquo;<span class="menu">Отмена</span>&raquo;. Размер окна автоматически подбирается таким образом, чтобы в него уместилось поле
+ввода указанного в параметре <span class="cpp">Width</span> размера и текст, указанный в параметре
+<span class="cpp">StrCaption</span>, перед ним. Если пользователь нажмет кнопку &laquo;<span class="menu">OK</span>&raquo;, функция
+вернет указатель на динамически отведенную область памяти, в которую скопирована строка из поля ввода (эту
+область необходимо будет позже освободить при помощи сервисной функции <span class="cpp"><span id="light_ref6"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span></span>).
+Если пользователь нажмет кнопку &laquo;<span class="menu">Отмена</span>&raquo;, функция вернет константу <span class="cpp">NULL</span>.</p>
+
+<p><span id="light_ref7">Эту функцию можно использовать</span> в
+<a href="pm_2_6_3.htm#light_ref8" title="Пример передачи данных через динамическую переменную">примере</a>
+с блоками-передатчиками и приемниками для задания имени
+<a href="pm_1_6.htm#ref1" title="Динамическая переменная">динамической переменной</a>, связывающей эти блоки между собой. В примере имя
+этой переменной хранится в <a href="um_1_2.htm#ref20" title="Комментарий блока">комментарии</a>
+блока, и пользователь может изменить его только в окне параметров этого блока на вкладке
+&laquo;<span class="menu">общие</span>&raquo;. Это не очень удобно, поскольку пользователю не выдается никаких подсказок о том,
+где именно вводится имя переменной. При помощи функции <span class="cpp"><a class="hidden" href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a></span> можно
+организовать ввод имени переменной в отдельном окне, с заголовком, дающим пользователю понять, что он вводит
+имя переменной для связи блоков. Диалоговое окно будет открываться в момент реакции модели на вызов функции
+настройки. Для того, чтобы блок начал реагировать на это событие, необходимо в окне его параметров на вкладке
+&laquo;<span class="menu">DLL</span>&raquo; установить флаг &laquo;<span class="menu">блок имеет функцию настройки</span>&raquo;. Кроме того, на вкладке
+&laquo;<span class="menu">общие</span>&raquo; можно установить флаг &laquo;<span class="menu">двойной щелчок в режиме редактирования вызывает функцию настройки</span>&raquo;
+(см. <a href="pm_1_4.htm#pic1" title="Параметры блока &ndash; общие">рис.&nbsp;5</a>), чтобы пользователю не нужно было выбирать
+пункт &laquo;<span class="menu">настройка</span>&raquo; в контекстном меню каждый раз, как ему понадобится изменить имя переменной.
+Эти действия следует произвести со всеми блоками-приемниками и блоками-передатчиками (можно воспользоваться
+функцией <a href="um_2_15_3.htm" title="&sect;2.15.3. Групповая установка параметров">групповой установки</a>).</p>
+
+<p>Теперь, когда блоки готовы откликаться на функцию настройки, необходимо ввести в их модели соответствующую
+реакцию. Реакция на функцию настройки будет одинаковой в модели блока-передатчика <span class="cpp">TestTunnelIn</span>
+и в модели блока-приемника <span class="cpp">TestTunnelOut</span>. Обе эти модели хранят свой
+единственный параметр &ndash; имя переменной связи &ndash; в комментарии блока, поэтому обе они при
+вызове функции настройки должны позволить пользователю изменить значение комментария в отдельном окне,
+и при этом не дать ему ввести более одной строки. Для этого и будет использоваться сервисная функция
+<span class="cpp"><a class="hidden" href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a></span>.</p>
+
+<p>Сначала в обе модели нужно добавить описание новой вспомогательной переменной <span class="cpp">str</span>,
+которой будет присваиваться указатель, возвращаемый функцией <span class="cpp"><a class="hidden" href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a></span>
+(добавленный текст выделен <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">// &hellip;</span>
+  <span class="rem">// Вспомогательная переменная – указатель на структуру подписки</span>
+  <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> Link;
+  <span class="rem">// Вспомогательная переменная – структура описания блока</span>
+  <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a> Descr;
+  <span class="changes"><span class="rem">// Вспомогательная переменная – указатель на строку </span></span>
+  <span class="changes"><span class="kw">char</span> *str;</span>
+
+  <span class="kw">switch</span>(CallMode)
+    { <span class="rem">// Очистка</span>
+  <span class="rem">// &hellip;</span></pre>
+
+<p>Внутрь оператора <span class="cpp">switch(CallMode)</span> необходимо добавить новый оператор
+<span class="cpp">case</span> с константой <span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>:</p>
+
+<pre class="cpp">  <span class="rem">//&hellip;</span>
+      <span class="changes"><span class="rem">// Реакция на функцию настройки </span></span>
+      <span class="changes"><span class="kw">case</span> <span id="light_ref8"><a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>:</span>
+      <span class="changes">  <span class="rem">// Получение текущего текста комментария блока </span></span>
+      <span class="changes">  Descr.servSize=<span class="kw">sizeof</span>(Descr);</span>
+      <span class="changes">  <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(BlockData-&gt;Block,&amp;Descr);</span>
+      <span class="changes">  <span class="rem">// Открытие диалогового окна для ввода строки </span></span>
+      <span class="changes">  str=<a class="hidden" href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a>(<span class="str">"Переменная связи"</span>, <span class="rem">// Заголовок окна </span></span>
+      <span class="changes">                     <span class="str">"Имя переменной:"</span>,  <span class="rem">// Заголовок поля </span></span>
+      <span class="changes">                     Descr.BlockComment, <span class="rem">// Исходный текст </span></span>
+      <span class="changes">                     <span class="const">150</span>);               <span class="rem">// Ширина поля </span></span>
+      <span class="changes">  <span class="kw">if</span>(str!=NULL) <span class="rem">// Пользователь нажал "OK" </span></span>
+      <span class="changes">    { <span class="rem">// Установить новый комментарий </span></span>
+      <span class="changes">      <span id="light_ref9"><a class="hidden" href="rdsSetBlockComment.htm" title="А.5.6.45. rdsSetBlockComment &ndash; задать комментарий блока">rdsSetBlockComment</a></span>(BlockData-&gt;Block,str);</span>
+      <span class="changes">      <span class="rem">// Освободить динамическую строку </span></span>
+      <span class="changes">      <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(str);</span>
+      <span class="changes">      <span class="rem">// Информировать RDS об изменениях </span></span>
+      <span class="changes">      <span class="kw">return</span> <a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>;</span>
+      <span class="changes">    }</span>
+      <span class="changes">  <span class="kw">break</span>;</span>
+    }
+  <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// &hellip;</span></pre>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/ModalWin_InputString.png" width="319" height="107" alt="Модальное окно ввода строки" />
+<p id="light_pic1">Рис.&nbsp;46. Модальное окно ввода строки</p>
+</div></div>
+
+
+<p>При вызове модели с параметром <span class="cpp"><a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span> прежде всего необходимо получить
+текущее значение комментария блока, чтобы предъявить пользователю для редактирования имя переменной,
+используемой блоком в данный момент. Для этого вызывается функция
+<span class="cpp"><a href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a></span>, заполняющая структуру описания блока (она уже использовалась
+в этих моделях). После ее вызова в поле структуры <span class="cpp">Descr.BlockComment</span> будет
+записан указатель на строку комментария блока.
+Теперь это значение можно передать в функцию <span class="cpp"><a class="hidden" href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a></span>, которая откроет
+диалоговое окно для редактирования строки с заголовком &laquo;<span class="rdsvar">Переменная связи</span>&raquo;
+(<a href="#pic1" title="Модальное окно ввода строки">рис.&nbsp;46</a>). Перед полем ввода будет выведен заголовок
+&laquo;Имя переменной:&raquo;, а само поле будет содержать текст из комментария блока (или пустую строку, если
+комментарий был пуст). Если пользователь изменит текст
+в поле ввода и нажмет кнопку &laquo;<span class="menu">OK</span>&raquo;, функция <span class="cpp"><a class="hidden" href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a></span> вернет указатель
+на динамически сформированную строку, скопированную из поля ввода, в противном случае она вернет
+<span class="cpp">NULL</span>. Возвращенное функцией значение присваивается вспомогательной переменной <span class="cpp">str</span>.
+Если оно не равно <span class="cpp">NULL</span> (то есть пользователь нажал &laquo;<span class="menu">OK</span>&raquo;), эта строка устанавливается
+в качестве нового комментария блока при помощи сервисной функции <span class="cpp"><a href="rdsSetBlockComment.htm" title="А.5.6.45. rdsSetBlockComment &ndash; задать комментарий блока">rdsSetBlockComment</a></span>, после чего
+занятая ей память освобождается при помощи функции <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>. Затем функция модели возвращает
+константу <span class="cpp"><a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a></span>, информируя RDS о том, что параметры блока
+изменились и требуется предупредить об этом пользователя, если он захочет выйти из программы, не
+сохранив схему.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_6_5.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_2.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

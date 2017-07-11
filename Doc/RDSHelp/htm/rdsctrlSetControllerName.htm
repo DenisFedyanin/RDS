@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>Б.3.4.28. rdsctrlSetControllerName &ndash; установить имя управляющей программы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b_3">Б.3. Б.3 Функции библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b_3_4">Б.3.4. Функции общего назначения</a></p>
+<div class="level"><p>Б.3.4.28. <span class="cpp">rdsctrlSetControllerName</span> &ndash; установить имя управляющей программы</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsctrlSetCalcMode.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsctrlSetEditMode.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsctrlSetControllerName">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</h2>
+<h3 class="off">Б.3. Б.3 Функции библиотеки RdsCtrl.dll</h3>
+<h4 class="off">Б.3.4. Функции общего назначения</h4>
+<h5>Б.3.4.28. <span class="cpp">rdsctrlSetControllerName</span> &ndash; установить имя управляющей программы</h5>
+
+
+<p>Функция <span class="cpp">rdsctrlSetControllerName</span> устанавливает строку имени внешней управляющей программы.</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsctrlSetControllerName(
+    <span class="kw">int</span> Link,     <span class="rem">// Идентификатор связи</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Name    <span class="rem">// Имя управляющей программы</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDSCTRL_VIS</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Link</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Идентификатор связи с RDS, присвоенный ей при создании функцией
+  <span class="cpp"><a href="rdsctrlCreateLink.htm" title="Б.3.2.3. rdsctrlCreateLink &ndash; создать связь с RDS">rdsctrlCreateLink</a></span>.</dd>
+
+  <dt><span class="cpp">Name</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на строку с именем внешней управляющей программы.</dd>
+</dl>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция устанавливает для копии RDS, управляемой через связь <span class="cpp">Link</span>, строку
+<span class="cpp">Name</span> в качестве имени управляющей программы. Эта строка передается в
+RDS без обработки, модели блоков могут обращаться к ней через поле
+<span class="cpp">ControllerName</span> структуры <span class="cpp"><a href="RDS_BFM_REMOTEMSG.htm#ref1" title="Структура RDS_REMOTEMSGDATA">RDS_REMOTEMSGDATA</a></span> в момент реакции на
+событие <span class="cpp"><a href="RDS_BFM_REMOTEMSG.htm" title="А.2.4.11. RDS_BFM_REMOTEMSG &ndash; вызов от внешнего приложения">RDS_BFM_REMOTEMSG</a></span>, а также при помощи функции
+<span class="cpp"><a href="rdsGetRemoteControllerName.htm" title="А.5.21.2. rdsGetRemoteControllerName &ndash; получить имя внешней управляющей программы">rdsGetRemoteControllerName</a></span>. Модели могут использовать имя управляющего приложения
+для того чтобы, например, выполнять разные действия в зависимости от того, какое именно приложение ими
+управляет. Имя приложения никак не связано с именем его исполняемого файла, это просто некоторая строка,
+о которой разработчик приложения должен договориться с разработчиками моделей блоков.</p>
+
+<p>Управляющее приложение не обязано устанавливать свое имя: если оно не вызовет
+<span class="cpp">rdsctrlSetControllerName</span>, в поле
+<span class="cpp">ControllerName</span> структуры <span class="cpp">RDS_REMOTEMSGDATA</span> будет
+записан указатель на пустую строку.</p>
+
+<p>Строка с именем управляющего приложения запоминается в параметрах связи <span class="cpp">Link</span>, ее
+не нужно устанавливать заново при повторном запуске RDS через эту связь. Можно, например, вызвать
+<span class="cpp">rdsctrlSetControllerName</span> один раз сразу после создания связи, когда еще нет
+работающей копии RDS. При этом после вызова <span class="cpp"><a href="rdsctrlConnect.htm" title="Б.3.2.2. rdsctrlConnect &ndash; запустить RDS">rdsctrlConnect</a></span> эта строка будет
+передана в RDS автоматически.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsctrlCreateLink.htm" title="Б.3.2.3. rdsctrlCreateLink &ndash; создать связь с RDS">rdsctrlCreateLink</a></span>,
+<span class="cpp"><a href="RDS_BFM_REMOTEMSG.htm" title="А.2.4.11. RDS_BFM_REMOTEMSG &ndash; вызов от внешнего приложения">RDS_BFM_REMOTEMSG</a></span>,
+<span class="cpp"><a href="RDS_BFM_REMOTEMSG.htm#ref1" title="Структура RDS_REMOTEMSGDATA">RDS_REMOTEMSGDATA</a></span>,
+<span class="cpp"><a href="rdsGetRemoteControllerName.htm" title="А.5.21.2. rdsGetRemoteControllerName &ndash; получить имя внешней управляющей программы">rdsGetRemoteControllerName</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsctrlSetCalcMode.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsctrlSetEditMode.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsctrlSetControllerName">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

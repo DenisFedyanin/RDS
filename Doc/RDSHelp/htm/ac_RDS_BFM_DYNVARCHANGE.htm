@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.8.3.7. Изменение динамической переменной</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8_3">&sect;3.8.3. Моделирование и переключение режимов</a></p>
+<div class="level"><p>&sect;3.8.3.7. Изменение динамической переменной</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_CALCMODE.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_MOUSEDOWN.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_DYNVARCHANGE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</h3>
+<h4 class="off">&sect;3.8.3. Моделирование и переключение режимов</h4>
+<h5>&sect;3.8.3.7. Изменение динамической переменной</h5>
+
+
+<p>Событие изменения динамической переменной возникает во всех
+блоках, подписанных на эту переменную, при ее создании, уничтожении, или при вызове для нее
+<a href="um_3_7_3_2.htm#ref1" title="Функция NotifySubscribers класса динамической переменной">функции уведомления подписчиков</a>
+об изменениях (что такое динамические переменные и как с ними работать объясняется
+в <a href="um_3_6_3.htm" title="&sect;3.6.3. Динамические переменные блока">&sect;3.6.3</a> и в <a href="um_index.htm#light_htm:um_3_7_3" title="&sect;3.7.3. Работа с динамическими переменными">&sect;3.7.3</a>.
+Реакция на это событие вводится на вкладке &laquo;<span class="menu"><a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">события</a></span>&raquo; левой
+панели редактора модели: раздел &laquo;<span class="menu">моделирование и режимы</span>&raquo;, подраздел
+&laquo;<span class="menu">изменение динамической переменной</span>&raquo;. В этой реакции обычно выполняют действия, для которых
+требуется значение изменившейся переменной. Во многих блоках, получающих данные через динамические переменные,
+выгоднее производить вычисления не каждый такт, а только при изменении этих переменных.</p>
+
+<p><span id="ref1">В</span> классе блока для реакции на событие изменения динамической переменной
+создается функция с именем <span class="cpp" id="light_ref1">rdsbcppDynVarChange</span>, параметр
+которой указывает на изменившуюся переменную:</p>
+
+<pre class="cpp">  // <span id="ref2">Изменение</span> динамической переменной
+  void rdsbcppBlockClass::rdsbcppDynVarChange(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> <span id="light_ref2">Link</span>)
+  {
+    <span class="changes"><i>&nbsp;&hellip; пользовательский текст реакции &hellip;&nbsp;</i></span>
+  }</pre>
+
+<p><span id="ref3">Параметр</span> функции <span class="cpp">Link</span> представляет собой указатель на структуру подписки блока
+на переменную <span id="light_ref3"><span class="cpp"><a href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a></span></span>:</p>
+
+<pre class="cpp">  typedef struct {
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Data;          // Адрес области данных переменной
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a>  VarName;       // Имя переменной
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a>  VarType;       // Тип переменной
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Provider; // Блок-владелец переменной
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> UID;           // Служебный идентификатор переменной
+                          // (служебное поле, изменять нельзя)
+    <a class="hidden" href="app_ids.htm#light_ref5" title="Идентификатор переменной">RDS_VHANDLE</a> Var;      // Идентификатор переменной для
+                          // использования в сервисных функциях
+  } <a class="hidden" href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a>;
+  typedef <a class="hidden" href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a> *<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>;</pre>
+
+<p>Поля структуры имеют следующий смысл:</p>
+<dl>
+  <dt><span class="cpp">Data</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></i></span>)</dt>
+  <dd>Указатель на область данных переменной (в автокомпилируемых моделях не используется).</dd>
+
+  <dt><span class="cpp">VarName</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на строку (<span class="cpp">char*</span>) с именем динамической переменной. Строка находится во
+  внутренней памяти RDS, ее нельзя изменять.</dd>
+
+  <dt><span class="cpp">VarType</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на <a href="pm_1_5.htm#ref19" title="Строка типа переменных блока">строку типа</a>
+  динамической переменной (в автокомпилируемых моделях не используется).</dd>
+
+  <dt><span class="cpp">Provider</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор блока, в котором находится данная динамическая переменная (может использоваться, например,
+  для прямого вызова у этого блока какой-либо функции, см. <a href="um_index.htm#light_htm:um_3_7_12" title="&sect;3.7.13. Вызов функций блоков">&sect;3.7.13</a>.</dd>
+
+  <dt><span class="cpp">UID</span>&emsp;(<span class="cpp"><i>LPVOID</i></span>)</dt>
+  <dd>Служебный идентификатор данной переменной, используемый внутри RDS. Значение этого поля нельзя изменять.</dd>
+
+  <dt><span class="cpp">Var</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref5" title="Идентификатор переменной">RDS_VHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор переменной, используемый в некоторых
+  <a href="app_index.htm#light_htm:app_a_5_14" title="А.5.14. Общие функции работы с переменными блока">сервисных функциях</a> для работы с переменными. В автокомпилируемых моделях
+  этот идентификатор обычно не используется.</dd>
+</dl>
+
+<p class="noindent">В автокомпилируемых моделях поля этой структуры практически никогда не используются.
+Чаще всего указатель на эту структуру служит своего рода уникальным идентификатором динамической переменной внутри
+блока, по которому можно понять, какая именно из переменных изменилась, если в блоке их несколько. Например, если
+в модель блока добавлена динамическая переменная с именем &laquo;<span class="rdsvar">DynVar1</span>&raquo;, в реакции на изменение
+динамической переменной можно сделать следующую проверку:</p>
+
+<pre class="cpp">  if(DynVar1.<a class="hidden" href="um_3_7_3_1.htm#ref8" title="Функция CheckLink класса динамической переменной">CheckLink</a>(Link))
+    { // Действия при изменении DynVar1
+      ...
+    }</pre>
+
+<p>Следует помнить, что событие изменения динамической переменной не возникает автоматически при присваивании
+ей в модели нового значения: присвоивший значение блок должен явно вызвать у объекта переменной функцию-член
+<span class="cpp"><a href="um_3_7_3_2.htm#ref1" title="Функция NotifySubscribers класса динамической переменной">NotifySubscribers</a></span>, чтобы уведомить всех подписчиков на переменную
+о произведенном изменении. Например, уведомить всех подписчиков на переменную &laquo;<span class="rdsvar">DynVar1</span>&raquo; о
+присвоении ей нового значения можно так:</p>
+
+<pre class="cpp">  DynVar1=10;                  // Присвоение значения
+  DynVar1.<a class="hidden" href="um_3_7_3_2.htm#ref1" title="Функция NotifySubscribers класса динамической переменной">NotifySubscribers</a>(); // Уведомление подписчиков</pre>
+
+<p>Пример реакции на это событие приведен в <a href="um_3_7_3_2.htm" title="&sect;3.7.3.2. Создание динамических переменных">&sect;3.7.3.2</a>. При написании моделей
+блоков без использования модуля автокомпиляции событию изменения динамической переменной соответствует
+константа RDS <span class="cpp"><a href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_CALCMODE.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_MOUSEDOWN.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_DYNVARCHANGE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

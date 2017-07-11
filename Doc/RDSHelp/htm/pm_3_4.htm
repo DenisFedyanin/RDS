@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.4. Реакция на события и сообщения от блоков</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3">Глава 3. Управление RDS из других приложений</a></p>
+<div class="level"><p>&sect;3.4. Реакция на события и сообщения от блоков</p>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_3_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_3_4_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 3. Управление RDS из других приложений</h2>
+<h3>&sect;3.4. Реакция на события и сообщения от блоков</h3>
+<p class="abstract">Рассматривается вызов специальным образом зарегистрированных функций управляющей программы при возникновении 
+            различных событий в RDS и в ответ на вызовы от блоков загруженной схемы. В созданную ранее модель поиска 
+            угла возвышения метательной машины (<a href="pm_2_14_2.htm" title="&sect;2.14.2. Сброс подсистемы в начальное состояние">&sect;2.14.2</a>) добавляются вызовы 
+            и реакции, позволяющие схеме с этой моделью обмениваться данными с управляющей программой. Дополнительно 
+            рассматривается пример блока-кнопки, сообщающего управляющей программе о щелчке на 
+            его изображении.</p>
+
+
+<p>До сих пор мы рассматривали примеры, в которых управляющее приложение вызывало различные функции
+RDS (переключения режимов, загрузки схемы и т.п.) или моделей блоков. Теперь рассмотрим обратную ситуацию:
+часто требуется, чтобы в ответ на какие-либо события в RDS (например, действия пользователя, или
+завершение расчета) вызывалась функция в управляющем приложении.</p>
+
+<p>Допустим, например, что управляющей программе нужно выполнить в RDS какой-либо
+<a href="pm_1_3.htm#ref3" title="Режим расчета">расчет</a> и получить его
+результаты. Для этого она должна запустить RDS, загрузить схему, запустить расчет, дождаться его конца
+и считать результаты из переменных каких-либо блоков. Основная проблема здесь заключается в том, что программа
+должна дождаться окончания расчета, то есть каким-то образом узнать о его остановке. Она могла бы вызывать
+в цикле функцию <span class="cpp"><span id="light_ref1"><a href="rdsctrlGetMode.htm" title="Б.3.4.19. rdsctrlGetMode &ndash; получить режим работы RDS">rdsctrlGetMode</a></span></span> для получения текущего режима работы
+RDS, дожидаясь перехода из режима расчета в режим
+<a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a>, однако это привело бы к постоянному обмену данными между
+процессами управляющего приложения и RDS, что отрицательным образом сказалось бы на производительности обеих
+программ. Кроме того, приложению пришлось бы сочетать выполнение цикла опроса режима RDS с обслуживанием
+собственного пользовательского интерфейса, иначе пользователю показалось бы, что программа
+&laquo;зависла&raquo;.</p>
+
+<p>Библиотека RdsCtrl.dll предоставляет управляющей программе более удобную возможность: программа может
+зарегистрировать в библиотеке функцию специального вида и указать, при наступлении каких событий в
+RDS эта функция должна вызываться. В рассмотренном выше случае программа, ожидающая конца расчета,
+зарегистрировала бы функцию реакции на остановку расчета, после чего запустила бы расчет и продолжала
+заниматься своими делами. При остановке расчета эта функция вызвалась бы автоматически, и считывание
+результатов расчета можно было бы выполнять внутри нее.</p>
+
+<p>Добавим в рассмотренный ранее пример программы реакцию на три события: запуск расчета,
+остановку расчета и завершение RDS. Мы будем регистрировать реакции на эти события функцией
+<span class="cpp"><span id="light_ref2"><a href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a></span></span> (это только одна из функций регистрации, но
+другие мы не будем здесь рассматривать):</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a>(
+    <span class="kw">int</span> Link,                  <span class="rem">// Связь с RDS</span>
+    <span class="kw">int</span> Event,                 <span class="rem">// Идентификатор события</span>
+    RDSCTRL_CALLBACK CallBack, <span class="rem">// Указатель на функцию</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> AuxData);           <span class="rem">// Дополнительные данные</span></pre>
+
+<p>В параметре <span class="cpp">Link</span>, как обычно, передается идентификатор связи с управляемой
+копией RDS, в параметре <span class="cpp">Event</span> &ndash; идентификатор события, на которое
+регистрируется реакция для данной связи (это одна из констант
+<span class="cpp"><a href="app_index.htm#light_htm:app_b_2" title="Б.2. События, на которые может реагировать программа">RDSCTRLEVENT_*</a></span>, описанных в файле
+&laquo;<span class="file">RdsCtrl.h</span>&raquo;). В параметре
+<span class="cpp">CallBack</span> передается указатель на регистрируемую функцию, которая будет вызываться при
+получении от RDS информации о наступлении данного события для данной связи. И, наконец, в параметре
+<span class="cpp">AuxData</span> вызвавшая программа может передать указатель на что угодно (например,
+на какую-либо структуру в памяти). Этот указатель просто запоминается вместе с указателем на зарегистрированную
+функцию, и передается ей при каждом вызове.</p>
+
+<p>Функции реакции на стандартные события имеют следующий вид:</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции_реакции</i>(
+    <span class="kw">int</span> Link,        <span class="rem">// Связь с копией RDS</span>
+    <span class="kw">int</span> Event,       <span class="rem">// Идентификатор события</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> EvData,   <span class="rem">// Данные события</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> AuxData); <span class="rem">// Дополнительный параметр</span></pre>
+
+<p>В параметре <span class="cpp">Link</span> функция получает идентификатор связи с копией
+RDS, в которой произошло событие, а в параметре <span class="cpp">Event</span> &ndash; идентификатор этого
+события. Таким образом, одну и ту же функцию можно использовать для реакции на разные события в
+разных управляемых копиях RDS &ndash; функция сможет разобраться, где и что произошло. В параметре
+<span class="cpp">EvData</span> функция получает указатель на структуру с описанием данных события.
+Поскольку разным событиям соответствуют разные структуры, а функция реакции для них имеет один и тот же формат,
+этот указатель приведен к общему типу <span class="cpp">void*</span>, и функция должна самостоятельно привести
+его к нужному типу в зависимости от значения параметра <span class="cpp">Event</span> (точно так же в
+RDS указатели на разные по типу данные передаются в функции моделей блоков через параметр
+<span class="cpp">ExtParam</span> типа <span class="cpp"><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></span>). Наконец, в параметре
+<span class="cpp">AuxData</span> функция получает тот самый указатель, который был передан в последнем
+параметре <span class="cpp"><a class="hidden" href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a></span> при ее регистрации. Так можно
+давать функции реакции доступ к каким-либо данным управляющей программы, не делая их глобальными переменными:
+достаточно объединить их в структуру и передать указатель на нее при регистрации функции реакции на событие.</p>
+
+<p>Мы опишем две функции реакции: одна из них будет вызываться при завершении RDS и выводить сообщение
+&laquo;Процесс RDS завершился&raquo;, другая &ndash; при запуске и остановке расчета, и выводить сообщения
+&laquo;Расчет запущен&raquo; и &laquo;Расчет остановлен&raquo; в зависимости от значения параметра
+<span class="cpp">Event</span>. Дополнительный указатель <span class="cpp">AuxData</span> мы использовать не будем,
+как и идентификатор связи с RDS <span class="cpp">Link</span> &ndash; связь у нас единственная, и нам не
+нужно разбираться, по какой из работающих связей пришла информация о событии. Функция, которая будет вызываться при
+завершении RDS, выглядит так:</p>
+
+<pre class="cpp">  <span class="rem">// Отклик на событие - завершение RDS</span>
+  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> RdsExitEvent(<span class="kw">int</span> Link,<span class="kw">int</span> Event,
+        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> EvData,<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> AuxData)
+  {
+    DisplayText(<span class="str">"Процесс RDS завершился"</span>);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции мы вообще не используем переданные параметры, мы просто выводим сообщение вызовом
+<span class="cpp">DisplayText</span>. Более сложное приложение могло бы в этой реакции, например,
+перезапустить RDS, но мы не будем этого делать.</p>
+
+<p>Функция реакции на запуск и остановку расчета не будет существенно сложнее:</p>
+
+<pre class="cpp">  <span class="rem">// Отклик на событие – запуск и остановка расчета</span>
+  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> CalcStartStopEvent(<span class="kw">int</span> Link,<span class="kw">int</span> Event,
+        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> EvData,<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> AuxData)
+  {
+    <span class="kw">switch</span>(Event)
+      { <span class="kw">case</span> <span id="light_ref3"><a class="hidden" href="RDSCTRLEVENT_CALCSTART.htm" title="Б.2.4. RDSCTRLEVENT_CALCSTART &ndash; запуск расчета">RDSCTRLEVENT_CALCSTART</a></span>: <span class="rem">// Запуск</span>
+          DisplayText(<span class="str">"Расчет запущен"</span>);
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <span id="light_ref4"><a class="hidden" href="RDSCTRLEVENT_CALCSTOP.htm" title="Б.2.5. RDSCTRLEVENT_CALCSTOP &ndash; остановка расчета">RDSCTRLEVENT_CALCSTOP</a></span>:  <span class="rem">// Остановка</span>
+          DisplayText(<span class="str">"Расчет остановлен"</span>);
+          <span class="kw">break</span>;
+      }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Здесь, поскольку одна и та же функция будет запускаться и в ответ на запуск, и в ответ на остановку расчета,
+мы анализируем параметр <span class="cpp">Event</span> и выводим сообщение, соответствующее произошедшему
+событию.</p>
+
+<p>Функции реакций готовы &ndash; осталось зарегистрировать их. Ранее мы уже создали для этой цели пустую
+функцию <span class="cpp">RegisterEvents</span>, которая вызывается сразу после загрузки библиотеки.
+Нужно добавить в нее следующие вызовы:</p>
+
+<pre class="cpp">  <span class="rem">// Разрешение событий и регистрация функций реакций</span>
+  <span class="kw">void</span> RegisterEvents(<span class="kw">void</span>)
+  {
+    <span class="rem">// Разрешить реакцию на события</span>
+    <span id="light_ref5"><a class="hidden" href="rdsctrlEnableEvents.htm" title="Б.3.6.1. rdsctrlEnableEvents &ndash; разрешение реакции на события">rdsctrlEnableEvents</a></span>(RdsLink,TRUE);
+    <span class="rem">// Событие завершения RDS</span>
+    <a class="hidden" href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a>(RdsLink,
+      <span id="light_ref6"><a class="hidden" href="RDSCTRLEVENT_CONNCLOSED.htm" title="Б.2.6. RDSCTRLEVENT_CONNCLOSED &ndash; завершение RDS">RDSCTRLEVENT_CONNCLOSED</a></span>,RdsExitEvent,NULL);
+    <span class="rem">// Событие запуска расчета</span>
+    <a class="hidden" href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a>(RdsLink,
+      <a class="hidden" href="RDSCTRLEVENT_CALCSTART.htm" title="Б.2.4. RDSCTRLEVENT_CALCSTART &ndash; запуск расчета">RDSCTRLEVENT_CALCSTART</a>,CalcStartStopEvent,NULL);
+    <span class="rem">// Событие завершения расчета</span>
+    <a class="hidden" href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a>(RdsLink,
+      <a class="hidden" href="RDSCTRLEVENT_CALCSTOP.htm" title="Б.2.5. RDSCTRLEVENT_CALCSTOP &ndash; остановка расчета">RDSCTRLEVENT_CALCSTOP</a>,CalcStartStopEvent,NULL);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Сначала мы вызываем функцию <span class="cpp"><a href="rdsctrlEnableEvents.htm" title="Б.3.6.1. rdsctrlEnableEvents &ndash; разрешение реакции на события">rdsctrlEnableEvents</a></span> с параметром <span class="cpp">TRUE</span>,
+тем самым разрешая RDS передавать в наше приложение информацию о событиях. Если ее не вызвать,
+или вызвать с параметром <span class="cpp">FALSE</span>, функции реакций не будут вызываться, несмотря на
+то, что мы их зарегистрировали &ndash; программа просто не узнает о событиях в RDS.</p>
+
+<p>Затем мы три раза вызываем <span class="cpp"><a href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a></span> для регистрации функций
+реакции на события <span class="cpp"><a href="RDSCTRLEVENT_CONNCLOSED.htm" title="Б.2.6. RDSCTRLEVENT_CONNCLOSED &ndash; завершение RDS">RDSCTRLEVENT_CONNCLOSED</a></span> (завершение процесса RDS),
+<span class="cpp"><a href="RDSCTRLEVENT_CALCSTART.htm" title="Б.2.4. RDSCTRLEVENT_CALCSTART &ndash; запуск расчета">RDSCTRLEVENT_CALCSTART</a></span> (запуск расчета) и <span class="cpp"><a href="RDSCTRLEVENT_CALCSTOP.htm" title="Б.2.5. RDSCTRLEVENT_CALCSTOP &ndash; остановка расчета">RDSCTRLEVENT_CALCSTOP</a></span>
+(остановка расчета). В последних двух случаях мы указываем одну и ту же функцию реакции
+<span class="cpp">CalcStartStopEvent</span>.</p>
+
+<p>Теперь, если мы запустим программу, загрузим в управляемую копию RDS какую-нибудь схему и будем
+запускать и останавливать расчет, в верхней части окна будут появляться сообщения, выведенные функцией реакции
+<span class="cpp">CalcStartStopEvent</span>. При этом безразлично, будем ли мы запускать и останавливать
+расчет <a href="pm_3_2.htm" title="&sect;3.2. Загрузка библиотеки и управление схемой">кнопками нашей программы</a>, или кнопками RDS &ndash; информация о событиях будет все равно поступать
+в программу. Если закрыть окно главной подсистемы загруженной схемы, RDS завершится, и функция реакции
+<span class="cpp">RdsExitEvent</span> выведет об этом сообщение.</p>
+
+<p>Модели блоков могут сами генерировать события, вызывая зарегистрированную в управляющей программе функцию
+реакции и передавая ей целое число и строку. Такое событие называется &laquo;сообщением от блока&raquo;, и
+ему соответствует идентификатор <span class="cpp"><span id="light_ref7"><a href="RDSCTRLEVENT_BLOCKMSG.htm" title="Б.2.2. RDSCTRLEVENT_BLOCKMSG &ndash; сообщение от блока">RDSCTRLEVENT_BLOCKMSG</a></span></span>. Реакция на сообщения от
+блоков используется очень часто. Фактически, если схемы RDS включаются в состав приложения, без
+таких сообщений бывает очень сложно обойтись. Через них можно передавать в управляющее приложение данные,
+полученные в процессе расчета (это удобнее, чем вручную считывать их из переменных разных блоков), нажатия на
+различные блоки-кнопки и т.д.</p>
+
+<p>Для реакции на сообщение от блока можно использовать обычную функцию описанного выше вида, при
+этом имя вызвавшего событие блока и переданные им число и строка будут находиться в структуре
+<span class="cpp"><span id="light_ref8"><a href="RDSCTRL_BLOCKMSGDATA.htm#ref1" title="Структура RDSCTRL_BLOCKMSGDATA">RDSCTRL_BLOCKMSGDATA</a></span></span>, указатель на которую передается в параметре
+<span class="cpp">EvData</span>. Можно также зарегистрировать для этой реакции специализированную функцию
+следующего вида:</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции_реакции_на_сообщение</i>(
+    <span class="kw">int</span> Link,        <span class="rem">// Связь с копией RDS</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> BlockName, <span class="rem">// Полное имя передавшего блока</span>
+    <span class="kw">int</span> IMsg,        <span class="rem">// Переданное блоком целое число</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> SMsg,      <span class="rem">// Переданная блоком строка</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> AuxData); <span class="rem">// Дополнительный параметр</span></pre>
+
+<p>Такая функция получает имя вызвавшего событие блока в параметре <span class="cpp">BlockName</span>, а
+число и строку, которые он передал &ndash; в параметрах <span class="cpp">IMsg</span> и
+<span class="cpp">SMsg</span> соответственно. Как и обычная функция реакции, в параметре
+<span class="cpp">AuxData</span> эта функция получает указатель, переданный при ее регистрации. Использование такой
+специализированной функции позволяет несколько упростить текст программы &ndash; здесь все необходимые данные
+сразу передаются в параметрах функции, и их не нужно &laquo;вытаскивать&raquo; из структуры, указатель
+на которую еще нужно привести к правильному типу.</p>
+
+<p>Для регистрации специальной функции реакции на сообщение от блока используется функция
+<span class="cpp"><span id="light_ref9"><a href="rdsctrlRegisterBlockMsgCallback.htm" title="Б.3.6.2. rdsctrlRegisterBlockMsgCallback &ndash; регистрация функции для реакции на сообщение от блока">rdsctrlRegisterBlockMsgCallback</a></span></span>:</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsctrlRegisterBlockMsgCallback.htm" title="Б.3.6.2. rdsctrlRegisterBlockMsgCallback &ndash; регистрация функции для реакции на сообщение от блока">rdsctrlRegisterBlockMsgCallback</a>(
+    <span class="kw">int</span> Link,                    <span class="rem">// Связь с копией RDS</span>
+    RDSCTRL_BMCALLBACK CallBack, <span class="rem">// Указатель на функцию</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> AuxData);             <span class="rem">// Дополнительные данные</span></pre>
+
+<p>В параметре <span class="cpp">Link</span> передается идентификатор связи, для сообщений которой регистрируется
+функция, в параметре <span class="cpp">CallBack</span> &ndash; указатель на регистрируемую функцию реакции, а
+в параметре <span class="cpp">AuxData</span> &ndash; произвольный указатель, который будет передаваться в одноименном
+параметре зарегистрированной функции при каждом вызове.</p>
+
+<p>Добавим в нашу программу реакцию на сообщения от блоков. Сначала напишем функцию реакции, которая будет
+помещать имя передавшего сообщение блока и полученные от него число и строку в одноименные поля ввода в
+окне программы:</p>
+
+<pre class="cpp">  <span class="rem">// Отклик на событие – сообщение от блока</span>
+  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> BlockMsgEvent(<span class="kw">int</span> Link,<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> BlockName,
+    <span class="kw">int</span> IMsg,<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> SMsg,<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> AuxData)
+  {
+    <span class="rem">// Заносим имя блока в одноименное поле ввода</span>
+    SetDlgItemText(MainWin,IDC_BLKNAMEEDIT,BlockName);
+    <span class="rem">// Заносим IMsg в поле ввода "число"</span>
+    SetDlgItemInt(MainWin,IDC_VALUEEDIT,IMsg,TRUE);
+    <span class="rem">// Заносим полученный текст в поле ввода "строка"</span>
+    SetDlgItemText(MainWin,IDC_STRINGEDIT,SMsg);
+
+    DisplayText(<span class="str">"Получено сообщение от блока"</span>);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Дескриптор окна, которому принадлежат поля ввода, в которые мы заносим информацию, как обычно, берется
+из глобальной переменной <span class="cpp">MainWin</span>. Для помещения текста и числа в
+поля ввода используются функции Windows API <span class="cpp">SetDlgItemText</span> и
+<span class="cpp">SetDlgItemInt</span> соответственно.</p>
+
+<p>Эту функцию необходимо зарегистрировать, <span class="changes">добавив</span> вызов
+<span class="cpp"><a class="hidden" href="rdsctrlRegisterBlockMsgCallback.htm" title="Б.3.6.2. rdsctrlRegisterBlockMsgCallback &ndash; регистрация функции для реакции на сообщение от блока">rdsctrlRegisterBlockMsgCallback</a></span> в уже написанную нами ранее функцию
+<span class="cpp">RegisterEvents</span>:</p>
+
+<pre class="cpp">  <span class="rem">// Разрешение событий и регистрация функций реакций</span>
+  <span class="kw">void</span> RegisterEvents(<span class="kw">void</span>)
+  {
+    <span class="rem">// Разрешить реакцию на события</span>
+    <a class="hidden" href="rdsctrlEnableEvents.htm" title="Б.3.6.1. rdsctrlEnableEvents &ndash; разрешение реакции на события">rdsctrlEnableEvents</a>(RdsLink,TRUE);
+    <span class="rem">// Событие завершения RDS</span>
+    <a class="hidden" href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a>(RdsLink,
+      <a class="hidden" href="RDSCTRLEVENT_CONNCLOSED.htm" title="Б.2.6. RDSCTRLEVENT_CONNCLOSED &ndash; завершение RDS">RDSCTRLEVENT_CONNCLOSED</a>,RdsExitEvent,NULL);
+    <span class="rem">// Событие запуска расчета</span>
+    <a class="hidden" href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a>(RdsLink,
+      <a class="hidden" href="RDSCTRLEVENT_CALCSTART.htm" title="Б.2.4. RDSCTRLEVENT_CALCSTART &ndash; запуск расчета">RDSCTRLEVENT_CALCSTART</a>,CalcStartStopEvent,NULL);
+    <span class="rem">// Событие завершения расчета</span>
+    <a class="hidden" href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a>(RdsLink,
+      <a class="hidden" href="RDSCTRLEVENT_CALCSTOP.htm" title="Б.2.5. RDSCTRLEVENT_CALCSTOP &ndash; остановка расчета">RDSCTRLEVENT_CALCSTOP</a>,CalcStartStopEvent,NULL);
+
+<div class="changes">    <span class="rem">// Сообщение от блока</span>
+    <a class="hidden" href="rdsctrlRegisterBlockMsgCallback.htm" title="Б.3.6.2. rdsctrlRegisterBlockMsgCallback &ndash; регистрация функции для реакции на сообщение от блока">rdsctrlRegisterBlockMsgCallback</a>(RdsLink,BlockMsgEvent,NULL);</div>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Теперь, если модель какого-либо блока в схеме, загруженной в управляемую копию RDS, передаст сообщение
+управляющей программе, данные этого сообщения появятся в полях ввода, а в верхней части окна программы будет
+выведен текст &laquo;Получено сообщение от блока&raquo;.</p>
+
+<p>Мы ввели в нашу программу реакцию на сообщения от блоков, но у нас пока нет блоков, которые передавали бы такие
+сообщения. Исправим эту ситуацию.
+Ранее (в <a href="pm_2_14_2.htm" title="&sect;2.14.2. Сброс подсистемы в начальное состояние">&sect;2.14.2</a>) мы создали несколько блоков, с помощью которых
+мы моделировали метательную машину, выпускающую снаряд с заданной начальной скоростью и углом возвышения,
+и подбирали угол возвышения для заданной дальности полета снаряда. По окончании расчета
+<a href="pm_2_14_2.htm#ref23" title="Модель поиска угла возвышения для заданной дальности выстрела">одна из этих моделей</a> сообщала пользователю найденное значение угла
+и соответствующую ему величину промаха. Изменим эту модель так, чтобы при управлении из внешнего приложения она,
+вместо вывода сообщения пользователю, генерировала бы в управляющей программе событие и передавала ей найденные
+значения. Это позволит использовать схему с такой моделью как составную часть какой-нибудь расчетной программы:
+программа загрузит схему, запустит расчет и через некоторое время получит его результаты через функцию реакции
+на сообщение от блока, в которой сможет их обработать.</p>
+
+<p>Поиском угла возвышения занимается модель <span class="cpp">ArtSearch</span>, личная область данных
+которой оформлена как класс <span class="cpp">TArtSearchData</span>. За вывод сообщения пользователю отвечает
+функция <span class="cpp">ShowResults</span> в этом классе, именно в нее мы вставим передачу сообщения управляющему
+приложению. Поскольку мы можем передать только целое число и строку, найденный угол возвышения и получившийся
+промах мы преобразуем в двухстрочный текст вида</p>
+
+<pre class="cpp">  Angle=<i>значение_угла</i>
+  Miss=<i>значение_промаха</i></pre>
+
+<p>Строки текста будут отделяться друг от друга кодом перевода строки &laquo;\n&raquo;. Этот текст будет
+передаваемой строкой, а в качестве целого числа мы всегда будем передавать ноль. Функцию
+<span class="cpp">ShowResults</span> необходимо <span class="changes">изменить</span> следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Вывод сообщения о результатах поиска</span>
+  <span class="kw">void</span> ShowResults(<span class="kw">void</span>)
+  { <span class="kw">char</span> *str,
+         *angle=<a class="hidden" href="rdsDtoA.htm" title="А.5.4.5. rdsDtoA &ndash; преобразование вещественного числа в строку">rdsDtoA</a>(OptAngle,-<span class="const">1</span>,NULL),
+         *miss=<a class="hidden" href="rdsDtoA.htm" title="А.5.4.5. rdsDtoA &ndash; преобразование вещественного числа в строку">rdsDtoA</a>(OptMiss,<span class="const">0</span>,NULL);
+  <span class="changes">  <span class="kw">if</span>(<span id="light_ref10"><a class="hidden" href="rdsHasRemoteController.htm" title="А.5.21.4. rdsHasRemoteController &ndash; проверка наличия внешнего управления">rdsHasRemoteController</a></span>()) <span class="rem">// Управляется извне    </span></span>
+  <span class="changes">    { <span class="rem">// Формрование динамической строки с текстом     </span></span>
+  <span class="changes">      str=<a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a>(<span class="str">"Angle="</span>,angle,FALSE);          </span>
+  <span class="changes">      <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;str,<span class="str">"\nMiss="</span>,FALSE);            </span>
+  <span class="changes">      <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;str,miss,FALSE);                 </span>
+  <span class="changes">      <span class="rem">// Передача сообщения управляющей программе      </span></span>
+  <span class="changes">      <span id="light_ref11"><a class="hidden" href="rdsRemoteControllerCall.htm" title="А.5.21.5. rdsRemoteControllerCall &ndash; передача сообщения управляющей программе">rdsRemoteControllerCall</a></span>(<span class="const">0</span>,str);                  </span>
+  <span class="changes">    }                                                  </span>
+  <span class="changes">  <span class="kw">else</span> <span class="rem">// Работает самостоятельно                      </span></span>
+      <span class="changes">{</span> <span class="rem">// Формрование динамической строки с сообщением</span>
+        str=<a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a>(<span class="str">"Угол возвышения: "</span>,angle,FALSE);
+        <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;str,<span class="str">" гр.\nПромах: "</span>,FALSE);
+        <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;str,miss,FALSE);
+        <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;str,<span class="str">" м"</span>,FALSE);
+        <span class="rem">// Вывод текста</span>
+        <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(str,<span class="str">"Поиск завершен"</span>,MB_OK);
+      <span class="changes">}</span>
+    <span class="rem">// Освобождение всех динамических строк</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(str);
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(angle);
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(miss);
+  };</pre>
+
+<p>Чтобы проверить, управляется ли RDS внешним приложением или работает самостоятельно, мы вызываем
+сервисную функцию <span class="cpp"><a href="rdsHasRemoteController.htm" title="А.5.21.4. rdsHasRemoteController &ndash; проверка наличия внешнего управления">rdsHasRemoteController</a></span>, которая вернет <span class="cpp">TRUE</span>, если
+схема загружена в копию RDS, которая в данный момент управляется извне. В этом случае мы формируем
+динамическую строку <span class="cpp">str</span> с текстом указанного формата, в который подставляются значения
+угла возвышения <span class="cpp">angle</span> и промаха <span class="cpp">miss</span>. Затем вызывается функция
+передачи сообщения управляющей программе <span class="cpp"><a href="rdsRemoteControllerCall.htm" title="А.5.21.5. rdsRemoteControllerCall &ndash; передача сообщения управляющей программе">rdsRemoteControllerCall</a></span>, в которую передаются
+число 0 и сформированная строка: эти параметры программа получит в своей функции реакции.</p>
+
+<p>Если же <span class="cpp"><a class="hidden" href="rdsHasRemoteController.htm" title="А.5.21.4. rdsHasRemoteController &ndash; проверка наличия внешнего управления">rdsHasRemoteController</a></span> вернет <span class="cpp">FALSE</span>, значит,
+RDS в данный момент работает самостоятельно. В этом случае, как и прежде, формируется сообщение
+для пользователя.</p>
+
+<p>Если загрузить схему для поиска угла
+(<a href="pm_2_14_2.htm#pic8" title="Схема поиска угла возвышения для заданной дальности">рис.&nbsp;101</a>)
+в управляемую копию RDS и запустить расчет, через некоторое время наша программа получит сообщение
+от блока поиска угла, как
+на <a href="#pic1" title="Поиск угла возвышения с внешним управлением">рис.&nbsp;126</a>.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/WinApplicationAngleSearch.png" width="870" height="333" alt="Поиск угла возвышения с внешним управлением" />
+<p id="light_pic1">Рис.&nbsp;126. Поиск угла возвышения с внешним управлением</p>
+</div></div>
+
+
+<p>В поле ввода имени блока окажется имя блока поиска угла, который передал сообщение (в данном случае
+&ndash; &laquo;:Search&raquo;), в поле &laquo;<span class="menu">число</span>&raquo; &ndash; полученное от блока целое число
+(ноль), а в поле &laquo;<span class="menu">строка</span>&raquo; &ndash; сформированный блоком текст с найденными значениями. Поля ввода,
+которые мы создали в нашей программе, не рассчитаны на многострочные тексты, поэтому на месте перевода строки отобразился
+специальный символ. В верхней части окна выведен текст &laquo;Расчет остановлен&raquo;, а не
+&laquo;Получено сообщение от блока&raquo;, поскольку после передачи сообщения блок поиска угла останавливает
+расчет, а в нашей программе отображается только самый последний текст из функции реакции.</p>
+
+<p>Для того, чтобы сделать нашу схему полностью функциональной, необходимо добавить в блок поиска угла
+возможность установки параметров через внешнее управление в реакции на вызов
+<span class="cpp"><span id="light_ref12"><a href="RDS_BFM_REMOTEMSG.htm" title="А.2.4.11. RDS_BFM_REMOTEMSG &ndash; вызов от внешнего приложения">RDS_BFM_REMOTEMSG</a></span></span>. Чтобы можно было не привязываться к имени этого блока в схеме,
+назовем выполняемую им операцию &laquo;ProgrammersGuide.ArtSearch&raquo; и будем искать его функцией
+rdsctrlFindOpSetProviders (см. <a href="pm_3_3.htm" title="&sect;3.3. Вызов функции блока загруженной схемы">&sect;3.3</a>). Устанавливать
+параметры блока будем функцией <span class="cpp"><span id="light_ref13"><a href="rdsctrlCallBlockFunctionEx.htm" title="Б.3.4.7. rdsctrlCallBlockFunctionEx &ndash; передача блоку числа и строки">rdsctrlCallBlockFunctionEx</a></span></span>, передавая блоку номер
+изменяемой переменной в целом параметре и ее значение в строковом.</p>
+
+<p>Для того, чтобы объявить о поддержке блоком операции
+&laquo;ProgrammersGuide.ArtSearch&raquo;, нужно внести следующие <span class="changes">изменения</span>
+в конструктор класса <span class="cpp">TArtSearchData</span>:</p>
+
+<pre class="cpp">  <span class="rem">// Конструктор класса</span>
+  TArtSearchData(<span class="kw">void</span>)
+    { SelfReset=FALSE;
+      Mode=ASMODE_READY;
+      <span class="changes"><span id="light_ref14"><a class="hidden" href="rdsExecutesRemoteOpsSet.htm" title="А.5.21.1. rdsExecutesRemoteOpsSet &ndash; регистрация блока как исполнителя операции внешнего управления">rdsExecutesRemoteOpsSet</a></span>(<span class="str">"ProgrammersGuide.ArtSearch"</span>,TRUE);</span>
+    };</pre>
+
+<p>В оператор <span class="cpp">switch</span> в модели блока
+<span class="cpp">ArtSearch</span> нужно добавить
+реакцию на вызов от управляющего приложения:</p>
+
+<pre class="cpp">  <span class="rem">// Вызов от управляющей программы</span>
+  <span class="kw">case</span> <a class="hidden" href="RDS_BFM_REMOTEMSG.htm" title="А.2.4.11. RDS_BFM_REMOTEMSG &ndash; вызов от внешнего приложения">RDS_BFM_REMOTEMSG</a>:
+    <span class="rem">// Устанавливаем значение переменной по умолчанию</span>
+    <span id="light_ref15"><a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a></span>(
+      BlockData-&gt;Block, <span class="rem">// Блок</span>
+      ((<a class="hidden" href="RDS_BFM_REMOTEMSG.htm#ref1" title="Структура RDS_REMOTEMSGDATA">RDS_REMOTEMSGDATA</a>*)ExtParam)-&gt;Value,  <span class="rem">// Номер переменной</span>
+      ((<a class="hidden" href="RDS_BFM_REMOTEMSG.htm#ref1" title="Структура RDS_REMOTEMSGDATA">RDS_REMOTEMSGDATA</a>*)ExtParam)-&gt;String);<span class="rem">// Значение</span>
+    <span class="kw">break</span>;</pre>
+
+<p>В этой реакции вызывается функция установки значения переменной по умолчанию (блок хранит свои параметры
+именно в них), в которой принятое от управляющей программы целое число трактуется как номер переменной, а
+строка &ndash; как ее значение. Таким образом, установке значения переменной
+<span class="cpp">MinAngle</span> будет соответствовать число 2 (в списке переменных блока она третья, то
+есть имеет индекс 2 начиная с нуля), <span class="cpp">MaxAngle</span> &ndash; 3,
+<span class="cpp">Accuracy</span> &ndash; 4, <span class="cpp">Distance</span> &ndash; 5. Теперь после загрузки
+схемы мы можем найти в ней блок, выполняющий операцию
+&laquo;ProgrammersGuide.ArtSearch&raquo;, и, вызывая его, установить в нем границы диапазона углов
+(переменные 2 и 3), точность установки угла (переменная 4) и требуемую дальность (переменная 5), запустить
+расчет и получить найденное значение угла возвышения для этой дальности через сообщение от блока. В таком
+виде модель блока поиска угла уже можно использовать для каких-либо расчетов.</p>
+
+<p>Рассмотрим еще один пример: создадим блок, который будет сообщать вызывающей программе о щелчках мыши
+на его изображении. Такой блок можно использовать в качестве кнопки на каком-либо виртуальном пульте, работающем
+под управлением внешнего приложения. С каждым таким блоком будет связано целое число-идентификатор, которое
+он будет сообщать управляющей программе при щелчке &ndash; так программа сможет различать щелчки по
+разным блокам, не зная их имен. Чтобы программа могла понять, какая именно кнопка мыши была нажата,
+блок будет передавать строку &laquo;L&raquo; для левой кнопки, &laquo;R&raquo; для правой и
+&laquo;M&raquo; для средней.</p>
+
+<p>Число-идентификатор мы будем хранить в переменной блока, и нам нужно будет предусмотреть функцию настройки,
+чтобы пользователь мог его вводить. Блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+    <th>Назначение</th>
+    <th>Номер</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+<td>Стандартный сигнал запуска (здесь не используется)</td><td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+<td>Стандартный сигнал готовности (здесь не используется)</td><td class="center">1</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">Value</td>
+<td class="center">int</td>
+<td class="center">4</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+<td>Идентификатор блока</td><td class="center">2</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Модель блока будет иметь следующий вид:</p>
+
+
+<pre class="cpp">  <span class="rem">// Нажатие кнопки мыши для ДУ</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> RemoteClick(<span class="kw">int</span> CallMode,
+      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="kw">char</span> *str,*def;
+    <span id="light_ref16"><a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a></span> *mouse;
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData->VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))   </span><span class="rem">// 0</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1))) </span><span class="rem">// 1</span>
+  <span class="preproc">#define Value  (*((int *)(pStart+2)))  </span><span class="rem">// 2</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типов статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSI}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Вызов функции настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="rem">// Получаем значение Value по умолчанию в виде строки</span>
+          def=<span id="light_ref17"><a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a></span>(BlockData->Block,<span class="const">2</span>,NULL);
+          <span class="rem">// Вызываем окно ввода строки</span>
+          str=<span id="light_ref18"><a class="hidden" href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a></span>(<span class="str">"Щелчок для ДУ"</span>,
+            <span class="str">"Идентификатор:"</span>,def,<span class="const">100</span>);
+          <span class="rem">// Строка def больше не нужна</span>
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(def);
+          <span class="kw">if</span>(str)
+            { <span class="rem">// Пользователь нажал "OK"</span>
+              <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(BlockData->Block,<span class="const">2</span>,str);
+              <span class="rem">// Строка str больше не нужна</span>
+              <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(str);
+              <span class="kw">return</span> <span id="light_ref19"><a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a></span>;
+            }
+          <span class="kw">break</span>;
+
+        <span class="rem">// Нажатие кнопки мыши</span>
+        <span class="kw">case</span> <span id="light_ref20"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>:
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a>*)ExtParam;
+          <span class="rem">// Определение нажатой кнопки</span>
+          <span class="kw">switch</span>(mouse->Button)
+            { <span class="kw">case</span> <span id="light_ref21"><a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a></span>:  str=<span class="str">"L"</span>; <span class="kw">break</span>;
+              <span class="kw">case</span> <span id="light_ref22"><a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref5" title="RDS_MRIGHTBUTTON">RDS_MRIGHTBUTTON</a></span>: str=<span class="str">"R"</span>; <span class="kw">break</span>;
+              <span class="kw">default</span>: str=<span class="str">"M"</span>;
+            }
+          <span class="rem">// Передача сообщения управляющей программе</span>
+          <a class="hidden" href="rdsRemoteControllerCall.htm" title="А.5.21.5. rdsRemoteControllerCall &ndash; передача сообщения управляющей программе">rdsRemoteControllerCall</a>(Value,str);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef Value</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Функция настройки в этой модели использует сервисную функцию ввода строки
+<span class="cpp"><a href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a></span> &ndash; поскольку нам нужно вводить единственное значение, она нам
+вполне подходит. Целый идентификатор, который мы будем передавать управляющей программе при щелчке, хранится
+в значении по умолчанию переменной блока <span class="cpp">Value</span> с индексом 2, для его чтения и
+записи используются функции <span class="cpp"><a href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a></span> и
+<span class="cpp"><a href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a></span> соответственно.</p>
+
+<p>При щелчке на изображении блока вызывается реакция <span class="cpp"><a href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>. В ней значение
+идентификатора <span class="cpp">Value</span> и строка, соответствующая нажатой кнопке, передается вызвавшему
+приложению функцией <span class="cpp"><a href="rdsRemoteControllerCall.htm" title="А.5.21.5. rdsRemoteControllerCall &ndash; передача сообщения управляющей программе">rdsRemoteControllerCall</a></span> (при этом в приложении возникнет событие типа
+&laquo;сообщение от блока&raquo;). В отличие от предыдущего примера, здесь мы не вызываем функцию
+<span class="cpp"><a href="rdsHasRemoteController.htm" title="А.5.21.4. rdsHasRemoteController &ndash; проверка наличия внешнего управления">rdsHasRemoteController</a></span> и не проверяем, работает ли RDS под управлением внешней программы.
+Функцию <span class="cpp"><a class="hidden" href="rdsRemoteControllerCall.htm" title="А.5.21.5. rdsRemoteControllerCall &ndash; передача сообщения управляющей программе">rdsRemoteControllerCall</a></span> можно безопасно вызывать и при отсутствии связи с
+управляющей программой, в этом случае вызов будет проигнорирован.</p>
+
+<p>Теперь можно создать новую схему, добавить в нее несколько блоков с моделью
+<span class="cpp">RemoteClick</span>, разрешив для них реакцию на действия мышью
+(см. <a href="pm_1_4.htm#pic3" title="Параметры блока &ndash; модель и реакции">рис.&nbsp;7</a>), ввести в настройках этих блоков разные
+идентификаторы, и загрузить эту схему в управляемую нашей программой копию RDS. Теперь в режимах
+моделирования и расчета при щелчке на любом из этих блоков в верхней части окна программы будет появляться текст
+&laquo;Получено сообщение от блока&raquo;, в поле &laquo;<span class="menu">число</span>&raquo; &ndash; идентификатор блока, на
+котором щелкнул пользователь, а в поле &laquo;<span class="menu">строка</span>&raquo; &ndash; символ, соответствующий нажатой кнопке
+(<a href="#pic2" title="Передача информации о щелчке мыши через событие">рис.&nbsp;127</a>).</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/WinApplicationClick.png" width="643" height="224" alt="Передача информации о щелчке мыши через событие" />
+<p id="light_pic2">Рис.&nbsp;127. Передача информации о щелчке мыши через событие</p>
+</div></div>
+
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_3_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

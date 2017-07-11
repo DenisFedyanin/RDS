@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.10.1. Рисование изображения блока в окне подсистемы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_10">&sect;2.10. Программное рисование внешнего вида блока</a></p>
+<div class="level"><p>&sect;2.10.1. Рисование изображения блока в окне подсистемы</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_9_4.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_10_2.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_10_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_10_1.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделями блоков,
+изображения которых формируются программно.
+Библиотека содержит две модели:</p>
+
+<ul>
+  <li><span class="cpp">SimpleLevelIndicator</span> &ndash; простой индикатор уровня;</li>
+  <li><span class="cpp">SimplePlot</span> &ndash; простой график зависимости значения входа от времени.</li>
+</ul>
+
+<pre class="cpp">  <span class="rem">// Программное рисование - индикатор уровня и простой график</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;stdio.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+  <span class="rem">//=========== Индикатор уровня ============</span>
+  <span class="rem">// Прототип функции рисования</span>
+  <span class="kw">void</span> SimpleLevelIndicatorDraw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw,<span class="kw">double</span> val);
+
+  <span class="rem">// Модель простого индикатора уровня</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>) <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> SimpleLevelIndicator(
+        <span class="kw">int</span> CallMode,
+        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x      (*((double *)(pStart+2)))</span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка допустимости типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSD}"</span>))
+            <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+          <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Рисование внешнего вида блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a>:
+          SimpleLevelIndicatorDraw((<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a>)ExtParam,x);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция рисования простого индикатора уровня</span>
+  <span class="kw">void</span> SimpleLevelIndicatorDraw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw,<span class="kw">double</span> val)
+  { <span class="rem">// Диапазон допустимых значений входа</span>
+    <span class="kw">const</span> <span class="kw">double</span> Min=<span class="const">0</span>.<span class="const">0</span>,Max=<span class="const">100.0</span>;
+    <span class="rem">// Цвета индикатора</span>
+    <span class="kw">const</span> <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> empty=<span class="const">0xffffff</span>, <span class="rem">// Верхняя часть (белый)</span>
+                   fill=<span class="const">0xff0000</span>,  <span class="rem">// Нижняя часть (синий)</span>
+                   border=<span class="const">0</span>;       <span class="rem">// Рамка вокруг (черный)</span>
+    <span class="rem">// Вспомогательные переменные</span>
+    <span class="kw">int</span> height,fullheight,x1,y1,x2,y2;
+
+    <span class="rem">// Координаты прямоугольника внутри рамки (отступ в 1 точку)</span>
+    x1=draw-&gt;Left+<span class="const">1</span>;
+    y1=draw-&gt;Top+<span class="const">1</span>;
+    x2=draw-&gt;Left+draw-&gt;Width-<span class="const">1</span>;
+    y2=draw-&gt;Top+draw-&gt;Height-<span class="const">1</span>;
+    <span class="rem">// Выстота блока без толщины рамки (==draw-&gt;Height-2)</span>
+    fullheight=(y2-y1);
+
+    <span class="rem">// Высота столбика (от нижней границы до линии раздела)</span>
+    height=(val-Min)*fullheight/(Max-Min);
+    <span class="rem">// Ограничения сверху и снизу</span>
+    <span class="kw">if</span>(height&gt;fullheight)
+      height=fullheight;
+    <span class="kw">else</span> <span class="kw">if</span>(height&lt;<span class="const">0</span>)
+      height=<span class="const">0</span>;
+
+    <span class="rem">// Рисование рамки</span>
+    <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,<span class="const">1</span>,border,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+    <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref5" title="RDS_GFS_EMPTY">RDS_GFS_EMPTY</a>,<span class="const">0</span>);
+    <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(draw-&gt;Left,draw-&gt;Top,
+                   draw-&gt;Left+draw-&gt;Width,draw-&gt;Top+draw-&gt;Height);
+    <span class="rem">// Закраска верхней части цветом empty</span>
+    <span class="kw">if</span>(height!=fullheight)
+      { <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,empty);
+        <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(x1,y1,x2,y2-height);
+      }
+    <span class="rem">// Закраска нижней части цветом fill</span>
+    <span class="kw">if</span>(height!=<span class="const">0</span>)
+      { <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,fill);
+        <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(x1,y2-height,x2,y2);
+      }
+  }
+  <span class="rem">//=========================================</span>
+
+
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Простой график – личная область данных</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">class</span> TSimplePlotData
+  { <span class="kw">private</span>:
+      <span class="rem">// Настроечные параметры графика (цвета, шаг и т.п.)</span>
+      <span class="kw">double</span> TimeStep;         <span class="rem">// Шаг записи отсчетов</span>
+      <a class="hidden" href="RDS_SERVFONTPARAMS.htm#ref1" title="Структура RDS_SERVFONTPARAMS">RDS_SERVFONTPARAMS</a> Font; <span class="rem">// Шрифт чисел на осях</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> BorderColor;    <span class="rem">// Цвет рамки вокруг блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> FillColor;      <span class="rem">// Цвет фона блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> PlotBorderColor;<span class="rem">// Цвет рамки поля графика</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> PlotFillColor;  <span class="rem">// Цвет фона поля графика</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> LineColor;      <span class="rem">// Цвет лини графика</span>
+      <span class="kw">int</span> LineWidth;           <span class="rem">// Толщина линии графика</span>
+
+      <span class="rem">// Ось X</span>
+      <span class="kw">double</span> Xmin,Xmax;        <span class="rem">// Диапазон</span>
+      <span class="kw">double</span> XGridStep;        <span class="rem">// Шаг чисел на осях</span>
+      <span class="kw">int</span> XNumDecimal;         <span class="rem">// Дробная часть чисел на осях</span>
+
+      <span class="rem">// Ось Y</span>
+      <span class="kw">double</span> Ymin,Ymax;        <span class="rem">// Диапазон</span>
+      <span class="kw">double</span> YGridStep;        <span class="rem">// Шаг чисел на осях</span>
+      <span class="kw">int</span> YNumDecimal;         <span class="rem">// Дробная часть чисел на осях</span>
+
+      <span class="rem">// Массивы для хранения отсчетов графика</span>
+      <span class="kw">double</span> *Times;           <span class="rem">// Массив отсчетов времени</span>
+      <span class="kw">double</span> *Values;          <span class="rem">// Массив значений</span>
+      <span class="kw">int</span> Count;               <span class="rem">// Размер массивов</span>
+      <span class="kw">int</span> NextIndex;           <span class="rem">// Индекс для записи следующего значения</span>
+      <span class="kw">double</span> NextTime;         <span class="rem">// Время записи следующего значения</span>
+
+      <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> Time;    <span class="rem">// Связь с динамической переменной</span>
+                               <span class="rem">// времени ("DynTime")</span>
+    <span class="kw">public</span>:
+      <span class="rem">// Функция отведения массивов отсчетов</span>
+      <span class="kw">void</span> AllocateArrays(<span class="kw">void</span>);
+      <span class="rem">// Функция освобождения массивов отсчетов</span>
+      <span class="kw">void</span> ClearArrays(<span class="kw">void</span>);
+      <span class="rem">// Добавление очередной точки в массив отсчетов графика</span>
+      <span class="kw">void</span> AddPoint(<span class="kw">double</span> v);
+
+      <span class="kw">int</span> Setup(<span class="kw">void</span>);           <span class="rem">// Функция настройки параметров</span>
+      <span class="kw">void</span> SaveText(<span class="kw">void</span>);       <span class="rem">// Функция сохранения параметров</span>
+      <span class="kw">void</span> LoadText(<span class="kw">char</span> *text); <span class="rem">// Функция загрузки параметров</span>
+      <span class="kw">void</span> Draw(RDS_PDRAWDATA DrawData); <span class="rem">// Функция рисования</span>
+
+      TSimplePlotData(<span class="kw">void</span>);     <span class="rem">// Конструктор класса</span>
+      ~TSimplePlotData();        <span class="rem">// Деструктор класса</span>
+  };
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Модель блока</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>) <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> SimplePlot(
+        <span class="kw">int</span> CallMode,
+        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x      (*((double *)(pStart+2)))</span>
+    <span class="rem">// Указатель на личную область, приведенный к правильному типу</span>
+    TSimplePlotData *data=(TSimplePlotData*)(BlockData-&gt;BlockData);
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          BlockData-&gt;BlockData=<span class="kw">new</span> TSimplePlotData();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка данных блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типов статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Функция настройки параметров</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="kw">return</span> data-&gt;Setup();
+
+        <span class="rem">// Загрузка параметров в текстовом формате</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a>:
+          data-&gt;LoadText((<span class="kw">char</span>*)ExtParam);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Созранение параметров в текстовом формате</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a>:
+          data-&gt;SaveText();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Рисование внешнего вида блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a>:
+          data-&gt;Draw((<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a>)ExtParam);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Запуск расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a>:
+          <span class="kw">if</span>(((<a class="hidden" href="RDS_BFM_STARTCALC.htm#ref2" title="Указатель на RDS_STARTSTOPDATA">RDS_PSTARTSTOPDATA</a>)ExtParam)-&gt;FirstStart)
+            data-&gt;AllocateArrays(); <span class="rem">// Первый запуск</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Сброс расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_RESETCALC.htm" title="А.2.4.12. RDS_BFM_RESETCALC &ndash; сброс расчета">RDS_BFM_RESETCALC</a>:
+          data-&gt;ClearArrays();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Реакция на изменение динамической переменной</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a>:
+          data-&gt;AddPoint(x);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений для переменных</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Конструктор класса личной области данных графика</span>
+  TSimplePlotData::TSimplePlotData(<span class="kw">void</span>)
+  { <span class="rem">// Присвоение начальных значений параметрам</span>
+    TimeStep=<span class="const">0</span>.<span class="const">1</span>;           <span class="rem">// Шаг записи</span>
+    BorderColor=<span class="const">0</span>;          <span class="rem">// Цвет рамки вокруг блока</span>
+    FillColor=<span class="const">0xffffff</span>;     <span class="rem">// Цвет фона блока</span>
+    PlotBorderColor=<span class="const">0</span>;      <span class="rem">// Цвет рамки окна графика и сетки</span>
+    PlotFillColor=<span class="const">0xffffff</span>; <span class="rem">// Цвет окна графика</span>
+    LineColor=<span class="const">0</span>;            <span class="rem">// Цвет линии графика</span>
+    LineWidth=<span class="const">1</span>;            <span class="rem">// Толщина линии графика</span>
+
+    <span class="rem">// Параметры шрифта</span>
+    Font.servSize=<span class="kw">sizeof</span>(Font);
+    strcpy(Font.Name,<span class="str">"Arial"</span>);
+    Font.SizePriority=FALSE;
+    Font.Height=<span class="const">15</span>;
+    Font.Color=<span class="const">0</span>;
+    Font.Bold=Font.Italic=Font.Underline=Font.StrikeOut=FALSE;
+    Font.CharSet=<a class="hidden" href="RDS_SERVFONTPARAMS.htm#light_ref5" title="DEFAULT_CHARSET">DEFAULT_CHARSET</a>;
+
+    <span class="rem">// Диапазоны осей, шаг сетки, число десятичных знаков</span>
+    <span class="rem">// в числах на осях</span>
+    Xmin=<span class="const">0</span>.<span class="const">0</span>; Xmax=<span class="const">10.0</span>;
+    XGridStep=<span class="const">5.0</span>;
+    XNumDecimal=<span class="const">0</span>;
+    Ymin=-<span class="const">1.0</span>; Ymax=<span class="const">1.0</span>;
+    YGridStep=<span class="const">0</span>.<span class="const">5</span>;
+    YNumDecimal=<span class="const">1</span>;
+
+    <span class="rem">// Обнуление указателей на массивы и их размера</span>
+    <span class="rem">// (массивы еще не отведены)</span>
+    Times=Values=NULL;
+    Count=NextIndex=<span class="const">0</span>;
+    NextTime=Xmin;
+
+    <span class="rem">// Подписка на динамическую переменную времени</span>
+    Time=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(
+      <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>, <span class="rem">// В родительской подсистеме</span>
+      <span class="str">"DynTime"</span>,    <span class="rem">// Имя переменной</span>
+      <span class="str">"D"</span>,          <span class="rem">// Тип переменной (double)</span>
+      TRUE);        <span class="rem">// Искать по иерархии</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Деструктор класса</span>
+  TSimplePlotData::~TSimplePlotData()
+  { <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(Time); <span class="rem">// Прекратить подписку</span>
+    ClearArrays();                      <span class="rem">// Освободить массивы</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Рисование внешнего вида блока</span>
+  <span class="kw">void</span> TSimplePlotData::Draw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> DrawData)
+  { <span class="rem">// Вспомогательные переменные</span>
+    <span class="kw">int</span> Gr_x1,Gr_x2,Gr_y1,Gr_y2;
+    <span class="kw">int</span> x1,y1,x2,y2,textheight,w1,w2;
+    <span class="kw">char</span> buf[<span class="const">80</span>];
+
+    <span class="rem">// Рамка графика</span>
+    <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,<span class="const">1</span>,BorderColor,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+    <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,FillColor);
+    <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(DrawData-&gt;Left,DrawData-&gt;Top,
+                   DrawData-&gt;Left+DrawData-&gt;Width,
+                   DrawData-&gt;Top+DrawData-&gt;Height);
+
+    <span class="rem">// Необходимо вычислить координаты поля графика относительно</span>
+    <span class="rem">// верхнего левого угла блока</span>
+
+    <span class="rem">// Установка параметров шрифта с учетом масштаба</span>
+    <a class="hidden" href="rdsXGSetFontByParStr.htm" title="А.5.18.23. rdsXGSetFontByParStr &ndash; установить шрифт по структуре описания">rdsXGSetFontByParStr</a>(&amp;Font,DrawData-&gt;DoubleZoom);
+    <span class="rem">// Зазор сверху – половина высоты цифры + 1 точка</span>
+    <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(<span class="str">"0"</span>,NULL,&amp;textheight);
+    Gr_y1=textheight/<span class="const">2</span>+<span class="const">1</span>;
+    <span class="rem">// Зазор снизу – полная высота цифры + 1 точка</span>
+    Gr_y2=DrawData-&gt;Height-textheight-<span class="const">1</span>;
+    <span class="rem">// Зазор слева – ширина самого длинного числа вертикальной</span>
+    <span class="rem">// оси или половина ширины Xmin</span>
+    sprintf(buf,<span class="str">" %.*lf "</span>,YNumDecimal,Ymin);
+    <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(buf,&amp;w1,NULL);	<span class="rem">// Ширина Ymin</span>
+    sprintf(buf,<span class="str">" %.*lf "</span>,YNumDecimal,Ymax);
+    <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(buf,&amp;w2,NULL);	<span class="rem">// Ширина Ymax</span>
+    <span class="kw">if</span>(w2&gt;w1) w1=w2;
+    sprintf(buf,<span class="str">" %.*lf "</span>,XNumDecimal,Xmin);
+    <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(buf,&amp;w2,NULL);	<span class="rem">// Ширина Xmin</span>
+    w2/=<span class="const">2</span>;
+    <span class="kw">if</span>(w2&gt;w1) w1=w2;
+    Gr_x1=w1;
+    <span class="rem">// Зазор справа – половина ширины Xmax</span>
+    sprintf(buf,<span class="str">" %.*lf "</span>,XNumDecimal,Xmax);
+    <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(buf,&amp;w2,NULL);	<span class="rem">// Ширина Xmax</span>
+    w2/=<span class="const">2</span>;
+    Gr_x2=DrawData-&gt;Width-w2;
+
+    <span class="rem">// Абсолютные (на рабочем поле) координаты поля графика</span>
+    x1=DrawData-&gt;Left+Gr_x1;
+    x2=DrawData-&gt;Left+Gr_x2;
+    y1=DrawData-&gt;Top+Gr_y1;
+    y2=DrawData-&gt;Top+Gr_y2;
+
+    <span class="kw">if</span>(x1&gt;=x2 || y1&gt;=y2) <span class="rem">// Негде рисовать</span>
+      <span class="kw">return</span>;
+
+    <span class="rem">// Прямоугольник поля графика</span>
+    <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,<span class="const">1</span>,PlotBorderColor,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+    <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,PlotFillColor);
+    <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(x1,y1,x2,y2);
+
+    <span class="rem">// Установка пунктирного стиля линии</span>
+    <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref9" title="PS_DOT">PS_DOT</a>,<span class="const">1</span>,PlotBorderColor,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+    <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref5" title="RDS_GFS_EMPTY">RDS_GFS_EMPTY</a>,<span class="const">0</span>); <span class="rem">// Без заливки</span>
+
+    <span class="rem">// Горизонтальная ось с сеткой</span>
+    <span class="kw">for</span>(<span class="kw">double</span> x=Xmin;x&lt;=Xmax+XGridStep*<span class="const">0</span>.<span class="const">5</span>;x+=XGridStep)
+      { <span class="rem">// ix - координата линии на рабочем поле</span>
+        <span class="kw">int</span> ix=x1+(x-Xmin)*(x2-x1)/(Xmax-Xmin);
+        <span class="kw">if</span>(ix&gt;x1 &amp;&amp; ix&lt;x2) <span class="rem">// Чертим вертикальную линию</span>
+          { <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(ix,y1);
+            <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(ix,y2);
+          }
+        <span class="rem">// Вывод числа на оси под полем</span>
+        sprintf(buf,<span class="str">"%.*lf"</span>,XNumDecimal,x);
+        <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(buf,&amp;w1,NULL);
+        <a class="hidden" href="rdsXGTextOut.htm" title="А.5.18.27. rdsXGTextOut &ndash; строка текста">rdsXGTextOut</a>(ix-w1/<span class="const">2</span>,y2,buf);
+      }
+    <span class="rem">// Вертикальная ось с сеткой</span>
+    <span class="kw">for</span>(<span class="kw">double</span> y=Ymin;y&lt;=Ymax+YGridStep*<span class="const">0</span>.<span class="const">5</span>;y+=YGridStep)
+      { <span class="rem">// iy - координата линии на рабочем поле</span>
+        <span class="kw">int</span> iy=y2-(y-Ymin)*(y2-y1)/(Ymax-Ymin);
+        <span class="kw">if</span>(iy&gt;y1 &amp;&amp; iy&lt;y2) <span class="rem">// Чертим горизонтальную линию</span>
+          { <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(x1,iy);
+            <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x2,iy);
+          }
+        <span class="rem">// Вывод числа на оси слева от поля</span>
+        sprintf(buf,<span class="str">"%.*lf "</span>,YNumDecimal,y);
+        <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(buf,&amp;w1,&amp;textheight);
+        <a class="hidden" href="rdsXGTextOut.htm" title="А.5.18.27. rdsXGTextOut &ndash; строка текста">rdsXGTextOut</a>(x1-w1-<span class="const">2</span>,iy-textheight/<span class="const">2</span>,buf);
+      }
+
+    <span class="rem">// Если массивы не пустые – рисовать график</span>
+    <span class="kw">if</span>(Count)
+      { <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> r;
+        <span class="rem">// Установить область отсечения рисования по полю графика</span>
+        r.left=x1+<span class="const">1</span>;
+        r.top=y1+<span class="const">1</span>;
+        r.right=x2-<span class="const">1</span>;
+        r.bottom=y2-<span class="const">1</span>;
+        <a class="hidden" href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a>(&amp;r);
+
+        <span class="rem">// Установить сплошной стиль линии, заданный для</span>
+        <span class="rem">// графика цвет и толщину линии с учетом масштаба</span>
+        <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,
+          LineWidth*DrawData-&gt;DoubleZoom,
+          LineColor,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+
+        <span class="rem">// Строим ломанную линию по отсчетам из массивов</span>
+        <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;NextIndex;i++)
+          { <span class="rem">// Преобразуем вещественные отсчеты в целочисленные</span>
+            <span class="rem">// координаты на рабочем поле</span>
+            <span class="kw">int</span> ix=x1+(Times[i]-Xmin)*(x2-x1)/(Xmax-Xmin),
+                iy=y2-(Values[i]-Ymin)*(y2-y1)/(Ymax-Ymin);
+            <span class="kw">if</span>(i) <span class="rem">// Не первая точка – строим линию от предыдущей</span>
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(ix,iy);
+            <span class="kw">else</span> <span class="rem">// Первая точка графика – делаем ее текущей</span>
+              <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(ix,iy);
+          }
+
+        <span class="rem">// Отмена отсечения</span>
+        <a class="hidden" href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a>(NULL);
+      }
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Отведение памяти под массивы</span>
+  <span class="kw">void</span> TSimplePlotData::AllocateArrays(<span class="kw">void</span>)
+  { <span class="rem">// Сначала нужно очистить массивы, если они были отведены ранее</span>
+    ClearArrays();
+    <span class="rem">// При нулевом или отрицательном шаге записи отсчетов</span>
+    <span class="rem">// работа блока невозможна</span>
+    <span class="kw">if</span>(TimeStep&lt;=<span class="const">0</span>.<span class="const">0</span>) <span class="kw">return</span>;
+    <span class="rem">// Вычисление требуемого числа отсчетов по диапазону оси</span>
+    <span class="rem">// времени и шагу записи</span>
+    Count=(Xmax-Xmin)/TimeStep+<span class="const">1</span>;
+    <span class="rem">// Число отсчетов должно быть положительным</span>
+    <span class="kw">if</span>(Count&lt;=<span class="const">0</span>) {Count=<span class="const">0</span>; <span class="kw">return</span>; }
+    <span class="rem">// Отведение памяти – по Count чисел double</span>
+    Times=<span class="kw">new</span> <span class="kw">double</span>[Count];
+    Values=<span class="kw">new</span> <span class="kw">double</span>[Count];
+    <span class="rem">// Первый свободный индкс массива - 0</span>
+    NextIndex=<span class="const">0</span>;
+    <span class="rem">// Момент записи отсчета – начало диапазона оси времени</span>
+    NextTime=Xmin;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Освобождение массивов</span>
+  <span class="kw">void</span> TSimplePlotData::ClearArrays(<span class="kw">void</span>)
+  { <span class="kw">if</span>(Count) <span class="rem">// Массивы были отведены</span>
+      { <span class="kw">delete</span>[] Times;
+        <span class="kw">delete</span>[] Values;
+      }
+    <span class="rem">// Обнуление указателей и Count</span>
+    Times=Values=NULL;
+    Count=NextIndex=<span class="const">0</span>;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Добавление отсчета в массив</span>
+  <span class="kw">void</span> TSimplePlotData::AddPoint(<span class="kw">double</span> v)
+  { <span class="kw">double</span> t;
+    <span class="kw">if</span>(NextIndex&gt;=Count) <span class="rem">// Весь массив заполнен</span>
+      <span class="kw">return</span>;
+    <span class="kw">if</span>(Time==NULL || Time-&gt;Data==NULL) <span class="rem">// Нет доступа к “DynTime"</span>
+      <span class="kw">return</span>;
+    <span class="rem">// Получение значения времени из “DynTime"</span>
+    t=*((<span class="kw">double</span>*)Time-&gt;Data);
+    <span class="kw">if</span>(t&lt;NextTime) <span class="rem">// Еще не пришло время писать отсчет</span>
+      <span class="kw">return</span>;
+    <span class="rem">// Достигнуто время записи</span>
+    Values[NextIndex]=v;
+    Times[NextIndex]=t;
+    NextIndex++; <span class="rem">// Следующий отсчет – в следующий индекс</span>
+    NextTime+=TimeStep; <span class="rem">// Время записи следующего отсчета</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Сохранение параметров в текстовом виде</span>
+  <span class="kw">void</span> TSimplePlotData::SaveText(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini;
+    <span class="kw">char</span> *str;
+
+    <span class="rem">// Создание объекта для работы с текстом</span>
+    ini=<a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a>(TRUE);
+
+    <span class="rem">// Создание в тексте секции "[General]"</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a>,<span class="const">0</span>,<span class="str">"General"</span>);
+    <span class="rem">// Запись в секцию различных параметров</span>
+    <a class="hidden" href="rdsINIWriteDouble.htm" title="А.5.27.7. rdsINIWriteDouble &ndash; установить вещественное значение параметра">rdsINIWriteDouble</a>(ini,<span class="str">"TimeStep"</span>,TimeStep);
+    <a class="hidden" href="rdsINIWriteDouble.htm" title="А.5.27.7. rdsINIWriteDouble &ndash; установить вещественное значение параметра">rdsINIWriteDouble</a>(ini,<span class="str">"Xmin"</span>,Xmin);
+    <a class="hidden" href="rdsINIWriteDouble.htm" title="А.5.27.7. rdsINIWriteDouble &ndash; установить вещественное значение параметра">rdsINIWriteDouble</a>(ini,<span class="str">"Xmax"</span>,Xmax);
+    <a class="hidden" href="rdsINIWriteDouble.htm" title="А.5.27.7. rdsINIWriteDouble &ndash; установить вещественное значение параметра">rdsINIWriteDouble</a>(ini,<span class="str">"XGridStep"</span>,XGridStep);
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"XNumDecimal"</span>,XNumDecimal);
+    <a class="hidden" href="rdsINIWriteDouble.htm" title="А.5.27.7. rdsINIWriteDouble &ndash; установить вещественное значение параметра">rdsINIWriteDouble</a>(ini,<span class="str">"Ymin"</span>,Ymin);
+    <a class="hidden" href="rdsINIWriteDouble.htm" title="А.5.27.7. rdsINIWriteDouble &ndash; установить вещественное значение параметра">rdsINIWriteDouble</a>(ini,<span class="str">"Ymax"</span>,Ymax);
+    <a class="hidden" href="rdsINIWriteDouble.htm" title="А.5.27.7. rdsINIWriteDouble &ndash; установить вещественное значение параметра">rdsINIWriteDouble</a>(ini,<span class="str">"YGridStep"</span>,YGridStep);
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"YNumDecimal"</span>,YNumDecimal);
+
+    <span class="rem">// Создание в тексте секции "[Visuals]"</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a>,<span class="const">0</span>,<span class="str">"Visuals"</span>);
+    <span class="rem">// Запись в секцию различных параметров</span>
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"BorderColor"</span>,(<span class="kw">int</span>)BorderColor);
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"FillColor"</span>,(<span class="kw">int</span>)FillColor);
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"PlotBorderColor"</span>,(<span class="kw">int</span>)PlotBorderColor);
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"PlotFillColor"</span>,(<span class="kw">int</span>)PlotFillColor);
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"LineColor"</span>,(<span class="kw">int</span>)LineColor);
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"LineWidth"</span>,LineWidth);
+
+    <span class="rem">// Преобразование описания шрифта в строку для сохранения</span>
+    str=<a class="hidden" href="rdsStructToFontText.htm" title="А.5.10.3. rdsStructToFontText &ndash; формирование описания шрифта">rdsStructToFontText</a>(&amp;Font,NULL);
+    <span class="rem">// Запись строки с описанием шрифта</span>
+    <a class="hidden" href="rdsINIWriteString.htm" title="А.5.27.9. rdsINIWriteString &ndash; установить текстовое значение параметра">rdsINIWriteString</a>(ini,<span class="str">"Font"</span>,str);
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(str);	<span class="rem">// Освобождение памяти, занятой строкой</span>
+
+    <span class="rem">// Запись сформированного текста в файл схемы или буфер обмена</span>
+    <a class="hidden" href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a>(ini,<a class="hidden" href="RDS_HINI_SAVEBLOCKTEXT.htm" title="А.5.27.16. Команда RDS_HINI_SAVEBLOCKTEXT &ndash; передать текст параметров блока в RDS">RDS_HINI_SAVEBLOCKTEXT</a>);
+
+    <span class="rem">// Уничтожение вспомогательного объекта</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(ini);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Загрузка параметров в текстовом виде из строки text</span>
+  <span class="kw">void</span> TSimplePlotData::LoadText(<span class="kw">char</span> *text)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini;
+    <span class="kw">char</span> *str;
+
+    <span class="rem">// Создание объекта для работы с текстом</span>
+    ini=<a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a>(TRUE);
+
+    <span class="rem">// Загрузка текста в объект</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_SETTEXT.htm" title="А.5.27.18. Команда RDS_HINI_SETTEXT &ndash; занести текст в объект">RDS_HINI_SETTEXT</a>,<span class="const">0</span>,text);
+
+    <span class="rem">// Если в тексте есть секция "General", загрузить из нее данные</span>
+    <span class="kw">if</span>(<a class="hidden" href="rdsINIOpenSection.htm" title="А.5.27.2. rdsINIOpenSection &ndash; установить текущую секцию">rdsINIOpenSection</a>(ini,<span class="str">"General"</span>))
+      { TimeStep=<a class="hidden" href="rdsINIReadDouble.htm" title="А.5.27.3. rdsINIReadDouble &ndash; получить вещественное значение параметра">rdsINIReadDouble</a>(ini,<span class="str">"TimeStep"</span>,TimeStep);
+        Xmin=<a class="hidden" href="rdsINIReadDouble.htm" title="А.5.27.3. rdsINIReadDouble &ndash; получить вещественное значение параметра">rdsINIReadDouble</a>(ini,<span class="str">"Xmin"</span>,Xmin);
+        Xmax=<a class="hidden" href="rdsINIReadDouble.htm" title="А.5.27.3. rdsINIReadDouble &ndash; получить вещественное значение параметра">rdsINIReadDouble</a>(ini,<span class="str">"Xmax"</span>,Xmax);
+        XGridStep=<a class="hidden" href="rdsINIReadDouble.htm" title="А.5.27.3. rdsINIReadDouble &ndash; получить вещественное значение параметра">rdsINIReadDouble</a>(ini,<span class="str">"XGridStep"</span>,XGridStep);
+        XNumDecimal=<a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"XNumDecimal"</span>,XNumDecimal);
+        Ymin=<a class="hidden" href="rdsINIReadDouble.htm" title="А.5.27.3. rdsINIReadDouble &ndash; получить вещественное значение параметра">rdsINIReadDouble</a>(ini,<span class="str">"Ymin"</span>,Ymin);
+        Ymax=<a class="hidden" href="rdsINIReadDouble.htm" title="А.5.27.3. rdsINIReadDouble &ndash; получить вещественное значение параметра">rdsINIReadDouble</a>(ini,<span class="str">"Ymax"</span>,Ymax);
+        YGridStep=<a class="hidden" href="rdsINIReadDouble.htm" title="А.5.27.3. rdsINIReadDouble &ndash; получить вещественное значение параметра">rdsINIReadDouble</a>(ini,<span class="str">"YGridStep"</span>,YGridStep);
+        YNumDecimal=<a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"YNumDecimal"</span>,YNumDecimal);
+      }
+    <span class="rem">// Если в тексте есть секция "Visuals", загрузить из нее данные</span>
+    <span class="kw">if</span>(<a class="hidden" href="rdsINIOpenSection.htm" title="А.5.27.2. rdsINIOpenSection &ndash; установить текущую секцию">rdsINIOpenSection</a>(ini,<span class="str">"Visuals"</span>))
+      { BorderColor=(<a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a>)<a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"BorderColor"</span>,
+          (<span class="kw">int</span>)BorderColor);
+        FillColor=(<a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a>)<a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"FillColor"</span>,
+          (<span class="kw">int</span>)FillColor);
+        PlotBorderColor=(<a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a>)<a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,
+          <span class="str">"PlotBorderColor"</span>,(<span class="kw">int</span>)PlotBorderColor);
+        PlotFillColor=(<a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a>)<a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"PlotFillColor"</span>,
+          (<span class="kw">int</span>)PlotFillColor);
+        LineColor=(<a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a>)<a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"LineColor"</span>,
+          (<span class="kw">int</span>)LineColor);
+        LineWidth=(<a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a>)<a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"LineWidth"</span>,LineWidth);
+        str=<a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a>(ini,<span class="str">"Font"</span>,<span class="str">""</span>,NULL);
+        <span class="kw">if</span>(str) <a class="hidden" href="rdsFontTextToStruct.htm" title="А.5.11.1. rdsFontTextToStruct &ndash; разбор описания шрифта">rdsFontTextToStruct</a>(str,NULL,&amp;Font);
+      }
+
+    <span class="rem">// Уничтожение вспомогательного объекта</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(ini);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция настройки параметров блока</span>
+  <span class="kw">int</span> TSimplePlotData::Setup(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window;
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;
+    <span class="kw">char</span> *str;
+
+    <span class="rem">// Создание окна</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(TRUE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Простой график"</span>);
+
+    <span class="rem">// Вкладка "Оси"</span>
+    <a class="hidden" href="rdsFORMAddTab.htm" title="А.5.28.4. rdsFORMAddTab &ndash; добавить вкладку">rdsFORMAddTab</a>(window,<span class="const">1</span>,<span class="str">"Оси"</span>);
+
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">1</span>,<span class="const">100</span>,
+      <a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a> | <a class="hidden" href="app_a_fields.htm#light_ref25" title="RDS_FORMFLAG_LINE">RDS_FORMFLAG_LINE</a>,<span class="str">"Шаг записи"</span>,<span class="const">50</span>);
+    <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,<span class="const">100</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,TimeStep);
+
+    <span class="rem">// Текстовая метка без возможности ввода</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">1</span>,<span class="const">1</span>,<a class="hidden" href="app_a_fields.htm#light_ref11" title="RDS_FORMCTRL_LABEL">RDS_FORMCTRL_LABEL</a>,<span class="str">"Ось X:"</span>,<span class="const">0</span>);
+
+    <span class="rem">// Диапазон (два поля ввода в одной строке)</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">1</span>,<span class="const">2</span>,<a class="hidden" href="app_a_fields.htm#light_ref18" title="RDS_FORMCTRL_RANGEEDIT">RDS_FORMCTRL_RANGEEDIT</a>,<span class="str">"Диапазон"</span>,<span class="const">90</span>);
+    <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Xmin);
+    <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_RANGEMAX.htm" title="А.5.28.23. Команда RDS_FORMVAL_RANGEMAX &ndash; значение поля ввода конца диапазона">RDS_FORMVAL_RANGEMAX</a>,Xmax);
+
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">1</span>,<span class="const">3</span>,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,<span class="str">"Шаг сетки"</span>,<span class="const">50</span>);
+    <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,XGridStep);
+
+    <span class="rem">// Поле ввода со стрелками увеличения/уменьшения</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">1</span>,<span class="const">4</span>,
+      <a class="hidden" href="app_a_fields.htm#light_ref20" title="RDS_FORMCTRL_UPDOWN">RDS_FORMCTRL_UPDOWN</a> | <a class="hidden" href="app_a_fields.htm#light_ref25" title="RDS_FORMFLAG_LINE">RDS_FORMFLAG_LINE</a>,
+      <span class="str">"Дробная часть чисел"</span>,<span class="const">50</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">4</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,XNumDecimal);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">4</span>,<a class="hidden" href="RDS_FORMVAL_UPDOWNMIN.htm" title="А.5.28.26. Команда RDS_FORMVAL_UPDOWNMIN &ndash; минимальное значение поля ввода со стрелками">RDS_FORMVAL_UPDOWNMIN</a>,<span class="const">0</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">4</span>,<a class="hidden" href="RDS_FORMVAL_UPDOWNMAX.htm" title="А.5.28.25. Команда RDS_FORMVAL_UPDOWNMAX &ndash; максимальное значение поля ввода со стрелками">RDS_FORMVAL_UPDOWNMAX</a>,<span class="const">5</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">4</span>,<a class="hidden" href="RDS_FORMVAL_UPDOWNINC.htm" title="А.5.28.24. Команда RDS_FORMVAL_UPDOWNINC &ndash; шаг изменения поля ввода со стрелками">RDS_FORMVAL_UPDOWNINC</a>,<span class="const">1</span>);
+
+    <span class="rem">// Текстовая метка без возможности ввода</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">1</span>,<span class="const">5</span>,<a class="hidden" href="app_a_fields.htm#light_ref11" title="RDS_FORMCTRL_LABEL">RDS_FORMCTRL_LABEL</a>,<span class="str">"Ось Y:"</span>,<span class="const">0</span>);
+
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">1</span>,<span class="const">6</span>,<a class="hidden" href="app_a_fields.htm#light_ref18" title="RDS_FORMCTRL_RANGEEDIT">RDS_FORMCTRL_RANGEEDIT</a>,<span class="str">"Диапазон"</span>,<span class="const">90</span>);
+    <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,<span class="const">6</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Ymin);
+    <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,<span class="const">6</span>,<a class="hidden" href="RDS_FORMVAL_RANGEMAX.htm" title="А.5.28.23. Команда RDS_FORMVAL_RANGEMAX &ndash; значение поля ввода конца диапазона">RDS_FORMVAL_RANGEMAX</a>,Ymax);
+
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">1</span>,<span class="const">7</span>,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,<span class="str">"Шаг сетки"</span>,<span class="const">50</span>);
+    <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,<span class="const">7</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,YGridStep);
+
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">1</span>,<span class="const">8</span>,<a class="hidden" href="app_a_fields.htm#light_ref20" title="RDS_FORMCTRL_UPDOWN">RDS_FORMCTRL_UPDOWN</a>,
+      <span class="str">"Дробная часть чисел"</span>,<span class="const">50</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">8</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,YNumDecimal);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">8</span>,<a class="hidden" href="RDS_FORMVAL_UPDOWNMIN.htm" title="А.5.28.26. Команда RDS_FORMVAL_UPDOWNMIN &ndash; минимальное значение поля ввода со стрелками">RDS_FORMVAL_UPDOWNMIN</a>,<span class="const">0</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">8</span>,<a class="hidden" href="RDS_FORMVAL_UPDOWNMAX.htm" title="А.5.28.25. Команда RDS_FORMVAL_UPDOWNMAX &ndash; максимальное значение поля ввода со стрелками">RDS_FORMVAL_UPDOWNMAX</a>,<span class="const">5</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">8</span>,<a class="hidden" href="RDS_FORMVAL_UPDOWNINC.htm" title="А.5.28.24. Команда RDS_FORMVAL_UPDOWNINC &ndash; шаг изменения поля ввода со стрелками">RDS_FORMVAL_UPDOWNINC</a>,<span class="const">1</span>);
+
+    <span class="rem">// Вкладка "Внешний вид"</span>
+    <a class="hidden" href="rdsFORMAddTab.htm" title="А.5.28.4. rdsFORMAddTab &ndash; добавить вкладку">rdsFORMAddTab</a>(window,<span class="const">2</span>,<span class="str">"Внешний вид"</span>);
+
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">2</span>,<span class="const">9</span>,<a class="hidden" href="app_a_fields.htm#light_ref3" title="RDS_FORMCTRL_COLOR">RDS_FORMCTRL_COLOR</a>,<span class="str">"Цвет рамки блока"</span>,<span class="const">50</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">9</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,(<span class="kw">int</span>)BorderColor);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">2</span>,<span class="const">10</span>,
+      <a class="hidden" href="app_a_fields.htm#light_ref3" title="RDS_FORMCTRL_COLOR">RDS_FORMCTRL_COLOR</a> | <a class="hidden" href="app_a_fields.htm#light_ref25" title="RDS_FORMFLAG_LINE">RDS_FORMFLAG_LINE</a>,<span class="str">"Цвет фона блока"</span>,<span class="const">50</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">10</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,(<span class="kw">int</span>)FillColor);
+
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">2</span>,<span class="const">11</span>,<a class="hidden" href="app_a_fields.htm#light_ref3" title="RDS_FORMCTRL_COLOR">RDS_FORMCTRL_COLOR</a>,<span class="str">"Цвет рамки графика и сетки"</span>,<span class="const">50</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">11</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,(<span class="kw">int</span>)PlotBorderColor);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">2</span>,<span class="const">12</span>,<a class="hidden" href="app_a_fields.htm#light_ref3" title="RDS_FORMCTRL_COLOR">RDS_FORMCTRL_COLOR</a>,<span class="str">"Цвет фона графика"</span>,<span class="const">50</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">12</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,(<span class="kw">int</span>)PlotFillColor);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">2</span>,<span class="const">13</span>,<a class="hidden" href="app_a_fields.htm#light_ref3" title="RDS_FORMCTRL_COLOR">RDS_FORMCTRL_COLOR</a>,<span class="str">"Цвет линии графика"</span>,<span class="const">50</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">13</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,(<span class="kw">int</span>)LineColor);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">2</span>,<span class="const">14</span>,
+      <a class="hidden" href="app_a_fields.htm#light_ref20" title="RDS_FORMCTRL_UPDOWN">RDS_FORMCTRL_UPDOWN</a> | <a class="hidden" href="app_a_fields.htm#light_ref25" title="RDS_FORMFLAG_LINE">RDS_FORMFLAG_LINE</a>,
+      <span class="str">"Толщина линии графика"</span>,<span class="const">50</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">14</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,LineWidth);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">14</span>,<a class="hidden" href="RDS_FORMVAL_UPDOWNMIN.htm" title="А.5.28.26. Команда RDS_FORMVAL_UPDOWNMIN &ndash; минимальное значение поля ввода со стрелками">RDS_FORMVAL_UPDOWNMIN</a>,<span class="const">0</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">14</span>,<a class="hidden" href="RDS_FORMVAL_UPDOWNMAX.htm" title="А.5.28.25. Команда RDS_FORMVAL_UPDOWNMAX &ndash; максимальное значение поля ввода со стрелками">RDS_FORMVAL_UPDOWNMAX</a>,<span class="const">5</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">14</span>,<a class="hidden" href="RDS_FORMVAL_UPDOWNINC.htm" title="А.5.28.24. Команда RDS_FORMVAL_UPDOWNINC &ndash; шаг изменения поля ввода со стрелками">RDS_FORMVAL_UPDOWNINC</a>,<span class="const">1</span>);
+
+    <span class="rem">// Кнопка открытия диалога выбора шрифта</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">2</span>,<span class="const">15</span>,<a class="hidden" href="app_a_fields.htm#light_ref9" title="RDS_FORMCTRL_FONTSELECT">RDS_FORMCTRL_FONTSELECT</a>,<span class="str">"Шрифт чисел"</span>,<span class="const">0</span>);
+    <span class="rem">// Преобразование шрифта в строку и занесение в поле ввода</span>
+    str=<a class="hidden" href="rdsStructToFontText.htm" title="А.5.10.3. rdsStructToFontText &ndash; формирование описания шрифта">rdsStructToFontText</a>(&amp;Font,NULL);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">15</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,str);
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(str);
+
+    <span class="rem">// Открытие окна</span>
+    ok=<a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Нажата кнопка OK - запись параметров обратно в блок</span>
+        Xmin=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        Xmax=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_RANGEMAX.htm" title="А.5.28.23. Команда RDS_FORMVAL_RANGEMAX &ndash; значение поля ввода конца диапазона">RDS_FORMVAL_RANGEMAX</a>);
+        XGridStep=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(window,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        XNumDecimal=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">4</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+
+        TimeStep=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(window,<span class="const">100</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+
+        Ymin=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(window,<span class="const">6</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        Ymax=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(window,<span class="const">6</span>,<a class="hidden" href="RDS_FORMVAL_RANGEMAX.htm" title="А.5.28.23. Команда RDS_FORMVAL_RANGEMAX &ndash; значение поля ввода конца диапазона">RDS_FORMVAL_RANGEMAX</a>);
+        YGridStep=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(window,<span class="const">7</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        YNumDecimal=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">8</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+
+        BorderColor=(<a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a>)<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">9</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        FillColor=(<a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a>)<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">10</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        PlotBorderColor=(<a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a>)<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">11</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        PlotFillColor=(<a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a>)<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">12</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        LineColor=(<a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a>)<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">13</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        LineWidth=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">14</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+
+        <span class="rem">// Получение параметров шрифта из строки</span>
+        str=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">15</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <a class="hidden" href="rdsFontTextToStruct.htm" title="А.5.11.1. rdsFontTextToStruct &ndash; разбор описания шрифта">rdsFontTextToStruct</a>(str,NULL,&amp;Font);
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="rem">// Возвращаемое значение</span>
+    <span class="kw">return</span> ok?<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_9_4.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_10_2.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_10_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.6.8. rdsDeleteBlock &ndash; удаление блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_6">А.5.6. Операции с блоками и связями</a></p>
+<div class="level"><p>А.5.6.8. <span class="cpp">rdsDeleteBlock</span> &ndash; удаление блока</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsCreateFullBlockNameString.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsDeleteConnection.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsDeleteBlock">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.6. Операции с блоками и связями</h4>
+<h5>А.5.6.8. <span class="cpp">rdsDeleteBlock</span> &ndash; удаление блока</h5>
+
+
+<p>Функция <span class="cpp">rdsDeleteBlock</span> удаляет из схемы блок,
+идентификатор которого передан в ее параметрах.</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsDeleteBlock(
+      <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block    <span class="rem">// Удаляемый блок</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_VBh</span></p>
+
+<p class="apphdr">Параметр</p>
+
+<dl>
+  <dt><span class="cpp">Block</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор блока, который необходимо удалить из схемы.</dd>
+</dl>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция удаляет блок <span class="cpp">Block</span> из схемы, если это возможно.
+Блок не может быть удален, если:</p>
+
+<ul>
+  <li>его моделью в данный момент
+  <a href="pm_1_8.htm" title="&sect;1.8. Открытие окон в модели блока">открыто модальное окно</a>;</li>
+  <li>это <a href="um_1_2.htm#light_ref10" title="Подсистема">подсистема</a>, моделью одного из внутренних блоков
+  которой открыто модальное окно;</li>
+  <li>это <a href="um_1_2.htm#ref11" title="Корневая подсистема">корневая подсистема</a>.</li>
+</ul>
+
+<p>Удаление блока, которому принадлежит открытое в данный момент модальное окно, запрещено, так
+как это может привести к выгрузке DLL с его моделью, в которой, вероятнее всего, находится и функция
+открытого окна. Поскольку окно останется открытым и будет продолжать вызывать свою функцию в ответ
+на системные события, это может привести к ошибкам. Корневая подсистема не может быть удалена в
+принципе, поскольку это приведет к удалению из памяти всей загруженной схемы.</p>
+
+<p>Вызов функции <span class="cpp">rdsDeleteBlock</span> не всегда удаляет блок немедленно:
+если в данный момент идет <a href="um_1_3.htm#ref3" title="Режим расчета">расчет</a>, блок будет удален только по окончании
+очередного такта. Если модель пытается удалить свой собственный блок, он тоже не будет удален
+немедленно: RDS дождется завершения функции его модели, и только тогда удалит этот блок.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции <span class="cpp">rdsDeleteBlock</span> приведен
+в <a href="pm_2_16_2.htm" title="&sect;2.16.2. Добавление и удаление блоков и связей">&sect;2.16.2 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsBlockModalWinOpen.htm" title="А.5.2.8. rdsBlockModalWinOpen &ndash; сообщение об открытии модального окна">rdsBlockModalWinOpen</a></span>,
+<span class="cpp"><a href="rdsDeleteConnection.htm" title="А.5.6.9. rdsDeleteConnection &ndash; удаление связи или шины">rdsDeleteConnection</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsCreateFullBlockNameString.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsDeleteConnection.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsDeleteBlock">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2">А.2. События блока и связанные с ними описания</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2_8">А.2.8. События обмена данными по сети</a></p>
+<div class="level"><p>А.2.8.3. <span class="cpp">RDS_BFM_NETDATARECEIVED</span> &ndash; получение данных блоком</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_BFM_NETDATAACCEPTED.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_NETDISCONNECT.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_NETDATARECEIVED">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.2. События блока и связанные с ними описания</h3>
+<h4 class="off">А.2.8. События обмена данными по сети</h4>
+<h5>А.2.8.3. <span class="cpp">RDS_BFM_NETDATARECEIVED</span> &ndash; получение данных блоком</h5>
+
+
+<p class="apphdr">Поток, в котором вызывается <a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функция модели</a></p>
+<p>Главный поток RDS.</p>
+
+<p class="apphdr">Первый параметр функции модели (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_BFM_NETDATARECEIVED</span>.</p>
+
+<p class="apphdr">Третий параметр функции модели (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Указатель на структуру <span class="cpp"><a href="#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a></span>, содержащую информацию о
+принятых данных и указатели на них.</p>
+
+<p class="apphdr">Возвращаемое функцией модели значение</p>
+<p>Не используется, можно возвращать любое значение.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Реакция на событие <span class="cpp">RDS_BFM_NETDATARECEIVED</span> вызывается у блока, для
+которого поступили данные с сервера. Для того, чтобы принимать данные по сети, блок должен
+сначала вызовом <span class="cpp"><a href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a></span> установить соединение с конкретным
+каналом передачи данных конкретного сервера, и указать при этом, что он будет получать данные
+из этого канала. Процедуры обмена данными по сети, используемые в RDS, подробно описаны в
+<a href="pm_index.htm#light_htm:pm_2_15" title="&sect;2.15. Обмен данными по сети">&sect;2.15 руководства программиста</a>.</p>
+
+<p><span id="ref1">В</span> <span id="ref2">параметре</span>
+<span class="cpp">ExtParam</span> передается указатель на структуру
+<span class="cpp">RDS_NETRECEIVEDDATA</span>:</p>
+
+<pre class="cpp">  <span id="ref3"><span class="kw">typedef</span></span> <span id="ref4"><span class="kw">struct</span></span> {
+    <span class="kw">int</span> ConnId;                    <span class="rem">// Идентификатор соединения</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Host;                    <span class="rem">// URL или IP-адрес сервера</span>
+    <span class="kw">int</span> Port;                      <span class="rem">// Порт</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Channel;                 <span class="rem">// Имя канала</span>
+    <span class="kw">int</span> Id;                        <span class="rem">// Принятое целое число</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Str;                     <span class="rem">// Принятая строка</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Buffer;                 <span class="rem">// Принятый буфер или NULL</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> BufferSize;              <span class="rem">// Размер принятого буфера</span>
+    <span id="light_ref3"><a class="hidden" href="app_ids.htm#light_ref7" title="Идентификатор машины в сети">RDS_NETSTATION</a></span> SenderStation;  <span class="rem">// Идентификатор</span>
+                                   <span class="rem">// машины-отправителя</span>
+    <span id="light_ref4"><a class="hidden" href="app_ids.htm#light_ref8" title="Идентификатор блока в сети">RDS_NETBLOCK</a></span> SenderBlock;      <span class="rem">// Идентификатор блока</span>
+                                   <span class="rem">// на машине-отправителе</span>
+  } <span id="light_ref1">RDS_NETRECEIVEDDATA</span>;
+  <span class="kw">typedef</span> RDS_NETRECEIVEDDATA *<span id="light_ref2">RDS_PNETRECEIVEDDATA</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">ConnId</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Идентификатор соединения, возвращенный функцией <span class="cpp"><a href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a></span> при
+  его создании.</dd>
+
+  <dt><span class="cpp">Host</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Имя (URL) или IP-адрес сервера, с которым установлено соединение (только в том случае,
+  если в качестве сервера не используется та же копия &laquo;<span class="file">rds.exe</span>&raquo;, в которую
+  загружена схема с данным блоком).</dd>
+
+  <dt><span class="cpp">Port</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Номер сетевого порта, через который идет обмен данными.</dd>
+
+  <dt><span class="cpp">Channel</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Имя канала передачи данных.</dd>
+
+  <dt><span class="cpp">Id</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Целый идентификатор полученных данных (произвольное целое число, указанное передавшим данные
+  блоком в вызове одной из функций передачи).</dd>
+
+  <dt><span class="cpp">Str</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на принятую строку во внутренней памяти RDS. В этом поле никогда не находится
+  константа <span class="cpp">NULL</span>: даже если передавший блок не отправлял строку в
+  составе порции данных, в поле <span class="cpp">Str</span> будет содержаться указатель на пустую
+  строку (то есть на нулевой байт).</dd>
+
+  <dt><span class="cpp">Buffer</span>&emsp;(<span class="cpp"><i>LPVOID</i></span>)</dt>
+  <dd>Указатель на начало принятых двоичных данных во внутренней памяти RDS. Если передававший
+  данные блок не отправлял двоичные данные, в этом поле будет находиться <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">BufferSize</span>&emsp;(<span class="cpp"><i>DWORD</i></span>)</dt>
+  <dd>Размер (в байтах) принятых двоичных данных, на которые указывает поле
+  <span class="cpp">Buffer</span>.</dd>
+
+  <dt><span class="cpp">SenderStation</span>&emsp;(<span class="cpp"><i>RDS_NETSTATION</i></span>)</dt>
+  <dd>Идентификатор машины-передатчика, то есть машины, на которой запущена копия RDS, в которую
+  загружена схема, блок которой отправил эти данные. Идентификаторы типа
+  <span class="cpp"><a href="app_ids.htm#light_ref7" title="Идентификатор машины в сети">RDS_NETSTATION</a></span> используются в RDS для передачи данных конкретному блоку
+  на конкретной машине.</dd>
+
+  <dt><span class="cpp">SenderBlock</span>&emsp;(<span class="cpp"><i>RDS_NETBLOCK</i></span>)</dt>
+  <dd>Идентификатор блока на машине-передатчике. Идентификаторы блоков типа
+  <span class="cpp"><a href="app_ids.htm#light_ref8" title="Идентификатор блока в сети">RDS_NETBLOCK</a></span> не взаимозаменяемы с идентификаторами
+  <span class="cpp"><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></span>: первые используются только в сетевых функциях для передачи данных
+  конкретному блоку, вторые &ndash; в сервисных функциях для работы с блоками в пределах одной схемы.
+  Пара (<span class="cpp">SenderStation</span>, <span class="cpp">SenderBlock</span>) однозначно
+  определяет блок-отправитель данных и может использоваться в функции
+  <span class="cpp"><a href="rdsNetSendData.htm" title="А.5.20.4. rdsNetSendData &ndash; передача данных конкретному блоку канала">rdsNetSendData</a></span> для передачи ответа пославшему данные блоку.</dd>
+
+  <dl>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a></span>,
+<span class="cpp"><a href="rdsNetSendData.htm" title="А.5.20.4. rdsNetSendData &ndash; передача данных конкретному блоку канала">rdsNetSendData</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_BFM_NETDATAACCEPTED.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_NETDISCONNECT.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_NETDATARECEIVED">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

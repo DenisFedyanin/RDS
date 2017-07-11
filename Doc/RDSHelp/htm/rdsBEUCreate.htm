@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.29.1. rdsBEUCreate &ndash; создать объект для отмены редактирования параметров блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_29">А.5.29. Вспомогательный объект для отмены редактирования параметров блока</a></p>
+<div class="level"><p>А.5.29.1. <span class="cpp">rdsBEUCreate</span> &ndash; создать объект для отмены редактирования параметров блока</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsFORMShowModal.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BEU_STORECHANGED.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsBEUCreate">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4>А.5.29. Вспомогательный объект для отмены редактирования параметров блока</h4>
+<p class="abstract">Описываются функции и команды вспомогательного объекта RDS, предназначенного для запоминания параметров блока до и после их изменения в общем наборе операций RDS. Это изменение параметров пользователь сможет, при желании, отменить.</p>
+<h5>А.5.29.1. <span class="cpp">rdsBEUCreate</span> &ndash; создать объект для отмены редактирования параметров блока</h5>
+
+
+<p>Функция <span class="cpp">rdsBEUCreate</span> создает
+<a href="app_a_objects.htm" title="А.5.22.1. Использование вспомогательных объектов RDS">вспомогательный объект</a> RDS,
+позволяющий позже вернуть параметры блока в состояние на момент создания этого объекта.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsBEUCreate(
+      <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block    <span class="rem">// Блок</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_HoBh</span></p>
+
+<p class="apphdr">Параметр</p>
+
+<dl>
+  <dt><span class="cpp">Block</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор блока, параметры которого запоминаются.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Уникальный идентификатор созданного объекта (<span class="cpp"><a href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a></span>).</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция создает вспомогательный объект, который будет содержать два полных набора параметров
+блока: до изменения и после изменения. С помощью этого объекта можно добавить операцию какого-либо
+программного изменения параметров блока в общий список выполненных пользователем операций. Пользователь
+сможет отменить эту операцию, выбрав пункт меню &laquo;<span class="menu">Система | Отменить</span>&raquo; или нажав
+<span class="keys">Ctrl</span>&nbsp;+&nbsp;<span class="keys">Z</span>, а также возвратить отмененную операцию, выбрав пункт меню
+&laquo;<span class="menu">Система | Возврат</span>&raquo; или нажав <span class="keys">Ctrl</span>&nbsp;+&nbsp;<span class="keys">R</span>.</p>
+
+<p>Созданный вспомогательный объект будет существовать до тех пор, пока схема не будет выгружена из
+памяти, или пока он не будет удален вызовом функции <span class="cpp"><a href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>.</p>
+
+<p>Параметры блока до изменения запоминаются в момент создания объекта. Обычно работа с таким объектом
+строится по следующему сценарию:</p>
+
+<ul>
+  <li>объект создается вызовом <span class="cpp">rdsBEUCreate</span>, при этом все параметры блока,
+  идентификатор которого передан в функцию, сохраняются во внутренней памяти объекта;</li>
+
+  <li>параметры блока программно изменяются каким-либо образом;</li>
+
+  <li>при помощи команды <span class="cpp"><a href="RDS_BEU_STORECHANGED.htm" title="А.5.29.2. Команда RDS_BEU_STORECHANGED &ndash; запись измененных параметров блока">RDS_BEU_STORECHANGED</a></span> прежние параметры блока из памяти объекта
+  и измененные параметры этого же блока передаются в общий набор запомненных операций RDS &ndash;
+  теперь изменение может быть отменено пользователем;</li>
+
+  <li>объект удаляется вызовом <span class="cpp">rdsDeleteObject</span> &ndash; поскольку параметры блока
+  сохраняются в момент создания объекта, для повторного использования этот объект непригоден.</li>
+</ul>
+
+<p><span id="ref1">При</span>
+сохранении параметров блока до и после изменения модель этого блока вызывается для реакции на событие
+<span class="cpp"><a href="RDS_BFM_SAVEBIN.htm" title="А.2.5.6. RDS_BFM_SAVEBIN &ndash; запись данных блока в двоичном формате">RDS_BFM_SAVEBIN</a></span> и <span class="cpp"><a href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a></span> для того, чтобы она могла
+сохранить параметры из личной области данных блока. При этом в качестве причины сохранения данных указывается
+<span id="light_ref1" class="cpp">RDS_LS_SAVEUNDO</span> (см. вызов функции <span class="cpp"><a href="rdsGetSystemInt.htm" title="А.5.2.24. rdsGetSystemInt &ndash; получить целый системный параметр">rdsGetSystemInt</a></span> с параметром
+<span class="cpp"><a href="rdsGetSystemInt.htm#light_ref6" title="RDS_GSISAVELOADACTION">RDS_GSISAVELOADACTION</a></span>).</p>
+
+<p>Следует помнить, что при изменении параметров блока в функции настройки (событие
+<span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>) добавление параметров блока до и после изменения в
+общий набор запомненных операций производится автоматически, и использовать этот вспомогательный объект не
+следует.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><a href="app_a_objects.htm" title="А.5.22.1. Использование вспомогательных объектов RDS">Вспомогательные объекты</a>,
+<span class="cpp"><a href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>,
+<span class="cpp"><a href="RDS_BEU_STORECHANGED.htm" title="А.5.29.2. Команда RDS_BEU_STORECHANGED &ndash; запись измененных параметров блока">RDS_BEU_STORECHANGED</a></span>,
+<span class="cpp"><a href="RDS_BFM_SAVEBIN.htm" title="А.2.5.6. RDS_BFM_SAVEBIN &ndash; запись данных блока в двоичном формате">RDS_BFM_SAVEBIN</a></span>,
+<span class="cpp"><a href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsFORMShowModal.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BEU_STORECHANGED.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsBEUCreate">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

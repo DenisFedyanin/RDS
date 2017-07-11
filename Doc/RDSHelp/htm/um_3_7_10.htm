@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.7.11. Реакция блока на мышь</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_7">&sect;3.7. Принципы создания автокомпилируемых моделей блоков</a></p>
+<div class="level"><p>&sect;3.7.11. Реакция блока на мышь</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="um_3_7_9.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_7_11.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_10">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.7. Принципы создания автокомпилируемых моделей блоков</h3>
+<h4>&sect;3.7.11. Реакция блока на мышь</h4>
+<p class="abstract">Рассматривается добавление в модели блоков реакции на нажатие кнопок мыши и перемещение ее курсора, позволяющей создавать различные интерактивные кнопки и рукоятки.</p>
+
+
+<p>Введение в модель блока реакции на нажатие и отпускание кнопок мыши и перемещение ее курсора
+&ndash; основной способ создания интерактивных блоков: кнопок, рукояток и т.п. Даже блоки, выполняющие
+ввод с клавиатуры (например, стандартное поле ввода), как правило, активируются щелчком на их изображении,
+то есть реагируют на нажатие левой кнопки мыши. Следует помнить, что модель блока может реагировать на
+мышь только в режимах
+<a href="um_1_3.htm#ref2" title="Режим моделирования">моделирования</a>
+и <a href="um_1_3.htm#ref3" title="Режим расчета">расчета</a> &ndash; если разработчику необходимо, чтобы блок взаимодействовал
+с пользователем еще и в режиме <a href="um_1_3.htm#ref1" title="Режим редактирования">редактирования</a>, необходимо либо вводить
+какие-либо поля и флаги в окно настройки
+(см. <a href="um_3_7_6.htm" title="&sect;3.7.6. Блоки с настраиваемыми пользователем параметрами">&sect;3.7.6</a>), либо дополнять контекстное меню блока
+(см.  <a href="um_3_7_11.htm" title="&sect;3.7.12. Добавление пунктов в контекстное и системное меню">&sect;3.7.12</a>), либо программно создавать собственные окна и панели
+(см. <a href="pm_1_8.htm" title="&sect;1.8. Открытие окон в модели блока">&sect;1.8</a>,
+<a href="pm_2_7_5.htm" title="&sect;2.7.5. Открытие модальных окон средствами Windows API">&sect;2.7.5</a> и
+<a href="pm_2_10_4.htm" title="&sect;2.10.4. Панели блоков в окне подсистемы">&sect;2.10.4 руководства программиста</a>). </p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/AC_events_mouse.png" width="465" height="284" alt="Реакции на мышь в списке событий" />
+<p id="light_pic1">Рис.&nbsp;447. Реакции на мышь в списке событий</p>
+</div></div>
+
+
+<p>Для реакции на мышь в RDS предусмотрены события нажатия кнопки, отпускания кнопки,
+двойного щелчка и перемещения курсора. В редакторе модели все они находятся в группе
+&laquo;<span class="menu">мышь и клавиатура</span>&raquo;
+(<a href="#pic1" title="Реакции на мышь в списке событий">рис.&nbsp;447</a>).
+Для того, чтобы в ответ на соответствующее действия пользователя вызвалась одна из этих реакций,
+должны одновременно выполниться следующие условия:</p>
+
+<ul>
+  <li>должен быть включен режим моделирования или расчета;</li>
+  <li>курсор мыши должен находиться в пределах изображения блока (то есть внутри его описывающего прямоугольника);</li>
+  <li>блок должен находиться на <a href="um_2_12.htm" title="&sect;2.12.1. Использование слоев">слое</a>, для которого разрешено редактирование;</li>
+  <li>в <a href="um_2_9_1.htm#pic10" title="Вкладка DLL окна параметров блока">параметрах блока</a> должна быть разрешена реакция на мышь.</li>
+</ul>
+
+<p><span id="ref1">Если</span>
+<span id="ref2">эти</span>
+условия выполнены, при нажатии или отпускании кнопки или при перемещении курсора мыши вызовется
+реакция модели, в которую через параметр <span class="cpp" id="light_ref1">MouseData</span>
+будет передан указатель на структуру
+<span id="light_ref2"><span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a></span></span>, описывающую произошедшее событие.
+Ниже кратко перечислены поля этой структуры и их назначение:</p>
+
+<dl>
+  <dt><span class="cpp">x</span>,&nbsp;<span class="cpp">y</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Координаты курсора мыши на рабочем поле окна подсистемы на момент возникновения события (уже с
+  учетом текущего масштаба подсистемы).</dd>
+
+  <dt><span class="cpp">BlockX</span>,&nbsp;<span class="cpp">BlockY</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Координаты точки привязки блока на рабочем поле с учетом масштаба и возможной связи положения этого блока с
+  переменными. Для блоков с <a href="um_1_2.htm#light_ref22">векторной картинкой</a> точка привязки
+  &ndash; это положение начала координат этой картинки, для всех остальных &ndash; левый верхний угол
+  прямоугольной области.</dd>
+
+  <dt><span class="cpp">Left</span>,&nbsp;<span class="cpp">Top</span>,&nbsp;<span class="cpp">Width</span>,&nbsp;<span class="cpp">Height</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Координаты левого верхнего угла (<span class="cpp">Left</span>, <span class="cpp">Top</span>) прямоугольной
+  области, занимаемой блоком, ее ширина (<span class="cpp">Width</span>) и высота (<span class="cpp">Height</span>)
+  в текущем масштабе с учетом возможной связи положения блока с его переменными.</dd>
+
+  <dt><span class="cpp">IntZoom</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Текущий масштаб окна <a href="um_1_2.htm#ref13" title="Родительская подсистема">родительской подсистемы</a>
+  блока в процентах (используется крайне редко).</dd>
+
+  <dt><span class="cpp">Button</span>&emsp;(<span class="cpp"><i><a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</dt>
+  <dd>Кнопка мыши, нажатие или отпускание которой вызвало событие:
+  <span class="cpp"><span id="light_ref3">RDS_MLEFTBUTTON</span></span> &ndash; левая кнопка,
+  <span class="cpp"><span id="light_ref4">RDS_MRIGHTBUTTON</span></span> &ndash; правая кнопка,
+  <span class="cpp"><span id="light_ref5">RDS_MMIDDLEBUTTON</span></span> &ndash; средняя кнопка.</dd>
+
+  <dt><span class="cpp">Shift</span>&emsp;(<span class="cpp"><i><a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</dt>
+  <dd>Набор битовых флагов, описывающие нажатые специальные клавиши клавиатуры и кнопки мыши в момент возникновения
+  события: <span class="cpp">RDS_MLEFTBUTTON</span>, <span class="cpp">RDS_MRIGHTBUTTON</span>,
+  <span class="cpp">RDS_MMIDDLEBUTTON</span> &ndash; нажатые кнопки мыши (см. выше),
+  <span class="cpp"><span id="light_ref6">RDS_KSHIFT</span></span> &ndash; нажата клавиша <span class="keys">Shift</span>,
+  <span class="cpp"><span id="light_ref7">RDS_KALT</span></span> &ndash; нажата клавиша <span class="keys">Alt</span>,
+  <span class="cpp"><span id="light_ref8">RDS_KCTRL</span></span> &ndash; нажата клавиша <span class="keys">Ctrl</span>.</dd>
+
+  <dt><span class="cpp">DoubleZoom</span>&emsp;(<span class="cpp"><i>double</i></span>)</dt>
+  <dd>Текущий масштаб окна родительской подсистемы блока в долях единицы:
+  1 &ndash; 100%, 0.5 &ndash; 50%, 2 &ndash; 200% и т.п.</dd>
+
+  <dt><span class="cpp">MouseEvent</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Константа, указывающая на произошедшее событие (нажатие, отпускание, перемещение курсора и т.п.)
+  Поскольку в автокомпилируемых моделях для каждого события создается независимая функция, в них это поле
+  структуры используется крайне редко. Подробнее о его возможных значениях можно прочесть
+  в <a href="RDS_BFM_MOUSEDBLCLICK.htm" title="А.2.6.8. RDS_BFM_MOUSEDBLCLICK &ndash; двойной щелчок мыши">А.2.6.8 приложений</a>.</dd>
+
+  <dt><span class="cpp">Viewport</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Номер <a href="pm_index.htm#light_htm:pm_3_6" title="&sect;3.6. Отображение схемы RDS в собственном окне приложения">порта вывода</a>, из которого пришла информация о событии
+  (нажатии, отпускании кнопки, перемещении курсора и т.п.), или &minus;1, если событие произошло в
+  обычном окне подсистемы.</dd>
+</dl>
+
+<p><span id="ref9">Параметр</span>
+<span class="cpp">MouseData</span>,
+<span id="ref10">указывающий</span>
+<span id="ref11">на</span>
+структуру описания события &ndash; не
+единственный параметр функций реакции на нажатие и отпускание кнопок мыши и перемещение курсора. Помимо него,
+в эти функции передается ссылка на целую переменную <span class="cpp">Result</span>, изменяя которую можно
+повлиять на действия, которые RDS выполнит после того, как реакция сработает. В эту переменную
+можно записать одну из трех стандартных констант RDS:</p>
+
+<ul>
+  <li><span class="cpp" id="light_ref9">RDS_BFR_DONE</span> &ndash; блок среагировал на мышь, никаких
+  дальнейших действий не требуется;</li>
+
+  <li><span class="cpp" id="light_ref10">RDS_BFR_NOTPROCESSED</span> &ndash; блок отказался реагировать на мышь,
+  необходимо вызвать реакцию блока, находящегося под ним, если такой есть, или реакцию всей подсистемы;</li>
+
+  <li><span class="cpp" id="light_ref11">RDS_BFR_SHOWMENU</span> (только при нажатии правой кнопки) &ndash; блок среагировал на
+  мышь, но, несмотря на это, RDS необходимо вывести обычное контекстное меню блока, появляющееся по
+  правой кнопке.</li>
+</ul>
+
+<p>По умолчанию в переменной <span class="cpp">Result</span> записана константа
+<span class="cpp">RDS_BFR_DONE</span>, поэтому, если модель не предпримет никаких специальных действий,
+блок будет перехватывать все щелчки, пришедшиеся на его изображение. Чтобы блок, которому разрешена реакция
+на мышь, мог становиться &laquo;прозрачным&raquo; для щелчков и пропускать их к блокам, изображения которых
+он перекрывает, модель этого блока должна записать в <span class="cpp">Result</span> константу
+<span class="cpp">RDS_BFR_NOTPROCESSED</span>. В реакции на нажатие правой кнопки модель может также записать в
+<span class="cpp">Result</span> константу <span class="cpp">RDS_BFR_SHOWMENU</span>, информируя RDS
+о том, что, хотя нажатие обработано, необходимо все равно вывести контекстное меню блока. Это необходимо
+делать, если блок не обрабатывает щелчки правой кнопкой, потому что в противном случае модель перехватит нажатие
+любой кнопки и заблокирует меню (пример использования <span class="cpp">RDS_BFR_SHOWMENU</span>
+будет приведен <a href="#ref15" title="Модель, опознающая элемент картинки под курсором">далее</a>).</p>
+
+<p>Теперь перейдем к примерам моделей блоков, реагирующих на мышь. Сначала рассмотрим самый простой
+пример: создадим блок, который по щелчку левой кнопки мыши будет увеличивать свой целый выход на единицу,
+а по щелчку правой &ndash; уменьшать его, тоже на единицу.
+<a href="um_3_7_2_1.htm#light_ref6" title="Создание нового блока с моделью">Создадим</a> в схеме новый блок, запускающийся
+<a href="um_3_7_2_1.htm#pic2" title="Установка запуска по сигналу в окне параметров блока">по сигналу</a>, и зададим ему следующую
+структуру <a href="um_3_6_2.htm" title="&sect;3.6.2. Статические переменные блока">статических переменных</a>:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr>
+
+  <tr><td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="vcenter">y</td>
+<td class="center">int</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p><span id="ref12">В</span>
+модели этого блока будет единственная реакция &ndash; реакция на нажатие кнопки мыши, в которой мы
+будем увеличивать или уменьшать переменную &laquo;<span class="rdsvar">y</span>&raquo; в зависимости от нажатой кнопки.
+Добавим в модель эту реакцию: на вкладке
+&laquo;<span class="menu"><a href="#pic1" title="Реакции на мышь в списке событий">события</a></span>&raquo; левой панели окна редактора раскроем раздел
+&laquo;<span class="menu">мышь и клавиатура</span>&raquo; и дважды щелкнем на подразделе
+&laquo;<span class="menu">нажатие кнопки мыши (<span id="light_ref12">RDS_BFM_MOUSEDOWN</span>)</span>&raquo;. В правой части
+окна появится новая пустая вкладка &laquo;<span class="menu">нажатие кнопки мыши</span>&raquo;, в
+которой необходимо ввести следующий текст:</p>
+
+<pre class="cpp">  switch(MouseData-&gt;Button) // Какая кнопка нажата
+    { case <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a>: y++; break;  // Левая
+      case <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref5" title="RDS_MRIGHTBUTTON">RDS_MRIGHTBUTTON</a>: y--; break; // Правая
+    }
+  // Взводим сигнал готовности для передачи выхода по связям
+  <a class="hidden" href="um_1_4.htm#ref27" title="Сигнал готовности блока">Ready</a>=1;</pre>
+
+<p>Здесь мы, в зависимости от того, какая именно кнопка мыши нажата, либо увеличиваем, либо уменьшаем
+<span class="cpp">y</span>. Идентификатор кнопки мы считываем из поля <span class="cpp">Button</span> структуры
+<span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a></span>, переданной через указатель <span class="cpp">MouseData</span>.
+После изменения <span class="cpp">y</span> мы принудительно присваиваем
+сигналу готовности
+<span class="cpp"><a href="um_1_4.htm#ref27" title="Сигнал готовности блока">Ready</a></span> единицу: у нашего блока нет реакции на
+<a href="um_1_3.htm#ref4" title="Такт расчета">такт расчета</a>, в котором готовность
+взводится автоматически, поэтому, если мы хотим, чтобы изменившееся значение <span class="cpp">y</span>
+было передано по связям на входы других блоков после выполнения реакции на нажатие кнопки мыши,
+необходимо взвести сигнал готовности вручную.</p>
+
+<p>Если запустить расчет прямо сейчас, можно будет увидеть, что при щелчках на изображении блока его
+выход не изменяется. Дело в том, что, несмотря на то, что мы ввели в модель реакцию на нажатие кнопки мыши,
+мы не разрешили самому блоку реагировать на мышь, поэтому наша реакция не вызывается. Поскольку наш блок
+пока существует в единственном числе, проще всего разрешить реакцию на мышь в
+<a href="um_2_9_1.htm#ref2" title="окно параметров простого блока">окне его параметров</a>
+(пункт &laquo;<span class="menu">параметры</span>&raquo; в его контекстном меню): на вкладке
+&laquo;<span class="menu">DLL</span>&raquo; этого окна следует включить флажок &laquo;<span class="menu">блок реагирует на мышь</span>&raquo;
+(<a href="#pic2" title="Разрешение реакции на мышь в окне параметров блока">рис.&nbsp;448</a>).</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/AC_blockparams_enablemouse.png" width="534" height="407" alt="Разрешение реакции на мышь в окне параметров блока" />
+<p id="light_pic2">Рис.&nbsp;448. Разрешение реакции на мышь в окне параметров блока</p>
+</div></div>
+
+
+<p>Если бы наша модель была подключена к нескольким блокам, разрешить реакцию на мышь проще было бы через
+<a href="um_3_6_8.htm" title="&sect;3.6.8. Установка параметров блоков с автокомпилируемой моделью">окно групповой установки</a>, в котором на вкладке
+&laquo;<span class="menu">DLL</span>&raquo; нужно было бы включить флажок &laquo;<span class="menu">реакция на мышь</span>&raquo; и выбрать в выпадающем списке
+справа от него вариант &laquo;нажатие, отпускание и перемещение с нажатыми кнопками&raquo;
+(<a href="#pic3" title="Разрешение реакции на мышь в окне групповой установки">рис.&nbsp;449</a>).</p>
+
+<div class="pic"><div class="container" id="pic3">
+<img src="../img/AC_groupset_enablemouse.png" width="638" height="448" alt="Разрешение реакции на мышь в окне групповой установки" />
+<p id="light_pic3">Рис.&nbsp;449. Разрешение реакции на мышь в окне групповой установки</p>
+</div></div>
+
+
+<div class="picright"><div class="container" id="pic4">
+<img src="../img/AC_leftrightclick_test.png" width="128" height="47" alt="Тестирование блока, реагирующего на левую и правую кнопки мыши" />
+<p id="light_pic4">Рис.&nbsp;450. Тестирование блока,<br />реагирующего на левую и<br />правую кнопки мыши</p>
+</div></div>
+
+
+<p>Для тестирования созданной модели подключим к выходу нашего блока индикатор
+(<a href="#pic4" title="Тестирование блока, реагирующего на левую и правую кнопки мыши">рис.&nbsp;450</a>).
+Если запустить расчет, щелчки левой кнопки мыши на изображении блока будут увеличивать число
+на индикаторе, а щелчки правой &ndash; уменьшать его.</p>
+
+<p><span id="ref13">Созданный</span>
+нами блок очень примитивен &ndash; выполняемые им действия жестко привязаны к кнопкам мыши.
+Если блок выполняет несколько действий, чаще всего их привязывают к различным частям изображения блока:
+например, на блоке может быть нарисовано несколько кнопок, и модель может по-разному реагировать на их нажатие.
+Чтобы определить, в какой именно части изображения блока находится курсор мыши в момент нажатия кнопки,
+модель может сравнивать координаты курсора из полей <span class="cpp">x</span> и <span class="cpp">y</span>
+структуры структуры <span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a></span>, передаваемой ей через указатель указатель
+<span class="cpp">MouseData</span>, с заранее вычисленными координатами элементов изображения
+(координаты всей прямоугольной области блока можно считать из полей <span class="cpp">Left</span>,
+<span class="cpp">Top</span>, <span class="cpp">Width</span> и <span class="cpp">Height</span>
+той же структуры). Если блок изображается
+<a href="um_1_2.htm#light_ref22">векторной картинкой</a>, можно поступить проще: присвоить
+различным элементам картинки уникальные целые идентификаторы, а в момент нажатия кнопки мыши
+<span id="light_ref13">запрашивать у RDS идентификатор элемента картинки под курсором</span>.
+Так можно достаточно легко создавать
+на изображении блока области, чувствительные к нажатию.</p>
+
+<p>Создадим новый блок, который также будет увеличивать и уменьшать свой целый выход &laquo;<span class="rdsvar">y</span>&raquo;,
+но уже в зависимости от того, на какой части картинки пользователь щелкнул мышью. Кроме уменьшения и
+увеличения предусмотрим также обнуление выхода.
+<a href="um_3_7_2_1.htm#light_ref6" title="Создание нового блока с моделью">Создадим</a> в схеме новый блок, запускающийся
+<a href="um_3_7_2_1.htm#pic2" title="Установка запуска по сигналу в окне параметров блока">по сигналу</a>, и зададим ему
+точно такую же, как и у предыдущего блока,
+структуру <a href="um_3_6_2.htm" title="&sect;3.6.2. Статические переменные блока">статических переменных</a>:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr>
+
+  <tr><td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="vcenter">y</td>
+<td class="center">int</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p><span id="ref14">Теперь</span>
+временно закроем редактор модели, сохранив при этом сделанные в структуре переменных изменения,
+<a href="um_2_9_1.htm#ref1" title="Открытие окна параметров блока">откроем окно параметров блока</a>
+и вызовем
+<a href="um_index.htm#light_htm:um_2_10" title="&sect;2.10. Редактирование векторной картинки блока">редактор векторной картинки</a>. Добавим в
+<span id="light_ref14">картинку</span> три
+<a href="um_2_10_2.htm" title="&sect;2.10.2. Рисование прямоугольников и эллипсов">квадрата</a>:
+красный &ndash; слева, белый &ndash; в центре и зеленый &ndash; справа. Красному квадрату дадим идентификатор
+1, зеленому &ndash; 2, а белому &ndash; 3
+(<a href="#pic5" title="Идентификатор одного из элементов в редакторе картинки">рис.&nbsp;451</a>).</p>
+
+<div class="pic"><div class="container" id="pic5">
+<img src="../img/AC_pictureelement_id.png" width="635" height="340" alt="Идентификатор одного из элементов в редакторе картинки" />
+<p id="light_pic5">Рис.&nbsp;451. Идентификатор одного из элементов в редакторе картинки</p>
+</div></div>
+
+
+<p><a href="#pic2" title="Разрешение реакции на мышь в окне параметров блока">Разрешим</a>
+<span id="ref15">новому</span>
+блоку реакцию на мышь и введем в модель реакцию на нажатие кнопки мыши,
+в которой мы будем выяснять, на какой из квадратов нажал пользователь. Снова откроем редактор модели, на
+вкладке &laquo;<span class="menu">события</span>&raquo; левой панели окна редактора раскроем раздел
+&laquo;<span class="menu">мышь и клавиатура</span>&raquo;
+(см. <a href="#pic1" title="Реакции на мышь в списке событий">рис.&nbsp;447</a>), дважды щелкнем на подразделе
+&laquo;<span class="menu">нажатие кнопки мыши</span>&raquo;, и на появившейся справа одноименной вкладке введем
+<span id="light_ref15">следующий текст</span>:</p>
+
+<pre class="cpp">
+  if(MouseData-&gt;Button==<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a>) // Нажата левая
+    { switch(<span id="light_ref16"><a class="hidden" href="rdsGetMouseObjectId.htm" title="А.5.6.31. rdsGetMouseObjectId &ndash; элемент векторной картинки блока под курсором мыши">rdsGetMouseObjectId</a></span>(MouseData)) // Идентификатор
+        { case 1: y--; break; // Красный квадрат
+          case 2: y++; break; // Зеленый квадрат
+          case 3: y=0; break; // Белый квадрат
+        }
+      // Взводим сигнал готовности для передачи выхода по связям
+      <a class="hidden" href="um_1_4.htm#ref27" title="Сигнал готовности блока">Ready</a>=1;
+    }
+  else // Нажата не левая
+    Result=RDS_BFR_SHOWMENU; // Разрешаем контекстное меню</pre>
+
+<p>Сначала мы выясняем, левая ли кнопка нажата, сравнивая поле <span class="cpp">Button</span> структуры описания
+события с константой <span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a></span>. Если это так, мы запрашиваем у
+RDS идентификатор элемента картинки под курсором мыши при помощи функции
+<span class="cpp"><a href="rdsGetMouseObjectId.htm" title="А.5.6.31. rdsGetMouseObjectId &ndash; элемент векторной картинки блока под курсором мыши">rdsGetMouseObjectId</a></span>, в которую передается указатель
+<span class="cpp">MouseData</span> на структуру описания события <span class="cpp">RDS_MOUSEDATA</span>.
+Функция вернет идентификатор, присвоенный нами элементу под курсором в редакторе векторной картинки, и,
+в зависимости от его значения, мы либо увеличим значение <span class="cpp">y</span>, либо уменьшим его,
+либо присвоим ему ноль. Затем, как и в прошлом примере, мы вручную взводим
+сигнал готовности блока
+<span class="cpp">Ready</span>, чтобы новое значение <span class="cpp">y</span> передалось по связям.
+Если курсор будет находиться в пределах изображения блока, но не над одним из тех элементов, которым мы
+присвоили идентификаторы, <span class="cpp">rdsGetMouseObjectId</span> вернет нулевое значение,
+и мы не выполним в реакции никаких действий над <span class="cpp">y</span>.</p>
+
+<p>Если же была нажата не левая кнопка, мы присваиваем переменной <span class="cpp">Result</span> значение
+<span class="cpp">RDS_BFR_SHOWMENU</span>, чтобы не блокировать вывод контекстного меню по правой кнопке
+мыши. Если мы не сделаем этого, RDS будет считать, что щелчок правой кнопкой мыши перехвачен
+моделью блока, и меню выведено не будет.</p>
+
+<div class="picright"><div class="container" id="pic6">
+<img src="../img/AC_pictureclick_test.png" width="199" height="50" alt="Тестирование блока, запрашивающего идентификатор элемента картинки под курсором" />
+<p id="light_pic6">Рис.&nbsp;452. Тестирование блока,<br />запрашивающего идентификатор<br />элемента картинки под курсором</p>
+</div></div>
+
+
+<p>Для тестирования созданной модели, как и в прошлом примере, подключим к выходу блока индикатор
+(<a href="#pic6" title="Тестирование блока, запрашивающего идентификатор элемента картинки под курсором">рис.&nbsp;452</a>).
+Если запустить расчет, щелчки левой кнопки мыши на левом квадрате картинки будут увеличивать число
+на индикаторе, на правом &ndash; уменьшать его, а на центральном &ndash; сбрасывать его в ноль.</p>
+
+<p>При создании различных блоков-рукояток необходимо отслеживать не только нажатие кнопки мыши, как в
+уже рассмотренных примерах, но и ее отпускание и перемещение курсора. При этом следует учитывать,
+что по умолчанию на перемещение курсора будет реагировать только тот блок, над изображением которого этот
+курсор находится. При создании рукояток это не очень удобно: если пользователь, нажав кнопку мыши на
+блоке-рукоятке и перемещая эту рукоятку, случайно выведет курсор за пределы блока, рукоятка
+перестанет перемещаться. Или, что еще хуже, курсор может попасть на изображение другого блока, тоже
+реагирующего на перемещения курсора. Если пользователь при этом следит за индикатором, связанным с
+выбранной им рукояткой, он может не заметить, что в системе начал изменяться какой-то другой параметр,
+связанный с блоком, в который случайно попал курсор.</p>
+
+<p><span id="ref17">Чтобы</span>
+избежать описанных проблем, обычно при создании различных рукояток используют так называемый
+&laquo;<span id="light_ref17">захват мыши</span>&raquo;. Реагируя на нажатие кнопки мыши,
+модель включает этот захват, после чего, независимо от того, где окажется курсор, реакция на его
+перемещение будет вызываться только у модели захватившего блока. При отпускании кнопки мыши модель
+выключает захват, и реакция на перемещение, как обычно, снова начинает вызываться только у блоков
+под курсором.</p>
+
+<p><span id="ref18">Рассмотрим</span>
+<span id="ref19">пример модели блока</span>,
+<span id="light_ref18">захватывающего мышь</span> и реагирующего на
+перемещение курсора. Создадим блок, изображающий <span id="light_ref19">двухкоординатную рукоятку</span>
+(<a href="#pic7" title="Предполагаемый внешний вид блока-рукоятки и его параметры">рис.&nbsp;453</a>)
+&ndash; этот же пример рассматривается
+в <a href="pm_2_12_2.htm" title="&sect;2.12.2. Захват мыши, реакция на перемещение курсора">&sect;2.12.2 руководства программиста</a>.</p>
+
+<div class="pic"><div class="container" id="pic7">
+<img src="../img/AC_MouseHandle_Layout.png" width="498" height="327" alt="Предполагаемый внешний вид блока-рукоятки и его параметры" />
+<p id="light_pic7">Рис.&nbsp;453. Предполагаемый внешний вид блока-рукоятки и его параметры</p>
+</div></div>
+
+
+<p>Блок будет представлять собой прямоугольник с перекрестием по центру, внутри которого пользователь
+сможет двигать мышью закрашенный круг, нажав на этом круге левую кнопку и перемещая его в желаемое положение.
+Выходами блока будут вещественные переменные &laquo;<span class="rdsvar">x</span>&raquo; и &laquo;<span class="rdsvar">y</span>&raquo;,
+соответствующие положению центра круга внутри прямоугольника. Перемещение центра круга по горизонтали от
+левой границы прямоугольника до правой меняет &laquo;<span class="rdsvar">x</span>&raquo; от &minus;1 до 1, перемещение круга по вертикали
+от нижней границы до верхней меняет &laquo;<span class="rdsvar">y</span>&raquo; от &minus;1 до 1. Совпадение центра круга с
+перекрестием соответствует нулям в обеих переменных &laquo;<span class="rdsvar">x</span>&raquo; и &laquo;<span class="rdsvar">y</span>&raquo;.
+Рисовать круг в прямоугольнике мы будем программно, причем нужно будет следить за тем, чтобы при приближении
+круга к границе его часть, выходящая за прямоугольник, не рисовалась. Цвета блока и размер круга мы сделаем
+<a href="um_3_6_6.htm" title="&sect;3.6.6. Настроечные параметры блока">настроечными параметрами</a>
+блока: диаметр круга в точках экрана будет храниться в целом параметре &laquo;<span class="rdsvar">CircleD</span>&raquo;, цвет
+рамки и перекрестия &ndash; в параметре &laquo;<span class="rdsvar">Border</span>&raquo;, цвет фона прямоугольника &ndash; в
+параметре &laquo;<span class="rdsvar">Fill</span>&raquo;, цвет круга &ndash; в параметре &laquo;<span class="rdsvar">Circle</span>&raquo; (все цвета будут
+иметь стандартный для Windows тип <span class="cpp"><a href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a></span>). Для лучшей визуальной обратной связи сделаем
+так, чтобы в процессе перетаскивания круг изображался другим цветом &ndash; будем хранить его в параметре
+&laquo;<span class="rdsvar">CircleMoving</span>&raquo;.</p>
+
+<p><a href="um_3_7_2_1.htm#light_ref6" title="Создание нового блока с моделью">Создадим</a> в схеме новый блок, запускающийся
+<a href="um_3_7_2_1.htm#pic2" title="Установка запуска по сигналу в окне параметров блока">по сигналу</a> &ndash;
+нам не нужно, чтобы он работал каждый такт &ndash; и зададим ему следующую структуру
+<a href="um_3_6_2.htm" title="&sect;3.6.2. Статические переменные блока">статических переменных</a>:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr>
+
+  <tr><td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="vcenter">x</td>
+<td class="center">double</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="vcenter">y</td>
+<td class="center">double</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>В редакторе модели на вкладке &laquo;<span class="menu">настройки</span>&raquo; добавим следующие настроечные параметры,
+одновременно создавая для них поля ввода
+(см. <a href="um_3_7_6.htm" title="&sect;3.7.6. Блоки с настраиваемыми пользователем параметрами">&sect;3.7.6</a>):</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>По умолчанию</th>
+    <th>Заголовок поля ввода</th>
+    <th>Тип поля ввода</th>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Border</td>
+    <td class="center">COLORREF</td>
+    <td class="center">0</td>
+    <td class="vcenter">Рамка</td>
+    <td class="vcenter">Выбор цвета</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Fill</td>
+    <td class="center">COLORREF</td>
+    <td class="center">0xffffff</td>
+    <td class="vcenter">Заливка</td>
+    <td class="vcenter">Выбор цвета</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Circle</td>
+    <td class="center">COLORREF</td>
+    <td class="center">0xff0000</td>
+    <td class="vcenter">Круг</td>
+    <td class="vcenter">Выбор цвета</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">CircleMoving</td>
+    <td class="center">COLORREF</td>
+    <td class="center">0xff</td>
+    <td class="vcenter">Круг в движении</td>
+    <td class="vcenter">Выбор цвета</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">CircleD</td>
+    <td class="center">int</td>
+    <td class="center">20</td>
+    <td class="vcenter">Диаметр круга</td>
+    <td class="vcenter">Ввод (+/&minus;), шаг 1, минимум 0, максимум 100</td>
+  </tr>
+
+</table>
+</div></div>
+
+<p>В качестве заголовка окна настройки введем &laquo;рукоятка&raquo;. В результате вкладка
+&laquo;<span class="menu">настройки</span>&raquo; окна редактора и окно настройки блока
+(его можно увидеть, нажав кнопку &laquo;<span class="menu">тест</span>&raquo; под списком полей ввода) будут выглядеть так,
+как на <a href="#pic8" title="Настроечные параметры и тест окна настройки рукоятки">рис.&nbsp;454</a>.</p>
+
+<div class="pic"><div class="container" id="pic8">
+<img src="../img/AC_handle_setup.png" width="548" height="464" alt="Настроечные параметры и тест окна настройки рукоятки" />
+<p id="light_pic8">Рис.&nbsp;454. Настроечные параметры и тест окна настройки рукоятки</p>
+</div></div>
+
+
+<p><span id="ref20">Теперь</span>
+<span id="ref21">добавим</span>
+в модель функцию рисования. На левой панели окна редактора следует выбрать вкладку
+&laquo;<span class="menu">события</span>&raquo;, раскрыть на ней раздел &laquo;<span class="menu">внешний вид блока</span>&raquo; и дважды щелкнуть на его
+подразделе &laquo;<span class="menu">рисование блока (<span id="light_ref20">RDS_BFM_DRAW</span>)</span>&raquo;
+(см. <a href="um_3_7_5.htm#pic2" title="Реакция на рисование блока в списке событий">рис.&nbsp;412</a>). При этом значок подраздела станет желтым,
+а в правой части окна появится новая пустая вкладка &laquo;<span class="menu">рисование</span>&raquo;. На этой вкладке необходимо
+ввести следующий текст:</p>
+
+<pre class="cpp">  // Вспомогательные переменные
+  int hx,hy,cx,cy; <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> r;
+  int hR=CircleD*DrawData-&gt;DoubleZoom/2; // Радиус круга-рукоятки
+  // Мышь захвачена блоком?
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> captured=<span id="light_ref21"><a class="hidden" href="um_3_7_1.htm#ref26" title="Указатель на структуру данных блока">rdsbcppBlockData</a></span>-&gt;Flags &amp; <a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>;
+
+  // Если размер блока - нулевой, рисовать негде
+  if(DrawData-&gt;Height==0 || DrawData-&gt;Width==0)
+    return;
+
+  // Рисование поля блока
+  <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(0,PS_SOLID,1,Border,R2_COPYPEN);
+  <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(0,RDS_GFS_SOLID,Fill);
+  <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(DrawData-&gt;Left,DrawData-&gt;Top,
+                 DrawData-&gt;Left+DrawData-&gt;Width,
+                 DrawData-&gt;Top+DrawData-&gt;Height);
+
+  // Вычисление центра прямоугольника блока
+  cx=DrawData-&gt;Left+DrawData-&gt;Width/2;
+  cy=DrawData-&gt;Top+DrawData-&gt;Height/2;
+
+  // Вычисление координат центра круга-рукоятки
+  hx=cx+x*DrawData-&gt;Width/2;
+  hy=cy-y*DrawData-&gt;Height/2;
+
+  // Установка области отсечения
+  r.left=DrawData-&gt;Left+1;
+  r.top=DrawData-&gt;Top+1;
+  r.right=DrawData-&gt;Left+DrawData-&gt;Width-1;
+  r.bottom=DrawData-&gt;Top+DrawData-&gt;Height-1;
+  <a class="hidden" href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a>(&amp;r);
+
+  // Рисование перекрестия
+  <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(cx,DrawData-&gt;Top);
+  <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(cx,DrawData-&gt;Top+DrawData-&gt;Height);
+  <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(DrawData-&gt;Left,cy);
+  <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(DrawData-&gt;Left+DrawData-&gt;Width,cy);
+
+  // Рисование круга (цвет зависит от признака захвата мыши)
+  <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(RDS_GFSTYLE,PS_NULL,0,0,0);
+  <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(0,RDS_GFS_SOLID,
+                     captured?CircleMoving:Circle);
+  <a class="hidden" href="rdsXGEllipse.htm" title="А.5.18.6. rdsXGEllipse &ndash; эллипс или окружность">rdsXGEllipse</a>(hx-hR,hy-hR,hx+hR+1,hy+hR+1);
+
+  // Отмена отсечения
+  <a class="hidden" href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a>(NULL);</pre>
+
+<p>Чтобы круг, который перетаскивает пользователь, увеличивался и уменьшался вместе с масштабом подсистемы,
+мы вычисляем радиус рисуемого круга <span class="cpp">hR</span> как половину произведения настроечного параметра
+<span class="cpp">CircleD</span> и масштабного множителя подсистемы
+<span class="cpp">DrawData-&gt;DoubleZoom</span>. На время перетаскивания круга мы будем захватывать мышь,
+поэтому признаком движения круга можно считать наличие захвата мыши. Для захвата мыши блок взводит в поле
+<span class="cpp">Flags</span> структуры данных блока <span class="cpp"><a href="RDS_BLOCKDATA.htm#ref3" title="Структура RDS_BLOCKDATA">RDS_BLOCKDATA</a></span> битовый флаг
+<span class="cpp"><a href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a></span>. Структура данных блока доступна во всех реакциях модели через указатель
+<span class="cpp"><a href="um_3_7_1.htm#ref26" title="Указатель на структуру данных блока">rdsbcppBlockData</a></span>. Таким образом, если флаг взведен, то есть если выражение
+<span class="cpp">rdsbcppBlockData-&gt;Flags &amp; RDS_MOUSECAPTURE</span> не равно нулю, то блок в
+данный момент захватил мышь. В процедуре рисования это будет означать, что круг нужно рисовать цветом
+<span class="cpp">CircleMoving</span> вместо <span class="cpp">Circle</span>. Полученный таким образом признак
+захвата записывается во временную логическую переменную <span class="cpp">captured</span>.</p>
+
+<p>Далее размеры блока сравниваются с нулем (на блоке нулевой ширины или высоты бессмысленно что-либо
+рисовать), устанавливается цвет рамки <span class="cpp">Border</span> и цвет заливки
+<span class="cpp">Fill</span> и рисуется прямоугольник размером во весь блок (программное рисование подробно
+рассматривается в <a href="um_3_7_5.htm" title="&sect;3.7.5. Блоки, программно рисующие свое изображение">&sect;3.7.5</a>). Затем вычисляется центр изображения блока
+(<span class="cpp">cx</span>,<span class="cpp">cy</span>) и координаты центра круга
+(<span class="cpp">hx</span>,<span class="cpp">hy</span>), соответствующие текущим значениям вещественных
+выходов <span class="cpp">x</span> и <span class="cpp">y</span>.</p>
+
+<p>Теперь необходимо ограничить рисование внутренней областью прямоугольника, чтобы нарисованный нами
+круг не вышел за габариты блока, даже если пользователь подтащит центр этого круга к самой границе.
+Для ограничения рисования заданной прямоугольной областью используется функция
+<span class="cpp"><a href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a></span>. Сначала мы заносим во вспомогательную структуру
+<span class="cpp">r</span> стандартного для Windows типа <span class="cpp"><a href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a></span> координаты прямоугольной
+области, лежащей внутри прямоугольника блока с отступом в одну точку экрана, а затем передаем указатель на
+эту структуру в <span class="cpp">rdsXGSetClipRect</span>. Начиная с этого момента Windows будет
+автоматически отсекать части нарисованных изображений, выходящие за пределы прямоугольника
+<span class="cpp">r</span>.</p>
+
+<p>Теперь можно нарисовать линии перекрестия с центром в (<span class="cpp">cx</span>,<span class="cpp">cy</span>)
+и круг радиуса <span class="cpp">hR</span> с центром в
+(<span class="cpp">hx</span>,<span class="cpp">hy</span>). Цвет круга зависит от вспомогательной
+переменной <span class="cpp">captured</span>: если мышь захвачена блоком (то есть круг в данный
+момент перетаскивается пользователем), он будет нарисован цветом <span class="cpp">CircleMoving</span>, в
+противном случае &ndash; цветом <span class="cpp">Circle</span>. Нарисовав все, что нужно, мы отменяем
+ранее установленное ограничение рисования, вызвав функцию <span class="cpp">rdsXGSetClipRect</span> с параметром
+<span class="cpp">NULL</span>.</p>
+
+<p>Программное рисование блока написано &ndash; теперь нужно заняться реализацией перетаскивания круга.
+Перетаскивание будет устроено следующим образом:</p>
+
+<ul>
+  <li>в момент нажатия левой кнопки мыши на изображении круга модель будет захватывать мышь и запоминать
+  текущие координаты центра нарисованного круга и координаты курсора мыши на момент нажатия;</li>
+
+  <li>при каждом перемещении курсора модель будет вычислять новые координаты центра круга (для этого нам
+  будут нужны запомненные при нажатии кнопки координаты), а по ним &ndash; новые вещественные значения
+  <span class="cpp">x</span> и <span class="cpp">y</span>;</li>
+
+  <li>при отпускании кнопки модель снимет захват мыши.</li>
+</ul>
+
+<p>Начнем с того, что добавим в класс блока поля, в которых мы будем запоминать координаты курсора и
+координаты центра круга на момент начала перетаскивания. На левой панели окна редактора выберем вкладку
+&laquo;<span class="menu">события</span>&raquo;, раскроем на ней раздел
+&laquo;<span class="menu">описания</span>&raquo; и дважды щелкнем на его подразделе
+&laquo;<span class="menu">описания внутри класса блока</span>&raquo;
+(см. <a href="um_3_7_8.htm#pic7" title="Описания внутри класса в списке событий">рис.&nbsp;442</a>). В правой части окна появится новая
+пустая вкладка &laquo;<span class="menu">описания в классе</span>&raquo;, на которой нужно ввести следующий текст:</p>
+
+<pre class="cpp">  // Центр круга (рукоятки) до начала перетаскивания
+  int OldCircleX,OldCircleY;
+  // Координаты курсора на момент начала перетаскивания
+  int OldMouseX,OldMouseY;</pre>
+
+<p>Перед перетаскиванием круга в полях <span class="cpp">OldCircleX</span> и <span class="cpp">OldCircleY</span>
+мы будем сохранять координаты его центра, а в полях <span class="cpp">OldMouseX</span> и
+<span class="cpp">OldMouseY</span> &ndash; координаты курсора мыши. Начиная перетаскивание,
+пользователь, вероятнее всего, нажмет не точно в центр круга, поэтому нам нужно запомнить две
+пары координат. В процессе перетаскивания положения центра круга относительно курсора мы будем
+сохранять постоянным.</p>
+
+<p>Теперь, как в предыдущих примерах, добавим в модель реакцию на нажатие кнопки мыши. На вкладке
+&laquo;<span class="menu">события</span>&raquo; раскроем раздел &laquo;<span class="menu">мышь и клавиатура</span>&raquo;
+(см. <a href="#pic1" title="Реакции на мышь в списке событий">рис.&nbsp;447</a>), дважды щелкнем на подразделе
+&laquo;<span class="menu">нажатие кнопки мыши</span>&raquo; и введем на открывшейся вкладке следующий текст:</p>
+
+<pre class="cpp">  // Вспомогательные переменные
+  int hx,hy,cx,cy,hR;
+  hR=CircleD*MouseData-&gt;DoubleZoom/2; // Радиус круга
+
+  // Если размер - нулевой, реакция не имеет смысла
+  if(MouseData-&gt;Height==0 || MouseData-&gt;Width==0)
+    return;
+  // Если нажата не левая кнопка, перетаскивать не надо
+  // Разрешаем в этом случае вызов контекстного меню блока
+  if(MouseData-&gt;Button!=<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a>)
+    { Result=RDS_BFR_SHOWMENU;
+      return;
+    }
+
+  // Координаты цента блока
+  cx=MouseData-&gt;Left+MouseData-&gt;Width/2;
+  cy=MouseData-&gt;Top+MouseData-&gt;Height/2;
+  // Координаты центра круга-рукоятки
+  hx=cx+x*MouseData-&gt;Width/2;
+  hy=cy-y*MouseData-&gt;Height/2;
+
+  <span id="ref22">//</span> Проверка попадания курсора в круг
+  if(<span id="light_ref22">abs</span>(MouseData-&gt;x-hx)&lt;=hR &amp;&amp; abs(MouseData-&gt;y-hy)&lt;=hR)
+    { // Курсор попал в круг
+      // Запоминаем координаты центра круга на момент
+      // начала перетаскивания
+      OldCircleX=hx;
+      OldCircleY=hy;
+      // Координаты курсора на начало перетаскивания
+      OldMouseX=MouseData-&gt;x;
+      OldMouseY=MouseData-&gt;y;
+      // Взводим флаг захвата мыши
+      <a class="hidden" href="um_3_7_1.htm#ref26" title="Указатель на структуру данных блока">rdsbcppBlockData</a>-&gt;Flags|=<a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>;
+    }</pre>
+
+<p>Здесь, как и в функции рисования, мы сначала вычисляем радиус круга (он нам нужен для проверки попадания
+курсора мыши в круг) и прерываем выполнение реакции, если один из размеров блока &ndash; нулевой. Затем,
+как в предыдущем примере, мы выясняем, левая ли клавиша мыши нажата. Если нажата не левая клавиша, мы
+записываем в переменную <span class="cpp">Result</span> константу <span class="cpp">RDS_BFR_SHOWMENU</span>,
+чтобы разрешить RDS вывод контекстного меню, и завершаем реакцию. В противном случае, опять,
+как в функции рисования, вычисляются координаты центра изображения блока
+(<span class="cpp">cx</span>,<span class="cpp">cy</span>) и координаты центра круга
+(<span class="cpp">hx</span>,<span class="cpp">hy</span>), соответствующие текущим значениям
+<span class="cpp">x</span> и <span class="cpp">y</span>.</p>
+
+<p>Далее мы проверяем попадание курсора в круг &ndash; точнее, в прямоугольник, внутрь которого вписан
+этот круг. Если по обеим координатам расстояние между курсором (поля <span class="cpp">x</span> и
+<span class="cpp">y</span> структуры <span class="cpp">MouseData</span>) и текущим центром круга
+(<span class="cpp">hx</span>,<span class="cpp">hy</span>) не больше радиуса круга
+<span class="cpp">hR</span>, значит, курсор попал внутрь круга. При этом мы запоминаем координаты
+курсора в полях <span class="cpp">OldMouseX</span> и <span class="cpp">OldMouseY</span>, которые мы
+уже добавили в класс блока, а координаты центра круга &ndash; в полях
+<span class="cpp">OldCircleX</span> и <span class="cpp">OldCircleY</span>. Затем мы взводим флаг
+захвата мыши <span class="cpp"><a href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a></span> в поле <span class="cpp">Flags</span> структуры данных блока
+<span class="cpp"><a href="um_3_7_1.htm#ref26" title="Указатель на структуру данных блока">rdsbcppBlockData</a></span> при помощи оператора присваивания с битовым &laquo;ИЛИ&raquo;:</p>
+
+<pre class="cpp">  <a class="hidden" href="um_3_7_1.htm#ref26" title="Указатель на структуру данных блока">rdsbcppBlockData</a>-&gt;Flags|=<a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>;</pre>
+
+<p><span id="ref23">Вся</span>
+основная работа будет выполняться в реакции на перемещение курсора мыши, но сначала добавим в
+модель реакцию на отпускание кнопки &ndash; в ней нам нужно только снять захват мыши. На вкладке
+&laquo;<span class="menu">события</span>&raquo; в разделе &laquo;<span class="menu">мышь и клавиатура</span>&raquo;
+(см. <a href="#pic1" title="Реакции на мышь в списке событий">рис.&nbsp;447</a>) дважды щелкнем на подразделе
+&laquo;<span class="menu">отпускание кнопки мыши</span>&raquo; и введем на открывшейся одноименной вкладке единственную строчку:</p>
+
+<pre class="cpp">  <span id="light_ref23"><a class="hidden" href="RDS_SETFLAG.htm" title="А.5.2.4. Макрос RDS_SETFLAG &ndash; установка битового флага">RDS_SETFLAG</a></span>(<a class="hidden" href="um_3_7_1.htm#ref26" title="Указатель на структуру данных блока">rdsbcppBlockData</a>-&gt;Flags,<a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>,FALSE);</pre>
+
+<p>Здесь мы используем стандартный макрос RDS <span class="cpp"><a href="RDS_SETFLAG.htm" title="А.5.2.4. Макрос RDS_SETFLAG &ndash; установка битового флага">RDS_SETFLAG</a></span>
+для очистки флага <span class="cpp">RDS_MOUSECAPTURE</span> в поле <span class="cpp">Flags</span> структуры
+данных блока. Можно было бы, не пользуясь макросом, записать</p>
+
+<pre class="cpp">  <a class="hidden" href="um_3_7_1.htm#ref26" title="Указатель на структуру данных блока">rdsbcppBlockData</a>-&gt;Flags=
+    (<a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a>)(<a class="hidden" href="um_3_7_1.htm#ref26" title="Указатель на структуру данных блока">rdsbcppBlockData</a>-&gt;Flags &amp; (~<a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>));</pre>
+
+<p class="noindent">Однако, запись с макросом несколько компактнее.</p>
+
+<p>Теперь займемся реакцией на перемещение курсора мыши. На вкладке
+&laquo;<span class="menu">события</span>&raquo; в разделе &laquo;<span class="menu">мышь и клавиатура</span>&raquo; дважды щелкнем на подразделе
+&laquo;<span class="menu">перемещение мыши</span>&raquo; и на открывшейся одноименной вкладке введем следующий текст:</p>
+
+<pre class="cpp">  // Вспомогательные переменные
+  int hx,hy,cx,cy;
+
+  // Если размер - нулевой, реакция не имеет смысла
+  if(MouseData-&gt;Height==0 || MouseData-&gt;Width==0)
+    { x=y=0.0;
+      return;
+    }
+  if(!(<a class="hidden" href="um_3_7_1.htm#ref26" title="Указатель на структуру данных блока">rdsbcppBlockData</a>-&gt;Flags &amp; <a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>))
+    { // Мышь не захвачена - ничего не нужно делать
+      return;
+    }
+
+  // Новые координаты центра рукоятки
+  hx=OldCircleX+(MouseData-&gt;x-OldMouseX);
+  hy=OldCircleY+(MouseData-&gt;y-OldMouseY);
+
+  // Координаты центра блока
+  cx=MouseData-&gt;Left+MouseData-&gt;Width/2;
+  cy=MouseData-&gt;Top+MouseData-&gt;Height/2;
+
+  // По новым координатам центра рукоятки вычисляем соответствующие
+  // им вещественные значения выходов, ограничивая их
+  // диапазоном [-1...1]
+  x=2.0*(hx-cx)/MouseData-&gt;Width;
+  if(x&gt;1.0) x=1.0;
+  else if(x&lt;-1.0) x=-1.0;
+  y=-2.0*(hy-cy)/MouseData-&gt;Height;
+  if(y&gt;1.0) y=1.0;
+  else if(y&lt;-1.0) y=-1.0;
+
+  // Взводим сигнал готовности для передачи выхода по связям
+  Ready=1;</pre>
+
+<p>Мы снова проверяем размеры блока и завершаем реакцию, обнуляя выходы, если его ширина или высота равны
+нулю. Затем мы проверяем флаг захвата мыши: если он не взведен, значит, была нажата не левая кнопка, или при
+нажатии кнопки курсор был за пределами круга &ndash; в общем, перетаскивание не было начато. В
+этом случае мы немедленно завершаем реакцию.</p>
+
+<p>Если мышь захвачена, то есть перетаскивание круга выполняется, мы вычисляем новое положение центра круга
+с учетом перемещения курсора: курсор с момента нажатия кнопки мыши переместился из
+(<span class="cpp">OldMouseX</span>,<span class="cpp">OldMouseY</span>) в
+(<span class="cpp">MouseData-&gt;x</span>,<span class="cpp">MouseData-&gt;y</span>), значит, центр круга
+сместился на ту же величину от (<span class="cpp">OldCircleX</span>,<span class="cpp">OldCircleY</span>).
+Зная новое положение центра круга внутри прямоугольника блока, мы можем вычислить новые значения вещественных
+выходов <span class="cpp">x</span> и <span class="cpp">y</span>. Эти значения мы ограничиваем диапазоном
+[&minus;1&hellip;1], то есть границами блока. Вычислив <span class="cpp">x</span> и <span class="cpp">y</span>,
+мы, как и в прошлых примерах, взводим сигнал готовности блока
+<span class="cpp"><a href="um_1_4.htm#ref27" title="Сигнал готовности блока">Ready</a></span>, чтобы значения выходов передались по связям.</p>
+
+<p>Модель блока-рукоятки полностью написана. Теперь, чтобы он смог работать, необходимо правильно настроить
+его параметры:</p>
+
+<ul>
+  <li>чтобы включить программное рисование, необходимо в
+  <a href="um_2_9_1.htm#ref2" title="окно параметров простого блока">окне параметров</a> блока на вкладке
+  &laquo;<span class="menu">внешний вид</span>&raquo; включить флажок
+  &laquo;<span class="menu">внешний вид &ndash; определяется функцией DLL</span>&raquo;
+  (см. <a href="um_3_7_5.htm#pic1" title="Флажок, разрешающий программное рисование в окне параметров блока">рис.&nbsp;411</a>);</li>
+
+  <li>чтобы пользователь мог задать размеры блока,
+  <a href="um_2_6.htm#ref9" title="Изменение размеров блока">растягивая мышью</a> маркеры его выделения, на этой же вкладке следует включить
+  флажок &laquo;<span class="menu">разрешить масштабирование</span>&raquo;;</li>
+
+  <li>чтобы модель блока вызывалась при нажатии и отпускании кнопок мыши и перемещении курсора, на вкладке
+  &laquo;<span class="menu">DLL</span>&raquo; окна параметров следует включить флажок &laquo;<span class="menu">блок реагирует на мышь</span>&raquo;
+  (см. <a href="#pic2" title="Разрешение реакции на мышь в окне параметров блока">рис.&nbsp;448</a>).</li>
+</ul>
+
+<div class="picright"><div class="container" id="pic9">
+<img src="../img/AC_2dhandle_test.png" width="251" height="144" alt="Тестирование рукоятки" />
+<p id="light_pic9">Рис.&nbsp;455. Тестирование рукоятки</p>
+</div></div>
+
+
+<p>Теперь наш блок полностью готов к работе. Сделаем его достаточно большим, чтобы было удобно
+перетаскивать круг внутри него, и подключим к его выходам &laquo;<span class="rdsvar">x</span>&raquo; и &laquo;<span class="rdsvar">y</span>&raquo;
+числовые индикаторы
+(<a href="#pic9" title="Тестирование рукоятки">рис.&nbsp;455</a>).
+Если настроечные параметры блока не изменены, то его прямоугольник будет белым с черной рамкой и
+перекрестием, а круг будет синим. Запустив расчет и перетаскивая круг внутри прямоугольника (круг при
+этом будет становиться красным), на индикаторах можно будет наблюдать изменение значений выходов: когда
+центр круга будет находиться в центре блока, выходы будут близки к нулю, у границ выходы будут близки к
+&plusmn;1. При выведении курсора за пределы прямоугольника блока центр круга останется на его границе
+(при этом выходящий за прямоугольник сегмент не будет нарисован), а при возврате курсора обратно в прямоугольник
+круг снова будет следовать за ним. При желании, можно войти в окно настроек блока через контекстное меню
+и изменить его цвета и диаметр круга.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="um_3_7_9.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_7_11.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_10">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

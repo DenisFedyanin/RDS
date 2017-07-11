@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.27.2. rdsINIOpenSection &ndash; установить текущую секцию</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_27">А.5.27. Вспомогательный объект для работы с текстом в формате INI-файла</a></p>
+<div class="level"><p>А.5.27.2. <span class="cpp">rdsINIOpenSection</span> &ndash; установить текущую секцию</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsINICreateTextHolder.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsINIReadDouble.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsINIOpenSection">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.27. Вспомогательный объект для работы с текстом в формате INI-файла</h4>
+<h5>А.5.27.2. <span class="cpp">rdsINIOpenSection</span> &ndash; установить текущую секцию</h5>
+
+
+<p>Функция <span class="cpp">rdsINIOpenSection</span> устанавливает имя существующей секции
+<a href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">вспомогательного объекта</a>, с которой будут
+работать все последующие вызовы команд чтения и записи параметров.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsINIOpenSection
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> Ini,     <span class="rem">// Объект</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> SectionName    <span class="rem">// Имя секции</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_BHoS</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Ini</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a></i></span>)</dt>
+  <dd>Идентификатор вспомогательного объекта для работы с текстом, ранее созданного функцией
+  <span class="cpp"><a href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a></span>.</dd>
+
+  <dt><span class="cpp">SectionName</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на строку с именем секции.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p><span class="cpp">TRUE</span> &ndash; секция <span class="cpp">SectionName</span> найдена в тексте,
+<span class="cpp">FALSE</span> &ndash; секция отсутствует.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция ищет в тексте, хранящемся в объекте <span class="cpp">Ini</span>, секцию с именем
+<span class="cpp">SectionName</span>, и, если она присутствует в тексте, устанавливает ее в качестве
+текущей. Все дальнейшие команды чтения и записи параметров будут работать с этой секцией текста. Если
+секция с именем <span class="cpp">SectionName</span> в тексте отсутствует, функция вернет
+<span class="cpp">FALSE</span> и все дальнейшие команды чтения и записи будут игнорироваться.</p>
+
+<p>Если логика работы программы требует, чтобы, в случае отсутствия секции, она была создана,
+следует использовать команду <span class="cpp"><a href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a></span>.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции <span class="cpp">rdsINIOpenSection</span> приведен в
+<a href="pm_2_8_5.htm" title="&sect;2.8.5. Сохранение параметров блока в формате INI-файла">&sect;2.8.5 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a></span>,
+<span class="cpp"><a href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a></span>,
+<span class="cpp"><a href="RDS_HINI_DELETESECTION.htm" title="А.5.27.12. Команда RDS_HINI_DELETESECTION &ndash; удалить секцию">RDS_HINI_DELETESECTION</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsINICreateTextHolder.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsINIReadDouble.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsINIOpenSection">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

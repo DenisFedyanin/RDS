@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.6.5. Работа со сложными динамическими переменными</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_6">&sect;2.6. Динамические переменные</a></p>
+<div class="level"><p>&sect;2.6.5. Работа со сложными динамическими переменными</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_6_4.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_6_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_6_5_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.6. Динамические переменные</h3>
+<h4>&sect;2.6.5. Работа со сложными динамическими переменными</h4>
+<p class="abstract">Рассматривается работа с динамическими переменными сложных типов: матрицами, структурами и т.п.
+                Приводится пример, в котором два блока передают друг другу матрицу вещественных чисел через динамическую переменную
+                в корневой подсистеме.</p>
+
+
+<p>Во всех приведенных примерах
+(<a href="pm_2_6_2.htm" title="&sect;2.6.2. Подписка на динамическую переменную">&sect;2.6.2</a>, <a href="pm_2_6_3.htm" title="&sect;2.6.3. Создание и удаление динамической переменной">&sect;2.6.3</a>,
+<a href="pm_2_6_4.htm" title="&sect;2.6.4. Работа с несколькими динамическими переменными">&sect;2.6.4</a>) модели блоков работали с простыми
+<a href="pm_1_6.htm#ref1" title="Динамическая переменная">динамическими переменными</a> типа
+<span class="cpp">double</span>. В работе с динамическими переменными сложных типов
+(<a href="pm_1_5.htm#light_ref12" title="тип переменной: строка">строками</a>, <a href="pm_1_5.htm#light_ref14" title="тип переменной: матрица">матрицами</a>,
+<a href="pm_1_5.htm#light_ref16" title="тип переменной: структура">структурами</a>) нет принципиальных отличий. Получив указатель на область
+данных переменной (поле <span class="cpp">Data</span> структуры
+<span class="cpp"><a href="RDS_DYNVARLINK.htm" title="А.4.6. RDS_DYNVARLINK &ndash; подписка на динамическую переменную">RDS_DYNVARLINK</a></span>) и удостоверившись, что он не равен <span class="cpp">NULL</span>, можно
+обращаться к данным динамической переменной так же, как если бы это была обычная
+<a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статическая переменная</a>.</p>
+
+<p>Для примера создадим модели двух блоков, один из которых будет записывать поступившую ему на
+вход матрицу вещественных чисел в созданную им динамическую переменную &laquo;<span class="rdsvar">DynMatr</span>&raquo; в
+<a href="pm_1_2.htm#ref5" title="Корневая подсистема">корневой подсистеме</a>, а другой &ndash; считывать эту матрицу из
+динамической переменной, передавать ее на свой выход и вычислять сумму ее элементов
+(<a href="#pic1" title="Передача матрицы через динамическую переменную">рис.&nbsp;45</a>).
+Фактически эти блоки представляют собой упрощенные аналоги
+<a href="pm_2_6_3.htm#light_ref8" title="Пример передачи данных через динамическую переменную">рассмотренных ранее</a>
+блока-передатчика и блока-приемника, передающие матрицу вместо вещественного числа и не имеющие возможности изменить
+имя динамической переменной, связывающей их.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/DynVars_MatrTunnel.png" width="675" height="165" alt="Передача матрицы через динамическую переменную" />
+<p id="light_pic1">Рис.&nbsp;45. Передача матрицы через динамическую переменную</p>
+</div></div>
+
+
+<p>Начнем с модели блока, записывающего матрицу в динамическую переменную. Помимо двух
+<a href="pm_1_5.htm#ref4" title="Обязательные сигналы простого блока">обязательных сигналов</a>, этот блок будет иметь единственный вход
+&laquo;<span class="rdsvar">X</span>&raquo; типа &laquo;матрица <span class="cpp">double</span>&raquo;:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">X</td>
+<td class="center">Матрица double</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center"></td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Как и в других моделях, работающих с единственной динамической переменной, указатель на ее структуру
+подписки будет запоминаться в поле <span class="cpp">BlockData</span> структуры
+<span class="cpp"><a href="RDS_BLOCKDATA.htm#ref3" title="Структура RDS_BLOCKDATA">RDS_BLOCKDATA</a></span>, поскольку как таковой личной области данных у блока не будет,
+и этот указатель можно использовать как угодно. Модель блока будет достаточно простой:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestDynMatrCreate(<span class="kw">int</span> CallMode,
+                                  <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                                  <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define pX      ((void **)(pStart+2))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на структуру подписки</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> Link;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Создание динамической переменной</span>
+          Link=<a class="hidden" href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a>(<span id="light_ref1"><a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref5" title="RDS_DVROOT">RDS_DVROOT</a></span>, <span class="rem">// В корневой</span>
+                                       <span class="str">"DynMatr"</span>,  <span class="rem">// Имя переменной</span>
+                                       <span class="str">"MD"</span>,       <span class="rem">// Тип</span>
+                                       TRUE,       <span class="rem">// Запрет удаления</span>
+                                       NULL);      <span class="rem">// Без нач.знач.</span>
+          <span class="rem">// Запомнить указатель на структуру подписки</span>
+          BlockData-&gt;BlockData=Link;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="rem">// Удалить переменную</span>
+          <a class="hidden" href="rdsDeleteDVByLink.htm" title="А.5.16.3. rdsDeleteDVByLink &ndash; удалить динамическую переменную и прекратить подписку на нее">rdsDeleteDVByLink</a>(Link);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSMD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="rem">// Если переменная существует, копировать входную матрицу</span>
+          <span class="rem">// в матрицу динамической переменной</span>
+          <span class="kw">if</span>(Link!=NULL &amp;&amp; Link-&gt;Data!=NULL)
+            { <span class="rem">// Копирование X в динамическую переменную</span>
+              <span id="light_ref2"><a class="hidden" href="rdsCopyVarArray.htm" title="А.5.15.7. rdsCopyVarArray &ndash; копировать одну матрицу/массив в другую">rdsCopyVarArray</a></span>(Link-&gt;Data,pX);
+              <span class="rem">// Уведомление подписчиков</span>
+              <a class="hidden" href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a>(Link);
+            }
+          <span class="kw">break</span>;
+      }
+
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef pX</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>При вызове модели в режиме <span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span> в корневой подсистеме будет создана
+динамическая переменная &laquo;<span class="rdsvar">DynMatr</span>&raquo; типа &laquo;&raquo;, то есть
+&laquo;матрица <span class="cpp">double</span>&raquo;, указатель на структуру подписки
+которой будет запомнен в переменной <span class="cpp">BlockData-&gt;BlockData</span>. При вызове модели
+в режиме <span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span> эта переменная будет уничтожена. Эти действия уже
+несколько раз описывались в предыдущих примерах и останавливаться на них подробнее нет смысла. При вызове
+модели для выполнения такта расчета запомненный в
+<span class="cpp">BlockData-&gt;BlockData</span> указатель на структуру подписки присваивается вспомогательной
+переменной <span class="cpp">Link</span>, и, если этот указатель существует
+(<span class="cpp">Link!=NULL</span>) и у динамической переменной есть данные
+(<span class="cpp">Link-&gt;Data!=NULL</span>), вызывается сервисная функция
+<span class="cpp"><a href="rdsCopyVarArray.htm" title="А.5.15.7. rdsCopyVarArray &ndash; копировать одну матрицу/массив в другую">rdsCopyVarArray</a></span>, копирующая данные матрицы, на которую ссылается указатель
+<span class="cpp">pX</span>, в матрицу, на которую ссылается указатель
+<span class="cpp">Link-&gt;Data</span> &ndash; так вход блока копируется в динамическую переменную.
+Функция <span class="cpp"><a class="hidden" href="rdsCopyVarArray.htm" title="А.5.15.7. rdsCopyVarArray &ndash; копировать одну матрицу/массив в другую">rdsCopyVarArray</a></span> может работать как со статическими матрицами, так
+и с динамическими &ndash; все функции и макросы, которые работают с данными статических переменных, могут
+с тем же успехом работать и с данными динамических, поскольку их представление в памяти не отличается.</p>
+
+<p>Теперь создадим модель блока, который будет считывать данные из динамической переменной
+&laquo;<span class="rdsvar">DynMatr</span>&raquo;. Блок будет выдавать полученную матрицу на выход &laquo;<span class="rdsvar">Y</span>&raquo;, а сумму ее
+элементов &ndash; на выход &laquo;<span class="rdsvar">s</span>&raquo;:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">Y</td>
+<td class="center">Матрица double</td>
+<td class="center">8</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center"></td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">s</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Сигналу &laquo;<span class="rdsvar">Start</span>&raquo; необходимо присвоить начальное значение 1 &ndash; это самый простой
+способ заставить модель блока выполниться в первом такте
+<a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a>. Также желательно
+<a href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">выключить</a> для блока запуск каждый такт. Модель будет передавать
+динамическую матрицу на выход и суммировать ее элементы и при каждом изменении переменной
+&laquo;<span class="rdsvar">DynMatr</span>&raquo;, о котором ее информирует блок с моделью <span class="cpp">TestDynMatrCreate</span>
+при помощи сервисной функции <span class="cpp"><a href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a></span>, и при выполнении такта расчета.
+На самом деле запуск модели в режиме <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span> произойдет всего один раз &ndash;
+при первом запуске расчета, из-за того, что сигнал &laquo;<span class="rdsvar">Start</span>&raquo; в этот момент будет иметь значение 1.
+После первого же запуска значение этого сигнала будет сброшено, и, поскольку у блока нет входов, а запуск
+каждый такт отключен, в дальнейшем модель будет вызываться только при изменении динамической переменной.</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestDynMatrGet(<span class="kw">int</span> CallMode,
+                               <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                               <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define pY      ((void **)(pStart+2))</span>
+  <span class="preproc">#define s       (*((double *)(pStart+10)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на структуру подписки</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> Link;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Подписка на динамическую переменную</span>
+          Link=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(<a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref5" title="RDS_DVROOT">RDS_DVROOT</a>, <span class="rem">// В корневой</span>
+                                       <span class="str">"DynMatr"</span>,   <span class="rem">// Имя</span>
+                                       <span class="str">"MD"</span>,        <span class="rem">// Тип</span>
+                                       FALSE);      <span class="rem">// Без поиска</span>
+          <span class="rem">// Запомнить указатель на структуру подписки</span>
+          BlockData-&gt;BlockData=Link;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="rem">// Прекратить подписку</span>
+          <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(Link);
+          <span class="kw">break</span>;
+
+       <span class="rem">// Проверка типа статических переменных</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSMDD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Изменение динамической переменой или такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a>:
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="rem">// В s будут суммироваться элементы матрицы</span>
+          s=<span class="const">0</span>;
+          <span class="rem">// Проверка существования динамической переменной</span>
+          <span class="kw">if</span>(Link!=NULL &amp;&amp; Link-&gt;Data!=NULL)
+            { <span class="rem">// Копировать динамическую матрицу в Y</span>
+              <a class="hidden" href="rdsCopyVarArray.htm" title="А.5.15.7. rdsCopyVarArray &ndash; копировать одну матрицу/массив в другую">rdsCopyVarArray</a>(pY,Link-&gt;Data);
+              <span class="rem">// Если матрица не нулевого размера – суммировать</span>
+              <span class="kw">if</span>(<a class="hidden" href="RDS_ARRAYEXISTS.htm" title="А.5.15.3. Макрос RDS_ARRAYEXISTS &ndash; проверка наличия элементов в матрице/массиве">RDS_ARRAYEXISTS</a>(Link-&gt;Data))
+                { <span class="rem">// Число элементов в матрице</span>
+                  <span class="kw">int</span> count=<a class="hidden" href="RDS_ARRAYROWS.htm" title="А.5.15.6. Макрос RDS_ARRAYROWS &ndash; число строк матрицы/массива">RDS_ARRAYROWS</a>(Link-&gt;Data)*
+                            <a class="hidden" href="RDS_ARRAYCOLS.htm" title="А.5.15.1. Макрос RDS_ARRAYCOLS &ndash; число столбцов матрицы/массива">RDS_ARRAYCOLS</a>(Link-&gt;Data);
+                  <span class="rem">// Указатель на начало данных матрицы</span>
+                  <span class="kw">double</span> *data=(<span class="kw">double</span>*)<a class="hidden" href="RDS_ARRAYDATA.htm" title="А.5.15.2. Макрос RDS_ARRAYDATA &ndash; указатель на первый элемент матрицы/массива">RDS_ARRAYDATA</a>(Link-&gt;Data);
+                  <span class="rem">// Суммирование элементов в цикле</span>
+                  <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;count;i++)
+                    s+=data[i];
+                }
+              <span class="rem">// Взвести Ready для передачи выходов по связям</span>
+              Ready=<span class="const">1</span>;
+            }
+          <span class="kw">break</span>;
+      }
+
+    <span class="kw">return</span> RDS_BFR_DONE;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef s</span>
+  <span class="preproc">#undef pY</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>При инициализации блока эта модель подписывается на динамическую переменную &laquo;<span class="rdsvar">DynMatr</span>&raquo;,
+при очистке &ndash; прекращает подписку. Как и в предыдущей модели, указатель на структуру подписки
+запоминается в <span class="cpp">BlockData-&gt;BlockData</span>. При запуске модели в режимах
+<span class="cpp"><a href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a></span> (изменение динамической переменной) и <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>
+(такт расчета) матрица, находящаяся в динамической переменной, копируется в выход блока
+<span class="cpp">Y</span>, после чего все ее элементы суммируются и выдаются на выход <span class="cpp">s</span>.
+Для проверки, существует ли матрица (не нулевой ли у нее размер) и для получения числа строк, числа столбцов и
+указателя на первый элемент матрицы применяются те же самые макросы, которые использовались для статических
+переменных. Если переписать отвечающую за суммирование матрицы часть модели, таким образом, чтобы она вместо
+динамической переменной обращалась к статическому выходу блока <span class="cpp">Y</span>, в который эта
+динамическая переменная была только что скопирована, текст программы будет выглядеть следующим образом
+(изменения выделены <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">// &hellip;</span>
+  <span class="rem">// Если матрица не нулевого размера – суммировать</span>
+  <span class="kw">if</span>(<a class="hidden" href="RDS_ARRAYEXISTS.htm" title="А.5.15.3. Макрос RDS_ARRAYEXISTS &ndash; проверка наличия элементов в матрице/массиве">RDS_ARRAYEXISTS</a>(<span class="changes">pY</span>))
+    { <span class="rem">// Число элементов в матрице</span>
+      <span class="kw">int</span> count=<a class="hidden" href="RDS_ARRAYROWS.htm" title="А.5.15.6. Макрос RDS_ARRAYROWS &ndash; число строк матрицы/массива">RDS_ARRAYROWS</a>(<span class="changes">pY</span>)*
+                <a class="hidden" href="RDS_ARRAYCOLS.htm" title="А.5.15.1. Макрос RDS_ARRAYCOLS &ndash; число столбцов матрицы/массива">RDS_ARRAYCOLS</a>(<span class="changes">pY</span>);
+      <span class="rem">// Указатель на начало данных матрицы</span>
+      <span class="kw">double</span> *data=(<span class="kw">double</span>*)<a class="hidden" href="RDS_ARRAYDATA.htm" title="А.5.15.2. Макрос RDS_ARRAYDATA &ndash; указатель на первый элемент матрицы/массива">RDS_ARRAYDATA</a>(<span class="changes">pY</span>);
+      <span class="rem">// Суммирование элементов в цикле</span>
+      <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;count;i++)
+        s+=data[i];
+    }
+  <span class="rem">// &hellip;</span></pre>
+
+<p>В этом варианте указатель на область данных динамической переменной
+<span class="cpp">Link-&gt;Data</span> заменен на указатель на статическую переменную <span class="cpp">pY</span>,
+и модель полностью сохранила работоспособность, поскольку данные, расположенные по этим указателям,
+имеют одинаковую структуру.</p>
+
+<p>Таким образом, если есть функция или макрос, выполняющая какое-либо действие над статической переменной,
+можно использовать ее и для выполнения этого действия над динамической, передав ей поле <span class="cpp">Data</span>
+структуры подписки <span class="cpp"><a class="hidden" href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a></span> вместо указателя на статическую переменную. Это
+будет работать и для матриц, и для строк, и для структур, и для простых переменных.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_6_4.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_6_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

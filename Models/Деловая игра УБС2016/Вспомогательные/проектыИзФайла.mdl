@@ -1,0 +1,39 @@
+$BC55MODEL 0.0.0 2016.10.3.12.38.2 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$VARS
+  signal name "Start" in menu run default 0
+  signal name "Ready" out menu default 0
+  string name "fileProjects" in menu default ""
+  matrix int name "Projects" out menu default "[ ] 0"
+$ENDDECL
+$MODEL
+FILE* f = fopen(fileProjects.c_str(),"r");
+int num, d;
+fscanf(f,"%d",&num);
+Projects.Resize(num,2);
+for( int i = 0 ; i < num ; i++ ) {
+  fscanf(f, "%d", &d);
+  Projects[i][0] = d;
+  fscanf(f, "%d", &d);
+  Projects[i][1] = d;
+}
+fclose(f);
+$GLOBAL
+#include <stdio.h>
+$OPTIONS
+  tabs $MODEL
+  window pos 234 234 size 916 470 hdiv 337 vdiv 171 fdiv 161
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 1
+  ignorewarnings 0
+  customerrmsg 0
+  autoreadonlyeditor 0
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

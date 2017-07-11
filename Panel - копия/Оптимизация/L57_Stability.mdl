@@ -1,0 +1,268 @@
+$BC55MODEL 0.0.0 2016.4.1.17.6.0 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$NOSHARE
+$VARS
+  signal name "Start" in run default 1
+  signal name "Ready" out default 0
+  double name "x0" in menu run default "0"
+  double name "y0" in menu run default "0"
+  double name "z0" in menu run default "0"
+  double name "x" out menu default "?"
+  double name "y" out menu default "?"
+  double name "z" out menu default "?"
+  signal name "InputChanged" default 1
+  double name "x0_old" default "?"
+  double name "y0_old" default "?"
+  double name "z0_old" default "?"
+  double name "xc" out default "?"
+  double name "yc" out default "?"
+  double name "zc" out default "?"
+  int name "CyclesInDelta" default 0
+  int name "CycleCount" out default 0
+  logical name "OutReady" default 0
+  matrix double oneindex name "A" in menu run default "[ ] 0"
+  logical name "Error" out default 0
+  signal name "ArrayChanged" default 1
+  logical name "OK" out menu default 1
+  matrix double oneindex name "A_old" default "[ ] 0"
+  matrix matrix double oneindex name "F" in menu run default "[ ] [ ] 0"
+  signal name "func_chg" default 1
+  matrix matrix double oneindex name "FS" default "[ ] [ ] 0"
+  signal name "Finished" out menu default 0
+  int name "OldFuncId1" default -1
+  int name "OldFuncId2" default -1
+  int name "OldFuncId3" default -1
+  int name "FuncId1" in run default -1
+  int name "FuncId2" in run default -1
+  int name "FuncId3" in run default -1
+$AUTO
+  "x0","InputChanged"
+  "y0","InputChanged"
+  "z0","InputChanged"
+  "x","OutReady"
+  "y","OutReady"
+  "z","OutReady"
+  "A","ArrayChanged"
+  "Error","OutReady"
+  "OK","OutReady"
+  "F","func_chg"
+$PARAM
+  int name "SetupFuncId1" default "-1"
+  int name "SetupFuncId2" default "-1"
+  int name "SetupFuncId3" default "-1"
+  double name "Delta" default "0.0001"
+  int name "DeltaCycles" default "10"
+$LINKS
+  manual "$RDSINCLUDE$\RdsL57\L57FuncXYZ.cpp"
+  manual "$RDSINCLUDE$\RdsL57\L57Stability_XYZ.cpp"
+$CUSTOMERR
+|В одном из описаний функций обнаружена ошибка: видимо, текст функции написан не в синтаксисе языка C. Пожалуйста, проверьте все описания в настройках блока или откройте редактор модели и изучите ошибки, выданные компилятором.
+$ENDDECL
+$MODEL
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к 
+неработоспособности модели. */
+
+#define L57MS_MODEL
+#include <RdsL57/L57Stability_XYZ.cpp>
+#undef L57MS_MODEL
+
+$GLOBAL
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Неосторожное внесение изменений в реакции, описания и переменные
+самой модели может привести к ее неработоспособности. 
+
+Допускается изменение макросов L57_USECASE, L57_BAK и L57_FUNCIDEDIT,
+описанных ниже.
+*/
+// Следующий макрос должен быть определен, если функции вычисляются при помощи case,
+// а не при помощи if ... else if ...
+#define L57_USECASE
+
+// Нужно ли создавать резервную копию файла модели при настройке (TRUE или FALSE)
+#define L57_BAK FALSE
+
+// Может ли пользователь видеть/редактировать целый идентификатор функции (TRUE или FALSE)
+#define L57_FUNCIDEDIT TRUE
+//-----------------------------------------------------------------------
+
+//-----------------------------------------------------------------------
+// Не редактируемая часть модели
+//-----------------------------------------------------------------------
+#define L57MS_GLOBALS
+#include <RdsL57/L57Stability_XYZ.cpp>
+#undef L57MS_GLOBALS
+
+// Функция вычисления - служебная (без перехвата исключений)
+double _SelectedFunc(int id,const TL57TextFuncArg &arguments)
+{ double f=0.0;
+  #define x (arguments.xval)
+  #define y (arguments.yval)
+  #define z (arguments.zval)
+  #define A (arguments.Params)
+  #define F (arguments.Functions)
+
+  #ifdef L57_USECASE
+  switch(id)
+    {
+
+  // ВНИМАНИЕ! Следующий комментарий - служебный, его нельзя изменять!
+  //L57_FUNCTIONS_CASES_BEGIN_MARKER ************************************
+/***** НАЧАЛО АВТОМАТИЧЕСКИ СФОРМИРОВАННОГО ТЕКСТА *****/
+// Вычисление функции: case
+case 0:
+  {
+    f=(5-y)/2.333;
+  ; /* */
+  }
+  break;
+case 1:
+  {
+    f=(5-x)/2.5;
+  ; /* */
+  }
+  break;
+case 2:
+  {
+    f=0;
+  ; /* */
+  }
+  break;
+/***** КОНЕЦ АВТОМАТИЧЕСКИ СФОРМИРОВАННОГО ТЕКСТА  *****/
+  //L57_FUNCTIONS_CASES_END_MARKER **************************************
+  // ВНИМАНИЕ! Предыдущий комментарий - служебный, его нельзя изменять!
+
+    }
+  #else
+    #define L57VAR_IFCALC id
+
+  // ВНИМАНИЕ! Следующий комментарий - служебный, его нельзя изменять!
+  //L57_FUNCTIONS_IFS_BEGIN_MARKER ************************************
+/***** НАЧАЛО АВТОМАТИЧЕСКИ СФОРМИРОВАННОГО ТЕКСТА *****/
+// Вычисление функции: if, переменная L57VAR_IFCALC
+if(L57VAR_IFCALC==0)
+  {
+    f=(5-y)/2.333;
+  ; /* */
+  }
+else if(L57VAR_IFCALC==1)
+  {
+    f=(5-x)/2.5;
+  ; /* */
+  }
+else if(L57VAR_IFCALC==2)
+  {
+    f=0;
+  ; /* */
+  }
+/***** КОНЕЦ АВТОМАТИЧЕСКИ СФОРМИРОВАННОГО ТЕКСТА  *****/
+  //L57_FUNCTIONS_IFS_END_MARKER **************************************
+  // ВНИМАНИЕ! Предыдущий комментарий - служебный, его нельзя изменять!
+
+    #undef L57VAR_IFCALC
+  #endif
+
+  return f;
+  #undef F
+  #undef x
+  #undef y
+  #undef z
+  #undef A
+}
+//-----------------------------------------------------------------------
+
+// Перечисление функций
+// ВНИМАНИЕ! Следующий комментарий - служебный, его нельзя изменять!
+//L57_FUNCTIONS_LIST_BEGIN_MARKER ************************************
+/***** НАЧАЛО АВТОМАТИЧЕСКИ СФОРМИРОВАННОГО ТЕКСТА *****/
+// Список функций
+#ifdef L57FUNC_LIST
+int L57FUNC_LIST(int num,int *pId,char **pName,char **pCode)
+{
+  static int Ids[]={0,1,2};
+  static char *Names[]={
+    "Функция 1",
+    "Функция 2",
+    "Функция 3"};
+  static char *Codes[]={
+    "f=(5-y)/2.333;",
+    "f=(5-x)/2.5;",
+    "f=0;"};
+  if(num<0 || num>=3) return 0;
+  if(pId) *pId=Ids[num];
+  if(pName) *pName=Names[num];
+  if(pCode) *pCode=Codes[num];
+  return 1;
+}
+#endif
+/***** КОНЕЦ АВТОМАТИЧЕСКИ СФОРМИРОВАННОГО ТЕКСТА  *****/
+//L57_FUNCTIONS_LIST_END_MARKER **************************************
+// ВНИМАНИЕ! Предыдущий комментарий - служебный, его нельзя изменять!
+//-----------------------------------------------------------------------
+
+
+$SETUP
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к 
+неработоспособности модели. */
+
+#define L57MS_SETUP
+#include <RdsL57/L57Stability_XYZ.cpp>
+#undef L57MS_SETUP
+$CLASSDEF
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к 
+неработоспособности модели. */
+
+#define L57MS_CLASS
+#include <RdsL57/L57Stability_XYZ.cpp>
+#undef L57MS_CLASS
+$CALCMODE
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к 
+неработоспособности модели. */
+
+#define L57MS_CALCMODE
+#include <RdsL57/L57Stability_XYZ.cpp>
+#undef L57MS_CALCMODE
+$START
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к 
+неработоспособности модели. */
+
+#define L57MS_START
+#include <RdsL57/L57Stability_XYZ.cpp>
+#undef L57MS_START
+$HIDDEN
+&0
+*Функция 1
+|f=(5-y)\x2f2.333;
+&1
+*Функция 2
+|f=(5-x)\x2f2.5;
+&2
+*Функция 3
+|f=0;
+$OPTIONS
+  tabs $GLOBAL
+  window pos 4 153 size 1187 830 hdiv 337 vdiv 354 fdiv 332 hidevar
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 1
+  ignorewarnings 1
+  customerrmsg 1
+  autoreadonlyeditor 1
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

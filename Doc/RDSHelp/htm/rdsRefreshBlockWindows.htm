@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_8">А.5.8. Работа с окнами подсистем</a></p>
+<div class="level"><p>А.5.8.14. <span class="cpp">rdsRefreshBlockWindows</span> &ndash; обновить немодальные окна</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsOpenSystemWindowEx.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsScrollWindowToBlock.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsRefreshBlockWindows">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.8. Работа с окнами подсистем</h4>
+<h5>А.5.8.14. <span class="cpp">rdsRefreshBlockWindows</span> &ndash; обновить немодальные окна</h5>
+
+
+<p>Функция <span class="cpp">rdsRefreshBlockWindows</span> обновляет все немодальные окна, принадлежащие
+указанному блоку (включая <a href="um_2_3.htm" title="&sect;2.3. Элементы и меню окна подсистемы">окна подсистем</a>).</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsRefreshBlockWindows(
+      <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,    <span class="rem">// Блок</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Recurse          <span class="rem">// Включая вложенные блоки</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_VBhB</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Block</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор блока, немодальные окна которого нужно обновить. Если <span class="cpp">Block</span>
+  &ndash; подсистема, обновляется также окно этой подсистемы.</dd>
+
+  <dt><span class="cpp">Recurse</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>: если <span class="cpp">Block</span> &ndash; подсистема, обновить также и
+  все окна ее внутренних блоков и подсистем. <span class="cpp">FALSE</span>: обновить только окна,
+  принадлежащие <span class="cpp">Block</span>.</dd>
+</dl>
+
+<p class="apphdr">Примечания</p>
+<p>Чаще всего эта функция вызывается для обновления окна подсистемы (и, возможно, окон всех вложенных в
+нее подсистем) в тех случаях, когда оно не обновляется автоматически. При вызове любой модели блока
+RDS взводит флаг обновления его
+<a href="um_1_2.htm#ref13" title="Родительская подсистема">родительской подсистемы</a>, что приведет к обновлению окна этой подсистемы
+при первой возможности, поэтому здесь функцию <span class="cpp">rdsRefreshBlockWindows</span> вызывать не
+нужно. Если же изменения во внешний вид одного из блоков внесены в результате каких-либо других действий
+&ndash; например, из функции какого-либо окна, открытого моделью средствами Windows API, или изменением
+<a href="pm_index.htm#light_htm:pm_2_6" title="&sect;2.6. Динамические переменные">динамической переменной</a>
+без вызова специальной функции <span class="cpp"><a href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a></span>
+&ndash; обновить окно подсистемы нужно вручную.</p>
+
+<p><span id="ref1">Эта</span>
+же функция может использоваться для обновления немодальных окон, открытых моделями блоков для своих целей
+&ndash; ее вызов приводит к возникновению для этих блоков события
+<span id="light_ref1" class="cpp"><a href="RDS_BFM_WINREFRESH.htm" title="А.2.6.21. RDS_BFM_WINREFRESH &ndash; обновление окон блока">RDS_BFM_WINREFRESH</a></span>, в реакции на которое
+и нужно обновить принадлежащие блоку окна.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции <span class="cpp">rdsRefreshBlockWindows</span> описан
+в <a href="pm_2_7_6.htm" title="&sect;2.7.6. Открытие модальных окон в режиме расчета">&sect;2.7.6 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_BFM_WINREFRESH.htm" title="А.2.6.21. RDS_BFM_WINREFRESH &ndash; обновление окон блока">RDS_BFM_WINREFRESH</a></span>,
+<span class="cpp"><a href="rdsEnableWindowRefresh.htm" title="А.5.8.4. rdsEnableWindowRefresh &ndash; разрешение/запрет обновления окон">rdsEnableWindowRefresh</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsOpenSystemWindowEx.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsScrollWindowToBlock.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsRefreshBlockWindows">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

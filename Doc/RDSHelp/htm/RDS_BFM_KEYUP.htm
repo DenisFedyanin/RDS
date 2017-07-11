@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.2.6.6. RDS_BFM_KEYUP &ndash; отпускание клавиши</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2">А.2. События блока и связанные с ними описания</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2_6">А.2.6. События пользовательского интерфейса и рисования внешнего вида блоков</a></p>
+<div class="level"><p>А.2.6.6. <span class="cpp">RDS_BFM_KEYUP</span> &ndash; отпускание клавиши</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_BFM_KEYDOWN.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_MENUFUNCTION.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_KEYUP">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.2. События блока и связанные с ними описания</h3>
+<h4 class="off">А.2.6. События пользовательского интерфейса и рисования внешнего вида блоков</h4>
+<h5>А.2.6.6. <span class="cpp">RDS_BFM_KEYUP</span> &ndash; отпускание клавиши</h5>
+
+
+<p class="apphdr">Поток, в котором вызывается <a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функция модели</a></p>
+<p>Главный поток RDS.</p>
+
+<p class="apphdr">Первый параметр функции модели (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_BFM_KEYUP</span>.</p>
+
+<p class="apphdr">Третий параметр функции модели (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Указатель на структуру описания события <span class="cpp"><a href="RDS_BFM_KEYDOWN.htm#ref2" title="Структура RDS_KEYDATA">RDS_KEYDATA</a></span>.</p>
+
+<p class="apphdr">Возвращаемое функцией модели значение</p>
+    <div class="tableshift"><div class="tcont">
+    <table>
+      <tr>
+        <td><span class="cpp">RDS_BFR_DONE</span></td>
+        <td>Отпускание клавиши не обработано блоком.</td>
+      </tr>
+      <tr>
+        <td><span class="cpp"><span id="light_ref1">RDS_BFR_STOP</span></span></td>
+        <td>Отпускание клавиши обработано, его не нужно передавать в остальные блоки подсистемы.</td>
+      </tr>
+    </table>
+    </div></div>
+
+<p class="apphdr">Примечания</p>
+<p>Реакция на событие <span class="cpp">RDS_BFM_KEYUP</span> вызывается при отпускании ранее нажатой клавиши
+клавиатуры в том случае, если одновременно выполняются следующие условия:</p>
+<ul>
+  <li>RDS находится в режиме <a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a> или
+  <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a>;</li>
+  <li>окно подсистемы, в которой находится данный блок, имеет фокус ввода (то есть это самое верхнее окно и
+  RDS &ndash; активное приложение);</li>
+  <li>в <a href="pm_1_4.htm#pic3" title="Параметры блока &ndash; модель и реакции">параметрах блока</a>
+  разрешена реакция на клавиатуру.</li>
+</ul>
+
+<p class="noindent">Как и при нажатии клавиши, при ее отпускании в режимах моделирования и расчета поочередно
+(в произвольном порядке) вызываются модели всех блоков активного окна подсистемы, для которых разрешена
+реакция на клавиатуру. В параметре <span class="cpp">ExtParam</span> при этом передается указатель на структуру
+<span class="cpp"><a href="RDS_BFM_KEYDOWN.htm#ref2" title="Структура RDS_KEYDATA">RDS_KEYDATA</a></span>, в которой содержится описание отпущенной клавиши. Если функция модели вернет
+константу <span class="cpp">RDS_BFR_DONE</span>, отпускание клавиши будет считаться не обработанным, и
+вызовется модель следующего блока; если же она вернет <span class="cpp">RDS_BFR_STOP</span>, перебор моделей
+блоков будет прекращен. Если ни одна из моделей блоков подсистемы не вернула <span class="cpp">RDS_BFR_STOP</span>,
+будет вызвана модель самой подсистемы для реакции на событие <span class="cpp"><a href="RDS_BFM_WINDOWKEYUP.htm" title="А.2.6.15. RDS_BFM_WINDOWKEYUP &ndash; реакция подсистемы на отпускание клавиши в своем окне">RDS_BFM_WINDOWKEYUP</a></span>.
+Реакция блоков на нажатие и отпускание клавиш подробно рассмотрена в
+<a href="pm_2_12_4.htm" title="&sect;2.12.4. Реакция блоков на клавиатуру">&sect;2.12.4 руководства программиста</a>.</p></p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_BFM_KEYDOWN.htm#ref2" title="Структура RDS_KEYDATA">RDS_KEYDATA</a></span>,
+<span class="cpp"><a href="RDS_BFM_KEYDOWN.htm" title="А.2.6.5. RDS_BFM_KEYDOWN &ndash; нажатие клавиши">RDS_BFM_KEYDOWN</a></span>,
+<span class="cpp"><a href="RDS_BFM_WINDOWKEYDOWN.htm" title="А.2.6.14. RDS_BFM_WINDOWKEYDOWN &ndash; реакция подсистемы на нажатие клавиши в своем окне">RDS_BFM_WINDOWKEYDOWN</a></span>,
+<span class="cpp"><a href="RDS_BFM_WINDOWKEYUP.htm" title="А.2.6.15. RDS_BFM_WINDOWKEYUP &ndash; реакция подсистемы на отпускание клавиши в своем окне">RDS_BFM_WINDOWKEYUP</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_BFM_KEYDOWN.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_MENUFUNCTION.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_KEYUP">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

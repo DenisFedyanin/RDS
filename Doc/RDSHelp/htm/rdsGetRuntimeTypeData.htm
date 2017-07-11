@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.14.13. rdsGetRuntimeTypeData &ndash; получить фактические данные переменной произвольного типа</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_14">А.5.14. Общие функции работы с переменными блока</a></p>
+<div class="level"><p>А.5.14.13. <span class="cpp">rdsGetRuntimeTypeData</span> &ndash; получить фактические данные переменной произвольного типа</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsGetBlockVarDefValueStr.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsGetStructVar.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsGetRuntimeTypeData">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.14. Общие функции работы с переменными блока</h4>
+<h5>А.5.14.13. <span class="cpp">rdsGetRuntimeTypeData</span> &ndash; получить фактические данные переменной произвольного типа</h5>
+
+
+<p>Функция <span class="cpp">rdsGetRuntimeTypeData</span> служит для доступа к фактическим данным переменной
+<a href="pm_1_5.htm#light_ref15" title="Произвольный тип переменной блока">произвольного типа</a>, если у нее в данный момент есть фактический тип.
+Работа с переменными произвольного типа подробно рассматривается
+в <a href="pm_2_5_6.htm" title="&sect;2.5.6. Работа с переменными произвольного типа">&sect;2.5.6 руководства программиста</a>.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsGetRuntimeTypeData(
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> BaseAddr,     <span class="rem">// Базовый адрес переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> *pRealTypeStr  <span class="rem">// Возвращаемая строка типа</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_pVpVpS</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">BaseAddr</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></i></span>)</dt>
+  <dd>Базовый адрес переменной произвольного типа в дереве, то есть указатель на блок из восьми байтов, которые
+  эта переменная занимает в дереве переменных блока.</dd>
+
+  <dt><span class="cpp">pRealTypeStr</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a>*</i></span>)</dt>
+  <dd>Указатель на переменную типа <span class="cpp">LPSTR</span> (<span class="cpp">char*</span>), в которую
+  функция запишет указатель на созданную ей динамическую строку, содержащую
+  <a href="pm_1_5.htm#ref19" title="Строка типа переменных блока">описание фактического типа</a>,
+  который в данный момент имеет переменная. Эта строка состоит из одного (для простых переменных) или нескольких
+  (для сложных переменных) стандартных символов, используемых в RDS для указания типа переменной. Если
+  строка типа не нужна вызывающей программе, в этом параметре можно передать <span class="cpp">NULL</span>.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Указатель на начало области данных переменной какого-либо фактического типа, созданной внутри переменной
+произвольного типа. Если переменная в данный момент не имеет фактического типа, функция вернет <span class="cpp">NULL</span>.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция, в основном, используется для получения строки фактического типа переменной произвольного типа &ndash;
+базовый адрес переменной фактического типа обычно можно получить и без вызова функций.</p>
+
+<p>Динамическая строка, записанная функцией <span class="cpp">rdsGetRuntimeTypeData</span> по указателю из
+параметра <span class="cpp">pRealTypeStr</span> (если он не равен <span class="cpp">NULL</span>), должна быть
+<span class="emph">обязательно</span> освобождена функцией <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции <span class="cpp">rdsGetRuntimeTypeData</span> приведен
+в <a href="pm_2_5_6.htm" title="&sect;2.5.6. Работа с переменными произвольного типа">&sect;2.5.6 руководства программиста</a>, там же описывается принцип размещения переменных
+произвольного типа в памяти.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsClearRuntimeType.htm" title="А.5.14.3. rdsClearRuntimeType &ndash; очистка переменной произвольного типа">rdsClearRuntimeType</a></span>,
+<span class="cpp"><a href="rdsSetRuntimeType.htm" title="А.5.14.19. rdsSetRuntimeType &ndash; установить фактический тип переменной произвольного типа">rdsSetRuntimeType</a></span>,
+<span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsGetBlockVarDefValueStr.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsGetStructVar.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsGetRuntimeTypeData">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.22.5. rdsGetObjectArray &ndash; получить массив из объекта</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_22">А.5.22. Общие функции вспомогательных объектов</a></p>
+<div class="level"><p>А.5.22.5. <span class="cpp">rdsGetObjectArray</span> &ndash; получить массив из объекта</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsDeleteObject.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsGetObjectDouble.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsGetObjectArray">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.22. Общие функции вспомогательных объектов</h4>
+<h5>А.5.22.5. <span class="cpp">rdsGetObjectArray</span> &ndash; получить массив из объекта</h5>
+
+
+<p>Функция <span class="cpp">rdsGetObjectArray</span> возвращает указатель на заданный массив в заданном
+<a href="app_a_objects.htm" title="А.5.22.1. Использование вспомогательных объектов RDS">объекте</a>, если такой массив существует.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsGetObjectArray(
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> Object,  <span class="rem">// Идентификатор объекта</span>
+    <span class="kw">int</span> ObjOp,           <span class="rem">// Команда (идентификатор массива)</span>
+    <span class="kw">int</span> OpParam,         <span class="rem">// Дополнительный параметр</span>
+    <span class="kw">int</span> *pSize           <span class="rem">// Возвращаемое число элементов</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_pVHoIIpI</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Object</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a></i></span>)</dt>
+  <dd>Идентификатор объекта, в котором нужно найти массив.</dd>
+
+  <dt><span class="cpp">ObjOp</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Идентификатор массива. Вместе с параметром <span class="cpp">OpParam</span> однозначно определяет массив в объекте.</dd>
+
+  <dt><span class="cpp">OpParam</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Дополнительный идентификатор массива. Вместе с параметром <span class="cpp">ObjOp</span> однозначно определяет массив в объекте.</dd>
+
+  <dt><span class="cpp">pSize</span>&emsp;(<span class="cpp"><i>int*</i></span>)</dt>
+  <dd>Указатель на целую переменную, в которую функция запишет число элементов в массиве. Если это число не
+  нужно вызывающей программе, в параметре можно передать <span class="cpp">NULL</span>.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Указатель общего вида (<span class="cpp">void*</span>) на первый элемент массива, или
+<span class="cpp">NULL</span>, если такого массива нет в объекте. Перед использованием этот указатель нужно
+будет привести к конкретному типу &laquo;указатель на тип элемента массива&raquo;.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция возвращает указатель на массив, содержащийся в объекте <span class="cpp">Object</span>. Массив
+однозначно определяется парой целых чисел (<span class="cpp">ObjOp</span>,<span class="cpp">OpParam</span>)
+&ndash; конкретный смысл этих параметров зависит от назначения объекта <span class="cpp">Object</span>. На
+данный момент только один вспомогательный объект RDS содержит в себе массивы &ndash; это объект для работы со
+списком блоков и связей, создаваемый функцией <span class="cpp"><a href="rdsBCLCreateList.htm" title="А.5.24.1. rdsBCLCreateList &ndash; создать объект для хранения списка блоков и связей">rdsBCLCreateList</a></span>.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции <span class="cpp">rdsGetObjectArray</span> приведен в
+<a href="pm_2_16_2.htm" title="&sect;2.16.2. Добавление и удаление блоков и связей">&sect;2.16.2 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><a href="app_a_objects.htm" title="А.5.22.1. Использование вспомогательных объектов RDS">Вспомогательные объекты</a>,
+<span class="cpp"><a href="rdsBCLCreateList.htm" title="А.5.24.1. rdsBCLCreateList &ndash; создать объект для хранения списка блоков и связей">rdsBCLCreateList</a></span>,
+<span class="cpp"><a href="RDS_HBCL_BLOCKARRAY.htm" title="А.5.24.6. Команда RDS_HBCL_BLOCKARRAY &ndash; получение массива блоков">RDS_HBCL_BLOCKARRAY</a></span>,
+<span class="cpp"><a href="RDS_HBCL_CONNARRAY.htm" title="А.5.24.9. Команда RDS_HBCL_CONNARRAY &ndash; получение массива связей/шин">RDS_HBCL_CONNARRAY</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsDeleteObject.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsGetObjectDouble.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsGetObjectArray">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

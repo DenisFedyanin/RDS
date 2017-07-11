@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.14.5. Вызов модели блока перед тактом расчета</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_14">&sect;2.14. Программное управление расчетом</a></p>
+<div class="level"><p>&sect;2.14.5. Вызов модели блока перед тактом расчета</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_14_4.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_15_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_14_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_14_5_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.14. Программное управление расчетом</h3>
+<h4>&sect;2.14.5. Вызов модели блока перед тактом расчета</h4>
+<p class="abstract">Рассматривается специальный режим вызова модели блока непосредственно перед тактом расчета 
+                (<span class="cpp"><a href="RDS_BFM_PREMODEL.htm" title="А.2.4.10. RDS_BFM_PREMODEL &ndash; вызов модели перед тактом расчета">RDS_BFM_PREMODEL</a></span>). Описанный в <a href="pm_2_14_4.htm" title="&sect;2.14.4. Отдельный расчет подсистемы">&sect;2.14.4</a> пример блока, ускоряющего работу 
+                подсистемы, модифицируется так, чтобы блоки подсистемы срабатывали до блоков остальной части схемы.</p>
+
+
+<p>При выполнении такта <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a>
+блоки, которые должны сработать в этом такте, вызываются в случайном порядке, и разработчик модели
+блока никак не может повлиять на то, какой по счету будет вызвана его модель. Все события, произошедшие
+в одном такте расчета, считаются одновременными, поэтому порядок выполнения моделей на самом деле не важен.
+Однако, иногда возникает необходимость сделать так, чтобы модель какого-либо блока была вызвана до того,
+как начнется очередной такт расчета. Особенно это важно, если эта модель выполняет действия, влияющие на
+расчет всей схемы.</p>
+
+<p>RDS позволяет вызвать модель блока перед тактом расчета &ndash; для этого существует специальный режим
+<span class="cpp"><span id="light_ref1"><a href="RDS_BFM_PREMODEL.htm" title="А.2.4.10. RDS_BFM_PREMODEL &ndash; вызов модели перед тактом расчета">RDS_BFM_PREMODEL</a></span></span>. Этот вызов будет производиться только в том случае, если модель
+блока при инициализации установила в поле <span class="cpp">Flags</span> структуры данных блока
+<span class="cpp"><a href="RDS_BLOCKDATA.htm#ref3" title="Структура RDS_BLOCKDATA">RDS_BLOCKDATA</a></span> битовый флаг <span class="cpp"><span id="light_ref2"><a href="RDS_BLOCKDATA.htm#light_ref16" title="Флаг RDS_CTRLCALC">RDS_CTRLCALC</a></span></span>. По умолчанию этот флаг
+сброшен, поэтому без его явной установки модели блоков в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_PREMODEL.htm" title="А.2.4.10. RDS_BFM_PREMODEL &ndash; вызов модели перед тактом расчета">RDS_BFM_PREMODEL</a></span>
+не вызываются. Флаг можно устанавливать не только при инициализации &ndash; главное установить его до перехода
+в <a href="pm_1_3.htm#ref2" title="Режим моделирования">режим моделирования</a>. После перехода в режим моделирования (и, тем более,
+запуска расчета) установка этого флага будет отложена RDS до возврата в
+<a href="pm_1_3.htm#ref1" title="Режим редактирования">режим редактирования</a> &ndash; это связано с внутренней логикой работы RDS.</p>
+
+<p>Если в схеме имеются блоки, установившие флаг <span class="cpp"><a class="hidden" href="RDS_BLOCKDATA.htm#light_ref16" title="Флаг RDS_CTRLCALC">RDS_CTRLCALC</a></span>, то перед каждым тактом
+расчета эти блоки вызываются в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_PREMODEL.htm" title="А.2.4.10. RDS_BFM_PREMODEL &ndash; вызов модели перед тактом расчета">RDS_BFM_PREMODEL</a></span>, если у них взведен сигнал
+запуска (первая сигнальная переменная, &laquo;<span class="rdsvar"><a href="um_1_4.htm#ref25" title="Сигнал запуска блока">Start</a></span>&raquo;) или установлен
+<a href="pm_1_4.htm#ref6" title="Запуск модели каждый такт">флаг &laquo;<span class="menu">запуск каждый такт</span>&raquo;</a>. Порядок вызова блоков в этом режиме,
+как и при выполнении такта расчета, определяется внутренней логикой RDS и не может быть изменен
+программистом. Затем, как обычно, выполняется вызов моделей блоков в режиме
+<span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span> и передача данных по связям. Фактически, вызов перед тактом расчета позволяет
+разбить действия блока в такте расчета на две части: сначала для всех блоков выполняется первая часть в режиме
+<span class="cpp"><a class="hidden" href="RDS_BFM_PREMODEL.htm" title="А.2.4.10. RDS_BFM_PREMODEL &ndash; вызов модели перед тактом расчета">RDS_BFM_PREMODEL</a></span>, затем &ndash; вторая, в режиме
+<span class="cpp"><a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>. Таким образом можно, например, выполнить какие-либо действия с
+соседними блоками до того, как они выполнят такт расчета, или запретить блоку работу в такте расчета,
+принудительно сбросив его сигнал &laquo;<span class="rdsvar">Start</span>&raquo;.</p>
+
+<p>Важно помнить, что в режиме <a class="hidden" href="RDS_BFM_PREMODEL.htm" title="А.2.4.10. RDS_BFM_PREMODEL &ndash; вызов модели перед тактом расчета">RDS_BFM_PREMODEL</a> запускаются только блоки,
+готовые к срабатыванию в очередном такте. Если, например, блок работает
+<a href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">по сигналу</a>, и после очередного такта расчета его вход
+&laquo;<span class="rdsvar"><a class="hidden" href="um_1_4.htm#ref25" title="Сигнал запуска блока">Start</a></span>&raquo; имеет нулевое значение, этот блок не будет вызван
+перед следующим тактом расчета, даже если его модель установила флаг <span class="cpp"><a class="hidden" href="RDS_BLOCKDATA.htm#light_ref16" title="Флаг RDS_CTRLCALC">RDS_CTRLCALC</a></span>. Также следует
+учитывать, что вызов перед тактом расчета не будет производиться, если расчет блока приостановлен из-за
+вызова функции <span class="cpp"><a href="rdsSetExclusiveCalc.htm" title="А.5.2.35. rdsSetExclusiveCalc &ndash; выделенный расчет подсистемы">rdsSetExclusiveCalc</a></span>, описанной в <a href="pm_2_14_4.htm" title="&sect;2.14.4. Отдельный расчет подсистемы">&sect;2.14.4</a>.</p>
+
+<p>Ранее мы создали <a href="pm_2_14_4.htm#ref4" title="Блок для отдельного расчета подсистемы">блок</a>, приостанавливающий расчет схемы до
+завершения расчета <a href="pm_1_2.htm#ref7" title="Родительская подсистема">родительской подсистемы</a>, и добились с его помощью того,
+что, с точки зрения схемы, подсистема со всем своим содержимым стала выполняться за один такт расчета, как и
+<a href="pm_1_2.htm#light_ref3" title="Простой блок">простой блок</a>
+в параллельной ветви (см. <a href="pm_2_14_4.htm#pic3" title="Подключение блока для отдельного расчета подсистемы">рис.&nbsp;107</a>). Теперь, используя вызов модели
+перед тактом расчета, добьемся того, чтобы подсистема выполнялась быстрее простого блока, то есть
+мгновенно, за ноль тактов. Если мы приостановим расчет остальной схемы перед очередным тактом, дадим всем блокам
+подсистемы сработать, а потом возобновим расчет, получится, что вся подсистема сработала перед этим остановленным
+тактом, чего мы и добиваемся. Нам потребуется только сделать новую модель блока отдельного расчета, перенеся
+включение и выключение отдельного расчета в реакцию на вызов перед тактом. Новая модель будет выглядеть так:</p>
+
+<pre class="cpp">  <span class="rem">// Включение/выключение отдельного расчета - вариант</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> SetExclusiveCalc0(<span class="kw">int</span> CallMode,
+          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define Lock   (*((char *)(pStart+2)))</span>
+  <span class="preproc">#define Unlock (*((char *)(pStart+3)))</span>
+  <span class="preproc">#define Locked (*((char *)(pStart+4)))</span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          BlockData-&gt;Flags|=<a class="hidden" href="RDS_BLOCKDATA.htm#light_ref16" title="Флаг RDS_CTRLCALC">RDS_CTRLCALC</a>; <span class="rem">// Разрешаем вызов перед тактом</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSSSL}"</span>)?
+              <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Вызов перед тактом расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_PREMODEL.htm" title="А.2.4.10. RDS_BFM_PREMODEL &ndash; вызов модели перед тактом расчета">RDS_BFM_PREMODEL</a>:
+          <span class="kw">if</span>(Lock) <span class="rem">// Поступил сигнал включения отдельного расчета</span>
+            { <span class="kw">if</span>(Locked) <span class="rem">// Отдельный расчет уже включен</span>
+                { Lock=<span class="const">0</span>;  <span class="rem">// Сбрасываем поступивший сигнал</span>
+                  Start=<span class="const">0</span>; <span class="rem">// Не работаем в такте расчета</span>
+                  <span class="kw">break</span>;
+                }
+              <span class="rem">// Включаем отдельный расчет родительской подсистемы</span>
+              <span class="kw">if</span>(<a class="hidden" href="rdsSetExclusiveCalc.htm" title="А.5.2.35. rdsSetExclusiveCalc &ndash; выделенный расчет подсистемы">rdsSetExclusiveCalc</a>(BlockData-&gt;Parent,TRUE))
+                { <span class="rem">// Включить удалось</span>
+                  Lock=<span class="const">0</span>;   <span class="rem">// Сбрасываем поступивший сигнал</span>
+                  Start=<span class="const">0</span>;  <span class="rem">// Не работаем в такте расчета</span>
+                  Locked=<span class="const">1</span>; <span class="rem">// Запоминаем факт включения</span>
+                }
+            }
+          <span class="kw">if</span>(Unlock) <span class="rem">// Поступил сигнал выключения</span>
+            { <span class="kw">if</span>(Locked) <span class="rem">// Отдельный расчет был включен - выключаем</span>
+                <a class="hidden" href="rdsSetExclusiveCalc.htm" title="А.5.2.35. rdsSetExclusiveCalc &ndash; выделенный расчет подсистемы">rdsSetExclusiveCalc</a>(BlockData-&gt;Parent,FALSE);
+              Locked=Lock=Unlock=<span class="const">0</span>; <span class="rem">// Сбрасываем сигналы и состояние</span>
+              Start=<span class="const">0</span>;              <span class="rem">// Не работаем в такте расчета</span>
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef Locked</span>
+  <span class="preproc">#undef Unlock</span>
+  <span class="preproc">#undef Lock</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Новая модель <span class="cpp">SetExclusiveCalc0</span> мало отличается от старой
+<span class="cpp">SetExclusiveCalc</span>. Во-первых, в нее добавлена реакция на инициализацию
+<span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span>, в которой взводится битовый флаг <span class="cpp"><a class="hidden" href="RDS_BLOCKDATA.htm#light_ref16" title="Флаг RDS_CTRLCALC">RDS_CTRLCALC</a></span>.
+Во-вторых, все действия, раньше выполнявшиеся в такте расчета, теперь перенесены в реакцию
+<span class="cpp"><a class="hidden" href="RDS_BFM_PREMODEL.htm" title="А.2.4.10. RDS_BFM_PREMODEL &ndash; вызов модели перед тактом расчета">RDS_BFM_PREMODEL</a></span>. И, в-третьих, в эти действия добавлен сброс флага
+<span class="cpp">Start</span>, чтобы после вызова перед тактом расчета блок не вызывался в самом такте &ndash;
+у него все равно нет реакции <span class="cpp"><a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>, и это было бы напрасной тратой
+процессорного времени.</p>
+
+<p>Теперь, если заменить модель блока отдельного расчета в схеме на <a href="pm_2_14_4.htm#pic3" title="Подключение блока для отдельного расчета подсистемы">рис.&nbsp;107</a>
+на новую, запустить расчет, нажать кнопку &laquo;On&raquo; и изменить значение в поле ввода
+&laquo;<span class="rdsvar">x</span>&raquo;, на графике можно будет увидеть выброс вниз шириной в один такт
+(<a href="#pic1" title="Подсистема выполняется быстрее простого блока">рис.&nbsp;108</a>).
+Это означает, что данные на вход &laquo;<span class="rdsvar">x2</span>&raquo; блока вычитания пришли раньше, чем на вход
+&laquo;<span class="rdsvar">x1</span>&raquo;, то есть что подсистема в нижней ветви схемы сработала раньше на один такт,
+чем простой блок в верхней ветви.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/PreCalc.png" width="811" height="527" alt="Подсистема выполняется быстрее простого блока" />
+<p id="light_pic1">Рис.&nbsp;108. Подсистема выполняется быстрее простого блока</p>
+</div></div>
+
+
+<p>Вызов модели блока перед тактом расчета применяется не так уж часто, но он бывает полезен в тех случаях,
+когда необходимо заставить модели каких-либо блоков гарантированно выполняться раньше всех остальных моделей.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_14_4.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_15_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_14_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

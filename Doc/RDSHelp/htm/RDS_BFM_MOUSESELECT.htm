@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.2.7.3. RDS_BFM_MOUSESELECT &ndash; возможность выбора блока мышью</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2">А.2. События блока и связанные с ними описания</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2_7">А.2.7. События, связанные с изменением схемы пользователем</a></p>
+<div class="level"><p>А.2.7.3. <span class="cpp">RDS_BFM_MOUSESELECT</span> &ndash; возможность выбора блока мышью</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_BFM_MANUALINSERT.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_MOVED.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_MOUSESELECT">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.2. События блока и связанные с ними описания</h3>
+<h4 class="off">А.2.7. События, связанные с изменением схемы пользователем</h4>
+<h5>А.2.7.3. <span class="cpp">RDS_BFM_MOUSESELECT</span> &ndash; возможность выбора блока мышью</h5>
+
+
+<p class="apphdr">Поток, в котором вызывается <a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функция модели</a></p>
+<p>Главный поток RDS.</p>
+
+<p class="apphdr">Первый параметр функции модели (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_BFM_MOUSESELECT</span>.</p>
+
+<p class="apphdr">Третий параметр функции модели (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Указатель на структуру описания события <span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a></span>.</p>
+
+<p class="apphdr">Возвращаемое функцией модели значение</p>
+    <div class="tableshift"><div class="tcont">
+    <table>
+      <tr>
+        <td><span class="cpp">RDS_BFR_DONE</span></td>
+        <td>Указанная в параметрах события точка принадлежит изображению блока и этот блок
+        должен быть выделен.</td>
+      </tr>
+      <tr>
+        <td><span class="cpp"><span id="light_ref1">RDS_BFR_NOTPROCESSED</span></span></td>
+        <td>Указанная точа не принадлежит блоку, нужно выделить один из ниже
+        лежащих блоков, если такие есть.</td>
+      </tr>
+    </table>
+    </div></div>
+
+<p class="apphdr">Примечания</p>
+<p>Реакция на событие <span class="cpp">RDS_BFM_MOUSESELECT</span> вызывается при попытке выделить
+блок в <a href="pm_1_3.htm#ref1" title="Режим редактирования">режиме редактирования</a> щелчком левой кнопки мыши, либо
+вызвать его контекстное меню щелчком правой. Чаще всего это событие используется в блоках сложной
+формы (см. <a href="pm_2_12_3.htm" title="&sect;2.12.3. Реакция на мышь в блоках сложной формы">&sect;2.12.3 руководства программиста</a>) для проверки, принадлежит ли
+точка под курсором мыши данному блоку, или она приходится на &laquo;прозрачную&raquo; часть
+занятой им прямоугольной области, сквозь которую может быть виден другой, лежащий ниже, блок.
+Если точка, координаты которой переданы в структуре <span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a></span>, принадлежит
+данному блоку, функция модели должна вернуть константу <span class="cpp">RDS_BFR_DONE</span>, если
+не принадлежит &ndash; константу <span class="cpp">RDS_BFR_NOTPROCESSED</span>. Поскольку по
+умолчанию функция модели всегда возвращает <span class="cpp">RDS_BFR_DONE</span>, блоки, в которых
+отсутствует реакция на событие <span class="cpp">RDS_BFM_MOUSESELECT</span>, считаются занимающими всю
+область их описывающего прямоугольника.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a></span>,
+<span class="cpp"><a href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_BFM_MANUALINSERT.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_MOVED.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_MOUSESELECT">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,59 @@
+$BC55MODEL 0.0.0 2016.8.16.20.36.0 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$VARS
+  signal name "Start" in menu run default 0
+  signal name "Ready" out menu default 0
+  matrix double name "players" out menu default "[ ] 0"
+  matrix double name "M" in menu default "[ ] 0"
+  int name "numplayers" in menu default 0
+  int name "numgroups" in menu default 0
+  int name "numcolons" in menu default 0
+  matrix int oneindex name "groups" default "[ ] 0"
+$ENDDECL
+$MODEL
+M.Resize(numplayers,numcolons,true);
+
+int perGroup = numplayers / numgroups;
+// если есть излишки:
+if ( numplayers % numgroups > 0 ) perGroup++;
+
+// инициализация
+groups.Resize(numplayers);
+int i, j, g;
+for ( i = 0, j = 1, g = 1 ; i < numplayers ; i++, j++ ) {
+  if( j > perGroup ) { j = 1; g++; }
+  groups[i] = g;
+}
+
+// случайная перестановка
+for (i = 0; i <= numplayers-2; i++) {
+  j = (int)( ((double)rand())/RAND_MAX * (numplayers-i-1) ); /* A random integer such that 0 <= j < n-i*/
+  /* Swap an existing element [i+j] to position [i] */
+  int t = groups[i];
+  groups[i] = groups[i+j];
+  groups[i+j] = t;
+}
+
+
+
+players = M;
+for( i = 0 ; i < numplayers ; i++ ) {
+  players[i][1] = groups[i];
+}
+$OPTIONS
+  tabs $MODEL
+  window pos 234 234 size 1242 563 hdiv 337 vdiv 250 fdiv 206
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 1
+  ignorewarnings 0
+  customerrmsg 0
+  autoreadonlyeditor 0
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

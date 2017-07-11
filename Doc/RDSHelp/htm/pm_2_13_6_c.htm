@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.13.6. Регистрация исполнителя функции</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_13">&sect;2.13. Вызов функций блоков</a></p>
+<div class="level"><p>&sect;2.13.6. Регистрация исполнителя функции</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_13_5.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_14_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_6">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_13_6.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделями блоков, выводящих сообщения
+пользователю или записывающих эти сообщения в заданный файл и иллюстрирующих
+регистрацию исполнителя функции. Библиотека содержит три модели:</p>
+
+<ul>
+  <li><span class="cpp">MessageFuncBlock_Box</span> &ndash; блок-исполнитель функции, показывающий сообщение
+  пользователю;</li>
+  <li><span class="cpp">MessageFuncBlock_File</span> &ndash; блок-исполнитель функции, выводящий
+  сообщение в файл;</li>
+  <li><span class="cpp">ShowMessage</span> &ndash; блок, передающий зарегистрированному
+  исполнителю сообщение для вывода.</li>
+</ul>
+
+<pre class="cpp">  <span class="rem">// Регистрация исполнителя функции</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;stdio.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+  <span class="rem">//====================================================================</span>
+  <span class="rem">// Имя и параметры функции</span>
+  <span class="rem">//====================================================================</span>
+  <span class="rem">// Функция вывода сообщения</span>
+  <span class="preproc">#define PROGGUIDEMESSAGEFUNC "</span><a class="hidden" href="pm_2_13_6.htm#ref6" title="Функция блока ProgrammersGuide.GraphPath.Reset"><span class="preproc">ProgrammersGuide.UserMessage</span></a><span class="preproc">"</span>
+  <span class="rem">// Структура параметров функции</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { DWORD servSize;   <span class="rem">// Размер этой структуры</span>
+    <span class="kw">char</span> *MessageStr; <span class="rem">// Текст сообщения</span>
+    <span class="kw">int</span> Level;        <span class="rem">// Уровень важности (0, 1 или 2)</span>
+  } <a class="hidden" href="pm_2_13_6.htm#ref7" title="Струкутра TProgGuideMessageFuncParams">TProgGuideMessageFuncParams</a>;
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Глобальная переменная для идентификатора функции</span>
+  <span class="kw">int</span> <a class="hidden" href="pm_2_13_6.htm#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>=<span class="const">0</span>;
+  <span class="rem">//=========================================</span>
+
+
+  <span class="rem">//====================================================================</span>
+  <span class="rem">// Блок-исполнитель функции, показывающей сообщение пользователю</span>
+  <span class="rem">//====================================================================</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> MessageFuncBlock_Box(<span class="kw">int</span> CallMode,
+        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a> func;
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Регистрируем функцию</span>
+          <span class="kw">if</span>(<a class="hidden" href="pm_2_13_6.htm#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>==<span class="const">0</span>)
+            <a class="hidden" href="pm_2_13_6.htm#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(PROGGUIDEMESSAGEFUNC);
+          <span class="rem">// Объявляем этот блок ее исполнителем</span>
+          <a class="hidden" href="rdsRegisterFuncProvider.htm" title="А.5.13.11. rdsRegisterFuncProvider &ndash; регистрация блока как исполнителя функции">rdsRegisterFuncProvider</a>(<a class="hidden" href="pm_2_13_6.htm#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>,FALSE);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Отменяем регистрацию данного блока как исполнителя</span>
+          <a class="hidden" href="rdsUnregisterFuncProvider.htm" title="А.5.13.14. rdsUnregisterFuncProvider &ndash; отмена регистрации блока как исполнителя функции">rdsUnregisterFuncProvider</a>(<a class="hidden" href="pm_2_13_6.htm#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов функции</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a>:
+          <span class="rem">// Приводим ExtParam к правильному типу</span>
+          func=(<a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a>)ExtParam;
+          <span class="kw">if</span>(func-&gt;Function==<a class="hidden" href="pm_2_13_6.htm#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>)
+            { <span class="rem">// Вызвана "</span><a class="hidden" href="pm_2_13_6.htm#ref6" title="Функция блока ProgrammersGuide.GraphPath.Reset"><span class="rem">ProgrammersGuide.UserMessage</span></a><span class="rem">"</span>
+              <a class="hidden" href="pm_2_13_6.htm#ref7" title="Струкутра TProgGuideMessageFuncParams">TProgGuideMessageFuncParams</a> *params=
+                (<a class="hidden" href="pm_2_13_6.htm#ref7" title="Струкутра TProgGuideMessageFuncParams">TProgGuideMessageFuncParams</a>*)(func-&gt;Data);
+              <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> icon;
+              <span class="kw">char</span> *caption;
+              <span class="rem">// Проверяем наличие параметров и их размер</span>
+              <span class="kw">if</span>(params==NULL ||
+                 params-&gt;servSize&lt;<span class="kw">sizeof</span>(<a class="hidden" href="pm_2_13_6.htm#ref7" title="Струкутра TProgGuideMessageFuncParams">TProgGuideMessageFuncParams</a>))
+                <span class="kw">break</span>; <span class="rem">// Параметров нет или неверный размер</span>
+              <span class="rem">// В зависимости от уровня важности сообщения</span>
+              <span class="rem">// устанавливаем иконку и заголовок</span>
+              <span class="kw">switch</span>(params-&gt;Level)
+                { <span class="kw">case</span> <span class="const">0</span>:  icon=<a class="hidden" href="rdsMessageBox.htm#light_ref3" title="MB_ICONINFORMATION">MB_ICONINFORMATION</a>;
+                           caption=<span class="str">"Информация"</span>;
+                           <span class="kw">break</span>;
+                  <span class="kw">case</span> <span class="const">1</span>:  icon=<a class="hidden" href="rdsMessageBox.htm#light_ref5" title="MB_ICONWARNING">MB_ICONWARNING</a>;
+                           caption=<span class="str">"Предупреждение"</span>;
+                           <span class="kw">break</span>;
+                  <span class="kw">default</span>: icon=<a class="hidden" href="rdsMessageBox.htm#light_ref2" title="MB_ICONERROR">MB_ICONERROR</a>;
+                           caption=<span class="str">"Ошибка"</span>;
+                }
+              <span class="rem">// Показываем сообщение пользователю</span>
+              <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(params-&gt;MessageStr,caption,icon | <a class="hidden" href="rdsMessageBox.htm#light_ref7" title="MB_OK">MB_OK</a>);
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//====================================================================</span>
+  <span class="rem">// Блок, вызывающий функцию вывода сообщения</span>
+  <span class="rem">//====================================================================</span>
+
+  <span class="rem">// Личная область данных блока, выводящего сообщение</span>
+  <span class="kw">class</span> TMessageFuncUserData
+  { <span class="kw">public</span>:
+      <span class="rem">// Указатель на структуру подписки</span>
+      <a class="hidden" href="RDS_FUNCPROVIDERLINK.htm#ref2" title="Указатель на RDS_FUNCPROVIDERLINK">RDS_PFUNCPROVIDERLINK</a> Link;
+
+      <span class="rem">// Функция настройки блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Setup(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,<span class="kw">int</span> NumTypeVar,<span class="kw">int</span> NumMessVar);
+
+      <span class="rem">// Конструктор класса</span>
+      TMessageFuncUserData(<span class="kw">void</span>)
+        { <span class="rem">// Регистрируем функцию</span>
+          <span class="kw">if</span>(<a class="hidden" href="pm_2_13_6.htm#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>==<span class="const">0</span>)
+            <a class="hidden" href="pm_2_13_6.htm#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(PROGGUIDEMESSAGEFUNC);
+          <span class="rem">// Подписываемся на блок-исполнитель</span>
+          Link=<a class="hidden" href="rdsSubscribeToFuncProvider.htm" title="А.5.13.13. rdsSubscribeToFuncProvider &ndash; подписка на блок-исполнитель функции">rdsSubscribeToFuncProvider</a>(<a class="hidden" href="pm_2_13_6.htm#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>);
+        };
+      <span class="rem">// Деструктор класса</span>
+      ~TMessageFuncUserData()
+        { <span class="rem">// Прекращаем подписку</span>
+          <a class="hidden" href="rdsUnsubscribeFromFuncProvider.htm" title="А.5.13.15. rdsUnsubscribeFromFuncProvider &ndash; отмена подписки на блок-исполнитель функции">rdsUnsubscribeFromFuncProvider</a>(<a class="hidden" href="pm_2_13_6.htm#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>);
+        };
+  };
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Блок, выводящий сообщение по сигналу</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> ShowMessage(<span class="kw">int</span> CallMode,
+        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Указатель на личную область данных</span>
+    TMessageFuncUserData *data=
+        (TMessageFuncUserData*)(BlockData-&gt;BlockData);
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pShow   ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Show    (*((char *)(pShow)))    </span><span class="rem">// 0</span>
+  <span class="preproc">#define Ready   (*((char *)(pShow+1)))  </span><span class="rem">// 1</span>
+  <span class="preproc">#define Message (*((char **)(pShow+2))) </span><span class="rem">// 2</span>
+  <span class="preproc">#define Type    (*((int *)(pShow+6)))   </span><span class="rem">// 3</span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация – создание личной области</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          BlockData-&gt;BlockData=<span class="kw">new</span> TMessageFuncUserData();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка – удаление личной области</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSAI}"</span>)?
+              <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Настройка блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="kw">return</span> data-&gt;Setup(BlockData-&gt;Block,<span class="const">3</span>,<span class="const">2</span>)?<span class="const">1</span>:<span class="const">0</span>;
+
+        <span class="rem">// Такт расчета (реакция на сигнал Show)</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">if</span>(data-&gt;Link!=NULL) <span class="rem">// Есть структура подписки</span>
+            { <a class="hidden" href="pm_2_13_6.htm#ref7" title="Струкутра TProgGuideMessageFuncParams">TProgGuideMessageFuncParams</a> params;
+              <span class="rem">// Готовим структуру параметров функции</span>
+              params.servSize=<span class="kw">sizeof</span>(params);
+              params.MessageStr=Message;
+              params.Level=Type;
+              <span class="rem">// Вызываем функцию по данным подписки</span>
+              <a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(data-&gt;Link-&gt;Block,
+                data-&gt;Link-&gt;FuncId,&amp;params);
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макрооперделений</span>
+  <span class="preproc">#undef Type</span>
+  <span class="preproc">#undef Message</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Show</span>
+  <span class="preproc">#undef pShow</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция настройки блока</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> TMessageFuncUserData::Setup(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,
+            <span class="kw">int</span> NumTypeVar,<span class="kw">int</span> NumMessVar)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window; <span class="rem">// Объект-окно</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;            <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="kw">char</span> *defval;
+
+    <span class="rem">// Создание окна</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Сообщение"</span>);
+
+    <span class="rem">// Важность сообщения</span>
+    <span class="rem">// Получение значения переменной по умолчанию</span>
+    defval=<a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a>(Block,NumTypeVar,NULL);
+    <span class="rem">// Добавление поля – выпадающий список</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">1</span>,<a class="hidden" href="app_a_fields.htm#light_ref5" title="RDS_FORMCTRL_COMBOLIST">RDS_FORMCTRL_COMBOLIST</a>,<span class="str">"Тип:"</span>,<span class="const">150</span>);
+    <span class="rem">// Установка списка вариантов</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a>,
+        <span class="str">"Информация\nПредупреждение\nОшибка"</span>);
+    <span class="rem">// Установка текущего значения поля</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_ITEMINDEX.htm" title="А.5.28.17. Команда RDS_FORMVAL_ITEMINDEX &ndash; номер варианта, выбранного в выпадающем списке с фиксированными вариантами">RDS_FORMVAL_ITEMINDEX</a>,defval);
+    <span class="rem">// Освобождение defval</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(defval);
+
+    <span class="rem">// Текст сообщения</span>
+    <span class="rem">// Получение значения переменной по умолчанию</span>
+    defval=<a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a>(Block,NumMessVar,NULL);
+    <span class="rem">// Добавление поля – многострочное</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<a class="hidden" href="app_a_fields.htm#light_ref13" title="RDS_FORMCTRL_MULTILINE">RDS_FORMCTRL_MULTILINE</a>,<span class="str">"Текст:"</span>,<span class="const">80</span>);
+    <span class="rem">// Установка текущего значения поля</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,defval);
+    <span class="rem">// Установка высоты поля в точках экрана (~3 строки)</span>
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_MLHEIGHT.htm" title="А.5.28.19. Команда RDS_FORMVAL_MLHEIGHT &ndash; высота многострочного поля ввода">RDS_FORMVAL_MLHEIGHT</a>,<span class="const">3</span>*<span class="const">24</span>);
+    <span class="rem">// Освобождение defval</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(defval);
+
+    <span class="rem">// Открытие окна</span>
+    ok=<a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Пользователь нажал OK – запись измененных параметров</span>
+        defval=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_ITEMINDEX.htm" title="А.5.28.17. Команда RDS_FORMVAL_ITEMINDEX &ndash; номер варианта, выбранного в выпадающем списке с фиксированными вариантами">RDS_FORMVAL_ITEMINDEX</a>);
+        <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(Block,NumTypeVar,defval);
+        defval=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(Block,NumMessVar,defval);
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="kw">return</span> ok;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//====================================================================</span>
+  <span class="rem">// Блок-исполнитель функции, записывающий сообщение в файл</span>
+  <span class="rem">//====================================================================</span>
+
+  <span class="rem">// Функция настройки блока вывода сообщения в файл</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> MessageFuncBlockFileSetup(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block, <span class="rem">// Идентификатор блока</span>
+    <span class="kw">int</span> NumFileVar,    <span class="rem">// Номер переменной имени файла</span>
+    <span class="kw">int</span> NumClearVar)   <span class="rem">// Номер переменной флага очистки</span>
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window;<span class="rem">// Идентификатор объекта-окна</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok; <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="kw">char</span> *defval;
+
+    <span class="rem">// Создание окна</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Запись в файл"</span>);
+
+    <span class="rem">// Поле ввода для имени файла</span>
+    <span class="rem">// Чтение значения переменной по умолчанию</span>
+    defval=<a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a>(Block,NumFileVar,NULL);
+    <span class="rem">// Поле ввода – выбор файла с диалогом сохранения</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">1</span>,<a class="hidden" href="app_a_fields.htm#light_ref19" title="RDS_FORMCTRL_SAVEDIALOG">RDS_FORMCTRL_SAVEDIALOG</a>,<span class="str">"Файл:"</span>,<span class="const">300</span>);
+    <span class="rem">// Фильтр типов файлов для диалога сохранения</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a>,
+        <span class="str">"Текстовые файлы (*.txt)|*.txt\nВсе файлы|*.*"</span>);
+    <span class="rem">// Запись значения в поле ввода</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,defval);
+    <span class="rem">// Освобождение defval</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(defval);
+
+    <span class="rem">// Очистка при загрузке схемы</span>
+    <span class="rem">// Чтение значения переменной по умолчанию</span>
+    defval=<a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a>(Block,NumClearVar,NULL);
+    <span class="rem">// Поле ввода - флаг</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<a class="hidden" href="app_a_fields.htm#light_ref2" title="RDS_FORMCTRL_CHECKBOX">RDS_FORMCTRL_CHECKBOX</a>,
+        <span class="str">"Очищать при загрузке схемы"</span>,<span class="const">0</span>);
+    <span class="rem">// Запись значения в поле ввода</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,defval);
+    <span class="rem">// Освобождение defval</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(defval);
+
+    <span class="rem">// Открытие окна</span>
+    ok=<a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Пользователь нажал OK – запись измененных значений</span>
+        defval=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(Block,NumFileVar,defval);
+        defval=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(Block,NumClearVar,defval);
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="kw">return</span> ok;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Блок-исполнитель функции, выводящий сообщение в файл</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> MessageFuncBlock_File(<span class="kw">int</span> CallMode,
+        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a> func;
+    <span class="kw">char</span> *fullpath;
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart      ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start       (*((char *)(pStart)))    </span><span class="rem">// 0</span>
+  <span class="preproc">#define Ready       (*((char *)(pStart+1)))  </span><span class="rem">// 1</span>
+  <span class="preproc">#define FileName    (*((char **)(pStart+2))) </span><span class="rem">// 2</span>
+  <span class="preproc">#define ClearOnLoad (*((char *)(pStart+6)))  </span><span class="rem">// 3</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Регистрация функции</span>
+          <span class="kw">if</span>(<a class="hidden" href="pm_2_13_6.htm#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>==<span class="const">0</span>)
+            <a class="hidden" href="pm_2_13_6.htm#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(PROGGUIDEMESSAGEFUNC);
+          <span class="rem">// Объявляем данный блок ее исполнителем</span>
+          <a class="hidden" href="rdsRegisterFuncProvider.htm" title="А.5.13.11. rdsRegisterFuncProvider &ndash; регистрация блока как исполнителя функции">rdsRegisterFuncProvider</a>(<a class="hidden" href="pm_2_13_6.htm#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>,FALSE);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Отмена регистрации блока как исполнителя</span>
+          <a class="hidden" href="rdsUnregisterFuncProvider.htm" title="А.5.13.14. rdsUnregisterFuncProvider &ndash; отмена регистрации блока как исполнителя функции">rdsUnregisterFuncProvider</a>(<a class="hidden" href="pm_2_13_6.htm#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типов статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSAL}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Вызов функции настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="kw">return</span> MessageFuncBlockFileSetup(BlockData-&gt;Block,<span class="const">2</span>,<span class="const">3</span>)?<span class="const">1</span>:<span class="const">0</span>;
+
+        <span class="rem">// Загрузка схемы только что завершилась</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_AFTERLOAD.htm" title="А.2.5.1. RDS_BFM_AFTERLOAD &ndash; завершена загрузка схемы">RDS_BFM_AFTERLOAD</a>:
+          <span class="kw">if</span>(ClearOnLoad) <span class="rem">// Включена очистка файла при загрузке</span>
+            { <span class="rem">// Формируем в fullpath полный путь к файлу, т.к.</span>
+              <span class="rem">// введенный пользователем может быть неполным</span>
+              fullpath=<a class="hidden" href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a>(FileName,NULL,NULL);
+              <span class="kw">if</span>(fullpath) <span class="rem">// Полный путь существует</span>
+                { DeleteFile(fullpath); <span class="rem">// Удаляем файл</span>
+                  <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(fullpath);    <span class="rem">// Освобождаем память</span>
+                }
+            }
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов функции</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a>:
+          func=(<a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a>)ExtParam;
+          <span class="kw">if</span>(func-&gt;Function==MessageFunc)
+            { <span class="rem">// Вызвана наша функция – приводим параметры к правильному типу</span>
+              <a class="hidden" href="pm_2_13_6.htm#ref7" title="Струкутра TProgGuideMessageFuncParams">TProgGuideMessageFuncParams</a> *params=
+                  (<a class="hidden" href="pm_2_13_6.htm#ref7" title="Струкутра TProgGuideMessageFuncParams">TProgGuideMessageFuncParams</a>*)(func-&gt;Data);
+              <span class="kw">char</span> *levelstr,*fullpath;
+              <span class="kw">if</span>(params==NULL ||
+                 params-&gt;servSize&lt;<span class="kw">sizeof</span>(<a class="hidden" href="pm_2_13_6.htm#ref7" title="Струкутра TProgGuideMessageFuncParams">TProgGuideMessageFuncParams</a>))
+                <span class="kw">break</span>; <span class="rem">// Параметров нет или неверный размер</span>
+              <span class="rem">// Записываем в переменную levelstr строку,</span>
+              <span class="rem">// соотвествующую важности сообщения</span>
+              <span class="kw">switch</span>(params-&gt;Level)
+                { <span class="kw">case</span> <span class="const">0</span>:  levelstr=<span class="str">"Информация"</span>;
+                           <span class="kw">break</span>;
+                  <span class="kw">case</span> <span class="const">1</span>:  levelstr=<span class="str">"Предупреждение"</span>;
+                           <span class="kw">break</span>;
+                  <span class="kw">default</span>: levelstr=<span class="str">"Ошибка"</span>;
+                }
+              <span class="rem">// Формируем в fullpath полный путь к файлу</span>
+              fullpath=<a class="hidden" href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a>(FileName,NULL,NULL);
+              <span class="kw">if</span>(fullpath) <span class="rem">// Полный путь сформирован</span>
+                { HANDLE h;
+                  <span class="rem">// Открываем файл fullpath на запись</span>
+                  h=CreateFile(fullpath,GENERIC_WRITE,<span class="const">0</span>,NULL,
+                        OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
+                  <span class="kw">if</span>(h!=INVALID_HANDLE_VALUE)
+                    { <span class="rem">// Файл открыт</span>
+                      <span class="kw">char</span> buf[<span class="const">100</span>]; <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> temp; SYSTEMTIME time;
+                      <span class="rem">// Перемещаем указатель файла в конец</span>
+                      SetFilePointer(h,<span class="const">0</span>,NULL,FILE_END);
+                      <span class="rem">// Получаем текущую дату и время</span>
+                      GetLocalTime(&amp;time);
+                      <span class="rem">// Формируем строку с датой и временем в buf</span>
+                      sprintf(buf,<span class="str">"%02d-%02d-%04d %02d:%02d:%02d "</span>
+                          <span class="str">"%s: "</span>,time.wDay,time.wMonth,time.wYear,
+                          time.wHour,time.wMinute,time.wSecond,
+                          levelstr);
+                      <span class="rem">// Записываем дату, время и важность</span>
+                      WriteFile(h,buf,strlen(buf),&amp;temp,NULL);
+                      <span class="rem">// Записываем текст сообщения</span>
+                      <span class="kw">if</span>(params-&gt;MessageStr)
+                        WriteFile(h,params-&gt;MessageStr,
+                            strlen(params-&gt;MessageStr),&amp;temp,NULL);
+                      <span class="rem">// Записываем перевод строки</span>
+                      WriteFile(h,<span class="str">"\r\n"</span>,<span class="const">2</span>,&amp;temp,NULL);
+                      <span class="rem">// Закрываем файл</span>
+                      CloseHandle(h);
+                    }
+                  <span class="rem">// Освобождаем память, отведенную под полный путь</span>
+                  <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(fullpath);
+                }
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef ClearOnLoad</span>
+  <span class="preproc">#undef FileName</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_13_5.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_14_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_6">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

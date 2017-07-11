@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.7.3. Расширенные возможности функции обратного вызова</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_7">&sect;2.7. Настройка параметров блока</a></p>
+<div class="level"><p>&sect;2.7.3. Расширенные возможности функции обратного вызова</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_7_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_4.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_7_3_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.7. Настройка параметров блока</h3>
+<h4>&sect;2.7.3. Расширенные возможности функции обратного вызова</h4>
+<p class="abstract">Рассматривается рисование произвольных изображений в модальном окне, формируемом вспомогательным
+                объектом RDS. Для этого в окно настроек блока из предыдущего примера добавляется изображение внешнего вида
+                формируемой генератором функции.</p>
+
+
+<p><span id="ref1">Вместо</span>
+<span class="cpp"><a href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span> для открытия модального окна можно использовать функцию
+<span id="light_ref1" class="cpp"><span id="light_ref2"><a href="rdsFORMShowModalServ.htm" title="А.5.28.7. rdsFORMShowModalServ &ndash; открыть окно с расширенной функцией обратного вызова">rdsFORMShowModalServ</a></span></span>, которая позволяет
+использовать более сложную функцию обратного вызова. В частности, при использовании этой функции можно
+рисовать в специально выделенных полях окна произвольные изображения.</p>
+
+<p><span id="light_ref3">Усложним <a href="pm_2_7_2.htm#light_ref13" title="Пример блока-генератора с настройкой параметров">предыдущий пример</a></span>:
+пусть теперь в окне настроек блока отображается примерный внешний вид формируемой периодической функции,
+причем прямоугольные импульсы должны рисоваться с правильной скважностью, то есть соотношение периода и
+длительности импульса у нарисованной функции должно соответствовать введенным пользователем значениям.</p>
+
+<p>Прежде всего необходимо изменить функцию <span class="cpp">TTestGenData::Setup</span> &ndash; нужно
+добавить в окно специальную панель для рисования и заменить вызов <span class="cpp"><a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span>
+на <span class="cpp"><a class="hidden" href="rdsFORMShowModalServ.htm" title="А.5.28.7. rdsFORMShowModalServ &ndash; открыть окно с расширенной функцией обратного вызова">rdsFORMShowModalServ</a></span>. Функция приобретет следующий вид (изменения выделены
+<span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">//====== Функция редактирования параметров ======</span>
+  <span class="kw">int</span> TTestGenData::Setup(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window;	<span class="rem">// Идентификатор вспомогательного объекта</span>
+  <span class="rem">// &hellip;</span>
+    <span class="rem">// Занесение исходных значений в поля ввода</span>
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Type);
+    <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Period);
+    <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Impulse);
+    <span class="changes"><span class="rem">// Включение дополнительной панели слева от полей ввода </span></span>
+    <span class="changes"><span id="light_ref4"><a class="hidden" href="rdsFORMEnableSidePanel.htm" title="А.5.28.5. rdsFORMEnableSidePanel &ndash; включить боковую панель">rdsFORMEnableSidePanel</a></span>(window,<span class="const">1</span>,-<span class="const">1</span>);</span>
+    <span class="changes"><span class="rem">// Добавление области для рисования графика </span></span>
+    <span class="changes"><a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">1</span>,<span class="const">4</span>,<span id="light_ref5"><a class="hidden" href="app_a_fields.htm#light_ref16" title="RDS_FORMCTRL_PAINTBOX">RDS_FORMCTRL_PAINTBOX</a></span>,NULL,<span class="const">100</span>);</span>
+    <span class="changes"><span class="rem">// Автоматическое вычисление высоты этой области </span></span>
+    <span class="changes"><a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">4</span>,<span id="light_ref6"><a class="hidden" href="RDS_FORMVAL_PBHEIGHT.htm" title="А.5.28.22. Команда RDS_FORMVAL_PBHEIGHT &ndash; высота области программного рисования">RDS_FORMVAL_PBHEIGHT</a></span>,-<span class="const">1</span>);</span>
+    <span class="changes"><span class="rem">// Открытие окна с другой функцией обратного вызова </span></span>
+    <span class="changes">ok=<a class="hidden" href="rdsFORMShowModalServ.htm" title="А.5.28.7. rdsFORMShowModalServ &ndash; открыть окно с расширенной функцией обратного вызова">rdsFORMShowModalServ</a>(window,TestGenDataCheckFunc2);</span>
+    <span class="kw">if</span>(ok)
+  <span class="rem">// &hellip;</span>
+    <span class="kw">return</span> ok?<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }</pre>
+
+<p>В этом примере график будет размещаться слева от полей ввода на дополнительной панели, поэтому сначала нужно
+разрешить отображение этой дополнительной панели при помощи функции
+<span class="cpp"><a href="rdsFORMEnableSidePanel.htm" title="А.5.28.5. rdsFORMEnableSidePanel &ndash; включить боковую панель">rdsFORMEnableSidePanel</a></span>. Второй параметр функции, равный 1, это идентификатор, который
+присваивается этой панели, при размещении на ней полей его нужно указывать при вызове
+<span class="cpp"><a href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a></span> вместо идентификатора вкладки. Третий параметр функции (&minus;1) указывает
+на необходимость автоматического вычисления ширины панели. Можно было бы разместить область рисования на основной
+панели над или под полями ввода, тогда в вызове функции
+<span class="cpp"><a class="hidden" href="rdsFORMEnableSidePanel.htm" title="А.5.28.5. rdsFORMEnableSidePanel &ndash; включить боковую панель">rdsFORMEnableSidePanel</a></span> не было бы необходимости. Здесь она используется только
+для иллюстрации возможности размещения полей на двух панелях.</p>
+
+<p>После включения дополнительной панели на нее при помощи вызова <span class="cpp"><a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a></span>
+добавляется область рисования (<span class="cpp"><a href="app_a_fields.htm#light_ref16" title="RDS_FORMCTRL_PAINTBOX">RDS_FORMCTRL_PAINTBOX</a></span>), которой присваивается идентификатор 4.
+В качестве идентификатора вкладки в функцию передается число 1, которое было использовано при вызове
+<span class="cpp"><a class="hidden" href="rdsFORMEnableSidePanel.htm" title="А.5.28.5. rdsFORMEnableSidePanel &ndash; включить боковую панель">rdsFORMEnableSidePanel</a></span>. Заголовка у области рисования нет (передается
+<span class="cpp">NULL</span>), ширина устанавливается в 100 точек экрана. Для области рисования нужно задать
+не только ширину, но и высоту, поэтому за вызовом <span class="cpp"><a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a></span> следует вызов
+<span class="cpp"><a href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a></span> с параметрами
+<span class="cpp"><a href="RDS_FORMVAL_PBHEIGHT.htm" title="А.5.28.22. Команда RDS_FORMVAL_PBHEIGHT &ndash; высота области программного рисования">RDS_FORMVAL_PBHEIGHT</a></span> (установка высоты области рисования) и &minus;1 (высота вычисляется
+автоматически). В результате на дополнительную панель будет добавлена область рисования с идентификатором 4,
+шириной в 100 точек и высотой во всю панель. Внутри этой области и будет рисоваться примерный вид графика
+функции.</p>
+
+<p>Для открытия модального окна теперь используется функция  <span class="cpp"><a class="hidden" href="rdsFORMShowModalServ.htm" title="А.5.28.7. rdsFORMShowModalServ &ndash; открыть окно с расширенной функцией обратного вызова">rdsFORMShowModalServ</a></span>,
+поэтому вместо старой функции обратного вызова <span class="cpp">TestGenDataCheckFunc</span> теперь указана
+<span class="cpp">TestGenDataCheckFunc2</span> &ndash; эту функцию еще предстоит написать. Она будет принимать
+не один, а два параметра: идентификатор окна <span class="cpp"><a href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a></span> и указатель на структуру
+<span class="cpp"><span id="light_ref7"><a href="RDS_FORMSERVFUNCDATA.htm#ref1" title="Структура RDS_FORMSERVFUNCDATA">RDS_FORMSERVFUNCDATA</a></span></span>, в которой содержатся дополнительные параметры вызова. Эта
+структура описана в файле &laquo;<span class="file">RdsDef.h</span>&raquo; следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="kw">int</span> Event;        <span class="rem">// Событие (RDS_FORMSERVEVENT_*)</span>
+    <span class="kw">int</span> CtrlId;       <span class="rem">// Идентификатор поля или -1</span>
+    <span class="rem">// Для </span><a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#light_ref4" title="RDS_FORMSERVEVENT_DRAW"><span class="rem">RDS_FORMSERVEVENT_DRAW</span></a>
+    <span id="light_ref8"><a class="hidden" href="app_ids.htm#light_ref16" title="Контекст устройства Windows">HDC</a></span> dc;           <span class="rem">// Контекст устройства рисования Windows</span>
+    <span class="kw">int</span> Left,Top;     <span class="rem">// Верхний левый угол зоны рисования</span>
+    <span class="kw">int</span> Width,Height; <span class="rem">// Размеры зоны рисования</span>
+  } <a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#ref1" title="Структура RDS_FORMSERVFUNCDATA">RDS_FORMSERVFUNCDATA</a>;
+  <span class="rem">// Указатель на структуру</span>
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#ref1" title="Структура RDS_FORMSERVFUNCDATA">RDS_FORMSERVFUNCDATA</a> *<a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#ref2" title="Указатель на RDS_FORMSERVFUNCDATA">RDS_PFORMSERVFUNCDATA</a>;</pre>
+
+<dl>
+  <dt><span class="cpp">Event</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Событие, произошедшее в модальном окне. В данный момент может принимать два значения:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp">RDS_FORMSERVEVENT_CHANGE</span></td>
+          <td>изменение одного или нескольких полей ввода;</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp">RDS_FORMSERVEVENT_DRAW</span></td>
+          <td>рисование в специальных областях.</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp">CtrlId</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Идентификатор поля, с которым связано событие, или &minus;1. Например, для события
+  <span class="cpp"><a href="RDS_FORMSERVFUNCDATA.htm#light_ref4" title="RDS_FORMSERVEVENT_DRAW">RDS_FORMSERVEVENT_DRAW</a></span> в этом поле передается идентификатор области, которую необходимо
+  перерисовать, а для события <span class="cpp"><a href="RDS_FORMSERVFUNCDATA.htm#light_ref3" title="RDS_FORMSERVEVENT_CHANGE">RDS_FORMSERVEVENT_CHANGE</a></span> &ndash; идентификатор изменившегося
+  поля или &minus;1, если изменилось сразу несколько полей.</dd>
+
+  <dt><span class="cpp">dc</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref16" title="Контекст устройства Windows">HDC</a></i></span>)</dt>
+  <dd>Контекст устройства Windows, на котором нужно рисовать при реакции на
+  <span class="cpp"><a href="RDS_FORMSERVFUNCDATA.htm#light_ref4" title="RDS_FORMSERVEVENT_DRAW">RDS_FORMSERVEVENT_DRAW</a></span>.</dd>
+
+  <dt><span class="cpp">Left</span>,&nbsp;<span class="cpp">Top</span>,&nbsp;<span class="cpp">Width</span>,&nbsp;<span class="cpp">Height</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Положение и размеры области рисования.</dd>
+</dl>
+
+<p>Для данного примера функция обратного вызова должна выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestGenDataCheckFunc2(<a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> win,
+                                     <a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#ref2" title="Указатель на RDS_FORMSERVFUNCDATA">RDS_PFORMSERVFUNCDATA</a> data)
+  { <span class="rem">// Считать номер пункта выпадающего списка</span>
+    <span class="kw">int</span> type=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(win,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+    <span class="rem">// Вспомогательные переменные для рисования графика</span>
+    <span class="kw">int</span> y0,y_ampl,x0,x1;
+    <span class="kw">double</span> pix_period;
+
+    <span class="kw">switch</span>(data-&gt;Event)
+      { <span class="rem">// Изменение поля ввода</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#light_ref3" title="RDS_FORMSERVEVENT_CHANGE">RDS_FORMSERVEVENT_CHANGE</a>:
+          <span class="rem">// Запретить ввод длительность импульса для sin и cos</span>
+          <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(win,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_ENABLED.htm" title="А.5.28.15. Команда RDS_FORMVAL_ENABLED &ndash; разрешение и запрещение всего поля ввода">RDS_FORMVAL_ENABLED</a>,type==<span class="const">2</span>);
+          <span class="rem">// Перерисовать график</span>
+          <a class="hidden" href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a>(win,<a class="hidden" href="RDS_FORM_INVALIDATE.htm" title="А.5.28.9. Команда RDS_FORM_INVALIDATE &ndash; обновить окно">RDS_FORM_INVALIDATE</a>);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Рисование</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#light_ref4" title="RDS_FORMSERVEVENT_DRAW">RDS_FORMSERVEVENT_DRAW</a>:
+          <span class="rem">// Заливка фона белым цветом</span>
+          <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,<span class="const">0xffffff</span>);
+          <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(data-&gt;Left,
+                        data-&gt;Top,
+                        data-&gt;Left+data-&gt;Width,
+                        data-&gt;Top+data-&gt;Height);
+          <span class="rem">// Координаты рисования</span>
+          x0=data-&gt;Left+<span class="const">10</span>;             <span class="rem">// Начало графика</span>
+          x1=data-&gt;Left+data-&gt;Width-<span class="const">10</span>; <span class="rem">// Конец графика</span>
+          y0=data-&gt;Top+data-&gt;Height/<span class="const">2</span>;  <span class="rem">// Центр по вертикали</span>
+          y_ampl=(data-&gt;Height-<span class="const">20</span>)/<span class="const">2</span>;   <span class="rem">// Амплитуда</span>
+          pix_period=<span class="const">0</span>.<span class="const">5</span>*(x1-x0);       <span class="rem">// Период на рисунке</span>
+          <span class="rem">// Координатные оси</span>
+          <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,<span class="const">1</span>,<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+          <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(data-&gt;Left+<span class="const">5</span>,y0);
+          <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(data-&gt;Left+data-&gt;Width-<span class="const">5</span>,y0);
+          <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(x0,data-&gt;Top+<span class="const">5</span>);
+          <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0,data-&gt;Top+data-&gt;Height-<span class="const">5</span>);
+          <span class="rem">// График</span>
+          <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref5" title="RDS_GFWIDTH">RDS_GFWIDTH</a>,<span class="const">0</span>,<span class="const">3</span>,<span class="const">0</span>,<span class="const">0</span>);
+          <span class="kw">if</span>(type==<span class="const">2</span>) <span class="rem">// Прямоугольные импульсы</span>
+            { <span class="kw">double</span> period,impulse,pix_impulse;
+              <span class="rem">// Чтение введенных пользователем значений</span>
+              period=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(win,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+              impulse=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(win,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+              <span class="kw">if</span>(period==<span class="const">0</span>.<span class="const">0</span>) <span class="rem">// Нельзя вычислить частоту</span>
+                <span class="kw">return</span>;
+              <span class="rem">// Длительность импульса на рисунке</span>
+              pix_impulse=impulse*pix_period/period;
+              <span class="rem">// Первый период</span>
+              <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(x0,y0+y_ampl);
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0,y0-y_ampl);
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0+pix_impulse,y0-y_ampl);
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0+pix_impulse,y0+y_ampl);
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0+pix_period,y0+y_ampl);
+              <span class="rem">// Второй период</span>
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0+pix_period,y0-y_ampl);
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0+pix_period+pix_impulse,y0-y_ampl);
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0+pix_period+pix_impulse,y0+y_ampl);
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x1,y0+y_ampl);
+            }
+          <span class="kw">else</span> <span class="rem">// Синус или косинус</span>
+            { <span class="kw">double</span> t,y;
+              <span class="rem">// Цикл по горизонтали с шагом в 3 точки</span>
+              <span class="kw">for</span>(<span class="kw">int</span> x=x0;x&lt;=x1;x+=<span class="const">3</span>)
+                { t=<span class="const">2</span>*M_PI*(x-x0)/pix_period;
+                  y=y_ampl*((type==<span class="const">0</span>)?sin(t):cos(t));
+                  <span class="kw">if</span>(x==x0) <span class="rem">// Первая точка – установить позицию</span>
+                    <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(x,y0-y);
+                  <span class="kw">else</span> <span class="rem">// Рисовать линию от предыдущей точки</span>
+                    <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x,y0-y);
+                } <span class="rem">// for(int x=x0...)</span>
+            }
+          <span class="kw">break</span>;
+      } <span class="rem">// switch</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Тело функции можно разместить перед функцией <span class="cpp">TTestGenData::Setup</span>
+или, как в предыдущем примере, поместить там прототип, а тело функции разместить в любом другом месте.</p>
+
+<p>В самом начале функции <span class="cpp">TestGenDataCheckFunc2</span>, как и в
+<span class="cpp">TestGenDataCheckFunc</span>, во вспомогательную переменную <span class="cpp">type</span>
+считывается выбранный в выпадающем списке тип формируемой функции. Затем, в зависимости от события окна
+(<span class="cpp">data-&gt;Event</span>), производятся различные действия.</p>
+
+<p>При изменении какого-либо поля ввода (событие <span class="cpp"><a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#light_ref3" title="RDS_FORMSERVEVENT_CHANGE">RDS_FORMSERVEVENT_CHANGE</a></span>)
+разрешается или запрещается ввод данных в поле длительности импульса, так же, как и в предыдущем примере в
+функции <span class="cpp">TestGenDataCheckFunc</span>. После этого вызов
+<span class="cpp"><a href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a></span> с параметром <span class="cpp"><a href="RDS_FORM_INVALIDATE.htm" title="А.5.28.9. Команда RDS_FORM_INVALIDATE &ndash; обновить окно">RDS_FORM_INVALIDATE</a></span> информирует окно
+о необходимости перерисовки &ndash; если изменились тип функции, период или длительность импульса, внешний вид
+графика нужно изменить в соответствии с новыми параметрами.</p>
+
+<p>Когда возникнет необходимость обновить изображение на панели рисования окна, функция
+<span class="cpp">TestGenDataCheckFunc2</span> будет вызвана с параметром
+<span class="cpp">data-&gt;Event</span>, равным <span class="cpp"><a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#light_ref4" title="RDS_FORMSERVEVENT_DRAW">RDS_FORMSERVEVENT_DRAW</a></span>.
+В функцию передается контекст рисования <span class="cpp">data-&gt;dc</span>, поэтому для рисования можно
+использовать любые функции Windows API, работающие с контекстами устройств. Чтобы не загромождать пример,
+вместо функций API здесь будут использоваться
+<a href="app_a_graph.htm" title="А.5.18.1. Применимость графических функций">графические функции-оболочки</a>
+RDS &ndash; хотя они и не так богаты, как функции рисования API, ими гораздо проще пользоваться,
+и для этого примера их вполне достаточно.</p>
+
+<p>В этом примере мы будем рисовать на панели черный график функции на белом фоне. Независимо от того,
+какой график будет рисоваться на панели, сначала нужно закрасить всю панель белым цветом. Для этого прежде всего
+следует установить цвет заливки геометрических фигур при помощи сервисной функции
+rdsXGSetBrushStyle. Функция принимает следующие параметры:</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(
+    <span class="kw">int</span> Mask,         <span class="rem">// Набор устанавливаемых параметров</span>
+    <span class="kw">int</span> Style,        <span class="rem">// Стиль заливки</span>
+    <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> Color);  <span class="rem">// Цвет заливки</span></pre>
+
+<p>В данном случае параметр <span class="cpp">Mask</span> равен нулю (устанавливаются оба параметра заливки),
+параметр <span class="cpp">Style</span> &ndash; константе <span class="cpp"><a href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a></span> (сплошная заливка),
+а параметр <span class="cpp">Color</span> &ndash; шестнадцатеричной константе <span class="cpp">0xFFFFFF</span>,
+соответствующей белому цвету (интенсивности всех трех компонентов цвета равны 255 (<span class="cpp">0xFF</span>),
+то есть максимальны). После этого вызова все геометрические фигуры, которые будут рисоваться на данной панели,
+будут иметь сплошной белый цвет фона. Теперь можно закрасить всю панель установленным цветом, вызвав функцию
+заполнения прямоугольника rdsXGFillRect:</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(
+    <span class="kw">int</span> Left,     <span class="rem">// Левая граница</span>
+    <span class="kw">int</span> Top,      <span class="rem">// Верхняя граница</span>
+    <span class="kw">int</span> Right,    <span class="rem">// Правая граница</span>
+    <span class="kw">int</span> Bottom);  <span class="rem">// Нижняя граница</span></pre>
+
+<p>Границы закрашиваемого прямоугольника определяются полями <span class="cpp">Left</span>,
+<span class="cpp">Top</span>, <span class="cpp">Width</span> и <span class="cpp">Height</span> структуры
+<span class="cpp"><a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#ref1" title="Структура RDS_FORMSERVFUNCDATA">RDS_FORMSERVFUNCDATA</a></span>, указатель на которую функция получает через параметр
+<span class="cpp">data</span>. <span class="cpp">Left</span> и <span class="cpp">Top</span> &ndash; это левая
+и верхняя границы области рисования, <span class="cpp">Width</span> и <span class="cpp">Height</span> &ndash;
+ширина и высота. Таким образом, правая граница закрашиваемой области вычисляется как
+<span class="cpp">data-&gt;Left+data-&gt;Width</span>, нижняя &ndash;
+<span class="cpp">data-&gt;Top+data-&gt;Height</span>.</p>
+
+<p>Для рисования графика необходимо вычислить несколько вспомогательных параметров. Будем считать, что горизонтальная
+ось графика проходит точно по центру панели, не доходя до левого и правого краев на 5 точек, а вертикальная ось
+отстоит от левого края панели на 10 точек, также не доходя до верхнего и нижнего краев на 5 точек
+(<a href="#pic1" title="Координаты и размеры графика в точках экрана">рис.&nbsp;50</a>). Для наглядности будем изображать на панели
+два периода графика, причем между правым краем графика и правым краем панели должен быть зазор в 10 точек.
+Максимум и минимум графика также должны отстоять от краев панели на 10 точек.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/GraphSetupPanelLayout.png" width="425" height="232" alt="Координаты и размеры графика в точках экрана" />
+<p id="light_pic1">Рис.&nbsp;50. Координаты и размеры графика в точках экрана</p>
+</div></div>
+
+
+<p>Таким образом получаем:</p>
+
+<p>Начало графика отстоит на 10 точек от левого края панели:</p>
+
+<pre class="cpp">  x0 = data-&gt;Left + <span class="const">10</span>;</pre>
+
+<p>Конец графика отстоит на 10 точек от правого края панели: </p>
+
+<pre class="cpp">  x1 = data-&gt;Left + data-&gt;Width – <span class="const">10</span>;</pre>
+
+<p>Горизонтальная ось проходит по центру панели, то есть отстоит от верхнего края на половину высоты:</p>
+
+<pre class="cpp">  y0 = data-&gt;Top + data-&gt;Height/<span class="const">2</span>;</pre>
+
+<p>Амплитуда графика равна половине высоты панели с запасом в 20 точек:</p>
+
+<pre class="cpp">  y_ampl = (data-&gt;Height – <span class="const">20</span>)/<span class="const">2</span>;</pre>
+
+<p>Между <span class="cpp">x0</span> и <span class="cpp">x1</span> умещается два периода графика:</p>
+
+<pre class="cpp">  pix_period = <span class="const">0</span>.<span class="const">5</span>*(x1 – x0);</pre>
+
+<p>После того, как вспомогательные параметры вычислены, нужно нарисовать оси координат. Для этого сначала следует
+установить тип и цвет рисуемых линий при помощи сервисной функции
+<span class="cpp"><span id="light_ref9"><a href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a></span></span>:</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(
+    <span class="kw">int</span> Mask,        <span class="rem">// Набор устанавливаемых параметров</span>
+    <span class="kw">int</span> Style,       <span class="rem">// Стиль линии</span>
+    <span class="kw">int</span> Width,       <span class="rem">// Толщина линии</span>
+    <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> Color,  <span class="rem">// Цвет линии</span>
+    <span class="kw">int</span> Mode);       <span class="rem">// Режим рисования</span></pre>
+
+<p>Нужно установить все параметры линии, поэтому параметр <span class="cpp">Mask</span> в вызове равен нулю.
+В качестве стиля линии передается стандартная константа Windows API <span class="cpp"><a href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a></span> (сплошная линия),
+толщина линии устанавливается равной одной точке, линия будет рисоваться черным (параметр
+<span class="cpp">Color</span> равен нулю, что означает нулевую интенсивность всех трех компонентов цвета, то
+есть черный цвет). В качестве режима рисования линии передается стандартная константа API
+<span class="cpp"><a href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a></span> &ndash; точки линии будут окрашены в установленный цвет независимо от
+цвета фона под линией. Эти параметры будут использоваться при рисовании всех линий и контуров геометрических
+фигур до следующего вызова функции <span class="cpp"><a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a></span>, или до тех пор,
+пока стиль линии не будет изменен средствами Windows API.</p>
+
+<p>Теперь, когда установлен тип линий, можно рисовать оси координат. Для рисования линий будут использоваться
+функции <span class="cpp"><span id="light_ref10"><a href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a></span></span> и <span class="cpp"><span id="light_ref11"><a href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a></span></span>. Первая устанавливает
+координаты точки начала рисования, вторая рисует линию от последней точки до точки с указанными в параметрах
+координатами (аналоги таких функций есть в большинстве графических библиотек). Для того, чтобы нарисовать
+прямую линию, нужно сделать один вызов <span class="cpp"><a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a></span>, указав координаты начала линии,
+и один вызов <span class="cpp"><a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a></span>, указав координаты конца.</p>
+
+<p>После того, как оси нарисованы, нужно изобразить внешний вид графика формируемой функции в зависимости от
+типа, выбранного в выпадающем списке (номер варианта уже считан во вспомогательную переменную <span class="cpp">type</span>).
+Чтобы график четко выделялся на фоне координатных осей, будем рисовать его линией толщиной в три точки. Для
+установки новой толщины линии снова используется функция <span class="cpp"><a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a></span>, только
+теперь в ее параметре <span class="cpp">Mask</span> передается константа
+<span class="cpp"><a href="rdsXGSetPenStyle.htm#light_ref5" title="RDS_GFWIDTH">RDS_GFWIDTH</a></span> (описана в &laquo;<span class="file">RdsDef.h</span>&raquo;), указывающая на то, что
+будет изменена только толщина линии. В параметре <span class="cpp">Width</span> передается новая толщина (3),
+а остальные параметры будут проигнорированы функцией, поэтому их значения не важны &ndash; в данном случае
+для их заполнения используются нули.</p>
+
+<p>Рисование графика будет производиться по-разному для прямоугольных импульсов и для синуса или косинуса.
+Импульсы можно изобразить несколькими линиями, а тригонометрические функции лучше строить по точкам
+с заданным шагом по горизонтали. Кроме того, внешний вид прямоугольных импульсов будет зависеть от соотношения
+периода функции и длительности импульса.</p>
+
+<p>При рисовании прямоугольных импульсов (значение <span class="cpp">type</span> равно 2) необходимо вычислить
+длительность импульса на рисунке. Мы условились, что на рисунке должно изображаться два периода функции,
+и, исходя из этого, рассчитали период графика в точках экрана (вспомогательная переменная <span class="cpp">pix_period</span>).
+Чтобы вычислить длительность импульса в точках экрана, нужно умножить <span class="cpp">pix_period</span> на
+отношение введенной пользователем длительности к введенному им периоду. Введенные период и длительность считываются
+во вспомогательные переменные <span class="cpp">period</span> и <span class="cpp">impulse</span> соответственно,
+после чего, если значение периода не нулевое, вычисляется длительность импульса на рисунке
+<span class="cpp">pix_impulse</span>. Теперь можно нарисовать два периода графика одной ломаной линией.
+Сначала нужно установить начальную точку рисования при помощи функции <span class="cpp"><a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a></span>,
+а затем рисовать ломаную линию последовательными вызовами <span class="cpp"><a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a></span> (каждый
+следующий вызов будет рисовать линию от конца предыдущей линии до указанных в параметрах координат).</p>
+
+<p>Рисование тригонометрических функций (значение <span class="cpp">type</span> не равно 2) осуществляется в
+цикле от <span class="cpp">x0</span> до <span class="cpp">x1</span> с шагом в 3 точки. Внутри цикла вычисляется
+значение синуса или косинуса (в зависимости от <span class="cpp">type</span>) и вызывается
+<span class="cpp"><a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a></span> для самой первой точки или
+<span class="cpp"><a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a></span> для всех остальных.</p>
+
+<p>Теперь при вызове функции настройки этого блока на панели слева от полей ввода будет изображаться внешний
+вид графика функции, соответствующий выбранному в выпадающем списке варианту
+(<a href="#pic2" title="Окно настроек генератора с изображением формируемой функции">рис.&nbsp;51</a>).</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/ModalWin_GenSetupDraw.png" width="422" height="171" alt="Окно настроек генератора с изображением формируемой функции" />
+<p id="light_pic2">Рис.&nbsp;51. Окно настроек генератора с изображением<br />формируемой функции</p>
+</div></div>
+
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_7_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_4.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.7.2. rdsLoadSystemState &ndash; загрузить сохраненное состояние</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_7">А.5.7. Сохранение и загрузка состояния схемы</a></p>
+<div class="level"><p>А.5.7.2. <span class="cpp">rdsLoadSystemState</span> &ndash; загрузить сохраненное состояние</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsDeleteSystemState.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsResetSystemState.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsLoadSystemState">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.7. Сохранение и загрузка состояния схемы</h4>
+<h5>А.5.7.2. <span class="cpp">rdsLoadSystemState</span> &ndash; загрузить сохраненное состояние</h5>
+
+
+<p><span id="ref1">Функция</span>
+<span class="cpp">rdsLoadSystemState</span> загружает ранее сохраненное состояние схемы.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsLoadSystemState(
+      <span class="kw">int</span> StateNum,         <span class="rem">// Номер состояния</span>
+      <span id="light_ref1">RDS_BBhpB</span> CallBack    <span class="rem">// Функция проверки</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_BICb2</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">StateNum</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Номер загружаемого состояния схемы, присвоенный ему при сохранении.</dd>
+
+  <dt><span class="cpp">CallBack</span>&emsp;(<span class="cpp"><i>RDS_BBhpB</i></span>)</dt>
+  <dd>Указатель на пользовательскую функцию, которую нужно вызвать для каждого блока,
+  состояние которого будет загружаться, или <span class="cpp">NULL</span>, если такой функции нет.
+  С помощью этой пользовательской функции можно, при необходимости, запретить загрузку состояния отдельных
+  блоков. Она должна иметь следующий вид:<br />
+  <pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции</i>(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block,<a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> *pgo);</pre>
+  В параметре <span class="cpp">block</span> пользовательской функции передается идентификатор блока,
+  состояние которого должно сейчас загрузиться. Если состояние этого блока нужно загрузить, функция должна
+  вернуть <span class="cpp">TRUE</span>, если же его нужно пропустить и перейти к загрузке состояния следующего
+  блока, функция должна вернуть <span class="cpp">FALSE</span>. В параметре <span class="cpp">pgo</span> передается
+  указатель на логическую переменную, в которую функция может записать <span class="cpp">FALSE</span> (исходно
+  в этой переменной находится <span class="cpp">TRUE</span>), чтобы после обработки блока <span class="cpp">block</span>
+  прекратить загрузку состояний оставшихся блоков.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p><span class="cpp">TRUE</span>, если состояние системы загружено, <span class="cpp">FALSE</span> в
+противном случае (нет состояния с номером <span class="cpp">StateNum</span>).</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция загружает состояние схемы, ранее сохраненное функцией <span class="cpp"><a href="rdsSaveSystemState.htm" title="А.5.7.4. rdsSaveSystemState &ndash; сохранить состояние блока/подсистемы">rdsSaveSystemState</a></span>.
+При необходимости, в параметре <span class="cpp">CallBack</span> можно передать указатель на функцию
+обратного вызова, с помощью которой можно разрешать или запрещать загрузку состояния каждого из блоков,
+а также прервать загрузку состояния в нужный момент. Если в <span class="cpp">CallBack</span> передано значение
+<span class="cpp">NULL</span>, будут загружены все состояния сохраненных блоков.</p>
+
+<p><span id="ref2">При</span>
+<span id="ref3">загрузке</span> состояния всем
+<a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статическим переменным</a>
+блока присваиваются значения, которые они имели на момент сохранения, после чего модель блока вызывается
+для реакции на событие
+<span id="light_ref2" class="cpp"><a href="RDS_BFM_LOADSTATE.htm" title="А.2.4.8. RDS_BFM_LOADSTATE &ndash; загрузка состояния блока">RDS_BFM_LOADSTATE</a></span>, в которой она должна
+загрузить из памяти все данные, записанные туда при реакции на событие
+<span id="light_ref3" class="cpp"><a href="RDS_BFM_SAVESTATE.htm" title="А.2.4.13. RDS_BFM_SAVESTATE &ndash; запись состояния блока">RDS_BFM_SAVESTATE</a></span>.</p>
+
+<p>Если после сохранения состояния один из блоков схемы был удален или изменил структуру статических
+переменных (что делает невозможным загрузку состояния этого блока, поскольку новая структура не
+соответствует сохраненной), вызов <span class="cpp">rdsLoadSystemState</span> не приведет к ошибкам
+&ndash; состояния проблемных блоков просто не будут загружены.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции <span class="cpp">rdsLoadSystemState</span> приведен
+в <a href="pm_2_14_3.htm" title="&sect;2.14.3. Сохранение и загрузка состояния блоков">&sect;2.14.3 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsSaveSystemState.htm" title="А.5.7.4. rdsSaveSystemState &ndash; сохранить состояние блока/подсистемы">rdsSaveSystemState</a></span>,
+<span class="cpp"><a href="RDS_BFM_LOADSTATE.htm" title="А.2.4.8. RDS_BFM_LOADSTATE &ndash; загрузка состояния блока">RDS_BFM_LOADSTATE</a></span>,
+<span class="cpp"><a href="RDS_BFM_SAVESTATE.htm" title="А.2.4.13. RDS_BFM_SAVESTATE &ndash; запись состояния блока">RDS_BFM_SAVESTATE</a></span>,
+<span class="cpp"><a href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsDeleteSystemState.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsResetSystemState.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsLoadSystemState">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

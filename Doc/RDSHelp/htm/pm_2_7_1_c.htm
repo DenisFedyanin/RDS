@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.7.1. Функция настройки блока и открытие модальных окон</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_7">&sect;2.7. Настройка параметров блока</a></p>
+<div class="level"><p>&sect;2.7.1. Функция настройки блока и открытие модальных окон</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_6_5.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_2.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_7_1.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделями блоков, организующих
+передачу данных между частями схемы через динамическую переменную, имя которой
+пользователь может задавать в окне настроек блока. Библиотека содержит две модели:</p>
+
+<ul>
+  <li><span class="cpp">TestTunnelIn</span> &ndash; блок-передатчик;</li>
+  <li><span class="cpp">TestTunnelOut</span> &ndash; блок-приемник.</li>
+</ul>
+
+<p class="noindent">Изменения, внесенные в старые версии этих же моделей, описанные в 
+<a href="pm_2_6_3.htm" title="&sect;2.6.3. Создание и удаление динамической переменной">&sect;2.6.3</a>, выделены <span class="changes">цветом</span>.</p>
+
+<pre class="cpp">  <span class="rem">// Связь между блоками через динамическую переменную</span>
+  <span class="changes"><span class="rem">// (добавлена функция настройки) </span></span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;math.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+  <span class="rem">//=========== Блок-передатчик =============</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+       <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestTunnelIn(<span class="kw">int</span> CallMode,
+                                <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                                <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x       (*((double *)(pStart+2)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на структуру подписки</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> Link;
+    <span class="rem">// Вспомогательная переменная – структура описания блока</span>
+    <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a> Descr;
+    <span class="changes"><span class="rem">// Вспомогательная переменная – указатель на строку </span></span>
+    <span class="changes"><span class="kw">char</span> *str;</span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="rem">// Удалить созданную динамическую переменную</span>
+          <a class="hidden" href="rdsDeleteDVByLink.htm" title="А.5.16.3. rdsDeleteDVByLink &ndash; удалить динамическую переменную и прекратить подписку на нее">rdsDeleteDVByLink</a>(Link);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Переход в режим моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CALCMODE.htm" title="А.2.4.1. RDS_BFM_CALCMODE &ndash; переход из режима редактирования в режим моделирования">RDS_BFM_CALCMODE</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="kw">if</span>(Link!=NULL) <span class="rem">// Динамическая переменная была создана</span>
+            { <span class="rem">// Заполнить структуру описания блока</span>
+              Descr.servSize=<span class="kw">sizeof</span>(Descr);
+              <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(BlockData-&gt;Block,&amp;Descr);
+              <span class="rem">// Сравнить имя переменной с текстом комментария</span>
+              <span class="kw">if</span>(strcmp(Link-&gt;VarName,Descr.BlockComment)!=<span class="const">0</span>)
+                { <span class="rem">// Имя переменной не совпадает с комментарием -</span>
+                  <span class="rem">// переменная будет удалена</span>
+                  <a class="hidden" href="rdsDeleteDVByLink.htm" title="А.5.16.3. rdsDeleteDVByLink &ndash; удалить динамическую переменную и прекратить подписку на нее">rdsDeleteDVByLink</a>(Link);
+                  <span class="rem">// Очистить запомненный указатель на структуру</span>
+                  <span class="rem">// подписки</span>
+                  BlockData-&gt;BlockData=NULL;
+                }
+            }
+          <span class="kw">break</span>;
+
+        <span class="rem">// Запуск расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a>:
+          <span class="kw">if</span>(BlockData-&gt;BlockData!=NULL) <span class="rem">// Переменная была создана</span>
+            <span class="kw">break</span>;
+          <span class="rem">// Динамической переменной нет (не было или удалена</span>
+          <span class="rem">// в реакции на RDS_BFM_CALCMODE) - надо создать новую.</span>
+          <span class="rem">// Сначала надо получить комментарий блока</span>
+          Descr.servSize=<span class="kw">sizeof</span>(Descr);
+          <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(BlockData-&gt;Block,&amp;Descr);
+          <span class="kw">if</span>(*Descr.BlockComment==<span class="const">0</span>) <span class="rem">// Комментарий пуст</span>
+            <span class="kw">break</span>;
+          <span class="rem">// Комментарий блока – не пустая строка. Создаем переменную.</span>
+
+          Link=<a class="hidden" href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a>(<a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref5" title="RDS_DVROOT">RDS_DVROOT</a>,
+                                       Descr.BlockComment,
+                                       <span class="str">"D"</span>,
+                                       TRUE,
+                                       NULL);
+          <span class="rem">// Запомнить новый указатель на структуру подписки</span>
+          BlockData-&gt;BlockData=Link;
+          <span class="rem">// В конце реакции на запуск расчета нет оператора break,</span>
+          <span class="rem">// поэтому сразу после нее выполнится реакция на</span>
+          <span class="rem">// такт расчета (чтобы начальное значение входа</span>
+          <span class="rem">// записалось в динамическую переменную)</span>
+
+        <span class="rem">// Выполнение такта моделирования</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="rem">// Проверка существования переменной</span>
+          <span class="kw">if</span>(Link!=NULL &amp;&amp; Link-&gt;Data!=NULL)
+            { <span class="rem">// Переменная существует – привести указатель</span>
+              <span class="rem">// на область данных переменной к типу "double*"</span>
+              <span class="kw">double</span> *pV=(<span class="kw">double</span>*)Link-&gt;Data;
+              <span class="kw">if</span>(*pV!=x) <span class="rem">// Значение входа изменилось</span>
+                { <span class="rem">// Записать в динамическую переменную новое</span>
+                  <span class="rem">// значение входа</span>
+                  *pV=x;
+                  <span class="rem">// Уведомить всех подписчиков об изменении</span>
+                  <span class="rem">// переменной</span>
+                  <a class="hidden" href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a>(Link);
+                }
+            }
+          <span class="kw">break</span>;
+
+        <span class="changes"><span class="rem">// Реакция на функцию настройки </span></span>
+        <span class="changes"><span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:</span>
+        <span class="changes">  <span class="rem">// Получение текущего текста комментария блока </span></span>
+        <span class="changes">  Descr.servSize=<span class="kw">sizeof</span>(Descr);</span>
+        <span class="changes">  <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(BlockData-&gt;Block,&amp;Descr);</span>
+        <span class="changes">  <span class="rem">// Открытие диалогового окна для ввода строки </span></span>
+        <span class="changes">  str=<a class="hidden" href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a>(<span class="str">"Переменная связи"</span>, <span class="rem">// Заголовок окна </span></span>
+        <span class="changes">                     <span class="str">"Имя переменной:"</span>,  <span class="rem">// Заголовок поля </span></span>
+        <span class="changes">                     Descr.BlockComment, <span class="rem">// Исходный текст </span></span>
+        <span class="changes">                     <span class="const">150</span>);               <span class="rem">// Ширина поля </span></span>
+        <span class="changes">  <span class="kw">if</span>(str!=NULL) <span class="rem">// Пользователь нажал "OK" </span></span>
+        <span class="changes">    { <span class="rem">// Установить новый комментарий </span></span>
+        <span class="changes">      <a class="hidden" href="rdsSetBlockComment.htm" title="А.5.6.45. rdsSetBlockComment &ndash; задать комментарий блока">rdsSetBlockComment</a>(BlockData-&gt;Block,str);</span>
+        <span class="changes">      <span class="rem">// Освободить динамическую строку </span></span>
+        <span class="changes">      <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(str);</span>
+        <span class="changes">      <span class="rem">// Информировать RDS об изменениях </span></span>
+        <span class="changes">      <span class="kw">return</span> <a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>;</span>
+        <span class="changes">    }</span>
+        <span class="changes">  <span class="kw">break</span>;</span>
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//============ Блок-приемник ==============</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+       <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestTunnelOut(<span class="kw">int</span> CallMode,
+                                 <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                                 <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define y      (*((double *)(pStart+2)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на структуру подписки</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> Link;
+    <span class="rem">// Вспомогательная переменная – структура описания блока</span>
+    <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a> Descr;
+    <span class="changes"><span class="rem">// Вспомогательная переменная – указатель на строку </span></span>
+    <span class="changes"><span class="kw">char</span> *str;</span>
+
+    <span class="kw">switch</span>(CallMode)
+     { <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="rem">// Прекратить подписку на переменную</span>
+          <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(Link);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Запуск расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="rem">// Получение описания блока (с комментарием)</span>
+          Descr.servSize=<span class="kw">sizeof</span>(Descr);
+          <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(BlockData-&gt;Block,&amp;Descr);
+          <span class="rem">// Проверка наличия комментария</span>
+          <span class="kw">if</span>(*Descr.BlockComment==<span class="const">0</span>) <span class="rem">// Пустая строка</span>
+            { <span class="rem">// Прекратить подписку на переменную</span>
+              <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(Link);
+              <span class="rem">// Очистить запомненный указатель на структуру подписки</span>
+              BlockData-&gt;BlockData=NULL;
+              <span class="kw">break</span>;
+            }
+          <span class="rem">// Если переменной нет (Link==NULL) или ее имя не</span>
+          <span class="rem">// соответствует комментарию блока (strcmp... !=0),</span>
+          <span class="rem">// нужно подписаться на новую переменную</span>
+          <span class="kw">if</span>(Link==NULL || 
+             strcmp(Link-&gt;VarName,Descr.BlockComment)!=<span class="const">0</span>)
+            { <span class="rem">// Прекратить подписку на старую переменную</span>
+              <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(Link);
+              <span class="rem">// Подписаться на новую</span>
+              Link=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(<a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref5" title="RDS_DVROOT">RDS_DVROOT</a>,
+                                            Descr.BlockComment,
+                                            <span class="str">"D"</span>,
+                                            FALSE);
+              <span class="rem">// Запомнить новый указатель на структуру подписки</span>
+              BlockData-&gt;BlockData=Link;
+            }
+          <span class="rem">// В конце реакции на запуск расчета нет оператора break,</span>
+          <span class="rem">// поэтому сразу после нее выполнится реакция на</span>
+          <span class="rem">// изменение динамической переменной (чтобы ее значение</span>
+          <span class="rem">// было немедленно передано на выход блока)</span>
+
+        <span class="rem">// Реакция на изменение динамической переменной</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="rem">// Проверка существования переменной</span>
+          <span class="kw">if</span>(Link!=NULL &amp;&amp; Link-&gt;Data!=NULL)
+            { <span class="rem">// Присвоить выходу блока значение динамической</span>
+              <span class="rem">// переменной</span>
+              y=*(<span class="kw">double</span>*)Link-&gt;Data;
+              <span class="rem">// Взвести сигнал Ready, чтобы значение выхода</span>
+              <span class="rem">// было передано по связям</span>
+              Ready=<span class="const">1</span>;
+            }
+          <span class="kw">break</span>;
+
+        <span class="changes"><span class="rem">// Реакция на функцию настройки </span></span>
+        <span class="changes"><span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:</span>
+        <span class="changes">  <span class="rem">// Получение текущего текста комментария блока </span></span>
+        <span class="changes">  Descr.servSize=<span class="kw">sizeof</span>(Descr);</span>
+        <span class="changes">  <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(BlockData-&gt;Block,&amp;Descr);</span>
+        <span class="changes">  <span class="rem">// Открытие диалогового окна для ввода строки </span></span>
+        <span class="changes">  str=<a class="hidden" href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a>(<span class="str">"Переменная связи"</span>, <span class="rem">// Заголовок окна </span></span>
+        <span class="changes">                     <span class="str">"Имя переменной:"</span>,  <span class="rem">// Заголовок поля </span></span>
+        <span class="changes">                     Descr.BlockComment, <span class="rem">// Исходный текст </span></span>
+        <span class="changes">                     <span class="const">150</span>);               <span class="rem">// Ширина поля </span></span>
+        <span class="changes">  <span class="kw">if</span>(str!=NULL) <span class="rem">// Пользователь нажал "OK" </span></span>
+        <span class="changes">    { <span class="rem">// Установить новый комментарий </span></span>
+        <span class="changes">      <a class="hidden" href="rdsSetBlockComment.htm" title="А.5.6.45. rdsSetBlockComment &ndash; задать комментарий блока">rdsSetBlockComment</a>(BlockData-&gt;Block,str);</span>
+        <span class="changes">      <span class="rem">// Освободить динамическую строку </span></span>
+        <span class="changes">      <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(str);</span>
+        <span class="changes">      <span class="rem">// Информировать RDS об изменениях </span></span>
+        <span class="changes">      <span class="kw">return</span> <a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>;</span>
+        <span class="changes">    }</span>
+        <span class="changes">  <span class="kw">break</span>;</span>
+      }
+
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_6_5.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_2.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.8.7.1. Загрузка состояния блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8_7">&sect;3.8.7. Загрузка и запись мгновенного состояния блока</a></p>
+<div class="level"><p>&sect;3.8.7.1. Загрузка состояния блока</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_AFTERLOAD.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_SAVESTATE.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_LOADSTATE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</h3>
+<h4>&sect;3.8.7. Загрузка и запись мгновенного состояния блока</h4>
+<p class="abstract">Рассматриваются реакции на события, возникающие при сохранении и восстановлении мгновенного состояния части схемы. Эти события порождаются вызовами специальных сервисных функций RDS и позволяют возвращать схему &laquo;назад во времени&raquo; по команде от одного из ее блоков.</p>
+<h5>&sect;3.8.7.1. Загрузка состояния блока</h5>
+
+
+<p><span id="ref1">Событие</span>
+загрузки состояния возникает у блока в процессе работы сервисной функции
+<span id="light_ref1"><span class="cpp"><a href="rdsLoadSystemState.htm" title="А.5.7.2. rdsLoadSystemState &ndash; загрузить сохраненное состояние">rdsLoadSystemState</a></span></span>, вызвав которую
+какая-либо модель блока может восстановить ранее
+сохраненное состояние блоков всей схемы или ее отдельной подсистемы. В реакции на это событие модель
+должна загрузить все данные, сохраненные ей же при реакции на событие сохранения состояния
+(см. <a href="ac_RDS_BFM_SAVESTATE.htm" title="&sect;3.8.7.2. Запись состояния блока">&sect;3.8.7.2</a>). Загрузка состояния может использоваться для
+того, чтобы вернуть схему &laquo;назад во времени&raquo; и повторить расчет, например, с другими
+входными данными. В интерфейсе пользователя RDS не предусмотрено сохранения состояния схемы и
+возврата ее в запомненное состояние &ndash; этим должны заниматься модели блоков. Сохранение и загрузка
+состояний блоков и подсистем подробно описаны в
+<a href="pm_2_14_3.htm" title="&sect;2.14.3. Сохранение и загрузка состояния блоков">&sect;2.14.3 руководства программиста</a>.</p>
+
+<p>Следует помнить, что значения
+<a href="um_3_6_2.htm" title="&sect;3.6.2. Статические переменные блока">статических переменных</a>
+блока сохраняются и восстанавливаются автоматически. Модель должна сохранять и восстанавливать только значения
+<a href="um_3_6_3.htm" title="&sect;3.6.3. Динамические переменные блока">динамических переменных</a>, за которые она отвечает, и значения
+своих внутренних параметров, если таковые имеются.</p>
+
+<p>Текст реакции на событие загрузки состояния вводится
+на вкладке &laquo;<span class="menu"><a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">события</a></span>&raquo; левой панели редактора модели:
+раздел &laquo;<span class="menu">загрузка и запись состояния</span>&raquo;, подраздел
+&laquo;<span class="menu">загрузка состояния блока</span>&raquo;.
+<span id="ref2">В</span> классе блока для этой реакции создается функция с именем
+<span class="cpp" id="light_ref2">rdsbcppLoadState</span>:</p>
+
+<pre class="cpp">  // Загрузка параметров состояния блока в двоичном виде
+  void rdsbcppBlockClass::rdsbcppLoadState(void)
+  {
+    <span class="changes"><i>&nbsp;&hellip; пользовательский текст реакции &hellip;&nbsp;</i></span>
+  }</pre>
+
+<p>Внутри этой функции данные должны загружаться вызовами функции
+<span class="cpp"><a href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a></span> в том же порядке, в котором они сохранялись вызовами
+<span class="cpp"><a href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a></span> при сохранении состояния.</p>
+
+<p>При написании моделей блоков без использования модуля автокомпиляции событию загрузки состояния соответствует
+константа RDS <span class="cpp"><a href="RDS_BFM_LOADSTATE.htm" title="А.2.4.8. RDS_BFM_LOADSTATE &ndash; загрузка состояния блока">RDS_BFM_LOADSTATE</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_AFTERLOAD.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_SAVESTATE.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_LOADSTATE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

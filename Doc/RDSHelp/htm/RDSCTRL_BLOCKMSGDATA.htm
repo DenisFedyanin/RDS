@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>Б.1.1. RDSCTRL_BLOCKMSGDATA &ndash; сообщение от блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b_1">Б.1. Структуры библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p>Б.1.1. <span class="cpp">RDSCTRL_BLOCKMSGDATA</span> &ndash; сообщение от блока</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdscompSetModelFunction.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDSCTRL_MENUITEM.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDSCTRL_BLOCKMSGDATA">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2>Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</h2>
+<p class="abstract">Описываются функции, экспортированные из библиотеки &laquo;<span class="file">RdsCtrl.dll</span>&raquo;, используемые в них структуры и константы. Применение этих функций для управления RDS из внешнего приложения описывается в <a href="pm_index.htm#light_htm:pm_3" title="Глава 3. Управление RDS из других приложений">главе 3 руководства программиста</a>.</p>
+<h3>Б.1. Структуры библиотеки RdsCtrl.dll</h3>
+<p class="abstract">Описываются структуры, используемые в различных функциях библиотеки RdsCtrl.dll.</p>
+<h4>Б.1.1. <span class="cpp">RDSCTRL_BLOCKMSGDATA</span> &ndash; сообщение от блока</h4>
+
+
+<p><span id="ref1">В структуре</span> <span id="ref2"><span class="cpp">RDSCTRL_BLOCKMSGDATA</span></span>
+передаются параметры сообщения, посланного блоком схемы, загруженной в RDS, внешней управляющей программе
+(для отправки такого сообщения используется сервисная функция
+<span class="cpp"><a href="rdsRemoteControllerCall.htm" title="А.5.21.5. rdsRemoteControllerCall &ndash; передача сообщения управляющей программе">rdsRemoteControllerCall</a></span>.</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span> {
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;         <span class="rem">// Размер этой структуры</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> BlockFullName;    <span class="rem">// Полное имя блока</span>
+    <span class="kw">int</span> IntMsg;             <span class="rem">// Переданное целое число</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> StrMsg;           <span class="rem">// Переданная строка</span>
+  } <span id="light_ref1">RDSCTRL_BLOCKMSGDATA</span>;
+  <span class="kw">typedef</span> RDSCTRL_BLOCKMSGDATA *<span id="light_ref2">RDSCTRL_PBLOCKMSGDATA</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">servSize</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</dt>
+  <dd>Размер этой структуры в байтах. Перед передачей сообщения блока управляющей программе в это поле
+  автоматически заносится значение <span class="cpp">sizeof(RDSCTRL_BLOCKMSGDATA)</span>. Управляющая программа
+  может использовать это поле для проверки соответствия размера переданной структуры собственным ожиданиям.</dd>
+
+  <dt><span class="cpp">BlockFullName</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на строку с <a href="pm_1_4.htm#light_ref2" title="Полное имя блока">полным именем блока</a>,
+  отправившего сообщение. Полное имя блока начинается с двоеточия, за которым следует последовательное
+  перечисление через двоеточие всех имен
+  <a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистем</a> на пути от
+  <a href="pm_1_2.htm#ref5" title="Корневая подсистема">корневой подсистемы</a>
+  до этого блока, которое завершается именем самого блока. Например, полное имя
+  &laquo;:Sys1:Sys100:Block1&raquo; говорит о том, что блок с именем &laquo;<span class="rdsvar">Block1</span>&raquo; находится в
+  подсистеме &laquo;<span class="rdsvar">Sys100</span>&raquo;, которая, в свою очередь, находится в подсистеме &laquo;<span class="rdsvar">Sys1</span>&raquo;
+  корневой подсистемы.</dd>
+
+  <dt><span class="cpp">IntMsg</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Целое число, переданное блоком.</dd>
+
+  <dt><span class="cpp">StrMsg</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку, переданную блоком. Если блок не передал в сообщении никакой строки,
+  в этом поле записан указатель на пустую строку.</dd>
+</dl>
+
+<p class="apphdr">Примечания</p>
+<p>Указатель на эту структуру передается управляющей программе двумя способами:</p>
+
+<ul>
+  <li>Если для реакции на сообщение от блока используется функция обратного вызова, зарегистрированная при помощи
+  функции <span class="cpp"><a href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a></span>, то указатель на
+  <span class="cpp">RDSCTRL_BLOCKMSGDATA</span> передается в третьем параметре этой функции обратного вызова.</li>
+
+  <li>Если для реакции на сообщение от блока используется сообщение окну управляющей программы,
+  зарегистрированному функцией <span class="cpp"><a href="rdsctrlRegisterEventMessage.htm" title="Б.3.6.3. rdsctrlRegisterEventMessage &ndash; регистрация оконного сообщения для реакции на событие">rdsctrlRegisterEventMessage</a></span>, то указатель на
+  <span class="cpp">RDSCTRL_BLOCKMSGDATA</span> передается в поле <span class="cpp">Data</span> структуры
+  <span class="cpp"><a href="RDSCTRL_MSGEVENTDATA.htm#ref1" title="Структура RDSCTRL_MSGEVENTDATA">RDSCTRL_MSGEVENTDATA</a></span>, указатель на которую, в свою очередь, передается в параметре
+  <span class="cpp">LPARAM</span> оконного сообщения.</li>
+</ul>
+
+<p>Структура <span class="cpp">RDSCTRL_BLOCKMSGDATA</span> и все строки, на которые указывают ее поля,
+существуют только во время выполнения реакции управляющего приложения на событие, то есть до завершения функции
+обратного вызова или реакции на оконное сообщение. Если управляющему приложению нужно сохранить переданные
+параметры, их нужно скопировать во внутреннюю память приложения до завершения реакции.</p>
+
+<p>Для реакции на сообщения от блоков можно также использовать специализированную функцию обратного вызова,
+регистрируемую при помощи функции <span class="cpp"><a href="rdsctrlRegisterBlockMsgCallback.htm" title="Б.3.6.2. rdsctrlRegisterBlockMsgCallback &ndash; регистрация функции для реакции на сообщение от блока">rdsctrlRegisterBlockMsgCallback</a></span>. В этом случае структура
+<span class="cpp">RDSCTRL_BLOCKMSGDATA</span> не используется.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsctrlRegisterEventStdCallback.htm" title="Б.3.6.4. rdsctrlRegisterEventStdCallback &ndash; регистрация функции для реакции на событие">rdsctrlRegisterEventStdCallback</a></span>,
+<span class="cpp"><a href="rdsctrlRegisterEventMessage.htm" title="Б.3.6.3. rdsctrlRegisterEventMessage &ndash; регистрация оконного сообщения для реакции на событие">rdsctrlRegisterEventMessage</a></span>,
+<span class="cpp"><a href="RDSCTRLEVENT_BLOCKMSG.htm" title="Б.2.2. RDSCTRLEVENT_BLOCKMSG &ndash; сообщение от блока">RDSCTRLEVENT_BLOCKMSG</a></span>,
+<span class="cpp"><a href="RDSCTRL_MSGEVENTDATA.htm#ref1" title="Структура RDSCTRL_MSGEVENTDATA">RDSCTRL_MSGEVENTDATA</a></span>,
+<span class="cpp"><a href="rdsctrlRegisterBlockMsgCallback.htm" title="Б.3.6.2. rdsctrlRegisterBlockMsgCallback &ndash; регистрация функции для реакции на сообщение от блока">rdsctrlRegisterBlockMsgCallback</a></span>,
+<span class="cpp"><a href="rdsRemoteControllerCall.htm" title="А.5.21.5. rdsRemoteControllerCall &ndash; передача сообщения управляющей программе">rdsRemoteControllerCall</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdscompSetModelFunction.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDSCTRL_MENUITEM.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDSCTRL_BLOCKMSGDATA">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

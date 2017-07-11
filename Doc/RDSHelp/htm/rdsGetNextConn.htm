@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.6.33. rdsGetNextConn &ndash; следующая связь в подсистеме</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_6">А.5.6. Операции с блоками и связями</a></p>
+<div class="level"><p>А.5.6.33. <span class="cpp">rdsGetNextConn</span> &ndash; следующая связь в подсистеме</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsGetNextBlock.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsGetParentBlock.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsGetNextConn">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.6. Операции с блоками и связями</h4>
+<h5>А.5.6.33. <span class="cpp">rdsGetNextConn</span> &ndash; следующая связь в подсистеме</h5>
+
+
+<p><span id="ref1">Функция</span> <span class="cpp">rdsGetNextConn</span> возвращает идентификатор
+<a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связи</a>
+или <a href="um_2_8.htm" title="&sect;2.8. Использование шин">шины</a>, следующей за указанной в той же
+<a href="um_1_2.htm#light_ref10" title="Подсистема">подсистеме</a>.</p>
+
+<pre class="cpp">  <span id="light_ref1"><a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsGetNextConn(
+      <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> PrevConn,          <span class="rem">// Предыдущая связь/шина</span>
+      <span class="kw">int</span> Type,                      <span class="rem">// Маска типов (RDS_CT*)</span>
+      <a class="hidden" href="RDS_CONNDESCRIPTION.htm#ref2" title="Указатель на RDS_CONNDESCRIPTION">RDS_PCONNDESCRIPTION</a> pDescr    <span class="rem">// Заполняемое описание</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_ChChICd</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">PrevConn</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор шины или связи (функция вернет следующую за ней).</dd>
+
+  <dt><span class="cpp"><spanid="ref3">Type</span></span>&emsp;(<span class="cpp"><i><span id="ref2">int</span></i></span>)</dt>
+  <dd>Маска типов, среди которых ищется связь или шина &ndash; стандартные константы типов связей
+  <span class="cpp"><a href="RDS_CONNDESCRIPTION.htm#light_ref4" title="Константы типов связей">RDS_CT*</a></span>, объединенные битовым ИЛИ. Если
+  нужно найти связь, указывается <span class="cpp" id="light_ref2">RDS_CTCONNECTION</span>,
+  если шину &ndash; <span class="cpp" id="light_ref3">RDS_CTBUS</span>, если любой из этих двух
+  видов связей, можно указать 0. Связь или шина, переданная в параметре <span class="cpp">PrevConn</span>, не
+  обязательно должна сама попадать в маску <span class="cpp">Type</span> &ndash; функция в любом случае
+  вернет связь указанного типа, следующий за <span class="cpp">PrevConn</span>.</dd>
+
+  <dt><span id="ref4"><span class="cpp">pDescr</span>&emsp;(<span class="cpp"><i><a href="RDS_CONNDESCRIPTION.htm#ref2" title="Указатель на RDS_CONNDESCRIPTION">RDS_PCONNDESCRIPTION</a></i></span>)</span></dt>
+  <dd>Указатель на заполняемую функцией структуру описания найденной связи/шины
+  <span class="cpp" id="light_ref4"><a href="RDS_CONNDESCRIPTION.htm#ref1" title="Структура RDS_CONNDESCRIPTION">RDS_CONNDESCRIPTION</a></span>. Если вызывающей программе
+  не нужно это описание, в этом параметре можно передать <span class="cpp">NULL</span>.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Идентификатор найденной связи/шины (<span class="cpp"><a href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></span>) или
+<span class="cpp">NULL</span>, если в подсистеме, в которой находится <span class="cpp">PrevConn</span>,
+больше нет связей указанных в <span class="cpp">Type</span> типов.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция ищет в <a href="um_1_2.htm#ref13" title="Родительская подсистема">родительской подсистеме</a>
+связи/шины <span class="cpp">PrevConn</span> следующую связь или
+шину (в зависимости от флагов в параметре <span class="cpp">Type</span>). Порядок следования связей и
+шин в подсистеме определяется внутренней логикой RDS и не может быть изменен программистом.
+Чаще всего эта функция используется вместе с функцией <span class="cpp"><a href="rdsGetFirstConn.htm" title="А.5.6.27. rdsGetFirstConn &ndash; первая связь в подсистеме">rdsGetFirstConn</a></span> для перебора
+всех связей или шин в заданной подсистеме. Например, пару этих функций можно вызвать в цикле
+<span class="cpp"><span class="kw">for</span></span>:</p>
+
+<pre class="cpp">  <span class="rem">// Перебор всех связей (без шин) подсистемы sys</span>
+  <span class="kw">for</span>(<a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> conn=<a class="hidden" href="rdsGetFirstConn.htm" title="А.5.6.27. rdsGetFirstConn &ndash; первая связь в подсистеме">rdsGetFirstConn</a>(sys,RDS_CTCONNECTION,NULL);
+      conn!=NULL;
+      conn=<a class="hidden" href="rdsGetNextConn.htm" title="А.5.6.33. rdsGetNextConn &ndash; следующая связь в подсистеме">rdsGetNextConn</a>(conn,<a class="hidden" href="RDS_CONNDESCRIPTION.htm#light_ref6" title="RDS_CTCONNECTION">RDS_CTCONNECTION</a>,NULL))
+    {
+      <span class="rem">// Какие-то действия со связью conn</span>
+    }</pre>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsGetFirstConn.htm" title="А.5.6.27. rdsGetFirstConn &ndash; первая связь в подсистеме">rdsGetFirstConn</a></span>,
+<span class="cpp"><a href="RDS_CONNDESCRIPTION.htm#ref1" title="Структура RDS_CONNDESCRIPTION">RDS_CONNDESCRIPTION</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsGetNextBlock.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsGetParentBlock.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsGetNextConn">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

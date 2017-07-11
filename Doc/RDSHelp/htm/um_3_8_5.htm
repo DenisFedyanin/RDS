@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.8.5. Вызов функции блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</a></p>
+<div class="level"><p>&sect;3.8.5. Вызов функции блока</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_KEYUP.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_LOADTXT.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_8_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</h3>
+<h4>&sect;3.8.5. Вызов функции блока</h4>
+<p class="abstract">Описывается реакция на <a href="um_index.htm#light_htm:um_3_7_12" title="&sect;3.7.13. Вызов функций блоков">вызов функции блока</a>, то есть на непосредственный вызов модели данного блока моделью другого.</p>
+
+
+<p>Для каждой функции блока, добавленной в редактор модели
+(см. <a href="um_3_6_5.htm" title="&sect;3.6.5. Функции блока">&sect;3.6.5</a>), модуль автокомпиляции автоматически добавляет в список событий
+реакцию на вызов этой функции. Текст этой реакции вводится
+на вкладке &laquo;<span class="menu"><a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">события</a></span>&raquo; левой панели редактора модели: раздел
+&laquo;<span class="menu">мышь и клавиатура</span>&raquo;, подраздел с именем нужной функции
+(см. <a href="um_3_7_12_2.htm#pic4" title="События реакций на вызовы функций">рис.&nbsp;464</a>). Написание реакций на вызовы функций
+подробно и с примерами рассматривается в <a href="um_index.htm#light_htm:um_3_7_12" title="&sect;3.7.13. Вызов функций блоков">&sect;3.7.13</a>, здесь же мы
+рассмотрим техническую сторону этих реакций.</p>
+
+<p>В классе блока для реакции на вызов создается функция-член с именем, автоматически сформированным по
+имени объекта функции, которое пользователь ввел при ее добавлении в модель. В зависимости от того, есть
+ли у функции параметр, эта функция-член будет иметь два или три параметра. Если параметр у функции есть,
+созданная для реакции на ее вызов функция-член будет выглядеть так
+(цветом выделены части текста, зависящие от конкретной функции):</p>
+
+<pre class="cpp">  // Реакция на функцию блока "<span class="changes"><i>имя_функции</i></span>"
+  void rdsbcppBlockClass::<span class="changes"><i>имя_реакции</i></span>(
+                            <span class="changes"><i>тип_указателя_на_параметр</i></span> Param,
+                            <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a> FData,
+                            int &Result)
+  {
+    <span class="changes"><i>&nbsp;&hellip; пользовательский текст реакции &hellip;&nbsp;</i></span>
+  }</pre>
+
+<p>В параметре <span class="cpp">Param</span> находится указатель на параметр вызванной функции блока,
+переданный другой моделью в момент этого вызова. Параметром функции блока, если он есть, всегда должен быть
+какой-нибудь указатель, и тип этого указателя вводится при добавлении функции в модель
+(см. <a href="um_3_7_12_2.htm#pic6" title="Добавление функции UserManual.PictureClick.Cmd в модель блока">рис.&nbsp;466</a>, поле ввода
+&laquo;<span class="menu">тип параметра функции</span>&raquo;). Если, например, в качестве параметра функции было введено
+&laquo;<span class="cpp">TMyFuncParam*</span>&raquo; (то есть
+&laquo;указатель на некоторую структуру <span class="cpp">TMyFuncParam</span>&raquo;),
+<span class="cpp">Param</span> в реакции тоже будет иметь тип <span class="cpp">TMyFuncParam*</span>.</p>
+
+<p><span id="ref1">Параметр</span>
+<span class="cpp">FData</span> &ndash; это указатель на общую для всех функций структуру описания
+события <span class="cpp" id="light_ref1">RDS_FUNCTIONCALLDATA</span>, из полей которой можно узнать,
+как и кем именно вызвана функция:</p>
+
+<pre class="cpp">  typedef struct {
+    int Function;       // Идентификатор функции в RDS
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Data;        // Параметр функции
+    int Reserved;       // Зарезервировано (не используется)
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Caller; // Вызвавший блок
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Broadcast;     // Вызов не одного блока, а нескольких
+    int BroadcastCnt;   // Номер блока среди всех вызванных
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Stop;          // Прекратить вызов блоков (возврат)
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Delayed;       // Отложенный вызов
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> DataBufSize;  // Размер буфера при отложенном вызове
+  } <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a>;
+  typedef <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a> *<a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a>;</pre>
+
+<p>Поля этой структуры имеют следующий смысл:</p>
+<dl>
+  <dt><span class="cpp">Function</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Уникальный целый идентификатор вызванной функции в RDS. Этот идентификатор присваивается функции
+  автоматически. Его также можно в любой момент получить из объекта функции, создаваемого модулем автокомпиляции для
+  работы с ней, при помощи функции-члена <span class="cpp"><a href="um_3_7_12_1.htm#light_ref3" title="Функция Id класса функции блока">Id</a></span> этого объекта.</dd>
+
+  <dt><span class="cpp">Data</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></i></span>)</dt>
+  <dd>Указатель, являющийся параметром функции (<span class="cpp">NULL</span>, если параметра нет). Значение этого
+  поля совпадает с описанным выше параметром <span class="cpp">Param</span>, за исключением типа:
+  <span class="cpp">Param</span> уже приведен к нужному типу, а поле <span class="cpp">Data</span> &ndash;
+  универсальный указатель типа <span class="cpp">void*</span>. В автокомпилируемых моделях использовать это
+  поле не имеет смысла, вместо него используется <span class="cpp">Param</span>.</dd>
+
+  <dt><span class="cpp">Caller</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор вызвавшего функцию блока. Модель вызванного блока может использовать его для того чтобы,
+  в свою очередь, вызвать у него какую-либо функцию в ответ.</dd>
+
+  <dt><span class="cpp">Broadcast</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd>Значение <span class="cpp">TRUE</span> в этом поле сигнализирует о том, что данная функция была вызвана сразу
+  у нескольких блоков (см. <a href="um_3_7_12_2.htm" title="&sect;3.7.13.2. Вызов функции у всех блоков подсистемы">&sect;3.7.13.2</a>),
+  значение <span class="cpp">FALSE</span> &ndash; что она вызвана только у данного блока
+  (см. <a href="um_3_7_12_3.htm" title="&sect;3.7.13.3. Вызов функции у одного блока">&sect;3.7.13.3</a>).</dd>
+
+  <dt><span class="cpp">BroadcastCnt</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd>При <span class="cpp">Broadcast==TRUE</span> в этом поле будет находиться порядковый (начинающийся с нуля)
+  номер данного блока среди всех вызванных. Например, если функция вызвана у всех блоков какой-либо подсистемы, и
+  в этой подсистеме находится три блока, при вызове первого из них в <span class="cpp">BroadcastCnt</span> будет
+  передан ноль, при вызове второго &ndash; 1, при вызове третьего &ndash; 2.</dd>
+
+  <dt><span class="cpp">Stop</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd>Флаг прекращения вызова функции у группы блоков. Исходно в этом поле записано значение <span class="cpp">FALSE</span>.
+  При <span class="cpp">Broadcast==TRUE</span> модель вызванного блока может записать в <span class="cpp">Stop</span>
+  значение <span class="cpp">TRUE</span>, запретив тем самым вызов функции для оставшихся блоков. Таким образом можно, например,
+  организовать поиск в подсистеме блока, выполняющего какие-либо действия: можно вызвать функцию у всех блоков
+  подсистемы и написать реакцию на вызов этой функции так, чтобы первый же выполняющий ее блок произвел необходимые
+  действия или сообщил вызвавшему блоку свой идентификатор, а затем прервал дальнейший перебор блоков и
+  вызов их функций, присвоив <span class="cpp">Stop</span> значение <span class="cpp">TRUE</span>.</dd>
+
+  <dt><span class="cpp">Delayed</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd>Значение <span class="cpp">FALSE</span> в этом поле указывает на прямой вызов функции, значение
+  <span class="cpp">TRUE</span> &ndash; на отложенный. Отложенные вызовы не поддерживаются модулем автокомпиляции
+  напрямую через объекты функций, но их можно выполнять при помощи обычных функций
+  RDS (см. <a href="pm_2_13_5.htm" title="&sect;2.13.5. Отложенный вызов функций блоков">&sect;2.13.5 руководства программиста</a>).</dd>
+
+  <dt><span class="cpp">DataBufSize</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</dt>
+  <dd>При отложенном вызове функции в этом поле передается размер области данных, указатель на
+  которую находится в поле <span class="cpp">Data</span>.</dd>
+</dl>
+
+<p>Третий параметр функции реакции &ndash; это ссылка на целую переменную <span class="cpp">Result</span>.
+Значение этой переменной возвращается вызвавшему блоку. Допустим, например, что в модель какого-то блока
+добавлена некоторая функция без параметров, в реакции на вызов которой записано:</p>
+
+<pre class="cpp">  Result=123;</pre>
+
+<p>В модель другого блока добавлена та же самая функция, и объект для работы с ней назван
+<span class="cpp">MyFuncObject</span>. Если идентификатор первого блока будет записан в переменной
+<span class="cpp">block</span> (например, этот блок был найден по какому-то признаку перебором всех блоков
+подсистемы), то вызов</p>
+
+<pre class="cpp">  int i=MyFuncObject.<a class="hidden" href="um_3_7_12_1.htm#light_ref5" title="Функция Call класса функции блока (без параметра)">Call</a>(block);</pre>
+
+<p class="noindent">запишет в переменную <span class="cpp">i</span> значение 123. По умолчанию в
+<span class="cpp">Result</span> записано значение 0 &ndash; если в реакции на вызов функции
+<span class="cpp">Result</span> ничего не будет присвоено, этот ноль там и останется и будет возвращен
+вызвавшему блоку.</p>
+
+<p>Если у функции нет параметра, в функции-члене для нее просто будет отсутствовать параметр <span class="cpp">Param</span>:</p>
+
+<pre class="cpp">  // Реакция на функцию блока "<span class="changes"><i>имя_функции</i></span>"
+  void rdsbcppBlockClass::<span class="changes"><i>имя_реакции</i></span>(
+      <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a> FData,
+      int &Result)
+  {
+    <span class="changes"><i>&nbsp;&hellip; пользовательский текст реакции &hellip;&nbsp;</i></span>
+  }</pre>
+
+<p>Смысл оставшихся двух параметров остается тем же.</p>
+
+<p>При написании моделей блоков без использования модуля автокомпиляции вызову любой функции блока соответствует
+константа RDS <span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span>. При этом, чтобы понять, какая именно функция
+вызвана, программист должен сам анализировать значение поля <span class="cpp">Function</span> в переданной в
+модель структуре <span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span>. Модуль автокомпиляции несколько упрощает работу,
+вставляя этот анализ в модель автоматически.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_KEYUP.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_LOADTXT.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_8_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

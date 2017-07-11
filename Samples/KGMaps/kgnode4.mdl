@@ -1,0 +1,89 @@
+$BC55MODEL 0.0.0 2017.3.14.16.51.0 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$NOSHARE
+$VARS
+  signal name "Start" in menu run default 0
+  signal name "Ready" out menu default 0
+  matrix double oneindex name "x" in menu default "[ ] 0"
+  double name "y" out menu default "0"
+  matrix double oneindex name "z" default "[ ] 0"
+  double name "t0" default "0"
+$DYNAMIC
+  double name "DynTime" request "DynTime" parent search
+$ENDDECL
+$MODEL
+
+if(DynTime>t0){
+
+	z.Resize(x.Size());
+	for(int i=0; i<z.Size(); i++)
+		z[i]=0.0;
+
+	// Выполнение функций связей
+	
+
+	// Выполнение функции узла
+	Calc();
+
+	t0=DynTime;
+	}
+$INIT
+Constructor();
+$RESET
+Reset();
+$CLASSDEF
+#include <kgmaps/kgmaps_class.cpp>
+$SETUP
+NSetup();
+RewriteMdl();
+Result=RDS_BFR_DONE;
+$OTHER
+switch(CallMode){
+	// Запись имени пункта меню для окна настройки связи
+	case RDS_BFM_SUPPORTSCONNSETUP:
+       	rdsConnSetupMenuName("Задание фунции связи");
+       	Result=1;
+       	break;
+
+	// Открытие окна настройки для связи
+     	case RDS_BFM_CONNSETUP:
+       	RSetup((RDS_PCONNSETUPDATA)ExtParam);
+		// Подпись связи
+       	break;
+
+	// Определение полного пути к файлу модели при выходе из режима редактирования
+	case RDS_BFM_LEAVINGEDITMODE:
+		// ЗДЕСЬ НУЖНА ПРОВЕРКА! - изменились ли функции связей
+		RewriteMdl();
+		Result=RDS_BFR_DONE;
+		break;
+	}
+$SAVETEXT
+Save();
+$LOADTEXT
+Load(LoadedText);
+$GLOBAL
+#include 	<kgmaps/kgmaps_global.cpp>
+$DRAW
+Draw(DrawData);
+$CLEANUP
+Clear();
+$OPTIONS
+  tabs $MODEL $INIT $RESET $CLASSDEF $SETUP $OTHER $SAVETEXT $LOADTEXT $GLOBAL $DRAW
+  window max hdiv 337 vdiv 436 fdiv 409
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 1
+  initcalc 0
+  initcalcstart 0
+  ignorewarnings 0
+  customerrmsg 0
+  autoreadonlyeditor 0
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

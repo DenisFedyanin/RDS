@@ -1,0 +1,165 @@
+EXPBLKTXT
+version 1 rev 0 4016.5.18.20.13.1
+
+dllblock name "L57_ArgMax1"
+ begin
+  name hidden
+  options sizeable
+  vars
+   begin
+    signal name "Start" in run default 1
+    signal name "Ready" out default 0
+    double name "xmin" in menu run default "0"
+    double name "xmax" in menu run default "?"
+    double name "dx" in menu run default "10"
+    signal name "xdiap_chg" default 1
+    double name "ymin" in menu run default "0"
+    double name "ymax" in menu run default "?"
+    double name "dy" in menu run default "10"
+    signal name "ydiap_chg" default 1
+    double name "zmin" in menu run default "0"
+    double name "zmax" in menu run default "?"
+    double name "dz" in menu run default "10"
+    signal name "zdiap_chg" default 1
+    matrix double name "X" out menu default "[ ] ?"
+    matrix double name "Y" out menu default "[ ] ?"
+    matrix double name "Z" out menu default "[ ] ?"
+    matrix double oneindex name "A" in menu run default "[ ] 0"
+    signal name "ArrayChanged" default 1
+    matrix double oneindex name "A_old" default "[ ] 0"
+    matrix double name "Fx" out menu default "[ ] ?"
+    matrix double name "Fy" out menu default "[ ] ?"
+    matrix double name "Fz" out menu default "[ ] ?"
+    double name "old_xmin" default "?"
+    double name "old_xmax" default "?"
+    double name "old_dx" default "?"
+    double name "old_ymin" default "?"
+    double name "old_ymax" default "?"
+    double name "old_dy" default "?"
+    double name "old_zmin" default "?"
+    double name "old_zmax" default "?"
+    double name "old_dz" default "?"
+    matrix double name "XY" out menu default "[ ] ?"
+    matrix double name "XZ" out menu default "[ ] ?"
+    matrix double name "YZ" out menu default "[ ] ?"
+    double name "Xmax" out menu default "?"
+    double name "Ymax" out menu default "?"
+    double name "Zmax" out menu default "?"
+    double name "Fmax" out menu default "?"
+    matrix matrix double oneindex name "F" in menu run default "[ ] [ ] 0"
+    signal name "func_chg" default 1
+    matrix matrix double oneindex name "FS" default "[ ] [ ] 0"
+    signal name "Finished" out default 0
+    logical name "Working" default 0
+    int name "x_cnt" default 0
+    int name "y_cnt" default 0
+    int name "z_cnt" default 0
+    double name "absFmax" out default "?"
+    int name "xi" default 0
+    int name "yi" default 0
+    int name "zi" default 0
+    logical name "Complete" out menu default 0
+    double name "Progress" out menu default "0"
+    matrix logical oneindex name "Enabled" in menu run default "[ ] 1"
+    signal name "enabled_chg" default 1
+    logical name "_enabled" default 1
+    logical name "OutReady" default 0
+    double name "Xmax_f" out default "?"
+    double name "Ymax_f" out default "?"
+    double name "Zmax_f" out default "?"
+    double name "Fmax_f" out default "?"
+    int name "stage" out default 0
+    matrix double oneindex name "FVal" default "[ ] ?"
+    matrix double name "AllMax" out menu default "[ ] ?"
+    logical name "Error" out default 0
+    int name "FuncId" in run default -1
+    int name "OldFuncId" default -1
+    matrix double name "F0xy" out menu default "[ ] ?"
+    signal name "F0xy_ready" default 0
+    matrix double name "F0yz" out default "[ ] ?"
+    signal name "F0yz_ready" default 0
+    matrix double name "F0xz" out default "[ ] ?"
+    signal name "F0xz_ready" default 0
+   end
+  auto
+   begin
+    var "xmin" ctrl "xdiap_chg"
+    var "xmax" ctrl "xdiap_chg"
+    var "dx" ctrl "xdiap_chg"
+    var "ymin" ctrl "ydiap_chg"
+    var "ymax" ctrl "ydiap_chg"
+    var "dy" ctrl "ydiap_chg"
+    var "zmin" ctrl "zdiap_chg"
+    var "zmax" ctrl "zdiap_chg"
+    var "dz" ctrl "zdiap_chg"
+    var "X" ctrl "OutReady"
+    var "Y" ctrl "OutReady"
+    var "Z" ctrl "OutReady"
+    var "A" ctrl "ArrayChanged"
+    var "Fx" ctrl "OutReady"
+    var "Fy" ctrl "OutReady"
+    var "Fz" ctrl "OutReady"
+    var "XY" ctrl "OutReady"
+    var "XZ" ctrl "OutReady"
+    var "YZ" ctrl "OutReady"
+    var "Xmax" ctrl "OutReady"
+    var "Ymax" ctrl "OutReady"
+    var "Zmax" ctrl "OutReady"
+    var "Fmax" ctrl "OutReady"
+    var "F" ctrl "func_chg"
+    var "absFmax" ctrl "OutReady"
+    var "Enabled" ctrl "enabled_chg"
+    var "Xmax_f" ctrl "OutReady"
+    var "Ymax_f" ctrl "OutReady"
+    var "Zmax_f" ctrl "OutReady"
+    var "Fmax_f" ctrl "OutReady"
+    var "AllMax" ctrl "OutReady"
+    var "Error" ctrl "OutReady"
+    var "F0xy" ctrl "F0xy_ready"
+    var "F0yz" ctrl "F0yz_ready"
+    var "F0xz" ctrl "F0xz_ready"
+   end
+  layout rect 185 70 fill 16777215 line 0 text "Внутренний максимизатор\r\nf(x,y,z)" font "Arial" height 13 color 0
+  dll file "L57_ArgMax.dll" func "rdsbcppBlockEntryPoint" setup "" auto
+  dlldata text
+   rdsbcppsetupparameters
+   begin
+   var SetupFuncId 0
+   var setup_xmin "0"
+   var setup_xmax "100"
+   var setup_dx "10"
+   var in_xdiap 1
+   var in_dx 1
+   var setup_ymin "0"
+   var setup_ymax "100"
+   var setup_dy "10"
+   var in_ydiap 1
+   var in_dy 1
+   var setup_zmin "0"
+   var setup_zmax "100"
+   var setup_dz "10"
+   var in_zdiap 1
+   var in_dz 1
+   var deep_search 1
+   var search_by_df 1
+   var setup_df "0.00001"
+   var setup_dx_min "0.01"
+   var setup_dy_min "0.01"
+   var setup_dz_min "0.01"
+   var setup_end_steps 1
+   var setup_df_cycles 100
+   var setup_df_equal "0.01"
+   var setup_no_plateau 1
+   var setup_ds_X 0
+   var setup_ds_Y 0
+   var setup_ds_Z 0
+   var setup_ds_XY 0
+   var setup_ds_XZ 0
+   var setup_ds_YZ 0
+   var setup_ds_edx "0.01"
+   var setup_ds_edy "0.01"
+   var setup_ds_edz "0.01"
+   end
+  enddlldata
+  autocomp file "$DLL$\\Common.dll" func "SearchComp" model "L57_ArgMax.mdl" alt "$PANEL$\\Оптимизация\\L57_ArgMax.mdl\n$PANEL$\\Оптимизация\\L57_ArgMax1.blk"
+ end

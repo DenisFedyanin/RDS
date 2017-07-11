@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.24.3. rdsBCLAddConn &ndash; добавление связи или шины в список</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_24">А.5.24. Вспомогательный объект для работы со списком блоков и связей</a></p>
+<div class="level"><p>А.5.24.3. <span class="cpp">rdsBCLAddConn</span> &ndash; добавление связи или шины в список</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsBCLAddBlock.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsBCLExecuteGroupSetDialog.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsBCLAddConn">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.24. Вспомогательный объект для работы со списком блоков и связей</h4>
+<h5>А.5.24.3. <span class="cpp">rdsBCLAddConn</span> &ndash; добавление связи или шины в список</h5>
+
+
+<p>Функция <span class="cpp">rdsBCLAddConn</span> добавляет в
+<a href="rdsBCLCreateList.htm" title="А.5.24.1. rdsBCLCreateList &ndash; создать объект для хранения списка блоков и связей">список блоков и связей</a>
+<a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связь</a>
+или <a href="um_2_8.htm" title="&sect;2.8. Использование шин">шину</a> с указанным идентификатором.</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsBCLAddConn(
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> List,  <span class="rem">// Список</span>
+    <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> Conn,  <span class="rem">// Связь</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> IgnoreDup     <span class="rem">// Игнорировать повторы</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_IHoChB</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">List</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a></i></span>)</dt>
+  <dd>Идентификатор вспомогательного объекта-списка, ранее созданного функцией
+  <span class="cpp"><a href="rdsBCLCreateList.htm" title="А.5.24.1. rdsBCLCreateList &ndash; создать объект для хранения списка блоков и связей">rdsBCLCreateList</a></span>.</dd>
+
+  <dt><span class="cpp">Conn</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор связи или шины, которую нужно добавить во внутренний массив объекта <span class="cpp">List</span>.</dd>
+
+  <dt><span class="cpp">IgnoreDup</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span> &ndash; перед добавлением проверить, нет ли уже в списке связи
+  (шины) с идентификатором <span class="cpp">Conn</span>. Если она есть, второй раз она добавлена не будет.
+  <span class="cpp">FALSE</span> &ndash; добавлять связь в любом случае, даже если она уже есть в
+  списке (ускоряет работу при больших размерах списков, но может привести к повторам идентификаторов связей
+  и шин в списке).</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Индекс добавленной связи или шины во внутреннем массиве объекта <span class="cpp">List</span>. Если в
+параметре <span class="cpp">IgnoreDup</span> было передано значение <span class="cpp">TRUE</span>, и
+связь с идентификатором <span class="cpp">Conn</span> уже находится в массиве, функция вернет индекс
+найденного идентификатора <span class="cpp">Conn</span>.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция позволяет добавлять в список отдельные связи и шины. Для определения общего числа связей
+и шин в списке следует использовать команду <span class="cpp"><a href="RDS_HBCL_CONNCOUNT.htm" title="А.5.24.10. Команда RDS_HBCL_CONNCOUNT &ndash; число связей и шин в списке">RDS_HBCL_CONNCOUNT</a></span>, для получения указателя
+на внутренний массив идентификаторов связей и шин &ndash; команду
+<span class="cpp"><a href="RDS_HBCL_CONNARRAY.htm" title="А.5.24.9. Команда RDS_HBCL_CONNARRAY &ndash; получение массива связей/шин">RDS_HBCL_CONNARRAY</a></span>. Функция удаления связей из списка не предусмотрена: для того,
+чтобы выбросить связь или шину из списка, следует вручную заменить в массиве ее идентификатор на <span class="cpp">NULL</span>.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции <span class="cpp">rdsBCLAddConn</span> приведен в
+<a href="pm_2_16_2.htm" title="&sect;2.16.2. Добавление и удаление блоков и связей">&sect;2.16.2 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsBCLCreateList.htm" title="А.5.24.1. rdsBCLCreateList &ndash; создать объект для хранения списка блоков и связей">rdsBCLCreateList</a></span>,
+<span class="cpp"><a href="rdsBCLAddBlock.htm" title="А.5.24.2. rdsBCLAddBlock &ndash; добавление блока в список">rdsBCLAddBlock</a></span>,
+<span class="cpp"><a href="RDS_HBCL_CONNCOUNT.htm" title="А.5.24.10. Команда RDS_HBCL_CONNCOUNT &ndash; число связей и шин в списке">RDS_HBCL_CONNCOUNT</a></span>,
+<span class="cpp"><a href="RDS_HBCL_CONNARRAY.htm" title="А.5.24.9. Команда RDS_HBCL_CONNARRAY &ndash; получение массива связей/шин">RDS_HBCL_CONNARRAY</a></span>,
+<span class="cpp"><a href="RDS_HBCL_CLEAR.htm" title="А.5.24.8. Команда RDS_HBCL_CLEAR &ndash; очистка списка">RDS_HBCL_CLEAR</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsBCLAddBlock.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsBCLExecuteGroupSetDialog.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsBCLAddConn">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

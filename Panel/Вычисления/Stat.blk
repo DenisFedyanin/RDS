@@ -1,0 +1,35 @@
+EXPBLKTXT
+version 1 rev 0 4017.2.27.12.38.0
+
+dllblock name "Stat"
+ begin
+  name hidden
+  options sizeable
+  vars
+   begin
+    signal name "Start" in menu run default 0
+    signal name "Ready" out menu default 0
+    matrix double oneindex name "input" in menu run default "[ ] 0"
+    signal name "newval" default 0
+    matrix matrix double oneindex name "input_mass" in menu run default "[ ] [ ] 0"
+    signal name "newmass" default 0
+    matrix double name "stat" out menu default "[ ] 0"
+    signal name "reset" in menu run default 0
+    matrix double oneindex name "rvals" out menu default "[ ] 0"
+    signal name "ctrl" in menu run default 0
+    double name "avrg" out menu default "0"
+    double name "max" out menu default "0"
+    double name "min" out menu default "0"
+    matrix double name "correlation" out menu default "[ ] 0"
+   end
+  auto
+   begin
+    var "input" ctrl "newval"
+    var "input_mass" ctrl "newmass"
+   end
+  layout rect 120 60 fill 16777215 line 0 text "Статистика" font "Arial" height 13 color 0
+  dll file "$DLL$\\montecarlo.dll" func "Stat@12" setup "" auto
+  dlldata text
+   RFull 1 QSec 10 RMin0 0 RMax0 1 QCor 10 CorQuad 0
+  enddlldata
+ end

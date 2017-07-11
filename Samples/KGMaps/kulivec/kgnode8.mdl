@@ -1,0 +1,105 @@
+$BC55MODEL 0.0.0 2017.3.14.16.51.0 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$NOSHARE
+$VARS
+  signal name "Start" in menu run default 0
+  signal name "Ready" out menu default 0
+  matrix double oneindex name "x" in menu default "[ ] 0"
+  matrix double oneindex name "x0" default "[ ] 0"
+  double name "init" in menu run default "0"
+  signal name "init_signal" run default 1
+  double name "init0" default "-1"
+  double name "y" out menu default "0"
+  logical name "new_set" default 1
+  matrix double oneindex name "z" default "[ ] 0"
+  double name "t0" default "0"
+$AUTO
+  "init", "init_signal"
+$DYNAMIC
+  double name "DynTime" request "DynTime" parent search
+$ENDDECL
+$POPUP
+ContextPopup(MenuData);
+$MENU
+MenuFunction(MenuData);
+$MODEL
+
+// Если передано новое исходное значение
+if(init_signal && CheckInputSource(rdsbcppBlockData->Block,init.Num(),NULL) && (init>(init0+TINYVAL) || init<(init0-TINYVAL))){
+	ival=init;
+	init0=init;
+	new_set=true;
+	init_signal=0;
+	}
+
+if(DynTime>t0){
+
+	z.Resize(x.Size());
+	x0.Resize(x.Size(), TRUE);
+	for(int i=0; i<z.Size(); i++){
+		z[i]=0.0;
+		if(new_set){
+			x0[i]=0.0;
+			}
+		}
+
+	// Выполнение функций связей
+	
+	if(regime==0){
+		#define y x[0]
+		z[0]=1.000000*y;
+		#undef y
+		}
+	else{
+		#define y (x[0]-x0[0])
+		z[0]=1.000000*y;
+		x0[0]=x[0];
+		#undef y
+		}
+
+
+	// Выполнение функции узла
+	Calc();
+
+	t0=DynTime;
+	}
+$INIT
+Constructor();
+$RESET
+Reset();
+$CLASSDEF
+#include <kgmaps/kgmaps_class.cpp>
+$SETUP
+Result=NSetup();
+CheckAndRewriteMdl();
+$OTHER
+MdlChange(CallMode, ExtParam, Result);
+$SAVETEXT
+Save();
+$LOADTEXT
+Load(LoadedText);
+$GLOBAL
+#include 	<kgmaps/kgmaps_global.cpp>
+$DRAW
+Draw(DrawData);
+$CLEANUP
+Clear();
+$OPTIONS
+  tabs $MODEL $INIT $RESET $CLASSDEF $SETUP $OTHER $SAVETEXT $LOADTEXT $GLOBAL $DRAW
+  window max hdiv 337 vdiv 436 fdiv 409
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 0
+  indexcheck 1
+  initcalc 0
+  initcalcstart 0
+  ignorewarnings 0
+  customerrmsg 0
+  autoreadonlyeditor 0
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

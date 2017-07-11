@@ -1,0 +1,44 @@
+EXPBLKTXT
+version 1 rev 0 4016.5.18.20.18.2
+
+dllblock name "Block1"
+ begin
+  name hidden
+  options sizeable
+  vars
+   begin
+    signal name "Start" in run default 1
+    signal name "Ready" out default 0
+    matrix double oneindex name "X" in menu run default "[ ] ?"
+    signal name "x_chg" default 0
+    matrix double oneindex name "Y" out menu default "[ ] ?"
+    logical name "y_enabled" default 0
+    matrix double oneindex name "A" in menu run default "[ ] 0"
+    matrix matrix double oneindex name "F" in menu run default "[ ] [ ] 0"
+    signal name "func_chg" default 1
+    matrix matrix double oneindex name "FS" out menu default "[ ] [ ] 0"
+    double name "Crit_In" in menu run default "0"
+    signal name "crit_in_chg" default 0
+    signal name "Crit_In_Ready" in menu run default 0
+    double name "Crit_Out" out menu default "0"
+    signal name "Crit_Out_Ready" out menu default 0
+    logical name "crit_out_en" default 0
+   end
+  auto
+   begin
+    var "X" ctrl "x_chg"
+    var "Y" ctrl "y_enabled"
+    var "F" ctrl "func_chg"
+    var "Crit_In" ctrl "crit_in_chg"
+    var "Crit_Out" ctrl "crit_out_en"
+   end
+  layout rect 205 65 fill 16777215 line 0 text "Ограничения для\r\nвнешнего максимизатора" font "Arial" height 13 color 0
+  dll file "L57_EcoMaxLim.dll" func "rdsbcppBlockEntryPoint" setup "" auto
+  dlldata text
+   rdsbcppsetupparameters
+   begin
+   var SetupFuncId -1
+   end
+  enddlldata
+  autocomp file "$DLL$\\Common.dll" func "SearchComp" model "L57_EcoMaxLim.mdl" alt "$PANEL$\\Оптимизация\\L57_EcoMaxLim.mdl\n$PANEL$\\Оптимизация\\L57_EcoMaxLim.blk"
+ end

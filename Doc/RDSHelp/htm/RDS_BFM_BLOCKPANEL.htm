@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.2.6.1. RDS_BFM_BLOCKPANEL &ndash; уведомление от панели блока в подсистеме</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2">А.2. События блока и связанные с ними описания</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2_6">А.2.6. События пользовательского интерфейса и рисования внешнего вида блоков</a></p>
+<div class="level"><p>А.2.6.1. <span class="cpp">RDS_BFM_BLOCKPANEL</span> &ndash; уведомление от панели блока в подсистеме</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_BFM_SAVETXT.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_CONTEXTPOPUP.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_BLOCKPANEL">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.2. События блока и связанные с ними описания</h3>
+<h4>А.2.6. События пользовательского интерфейса и рисования внешнего вида блоков</h4>
+<p class="abstract">В реакциях на эти события осуществляется взаимодействие с пользователем и настройка параметров блока, а также программное рисование внешнего вида блока, если это необходимо.</p>
+<h5>А.2.6.1. <span class="cpp">RDS_BFM_BLOCKPANEL</span> &ndash; уведомление от панели блока в подсистеме</h5>
+
+
+<p class="apphdr">Поток, в котором вызывается <a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функция модели</a></p>
+<p>Главный поток RDS.</p>
+
+<p class="apphdr">Первый параметр функции модели (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_BFM_BLOCKPANEL</span>.</p>
+
+<p class="apphdr">Третий параметр функции модели (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Указатель на структуру <span class="cpp"><a href="#ref1" title="Структура RDS_PANOPERATION">RDS_PANOPERATION</a></span>, в которой содержится причина вызова
+(что именно произошло с панелью блока) и указатель на структуру описания панели.</p>
+
+<p class="apphdr">Возвращаемое функцией модели значение</p>
+<p>Не используется, можно возвращать любое значение.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Реакция на это событие вызывается при любых действиях с панелью блока в подсистеме: при ее создании,
+удалении, перемещении, изменении размера и т.п. (см. 
+<a href="pm_2_10_4.htm" title="&sect;2.10.4. Панели блоков в окне подсистемы">&sect;2.10.4 руководства программиста</a>).
+<span id="ref1">В</span> <span id="ref2">третьем</span>
+параметре функции модели при этом
+передается указатель на структуру <span class="cpp">RDS_PANOPERATION</span>,
+описывающую произошедшее с панелью:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span> {
+    <span class="kw">int</span> Operation;             <span class="rem">// Действие с панелью</span>
+    <a class="hidden" href="RDS_PANDESCRIPTION.htm#ref2" title="Указатель на RDS_PANDESCRIPTION">RDS_PPANDESCRIPTION</a> Panel; <span class="rem">// Описание панели</span>
+  } <span id="light_ref1">RDS_PANOPERATION</span>;
+  <span class="kw">typedef</span> RDS_PANOPERATION *<span id="light_ref2">RDS_PPANOPERATION</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">Operation</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Действие с панелью, на которое может отреагировать модель блока. В этом поле может содержаться одна из
+  следующих констант:
+    <div class="tableleft"><div class="tcont">
+    <table class="list">
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref3">RDS_PANOP_CREATE</span></span></td>
+        <td>Для панели создан объект-окно Windows. Модель блока теперь может использовать его
+        <a href="app_ids.htm#light_ref18" title="Дескриптор окна">дескриптор</a>
+        (например, для добавления внутрь панели различных полей ввода).</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref4">RDS_PANOP_DESTROY</span></span></td>
+        <td>Объект-окно Windows, связанный с панелью, будет уничтожен. Модель должна удалить все поля ввода и
+        другие объекты, которые она создала в этом окне.</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref5">RDS_PANOP_RESIZED</span></span></td>
+        <td>Размер панели только что изменен пользователем или одной из сервисных функций RDS.</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref6">RDS_PANOP_MOVED</span></span></td>
+        <td>Панель перемещена пользователем.</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref7">RDS_PANOP_PAINT</span></span></td>
+        <td>Модель должна перерисовать содержимое панели.</td>
+      </tr>
+    </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp">Panel</span>&emsp;(<span class="cpp"><i>RDS_PPANDESCRIPTION</i></span>)</dt>
+  <dd>Указатель на структуру описания панели <span class="cpp"><a href="RDS_PANDESCRIPTION.htm" title="А.4.13. RDS_PANDESCRIPTION &ndash; описание панели блока в окне подсистемы">RDS_PANDESCRIPTION</a></span>. Эта структура создается
+  только на время вызова модели блока для реакции на событие <span class="cpp">RDS_BFM_BLOCKPANEL</span>. После
+  завершения реакции структура уничтожается, поэтому переданный указатель нельзя запоминать для дальнейшего
+  использования. Если модели блока понадобится описание панели вне реакции на событие
+  <span class="cpp">RDS_BFM_BLOCKPANEL</span>, она может вызвать сервисную функцию
+  <span class="cpp"><a href="rdsPANGetDescr.htm" title="А.5.31.2. rdsPANGetDescr &ndash; получить описание панели">rdsPANGetDescr</a></span>.</dd>
+</dl>
+
+<p class="apphdr">Пример</p>
+<p>Пример модели блока, работающей с панелью, рассматривается в
+<a href="pm_2_10_4.htm" title="&sect;2.10.4. Панели блоков в окне подсистемы">&sect;2.10.4 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_PANDESCRIPTION.htm" title="А.4.13. RDS_PANDESCRIPTION &ndash; описание панели блока в окне подсистемы">RDS_PANDESCRIPTION</a></span>,
+<span class="cpp"><a href="rdsPANCreate.htm" title="А.5.31.1. rdsPANCreate &ndash; создать объект для работы с панелью">rdsPANCreate</a></span>,
+<span class="cpp"><a href="rdsPANGetDescr.htm" title="А.5.31.2. rdsPANGetDescr &ndash; получить описание панели">rdsPANGetDescr</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_BFM_SAVETXT.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_CONTEXTPOPUP.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_BLOCKPANEL">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

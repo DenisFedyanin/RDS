@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.7.6. Блоки с настраиваемыми пользователем параметрами</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_7">&sect;3.7. Принципы создания автокомпилируемых моделей блоков</a></p>
+<div class="level"><p>&sect;3.7.6. Блоки с настраиваемыми пользователем параметрами</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="um_3_7_5.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_7_7.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_6">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.7. Принципы создания автокомпилируемых моделей блоков</h3>
+<h4>&sect;3.7.6. Блоки с настраиваемыми пользователем параметрами</h4>
+<p class="abstract">Рассматривается добавление в модель блока окна настроек, позволяющего пользователю задавать различные индивидуальные параметры блока. Разные блоки с одной и той же моделью могут иметь разные значения настроечных параметров.</p>
+
+
+<p>Чтобы сделать ввод различных параметров, управляющих работой блока, более удобным, модуль
+автокомпиляции позволяет достаточно просто создавать окна настроек, в которых пользователь в режиме
+редактирования может вводить или выбирать из списков значения этих параметров. Интерфейс создания таких
+окон подробно описан в
+<a href="um_3_6_6.htm" title="&sect;3.6.6. Настроечные параметры блока">&sect;3.6.6</a>. Рассмотрим несколько простых примеров блоков с
+настройками.</p>
+
+<p>Сначала создадим блок, умножающий вещественный вход &laquo;<span class="rdsvar">x</span>&raquo; на константу
+&laquo;<span class="rdsvar">K</span>&raquo; и выдающий полученное произведение на выход &laquo;<span class="rdsvar">y</span>&raquo;, причем
+&laquo;<span class="rdsvar">K</span>&raquo; сделаем параметром блока, который пользователь сможет вводить в окне настройки,
+открываемом по двойному щелчку на блоке.
+<a href="um_3_7_2_1.htm#light_ref6" title="Создание нового блока с моделью">Создадим</a> в схеме новый блок,
+запускающийся <a href="um_3_7_2_1.htm#pic2" title="Установка запуска по сигналу в окне параметров блока">по сигналу</a>,
+и зададим ему следующую структуру статических переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr>
+
+  
+  <tr><td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+
+  <tr><td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+  <tr><td class="vcenter">x</td>
+<td class="center">double</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+
+  <tr><td class="vcenter">y</td>
+<td class="center">double</td>
+<td class="center">Вход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Модель блока будет запускаться при самом первом запуске расчета (у сигнала &laquo;<span class="rdsvar">Start</span>&raquo;
+единичное начальное значение) и при поступлении нового значения на вход &laquo;<span class="rdsvar">x</span>&raquo; (у этого входа
+установлен флажок &laquo;<span class="menu">пуск</span>&raquo;). &laquo;<span class="rdsvar">K</span>&raquo; будет настроечным параметром, поэтому в
+структуру переменных блока переменная с таким именем не входит. На
+вкладку &laquo;<span class="menu"><a href="um_3_3.htm#pic8" title="Окно редактора пустой модели">модель</a></span>&raquo;, то есть в реакцию на
+<a href="um_1_3.htm#ref4" title="Такт расчета">такт расчета</a>, введем единственный оператор:</p>
+
+<pre class="cpp">  y=K*x;</pre>
+
+<p>Осталось добавить в список настроечных параметров переменную &laquo;<span class="rdsvar">K</span>&raquo; и
+создать для нее поле ввода.</p>
+
+<p>Выберем в левой части окна редактора вкладку &laquo;<span class="menu">настройки</span>&raquo;
+(см. <a href="um_3_6_6.htm#pic1" title="Настроечные параметры блока">рис.&nbsp;341</a>) &ndash; в данный момент и список параметров,
+и список полей ввода окна настройки на ней пусты. Нажмем в верхней части вкладки (в списке параметров)
+кнопку со знаком &laquo;<span class="menu">+</span>&raquo; и заполним открывшееся окно
+согласно <a href="#pic1" title="Добавление настроечного параметра K и поля ввода для него">рис.&nbsp;418</a>.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/AC_blocksetup_kx1.png" width="642" height="429" alt="Добавление настроечного параметра K и поля ввода для него" />
+<p id="light_pic1">Рис.&nbsp;418. Добавление настроечного параметра &laquo;<span class="rdsvar">K</span>&raquo; и поля ввода для него</p>
+</div></div>
+
+
+<p>На панели &laquo;<span class="menu">переменная</span>&raquo; введем имя &laquo;K&raquo; (это имя будет именем переменной в
+нашей программе, поэтому введенная буква &laquo;K&raquo; должна быть буквой латинского алфавита), выберем
+в списке тип &laquo;double&raquo; и дадим параметру значение по умолчанию &laquo;1&raquo;.
+Одновременно с самим параметром создадим и поле ввода для него &ndash; на панели
+&laquo;<span class="menu">поле ввода</span>&raquo; установим флажок &laquo;<span class="menu">добавить для этой переменной поле ввода</span>&raquo;
+и введем заголовок &laquo;Множитель&raquo;. Теперь окно можно закрыть кнопкой
+&laquo;<span class="menu">OK</span>&raquo;. Вкладка &laquo;<span class="menu">события</span>&raquo; окна редактора модели после этого примет вид,
+изображенный
+на <a href="#pic2" title="Окно редактора модели с добавленным параметром">рис.&nbsp;419</a>:
+в списке параметров появилась переменная &laquo;<span class="rdsvar">K</span>&raquo;, а в списке полей окна настройки
+&ndash; поле ввода для нее с заголовком &laquo;множитель&raquo;.</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/AC_blocksetup_kx2.png" width="578" height="380" alt="Окно редактора модели с добавленным параметром" />
+<p id="light_pic2">Рис.&nbsp;419. Окно редактора модели с добавленным параметром</p>
+</div></div>
+
+
+<p>Чтобы пользователю было понятнее, настройки какого блока он вызвал, дадим окну настройки заголовок.
+Для этого на панели &laquo;<span class="menu">окно настройки</span>&raquo; в нижней части вкладки
+&laquo;<span class="menu">настройки</span>&raquo; нажмем кнопку справа сверху от списка полей (она останется нажатой) и введем
+заголовок &laquo;умножение на константу&raquo;, как показано
+на <a href="#pic3" title="Ввод заголовка окна настроек">рис.&nbsp;420</a>.
+Ширину и высоту окна вводить не будем.</p>
+
+<div class="pic"><div class="container" id="pic3">
+<img src="../img/AC_blocksetup_kx3.png" width="283" height="163" alt="Ввод заголовка окна настроек" />
+<p id="light_pic3">Рис.&nbsp;420. Ввод заголовка окна настроек</p>
+</div></div>
+
+
+<p>Теперь можно посмотреть, как будет выглядеть созданное нами окно настроек. Нажмем кнопку
+&laquo;<span class="menu">тест</span>&raquo; под списком полей ввода, и созданное нами окно откроется
+(<a href="#pic4" title="Тестирование окна настроек">рис.&nbsp;421</a>).</p>
+
+<div class="pic"><div class="container" id="pic4">
+<img src="../img/AC_blocksetup_kx4.png" width="548" height="276" alt="Тестирование окна настроек" />
+<p id="light_pic4">Рис.&nbsp;421. Тестирование окна настроек</p>
+</div></div>
+
+
+<p>При некоторых настройках Windows (например, если установлены крупные шрифты), введенный нами текст
+заголовка окна может не уместиться в его верхней части &ndash; именно такой случай изображен на рисунке.
+Можно ввести другой, более короткий, заголовок, а можно просто увеличить ширину ширину окна, установив флажок
+&laquo;<span class="menu">ширина</span>&raquo; над списком полей ввода
+(см. <a href="#pic3" title="Ввод заголовка окна настроек">рис.&nbsp;420</a>, если панель с заголовком закрылась, ее
+снова можно открыть кнопкой над списком полей) и введя желаемую ширину окна в точках экрана. Можно, например,
+установить ширину в 300 точек и снова нажать кнопку &laquo;<span class="menu">тест</span>&raquo;, чтобы проверить, уместился ли
+заголовок в окно. Если он все равно не умещается, можно ввести большую ширину и снова протестировать окно,
+и т.д. до тех пор, пока окно с заголовком не приобретет желаемый внешний вид.</p>
+
+<p>Выполненных действий достаточно, чтобы у блока появилось окно настройки, в котором можно будет вводить
+значение множителя &laquo;<span class="rdsvar">K</span>&raquo;. Это значение будет сохраняться вместе со схемой, причем независимо
+для всех блоков с этой моделью: если в схеме будет несколько таких блоков, значения &laquo;<span class="rdsvar">K</span>&raquo;
+у них могут быть разными, несмотря на то, что их обслуживает одна и та же модель. Модуль автокомпиляции
+автоматически добавляет в модель команды сохранения и загрузки введенных пользователем значений параметров
+при сохранении и загрузке схемы или самого блока. Этим настроечные параметры отличаются от, например,
+значений по умолчанию
+<a href="um_3_6_2.htm" title="&sect;3.6.2. Статические переменные блока">статических переменных</a>
+блока: у всех блоков с одной и той же моделью значения переменных по
+умолчанию будут одинаковыми, поскольку структура переменных блока с автокомпилируемой моделью
+запоминается в файле модели, а не в файле схемы, в котором хранятся другие данные блока.</p>
+
+<p>Теперь можно скомпилировать модель и закрыть окно редактора. Если нажать на созданном блоке
+правую кнопку мыши и выбрать в контекстном меню пункт &laquo;<span class="menu">настройка</span>&raquo;, откроется созданное
+нами окно, в котором можно будет ввести значение множителя &laquo;<span class="rdsvar">K</span>&raquo; для этого блока.</p>
+
+<p><span id="ref1">В</span>
+отличие от большинства стандартных блоков, у которых окно настройки
+<span id="light_ref1">открывается по двойному щелчку</span>, в нашем блоке по двойному щелчку
+открывается редактор модели. Можно исправить это двумя способами. Если блок с этой моделью
+&ndash; единственный, как в нашем случае, проще всего открыть окно его параметров
+(пункт &laquo;<span class="menu">параметры</span>&raquo; в его контекстном меню), и на вкладке
+&laquo;<span class="menu">общие</span>&raquo; включить флажок
+&laquo;<span class="menu">двойной щелчок &ndash; вызывает функцию настройки</span>&raquo;
+(<a href="#pic5" title="Включение настройки по двойному щелчку в окне параметров блока">рис.&nbsp;422</a>).</p>
+
+<div class="pic"><div class="container" id="pic5">
+<img src="../img/AC_blockparam_setupbydblclick.png" width="534" height="306" alt="Включение настройки по двойному щелчку в окне параметров блока" />
+<p id="light_pic5">Рис.&nbsp;422. Включение настройки по двойному щелчку в окне параметров блока</p>
+</div></div>
+
+
+<p>Если же блоков с данной моделью несколько, лучше включить настройку по двойному щелчку для них всех
+одновременно. Для этого нужно открыть редактор модели и выбрать пункт меню
+&laquo;<span class="menu">модель | установка параметров блоков</span>&raquo;
+(см. <a href="um_3_6_8.htm" title="&sect;3.6.8. Установка параметров блоков с автокомпилируемой моделью">&sect;3.6.8</a>): при этом откроется окно групповой установки, в котором
+можно изменить параметры всех блоков с этой моделью. На вкладке
+&laquo;<span class="menu">разное</span>&raquo; этого окна на панели &laquo;<span class="menu">двойной щелчок</span>&raquo; следует включить флажки
+&laquo;<span class="menu">установить реакцию</span>&raquo; и &laquo;<span class="menu">передается в функцию DLL</span>&raquo;
+(<a href="#pic6" title="Включение настройки по двойному щелчку в окне групповой установки">рис.&nbsp;423</a>).
+В данном случае, &laquo;передается в функцию DLL&raquo; означает, что с двойным щелчком будет разбираться
+модель блока, а не RDS (окно параметров блока) и не модуль автокомпиляции (редактор модели). А модель
+блока по двойному щелчку может только открывать окно настройки, что и будет происходить. Новая реакция на
+двойной щелчок вступит в силу после закрытия окна кнопкой &laquo;<span class="menu">OK</span>&raquo;.</p>
+
+<div class="pic"><div class="container" id="pic6">
+<img src="../img/AC_Groupset_setupbydblclick.png" width="638" height="373" alt="Включение настройки по двойному щелчку в окне групповой установки" />
+<p id="light_pic6">Рис.&nbsp;423. Включение настройки по двойному щелчку в окне групповой установки</p>
+</div></div>
+
+
+<div class="picright"><div class="container" id="pic7">
+<img src="../img/AC_blocksetup_kx5.png" width="301" height="167" alt="Блок умножения на константу и окно его настройки" />
+<p id="light_pic7">Рис.&nbsp;424. Блок умножения на<br />константу и окно его настройки</p>
+</div></div>
+
+
+<p>Для проверки работы созданной модели и ее настройки можно подключить поле ввода к входу блока
+&laquo;<span class="rdsvar">x</span>&raquo; и числовой индикатор к выходу &laquo;<span class="rdsvar">y</span>&raquo;
+(<a href="#pic7" title="Блок умножения на константу и окно его настройки">рис.&nbsp;424</a>).
+Двойной щелчок на блоке откроет окно настройки, в котором вводится множитель. Запустив расчет
+и изменяя значение на входе блока, можно будет видеть на выходе значение произведения входа и
+введенной в окне константы.</p>
+
+<p><span id="ref2">Параметрами</span>
+блока могут быть не только вещественные переменные, но и целые, логические, строки, а также
+переменные типа <span id="light_ref2"><span class="cpp"><a href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a></span></span>,
+который в API Windows используется для описания цвета.
+Последние часто используют в качестве параметров блоков, изображения которых программно рисуются их моделями,
+чтобы пользователь мог изменять цвета этих изображений.</p>
+
+<p>В <a href="um_3_7_5.htm" title="&sect;3.7.5. Блоки, программно рисующие свое изображение">&sect;3.7.5</a> описывается
+<a href="um_3_7_5.htm#light_ref6" title="Пример модели: индикатор уровня">простой индикатор уровня</a>, рисующий на белом фоне вертикальный синий
+столбик, высота которого пропорциональна значению входа блока, причем вход мог изменяться от нуля
+(столбик нулевой высоты) до ста (столбик высотой во весь блок). Изменим модель так, чтобы диапазон изменения
+входа и все используемые при рисовании цвета стали настроечными параметрами.</p>
+
+<p>Откроем редактор ранее созданной модели и, описанным выше образом, добавим на вкладке
+&laquo;<span class="menu">настройки</span>&raquo; следующие настроечные параметры, одновременно создавая для них поля ввода:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>По умолчанию</th>
+    <th>Заголовок поля ввода</th>
+    <th>Тип поля ввода</th>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Min</td>
+    <td class="center">double</td>
+    <td class="center">0</td>
+    <td class="vcenter">Минимум</td>
+    <td class="vcenter">Ввод</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Max</td>
+    <td class="center">double</td>
+    <td class="center">100</td>
+    <td class="vcenter">Максимум</td>
+    <td class="vcenter">Ввод</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">UpColor</td>
+    <td class="center">COLORREF</td>
+    <td class="center">0xffffff</td>
+    <td class="vcenter">Верхняя часть</td>
+    <td class="vcenter">Выбор цвета</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">DownColor</td>
+    <td class="center">COLORREF</td>
+    <td class="center">0xff0000</td>
+    <td class="vcenter">Нижняя часть</td>
+    <td class="vcenter">Выбор цвета</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">BorderColor</td>
+    <td class="center">COLORREF</td>
+    <td class="center">0</td>
+    <td class="vcenter">Рамка</td>
+    <td class="vcenter">Выбор цвета</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">ErrorColor</td>
+    <td class="center">COLORREF</td>
+    <td class="center">0xff</td>
+    <td class="vcenter">Ошибка</td>
+    <td class="vcenter">Выбор цвета</td>
+  </tr>
+
+</table>
+</div></div>
+
+<p>В качестве заголовка окна настройки введем &laquo;уровень&raquo;. В результате вкладка
+&laquo;<span class="menu">настройки</span>&raquo; окна редактора и окно настройки блока (его можно увидеть, нажав кнопку
+&laquo;<span class="menu">тест</span>&raquo; под списком полей ввода) будет выглядеть так, как
+на <a href="#pic8" title="Добавленные настроечные параметры и тест окна настройки">рис.&nbsp;425</a>.</p>
+
+<div class="pic"><div class="container" id="pic8">
+<img src="../img/AC_blocksetup_bar1.png" width="590" height="489" alt="Добавленные настроечные параметры и тест окна настройки" />
+<p id="light_pic8">Рис.&nbsp;425. Добавленные настроечные параметры и тест окна настройки</p>
+</div></div>
+
+
+<p>У созданного окна настройки есть небольшой недостаток: разные по смыслу параметры изображаются вместе.
+Пользователю будет удобнее, если дать ему понять, что &laquo;минимум&raquo; и
+&laquo;максимум&raquo; относятся к диапазону входа, а кнопки &ndash; к заданию цветов блока.
+Можно добавить в окно пояснительные надписи, но от этого оно станет слишком высоким. Лучше всего разбить параметры
+на две вкладки: поля ввода диапазона входа будут находиться на вкладке &laquo;<span class="menu">диапазон</span>&raquo;, а цвета
+&ndash; на вкладке &laquo;<span class="menu">цвета</span>&raquo;.</p>
+
+<p>Сейчас в нашем окне нет ни одной вкладки. Создадим первую из них: нажмем кнопку &laquo;<span class="menu">добавить вкладку</span>&raquo;
+под списком полей ввода
+(<a href="#pic9" title="Добавление вкладки">рис.&nbsp;426</a>)
+и введем ее заголовок &laquo;диапазон&raquo; в открывшемся окне. После нажатия кнопки
+&laquo;<span class="menu">OK</span>&raquo; все уже созданные поля ввода окажутся на новой вкладке. Еще раз нажмем кнопку
+&laquo;<span class="menu">добавить вкладку</span>&raquo; и введем заголовок &laquo;цвета&raquo; &ndash; новая пустая вкладка
+&laquo;цвета&raquo; появится в конце списка полей
+(<a href="#pic10" title="В окно добавлены вкладки диапазон и цвета">рис.&nbsp;427</a>).</p>
+
+<div class="pic"><div class="container" id="pic9">
+<img src="../img/AC_blocksetup_bar2.png" width="616" height="201" alt="Добавление вкладки" />
+<p id="light_pic9">Рис.&nbsp;426. Добавление вкладки</p>
+</div></div>
+
+
+<div class="pic"><div class="container" id="pic10">
+<img src="../img/AC_blocksetup_bar3.png" width="286" height="219" alt="В окно добавлены вкладки диапазон и цвета" />
+<p id="light_pic10">Рис.&nbsp;427. В окно добавлены  вкладки &laquo;диапазон&raquo; и &laquo;цвета&raquo;</p>
+</div></div>
+
+
+<p>Теперь нам нужно по очереди переместить кнопки выбора цветов на вторую вкладку. Сначала выберем в списке поле
+ввода для параметра &laquo;<span class="rdsvar">UpColor</span>&raquo;. Под списком полей слева находятся две кнопки со стрелками вниз
+и вверх, предназначенные для изменения порядка полей и вкладок. Будем нажимать кнопку со стрелкой вниз до тех
+пор, пока поле &laquo;<span class="rdsvar">UpColor</span>&raquo; не переместится ниже символа вкладки
+&laquo;цвета&raquo;. Теперь поле ввода будет располагаться на этой вкладке.</p>
+
+<p>Последовательно переместим все остальные поля задания цветов на вкладку &laquo;цвета&raquo; таким же
+образом, выстроив их в том же порядке, в котором мы их добавляли:
+&laquo;<span class="rdsvar">UpColor</span>&raquo;, &laquo;<span class="rdsvar">DownColor</span>&raquo;, &laquo;<span class="rdsvar">BorderColor</span>&raquo; и
+&laquo;<span class="rdsvar">ErrorColor</span>&raquo;. Чтобы визуально отделить цвет &laquo;<span class="rdsvar">ErrorColor</span>&raquo;, используемый для
+индикации ошибки входа, от остальных трех цветов, использующихся при нормальной работе блока, добавим после
+&laquo;<span class="rdsvar">BorderColor</span>&raquo; (то есть, перед &laquo;<span class="rdsvar">ErrorColor</span>&raquo;) рельефную линию. Для этого
+дважды щелкнем на &laquo;<span class="rdsvar">BorderColor</span>&raquo; в списке полей окна настройки (то есть в списке на
+нижней части вкладки &ndash; на верхней части вкладки располагается список самих параметров, а не полей
+ввода для них) и в открывшемся окне параметров поля ввода установим флажок
+&laquo;<span class="menu">рельефная линия-разделитель</span>&raquo;
+(<a href="#pic11" title="Добавление рельефной линии в окне параметров поля ввода">рис.&nbsp;428</a>).</p>
+
+<div class="pic"><div class="container" id="pic11">
+<img src="../img/AC_blocksetup_bar4.png" width="622" height="339" alt="Добавление рельефной линии в окне параметров поля ввода" />
+<p id="light_pic11">Рис.&nbsp;428. Добавление рельефной линии в окне параметров поля ввода</p>
+</div></div>
+
+
+<p>Теперь поля ввода распределены по двум вкладкам. Если нажать под списком полей кнопку
+&laquo;<span class="menu">тест</span>&raquo;, можно будет увидеть окно с вкладками &laquo;<span class="menu">диапазон</span>&raquo; и
+&laquo;<span class="menu">цвета</span>&raquo; и линией между полями &laquo;<span class="menu">рамка</span>&raquo; и
+&laquo;<span class="menu">ошибка</span>&raquo; на последней
+(<a href="#pic12" title="Список полей ввода (слева) и две вкладки созданного окна настроек (в центре и справа)">рис.&nbsp;429</a>).</p>
+
+<div class="pic"><div class="container" id="pic12">
+<img src="../img/AC_blocksetup_bar5.png" width="782" height="228" alt="Список полей ввода (слева) и две вкладки созданного окна настроек (в центре и справа)" />
+<p id="light_pic12">Рис.&nbsp;429. Список полей ввода (слева) и две вкладки созданного окна настроек (в центре и справа)</p>
+</div></div>
+
+
+<p>Мы добавили в блок настроечные параметры и создали окно настройки для них. Теперь нужно ввести эти
+параметры в модель. Текст на вкладке редактора &laquo;<span class="menu">рисование</span>&raquo; (это единственный
+введенный фрагмент программы в модели индикатора уровня) нужно изменить, заменив в нем константы на
+настроечные параметры. В тексте ниже изменения <span class="changes">выделены цветом</span>.
+Комментарии оставлены без изменения,
+хотя в них вместо слов &laquo;красный&raquo;, &laquo;белый&raquo;,
+&laquo;синий&raquo; и &laquo;черный&raquo; теперь следовало бы тоже использовать имена параметров.</p>
+
+<pre class="cpp">  // Вспомогательные переменные
+  int right,bottom,h;
+
+  // Правый нижний угол области блока
+  right=DrawData-&gt;Left+DrawData-&gt;Width;
+  bottom=DrawData-&gt;Top+DrawData-&gt;Height;
+
+  // Проверка наличия ошибки на входе
+  if(x==<a class="hidden" href="um_3_7_1.htm#ref15" title="Переменная rdsbcppHugeDouble">rdsbcppHugeDouble</a><span class="changes"> || Max&lt;=Min</span>) // Заливаем красным
+    { // Красный фон
+      <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(0,RDS_GFS_SOLID,<span class="changes">ErrorColor</span>);
+      // Черная линия
+      <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(0,PS_SOLID,
+                       DrawData-&gt;DoubleZoom,<span class="changes">BorderColor</span>,R2_COPYPEN);
+      // Прямоугольник - черная рамка и красный фон
+      <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(DrawData-&gt;Left,DrawData-&gt;Top,right,bottom);
+      // Завершаем реакцию, больше ничего не рисуем
+      return;
+    }
+
+  // Высота синего столбика в точках экрана
+  h=<span class="changes">(x-Min)*DrawData-&gt;Height/(Max-Min)</span>;
+  // Ограничение
+  if(h&lt;0)
+    h=0;
+  else if(h&gt;DrawData-&gt;Height)
+    h=DrawData-&gt;Height;
+
+  // Отключаем рамку
+  <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(RDS_GFSTYLE,PS_NULL,0,0,0);
+
+  // Рисуем верхнюю (белую) часть
+  if(h!=DrawData-&gt;Height) // Есть белое
+    { // Белый фон
+      <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(0,RDS_GFS_SOLID,<span class="changes">UpColor</span>);
+      // Верхняя часть - на h меньше высоты блока
+      <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(DrawData-&gt;Left,
+                     DrawData-&gt;Top,
+                     right,
+                     bottom-h+1);
+    }
+  // Рисуем нижнюю (синюю) часть
+  if(h!=0)
+    { // Синий фон
+      <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(0,RDS_GFS_SOLID,<span class="changes">DownColor</span>);
+      // Нижняя часть - от h до высоты блока
+      <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(DrawData-&gt;Left,
+                     bottom-h,
+                     right,
+                     bottom);
+    }
+
+  // Рисуем рамку
+  // Черная линия, толщина - с учетом масштаба
+  <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(0,PS_SOLID,DrawData-&gt;DoubleZoom,
+                   <span class="changes">BorderColor</span>,R2_COPYPEN);
+  // Отключаем заливку
+  <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(RDS_GFSTYLE,RDS_GFS_EMPTY,0);
+  // Прямоугольник рамки
+  <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(DrawData-&gt;Left,DrawData-&gt;Top,right,bottom);</pre>
+
+<p>В тексте модели, кроме замены цветовых констант на настроечные параметры, изменена также формула
+вычисления высоты столбика <span class="cpp">h</span> (теперь там учитываются параметры границ диапазона
+<span class="cpp">x</span>, которые раньше были жестко заданы) и проверка возможности рисования. Если
+раньше рисование было невозможно только тогда, когда на вход блока приходило значение-индикатор ошибки
+<span class="cpp"><a href="um_3_7_1.htm#ref15" title="Переменная rdsbcppHugeDouble">rdsbcppHugeDouble</a></span>, то теперь ошибкой следует считать и неправильное задание диапазона
+индикатора: если пользователь по ошибке сделает верхнюю границу диапазона <span class="cpp">Max</span> меньше
+или равной нижней <span class="cpp">Min</span>, рисование индикатора становится бессмысленным. На самом деле,
+следовало бы также проверить и <span class="cpp">Min</span>, и <span class="cpp">Max</span> на равенство
+<span class="cpp">rdsbcppHugeDouble</span>, но, для упрощения примера, будем считать пользователя достаточно
+разумным, чтобы не вводить в качестве одной из границ вопросительный знак, обозначающий в
+RDS ошибочное значение.</p>
+
+<p>Теперь цвета и границы диапазона нашего блока могут быть настроены пользователем. Для его удобства можно
+сделать так, чтобы окно настройки
+<a href="#ref1" title="Включение настройки параметров блока по двойному щелчку">открывалось по двойному щелчку</a>
+вместо редактора модели. Индикатор, у которого изменен входной диапазон и цвета верхней и нижней части,
+изображен на <a href="#pic13" title="Измененный индикатор и вкладки его окна настроек">рис.&nbsp;430</a>.</p>
+
+<div class="pic"><div class="container" id="pic13">
+<img src="../img/AC_blocksetup_bar6.png" width="620" height="230" alt="Измененный индикатор и вкладки его окна настроек" />
+<p id="light_pic13">Рис.&nbsp;430. Измененный индикатор и вкладки его окна настроек</p>
+</div></div>
+
+
+<p>К модели может быть добавлено любое число настроечных параметров и они могут быть распределены по вкладкам
+окна так, как хочет разработчик. Следует помнить, что стандартный блок автокомпиляции
+<a href="um_3_6_6.htm#ref15" title="Недостаток редактора настроек">не позволяет</a>
+создавать
+модели, в которых параметры могут как подаваться на входы по связям, так и вводиться в окне настройки.
+Тем не менее, предоставляемых модулем возможностей достаточно для настройки большинства блоков.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="um_3_7_5.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_7_7.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_6">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

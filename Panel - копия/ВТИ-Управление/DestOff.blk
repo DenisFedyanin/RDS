@@ -1,0 +1,35 @@
+EXPBLKTXT
+version 1 rev 0 2014.5.28.15.46.2
+
+types
+ begin
+  struct type "VTIState" 
+   begin
+    logical name "Able" default 0
+    logical name "InUse" default 0
+    double name "SrcRes" default 0
+    double name "SrcNeed" default 0
+    double name "TreeNeedIni" default 0
+    double name "TreeNeed" default 0
+    int name "Importance" default 0
+   end
+ end
+
+dllblock name "DestOff1"
+ begin
+  name hidden
+  options sizeable
+  vars
+   begin
+    signal name "Start" in run default 0
+    signal name "Ready" out default 0
+    struct type "VTIState" name "Check" in menu run default "{0, 0, 0, 0, 0, 0, 0}"
+    matrix struct type "VTIState" oneindex name "State" in menu run default "[ ] {0, 0, 0, 0, 0, 0, 0}"
+    matrix logical oneindex name "On" out menu default "[ ] 1"
+    signal name "Reset" in menu run default 0
+    int name "Flags" default 1
+    double name "LastDelta" default 0
+   end
+  layout rect 105 45 fill 16777215 line 0 text "Отключение по\r\nприоритету" font "Arial" height 13 color 0
+  dll file "$DLL$\\vti.dll" func "LowPriOff" setup "О блоке..." auto
+ end

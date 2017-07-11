@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.2.12. rdsCancelPaste &ndash; отмена вставки блоков из буфера обмена</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_2">А.5.2. Управление работой RDS и функции общего назначения</a></p>
+<div class="level"><p>А.5.2.12. <span class="cpp">rdsCancelPaste</span> &ndash; отмена вставки блоков из буфера обмена</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsCalcProcessNeverStarted.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsChangeRegWinTitle.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsCancelPaste">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.2. Управление работой RDS и функции общего назначения</h4>
+<h5>А.5.2.12. <span class="cpp">rdsCancelPaste</span> &ndash; отмена вставки блоков из буфера обмена</h5>
+
+
+<p>Функция <span class="cpp">rdsCancelPaste</span> отменяет вставку одного или нескольких блоков из буфера обмена,
+если она вызвана из реакции на событие, возникшее в процессе этой вставки.</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsCancelPaste(<span class="kw">void</span>);</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_VV</span></p>
+
+<p class="apphdr">Примечания</p>
+<p>При вставке блоков в схему из буфера обмена последовательно вызывается множество реакций моделей этих блоков.
+К блокам подключаются модели (событие <span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span>), проверяются
+<a href="um_1_4.htm" title="&sect;1.4. Статические переменные блоков">статические переменные</a>
+блоков (событие <span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>), загружаются сохраненные параметры блоков
+(события <span class="cpp"><a href="RDS_BFM_LOADBIN.htm" title="А.2.5.4. RDS_BFM_LOADBIN &ndash; загрузка данных блока в двоичном формате">RDS_BFM_LOADBIN</a></span> и <span class="cpp"><a href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a></span>). Если вставляемые блоки
+имеют <a href="um_1_8.htm" title="&sect;1.8. Автоматическая компиляция моделей блоков">автоматически компилируемые модели</a>, также вызываются реакции
+связанных с ними модулей автокомпиляции: инициализация модуля, если он еще не подключен
+(<span class="cpp"><a href="RDS_COMPM_INIT.htm" title="А.3.4.10. RDS_COMPM_INIT &ndash; инициализация модуля">RDS_COMPM_INIT</a></span>), проверка возможности подключения блока к модели
+(<span class="cpp"><a href="RDS_COMPM_CANATTACHBLK.htm" title="А.3.4.2. RDS_COMPM_CANATTACHBLK &ndash; проверка возможности подключения модели к блоку">RDS_COMPM_CANATTACHBLK</a></span>), инициализация модели, если это ее первое использование в схеме
+(<span class="cpp"><a href="RDS_COMPM_MODELINIT.htm" title="А.3.4.13. RDS_COMPM_MODELINIT &ndash; инициализация модели">RDS_COMPM_MODELINIT</a></span>), подключение модели к блоку
+(<span class="cpp"><a href="RDS_COMPM_ATTACHBLOCK.htm" title="А.3.4.1. RDS_COMPM_ATTACHBLOCK &ndash; подключение модели к блоку">RDS_COMPM_ATTACHBLOCK</a></span>) и т.д. Если хотя бы в одной из этих реакций будет вызвана функция
+<span class="cpp">rdsCancelPaste</span>, вставка будет отменена, а все блоки и связи, которые успели вставиться
+до вызова функции, будут стерты с вызовом соответствующих реакций их моделей.</p>
+
+<p>Чаще всего эта функция применяется для того, чтобы при вставке блоков, которые связаны с какими-либо
+глобальными объектами, предупредить об этом пользователя и дать ему возможность, при необходимости, отменить
+эту вставку. Например, стандартный модуль автоматической компиляции, входящий в состав RDS, при вставке
+из буфера обмена блоков с автокомпилируемыми моделями
+<a href="um_3_5.htm#pic2" title="Запрос, выдающийся пользователю при вставке блока с автокомпилируемой моделью из буфера обмена">спрашивает</a>
+пользователя, что сделать с моделями: создать их копии для вставляемых блоков, чтобы их можно было
+независимо изменять, или связать вставляемые блоки с теми же файлами моделей, которые использовались
+оригинальными, скопированными в буфер, блоками. Если пользователь нажмет в диалоге кнопку
+&laquo;<span class="menu">Отмена</span>&raquo;, вся вставка блоков будет отменена.</p>
+
+<p>Если функция <span class="cpp">rdsCancelPaste</span> вызывается не в момент вставки блоков из буфера обмена,
+вызов будет проигнорирован.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsCalcProcessNeverStarted.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsChangeRegWinTitle.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsCancelPaste">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

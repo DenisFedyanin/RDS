@@ -1,0 +1,61 @@
+$BC55MODEL 0.0.0 2016.6.1.15.32.1 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$VARS
+  signal name "Start" in menu run default 0
+  signal name "Ready" out menu default 0
+  matrix double name "X" in menu default "[ ] 0"
+  matrix double name "Y" out menu default "[ ] 0"
+  matrix matrix double oneindex name "Z" default "[ ] [ ] 0"
+  matrix double name "M" default "[ ] 0"
+  matrix double name "Y1" out menu default "[ ] 0"
+$ENDDECL
+$MODEL
+if (X.IsEmpty()) return;
+
+Z.Resize(10, TRUE);
+Y1.Resize(10, 3, TRUE);
+
+int rZ=Z.Size();
+
+int r=X.Rows();
+int c=X.Cols();
+
+Z[X[r-1][0]]=X;
+
+
+int k=0;
+int ri=0;
+int m=0;
+for (int i=0; i<rZ; i++){
+	M=Z[i];
+	Y1[i][0]=i;
+	Y1[i][1]=m;
+	ri=M.Rows();
+	Y1[i][2]=m+ri;
+	m=m+ri;
+	Y.Resize(m, c, TRUE);
+	for (int j=0; j<ri; j++){
+		for (int ij=0; ij<c;ij++){
+			Y[k][ij]=M[j][ij];
+		};
+		k++;
+	}
+}
+
+$OPTIONS
+  tabs $MODEL
+  window pos 154 154 size 1067 495 hdiv 337 vdiv 182 fdiv 172
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 1
+  ignorewarnings 0
+  customerrmsg 0
+  autoreadonlyeditor 0
+  genvartypemacros 0
+  matherr 1
+  catchall 1
+  dvstart 1
+  searchlinks auto deep

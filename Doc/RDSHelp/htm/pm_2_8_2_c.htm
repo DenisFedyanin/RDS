@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.8.2. Сохранение параметров в двоичном формате</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_8">&sect;2.8. Сохранение и загрузка параметров блока</a></p>
+<div class="level"><p>&sect;2.8.2. Сохранение параметров в двоичном формате</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_8_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_8_3.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_8_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_8_2.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделью блока,
+сохраняющего параметры в двоичном формате. Изменения относительно
+<a href="pm_2_7_2.htm#ref2" title="Простой пример окна настроек">предыдущей версии этой модели</a>
+выделены <span class="changes">цветом</span>.</p>
+
+<pre class="cpp">  <span class="rem">// Сохранение параметров в двоичном формате</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;math.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">//= Пример блока с личной областью данных =</span>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//====== Класс личной области данных ======</span>
+  <span class="kw">class</span> TTest1Data
+  { <span class="kw">public</span>:
+      <span class="kw">int</span> IParam;       <span class="rem">// Целый параметр</span>
+      <span class="kw">double</span> DParam;    <span class="rem">// Вещественный параметр</span>
+      <span class="kw">int</span> Setup(<span class="kw">void</span>);  <span class="rem">// Функция настройки параметров</span>
+      TTest1Data(<span class="kw">void</span>)  <span class="rem">// Конструктор класса</span>
+        { IParam=<span class="const">0</span>; DParam=<span class="const">0</span>.<span class="const">0</span>;
+          <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(<span class="str">"Область создана"</span>,<span class="str">"TTest1Data"</span>,MB_OK);
+        };
+      ~TTest1Data()     <span class="rem">// Деструктор класса</span>
+        { <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(<span class="str">"Область удалена"</span>,<span class="str">"TTest1Data"</span>,MB_OK);};
+  };
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//============= Модель блока ==============</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> Test1(<span class="kw">int</span> CallMode, <span class="rem">// Режим вызова (событие в RDS)</span>
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData, <span class="rem">// Структура данных блока</span>
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> <span class="rem">/*ExtParam*/</span>) <span class="rem">// Доп.параметр (здесь не используется)</span>
+  { TTest1Data *data;
+    <span class="kw">switch</span>(CallMode)
+      { <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>: <span class="rem">// Инициализация</span>
+          BlockData-&gt;BlockData=<span class="kw">new</span> TTest1Data();
+          <span class="kw">break</span>;
+
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>: <span class="rem">// Очистка</span>
+          data=(TTest1Data*)(BlockData-&gt;BlockData);
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>: <span class="rem">// Функция настройки</span>
+          data=(TTest1Data*)(BlockData-&gt;BlockData);
+          <span class="kw">return</span> data-&gt;Setup();
+
+      <span class="changes">  <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVEBIN.htm" title="А.2.5.6. RDS_BFM_SAVEBIN &ndash; запись данных блока в двоичном формате">RDS_BFM_SAVEBIN</a>:</span>
+      <span class="changes">    <span class="rem">// Сохранение параметров в двоичном формате </span></span>
+      <span class="changes">    data=(TTest1Data*)(BlockData-&gt;BlockData);</span>
+      <span class="changes">    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;(data-&gt;IParam),<span class="kw">sizeof</span>(data-&gt;IParam));</span>
+      <span class="changes">    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;(data-&gt;DParam),<span class="kw">sizeof</span>(data-&gt;DParam));</span>
+      <span class="changes">    <span class="kw">break</span>;</span>
+
+      <span class="changes">  <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADBIN.htm" title="А.2.5.4. RDS_BFM_LOADBIN &ndash; загрузка данных блока в двоичном формате">RDS_BFM_LOADBIN</a>:</span>
+      <span class="changes">    <span class="rem">// Загрузка параметров в двоичном формате </span></span>
+      <span class="changes">    data=(TTest1Data*)(BlockData-&gt;BlockData);</span>
+      <span class="changes">    <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;(data-&gt;IParam),<span class="kw">sizeof</span>(data-&gt;IParam));</span>
+      <span class="changes">    <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;(data-&gt;DParam),<span class="kw">sizeof</span>(data-&gt;DParam));</span>
+      <span class="changes">    <span class="kw">break</span>;</span>
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Функция настройки параметров</span>
+  <span class="kw">int</span> TTest1Data::Setup(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window; <span class="rem">// Идентификатор вспомогательного объекта</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;            <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="rem">// Создание окна</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Ввод параметров"</span>);
+    <span class="rem">// Добавление полей ввода</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">1</span>,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,
+                   <span class="str">"Целый параметр:"</span>,<span class="const">80</span>);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,
+                   <span class="str">"Вещественный параметр:"</span>,<span class="const">80</span>);
+    <span class="rem">// Занесение исходных значений в поля ввода</span>
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,IParam);
+    <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,DParam);
+    <span class="rem">// Открытие окна</span>
+    ok=<a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Нажата кнопка OK - запись параметров обратно в блок</span>
+        IParam=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        DParam=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="rem">// Возвращаемое значение</span>
+    <span class="kw">return</span> ok?<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_8_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_8_3.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_8_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.6.4. Работа с несколькими динамическими переменными</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_6">&sect;2.6. Динамические переменные</a></p>
+<div class="level"><p>&sect;2.6.4. Работа с несколькими динамическими переменными</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_6_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_6_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_6_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_6_4.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделями блоков, работающих одновременно
+с несколькими динамическими переменными. Библиотека содержит две модели:</p>
+
+<ul>
+  <li><span class="cpp">TestBlkMoveSetter</span> &ndash; блок, записывающий в динамические переменные значения скорости и угла поворота;</li>
+  <li><span class="cpp">TestBlkMoveObject</span> &ndash; блок, перемещающийся в окне подсистемы со скоростью и
+  в направлении, считанными из динамических переменных.</li>
+</ul>
+
+<pre class="cpp">  <span class="rem">// Подвижный блок, передача через динамические переменные</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;math.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+  <span class="rem">//=========== Блок управления =============</span>
+  <span class="rem">// Структура личной области данных блока</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="rem">// Указатель на структуру подписки на скорость</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> VLink;
+    <span class="rem">// Указатель на структуру подписки на направление</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> ALink;
+  } TestBlkMoveSetterData;
+
+  <span class="rem">// Модель блока управления</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestBlkMoveSetter(<span class="kw">int</span> CallMode,
+                                  <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                                  <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define Speed   (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define Angle   (*((double *)(pStart+10)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на личную область</span>
+    <span class="rem">// данных блока, приведенный к правильному типу</span>
+    TestBlkMoveSetterData *privdata;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Отведение памяти под личную область данных</span>
+          privdata=(TestBlkMoveSetterData*)
+                    malloc(<span class="kw">sizeof</span>(TestBlkMoveSetterData));
+          BlockData-&gt;BlockData=privdata;
+          <span class="rem">// Создание переменной для передачи скорости</span>
+          privdata-&gt;VLink=<a class="hidden" href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a>(
+                            <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,     <span class="rem">// В родительской</span>
+                            <span class="str">"BlkMove_Speed"</span>,  <span class="rem">// Имя переменной</span>
+                            <span class="str">"D"</span>,              <span class="rem">// Тип double</span>
+                            TRUE,             <span class="rem">// Запрет удаления</span>
+                            NULL);            <span class="rem">// Без нач.значения</span>
+          <span class="rem">// Создание переменной для передачи направления</span>
+          privdata-&gt;ALink=<a class="hidden" href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a>(
+                            <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,
+                            <span class="str">"BlkMove_Angle"</span>,
+                            <span class="str">"D"</span>,
+                            TRUE,
+                            NULL);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка данных блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Приведение указателя на личную область данных к</span>
+          <span class="rem">// правильному типу</span>
+          privdata=(TestBlkMoveSetterData*)(BlockData-&gt;BlockData);
+          <span class="rem">// Удаление динамических переменных</span>
+          <a class="hidden" href="rdsDeleteDVByLink.htm" title="А.5.16.3. rdsDeleteDVByLink &ndash; удалить динамическую переменную и прекратить подписку на нее">rdsDeleteDVByLink</a>(privdata-&gt;VLink);
+          <a class="hidden" href="rdsDeleteDVByLink.htm" title="А.5.16.3. rdsDeleteDVByLink &ndash; удалить динамическую переменную и прекратить подписку на нее">rdsDeleteDVByLink</a>(privdata-&gt;ALink);
+          <span class="rem">// Освобождение отведенной памяти</span>
+          free(privdata);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="rem">// Приведение указателя на личную область данных к</span>
+          <span class="rem">// правильному типу</span>
+          privdata=(TestBlkMoveSetterData*)(BlockData-&gt;BlockData);
+          <span class="rem">// Проверка существования переменной направления</span>
+          <span class="kw">if</span>(privdata-&gt;ALink!=NULL &amp;&amp; privdata-&gt;ALink-&gt;Data!=NULL)
+            { <span class="rem">// Переменная существует – привести к типу double*</span>
+              <span class="kw">double</span> *pa=(<span class="kw">double</span>*)privdata-&gt;ALink-&gt;Data;
+              <span class="kw">if</span>(*pa!=Angle) <span class="rem">// Значение направления изменилось</span>
+                { <span class="rem">// Записать значение в динамическую переменную</span>
+                  *pa=Angle;
+                  <span class="rem">// Уведомить всех подписчиков об изменении</span>
+                  <a class="hidden" href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a>(privdata-&gt;ALink);
+                }
+            }
+          <span class="rem">// Проверка существования переменной скорости</span>
+          <span class="kw">if</span>(privdata-&gt;VLink!=NULL &amp;&amp; privdata-&gt;VLink-&gt;Data!=NULL)
+            { <span class="rem">// Переменная существует – привести к типу double*</span>
+              <span class="kw">double</span> *pv=(<span class="kw">double</span>*)privdata-&gt;VLink-&gt;Data;
+              <span class="kw">if</span>(*pv!=Speed)
+                { <span class="rem">// Записать значение в динамическую переменную</span>
+                  *pv=Speed;
+                  <span class="rem">// Уведомить всех подписчиков об изменении</span>
+                  <a class="hidden" href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a>(privdata-&gt;VLink);
+                }
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef Angle</span>
+  <span class="preproc">#undef Speed</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//============ Подвижный блок =============</span>
+  <span class="rem">// Структура личной области данных блока</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="rem">// Указатель на структуру подписки на скорость</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> VLink;
+    <span class="rem">// Указатель на структуру подписки на направление</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> ALink;
+    <span class="rem">// Указатель на структуру подписки на время</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> Time;
+
+    <span class="rem">// Дополнительные поля для хранения значений синуса</span>
+    <span class="rem">// и косинуса направления движения блока</span>
+    <span class="kw">double</span> SinA;
+    <span class="kw">double</span> CosA;
+  } TestBlkMoveObjectData;
+
+  <span class="rem">// Модель перемещающегося блока</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestBlkMoveObject(<span class="kw">int</span> CallMode,
+                                  <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                                  <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x       (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define y       (*((double *)(pStart+10)))</span>
+  <span class="preproc">#define a       (*((double *)(pStart+18)))</span>
+  <span class="preproc">#define t0      (*((double *)(pStart+26)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на личную область</span>
+    <span class="rem">// данных блока, приведенный к правильному типу</span>
+    TestBlkMoveObjectData *privdata;
+    <span class="rem">// Вспомогательные переменные для скорости и времени</span>
+    <span class="kw">double</span> v,time;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Отведение памяти под личную область данных</span>
+          privdata=(TestBlkMoveObjectData*)
+                    malloc(<span class="kw">sizeof</span>(TestBlkMoveObjectData));
+          BlockData-&gt;BlockData=privdata;
+          <span class="rem">// Подписка на переменную скорости</span>
+          privdata-&gt;VLink=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(
+                          <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,    <span class="rem">// В родительской</span>
+                          <span class="str">"BlkMove_Speed"</span>, <span class="rem">// Имя переменной</span>
+                          <span class="str">"D"</span>,             <span class="rem">// Тип double</span>
+                          FALSE);          <span class="rem">// Без поиска</span>
+          <span class="rem">// Подписка на переменную направления</span>
+          privdata-&gt;ALink=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(
+                          <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,
+                          <span class="str">"BlkMove_Angle"</span>,
+                          <span class="str">"D"</span>,
+                          FALSE);
+          <span class="rem">// Подписка на переменную времени</span>
+          privdata-&gt;Time=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(
+                          <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,  <span class="rem">// В родительской</span>
+                          <span class="str">"DynTime"</span>,     <span class="rem">// Имя переменной</span>
+                          <span class="str">"D"</span>,           <span class="rem">// Тип double</span>
+                          TRUE);         <span class="rem">// Поиск в иерархии</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка данных блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Приведение указателя на личную область данных к</span>
+          <span class="rem">// правильному типу</span>
+          privdata=(TestBlkMoveObjectData*)(BlockData-&gt;BlockData);
+          <span class="rem">// Прекращение подписки на все динамические переменные</span>
+          <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(privdata-&gt;VLink);
+          <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(privdata-&gt;ALink);
+          <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(privdata-&gt;Time);
+          <span class="rem">// Освобождение отведенной памяти</span>
+          free(privdata);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDDDD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Реакция на изменение динамической переменной</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a>:
+          <span class="rem">// Приведение указателя на личную область данных к</span>
+          <span class="rem">// правильному типу</span>
+          privdata=(TestBlkMoveObjectData*)(BlockData-&gt;BlockData);
+          <span class="rem">// Проверка – удалось ли подписаться на все переменные</span>
+          <span class="rem">// (если хотя бы один указатель – NULL, значит, не удалось)</span>
+          <span class="kw">if</span>(privdata-&gt;VLink==NULL ||  <span class="rem">// Скорость</span>
+             privdata-&gt;ALink==NULL ||  <span class="rem">// Направление</span>
+             privdata-&gt;Time==NULL)     <span class="rem">// Время</span>
+            <span class="kw">break</span>;
+          <span class="rem">// Проверка – существуют ли все переменные</span>
+          <span class="rem">// (если хотя бы один указатель – NULL, значит, не удалось)</span>
+          <span class="kw">if</span>(privdata-&gt;VLink-&gt;Data==NULL ||  <span class="rem">// Скорость</span>
+             privdata-&gt;ALink-&gt;Data==NULL ||  <span class="rem">// Направление</span>
+             privdata-&gt;Time-&gt;Data==NULL)     <span class="rem">// Время</span>
+            <span class="kw">break</span>;
+          <span class="rem">// Если изменилась переменная направления, нужно вычислить</span>
+          <span class="rem">// и запомнить новые значения ыинуса и косинуса угла</span>
+          <span class="kw">if</span>(ExtParam==(<span class="kw">void</span>*)(privdata-&gt;ALink))
+            { <span class="rem">// Изменилось направление – привести к типу double*</span>
+              <span class="kw">double</span> *pa=(<span class="kw">double</span>*)privdata-&gt;ALink-&gt;Data;
+              <span class="rem">// Значение угла в радианах</span>
+              a=(*pa)*M_PI/<span class="const">180.0</span>;
+              <span class="rem">// Значения синуса и косинуса</span>
+              privdata-&gt;SinA=sin(a);
+              privdata-&gt;CosA=cos(a);
+            }
+          <span class="rem">// Записать во вспомогательные переменные v и time значения</span>
+          <span class="rem">// скорости и времени</span>
+          v=*(<span class="kw">double</span>*)privdata-&gt;VLink-&gt;Data;
+          time=*(<span class="kw">double</span>*)privdata-&gt;Time-&gt;Data;
+          <span class="rem">// Вычислить новое смещение изображения блока</span>
+          x+=v*(time-t0)*privdata-&gt;CosA;
+          y-=v*(time-t0)*privdata-&gt;SinA;
+          <span class="rem">// Запомнить значение времени, для которого вычислены</span>
+          <span class="rem">// новые координаты</span>
+          t0=time;
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef t0</span>
+  <span class="preproc">#undef a</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_6_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_6_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_6_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

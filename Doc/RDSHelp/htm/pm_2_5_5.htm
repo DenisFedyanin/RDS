@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.5.5. Работа со структурами</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_5">&sect;2.5. Статические переменные блоков</a></p>
+<div class="level"><p>&sect;2.5.5. Работа со структурами</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_5_4.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_5_6.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_5_5_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.5. Статические переменные блоков</h3>
+<h4>&sect;2.5.5. Работа со структурами</h4>
+<p class="abstract">Описываются особенности работы с переменными-структурами, их размещение в памяти и способ доступа
+                к их полям при помощи макросов. Приводится пример блока, суммирующего два комплексных входа, в котором
+                комплексные числа представлены структурами с двумя вещественными полями <span class="cpp">Re</span> и <span class="cpp">Im</span>.</p>
+
+
+<p>Достаточно часто необходимо передавать от блока к блоку несколько значений одновременно. Например,
+если блоки моделируют поведение каких-либо объектов в трехмерном пространстве, им нужно передавать друг
+другу координаты этих объектов, то есть шесть вещественных чисел (три числа описывают положение центра объекта
+в пространстве, и еще три &ndash; углы его поворота). Делать каждую их шести координат отдельным входом или
+выходом не очень удобно: для передачи информации об объекте между двумя блоками их придется соединить шестью
+связями &ndash; это загромождает схему, особенно если таких блоков много, и нагружает пользователя лишней
+работой. Можно записывать координаты в
+<a href="pm_2_5_3.htm" title="&sect;2.5.3. Доступ к матрицам и массивам">массивы</a>: массив вещественных чисел из шести элементов может хранить все
+шесть координат объекта и передаваться между блоками как единое целое (пользователю потребуется провести
+только одну связь). Однако, при этом программист должен постоянно следить за размером переданного массива
+и помнить соответствие между координатами объекта и номерами элементов массива. Помнить это
+соответствие придется и пользователю: если он, например, захочет вывести координату &laquo;<span class="rdsvar">X</span>&raquo;
+на числовой индикатор, он должен знать номер элемента массива, в котором эта координата находится. А если
+кроме шести вещественных координат необходимо передавать еще какую-либо информацию об объекте (например,
+строку с его названием), использование массивов становится невозможным: все элементы массива должны иметь
+один и тот же тип.</p>
+
+<p>Решение этой проблемы давно известно во всех языках программирования высокого уровня: для хранения
+и передачи набора разнородных данных обычно используются структуры (в некоторых языках их называют
+&laquo;записями&raquo;), которые состоят из полей разного типа, каждое из которых имеет свое собственное
+имя. Имена полей существенно облегчают работу и пользователю, и программисту: запись
+&laquo;<span class="cpp">Coords.X</span>&raquo; гораздо понятнее записи
+&laquo;<span class="cpp">Coords[0]</span>&raquo;. RDS позволяет создавать в блоках переменные
+<a href="pm_1_5.htm#light_ref16" title="тип переменной: структура">структурного типа</a>, в качестве полей они могут содержать как
+простые переменные, так и массивы и другие структуры. По связям структура всегда передается как единое
+целое, этим структуры отличаются от
+<a href="um_2_8.htm" title="&sect;2.8. Использование шин">шин</a>: каналы передачи данных в шинах тоже имеют свои имена,
+как и поля структур, но работают полностью независимо, в структуре же
+нельзя передать по связи только одно поле.</p>
+
+<p>Для структуры в дереве переменных хранится указатель на область памяти, в которой последовательно размещаются
+ее поля (<a href="#pic1" title="Размещение в памяти данных структуры">рис.&nbsp;24</a>).</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/StructInMemory.png" width="561" height="193" alt="Размещение в памяти данных структуры" />
+<p id="light_pic1">Рис.&nbsp;24. Размещение в памяти данных структуры</p>
+</div></div>
+
+
+<p>Зная указатель на эту область, с полями структуры можно работать так же, как и с переменными блока
+&ndash; фактически, с точки зрения RDS, набор переменных блока тоже является структурой, указатель на которую
+хранится в поле <span class="cpp">VarData</span> параметров блока <span class="cpp"><a href="RDS_BLOCKDATA.htm#ref3" title="Структура RDS_BLOCKDATA">RDS_BLOCKDATA</a></span>. В отличие от
+<a href="pm_2_5_3.htm" title="&sect;2.5.3. Доступ к матрицам и массивам">матриц</a> и
+<a href="pm_2_5_4.htm" title="&sect;2.5.4. Работа со строками">строк</a>, дополнительная память которых может освобождаться и отводиться
+заново при их изменении, область памяти с полями структуры отводится один раз при создании переменных блока
+и больше не изменяется до момента уничтожения блока или задания нового набора переменных. По этой причине
+к полям структуры, как и к переменным блока, можно обращаться по фиксированным смещениям относительно базового
+адреса (указателя на начало области данных).</p>
+
+<p>Для примера введем в RDS структуру <span class="cpp">TestComplex</span>, описывающую комплексное число и
+состоящую из двух полей <span class="cpp">Re</span> и <span class="cpp">Im</span>
+типа <span class="cpp">double</span>:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>По умолчанию</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Re</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">8</td>
+<td class="vcenter">Im</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<div class="picright"><div class="container" id="pic2">
+<img src="../img/pm_StructList.png" width="260" height="284" alt="Окно списка структур схемы" />
+<p id="light_pic2">Рис.&nbsp;25. Окно списка структур схемы</p>
+</div></div>
+
+
+<p>Для редактирования и создания новых структур служит пункт меню
+&laquo;<span class="menu">система | структуры</span>&raquo; (<a href="#pic2" title="Окно списка структур схемы">рис.&nbsp;25</a>), он открывает
+окно со списком структур, содержащим имена всех созданных в схеме структур и число блоков схемы,
+использующих каждую структуру в данный момент (при попытке изменить структуру, которая в
+данный момент используется, RDS выведет предупреждение, так как добавление, удаление и
+перестановка полей в структуре может привести к неработоспособности блоков, модели которых ссылаются на
+ее поля по фиксированным смещениям).</p>
+
+<p>В окне списка структур можно добавить новую структуру (кнопка &laquo;<span class="menu">+</span>&raquo;) и изменить уже существующую
+(кнопка &laquo;<span class="menu">{&hellip;}</span>&raquo;). Нам нужно создать новую структуру &ndash; после нажатия кнопки
+&laquo;<span class="menu">+</span>&raquo; откроется окно редактора структур
+(<a href="#pic3" title="Окно редактирования полей структуры">рис.&nbsp;26</a>),
+похожее на окно <a href="pm_1_5.htm#pic2" title="Редактор переменных">редактора переменных блока</a>. Фактически,
+эти два окна отличаются только тем, что в
+редакторе структур нельзя сделать поле структуры входом или выходом (входом или выходом блока может быть
+только вся структура целиком), задать запуск модели блока, связанные логические и сигнальные переменные,
+а также отображение имени в точке присоединения связи
+(см. <a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">&sect;1.5</a>) &ndash; все эти параметры структура вместе со всеми
+своими полями получит, когда она будет использована в каком-либо блоке в качестве входа или выхода. В
+окне редактора структур нужно задать имя нашей структуры
+(&laquo;<span class="rdsvar">TestComplex</span>&raquo;) ввести два вещественных поля &laquo;<span class="rdsvar">Re</span>&raquo; и &laquo;<span class="rdsvar">Im</span>&raquo;,
+и запомнить структуру нажатием кнопки &laquo;<span class="menu">OK</span>&raquo;. Теперь структура
+&laquo;<span class="rdsvar">TestComplex</span>&raquo; зарегистрирована в схеме и может быть указана в качестве типа любой
+статической переменной любого блока.</p>
+
+<div class="pic"><div class="container" id="pic3">
+<img src="../img/pm_StructEdit.png" width="523" height="284" alt="Окно редактирования полей структуры" />
+<p id="light_pic3">Рис.&nbsp;26. Окно редактирования полей структуры</p>
+</div></div>
+
+
+<p>Создадим модель блока, суммирующего значения комплексных (типа &laquo;<span class="rdsvar">TestComplex</span>&raquo;) входов
+<span class="cpp">x1</span> и <span class="cpp">x2</span> и выдающего сумму на выход <span class="cpp">y</span>.
+Блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">x1</td>
+<td class="center">Структура TestComplex</td>
+<td class="center">4</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">{0,0}</td>
+</tr>
+<tr><td class="center">6</td>
+<td class="vcenter">x2</td>
+<td class="center">Структура TestComplex</td>
+<td class="center">4</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">{0,0}</td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">y</td>
+<td class="center">Структура TestComplex</td>
+<td class="center">4</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">{0,0}</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Функция модели блока будет довольно простой:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestStructSum(<span class="kw">int</span> CallMode,
+                              <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                              <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x1     (*((void **)(pStart+2)))</span>
+  <span class="preproc">#define x2     (*((void **)(pStart+6)))</span>
+  <span class="preproc">#define y      (*((void **)(pStart+10)))</span>
+  <span class="rem">// </span><span id="light_ref1"><span class="rem">Макроопределения для полей структуры</span></span><span class="rem"> TestComplex</span>
+  <span class="preproc">#define Re(base)  (*((double *)(base)))</span>
+  <span class="preproc">#define Im(base)  (*((double *)(((char*)(base))+8)))</span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SS{DD}{DD}{DD}}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          Re(y)=Re(x1)+Re(x2);
+          Im(y)=Im(x1)+Im(x2);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef Im</span>
+  <span class="preproc">#undef Re</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef x2</span>
+  <span class="preproc">#undef x1</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Макроопределения для структур <span class="cpp">x1</span>, <span class="cpp">x2</span> и <span class="cpp">y</span>
+представляют собой указатели универсального типа (<span class="cpp">void*</span>) на начало области данных
+каждой структуры. В отличие от определений для переменных блока, которые жестко привязаны к началу дерева
+переменных <span class="cpp">BlockData->VarData</span>, определения для полей структуры <span class="cpp">Re</span> и
+<span class="cpp">Im</span> &ndash; это макросы с параметром, через который передается указатель на данные
+конкретной структуры. Например, для доступа к полю <span class="cpp">Re</span> структуры
+<span class="cpp">x1</span> необходимо написать <span class="cpp">Re(x1)</span>
+(<a href="#pic4" title="Обращение к полям структуры из модели блока">рис.&nbsp;27</a>).</p>
+
+<div class="pic"><div class="container" id="pic4">
+<img src="../img/StructInMemory1.png" width="627" height="227" alt="Обращение к полям структуры из модели блока" />
+<p id="light_pic4">Рис.&nbsp;27. Обращение к полям структуры из модели блока</p>
+</div></div>
+
+
+<p>Чтобы не писать такие макроопределения вручную, можно заставить RDS сформировать их в буфере обмена,
+нажав правую кнопку мыши на строке типа в левом нижнем углу
+окна редактирования структуры и выбрав в открывшемся меню (см. аналогичное меню в
+<a href="pm_2_5_1.htm#pic1" title="Вызов меню для копирования в буфер обмена всех макросов переменных блока">редакторе переменных блока</a>) пункт
+&laquo;<span class="menu">копировать список (#define, по возможности сами данные)</span>&raquo;.</p>
+
+<p>Строка типа, передаваемая функции модели при вызове с параметром
+<span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>, состоит из двух букв &laquo;S&raquo; для <a href="pm_1_5.htm#ref4" title="Обязательные сигналы простого блока">обязательных сигналов</a>
+<span class="cpp">Start</span> и <span class="cpp">Ready</span>, и трех фрагментов
+&laquo;{DD}&raquo;, описывающих тип &laquo;<span class="rdsvar">TestComplex</span>&raquo; для переменных
+<span class="cpp">x1</span>, <span class="cpp">x2</span> и <span class="cpp">y</span>. При проверке переменных
+название типа структуры не имеет значения. Важно только то, что структура состоит из двух полей
+<span class="cpp">double</span> (два символа &laquo;D&raquo;). Если, например, ввести
+в RDS структуру &laquo;<span class="rdsvar">TestStruct</span>&raquo;, состоящую из двух полей
+<span class="cpp">Field1</span> и <span class="cpp">Field2</span> типа <span class="cpp">double</span>, и заменить
+в описываемом блоке тип &laquo;<span class="rdsvar">TestComplex</span>&raquo; на &laquo;<span class="rdsvar">TestStruct</span>&raquo;, в модель будет передаваться
+точно такая же строка типа. Обе структуры будут описываться строкой &laquo;{DD}&raquo;, и модель не
+увидит между ними разницы. Тем не менее, это не приведет к возникновению ошибок, поскольку структуры с
+одинаковыми типами полей размещаются в памяти одинаково. Макрос
+<span class="cpp">Re(x1)</span> может с одинаковым успехом обращаться к полю <span class="cpp">Re</span>, если
+переменная <span class="cpp">x1</span> имеет тип &laquo;<span class="rdsvar">TestComplex</span>&raquo;, и к полю
+<span class="cpp">Field1</span>, если <span class="cpp">x1</span> имеет тип &laquo;<span class="rdsvar">TestStruct</span>&raquo;,
+поскольку эти поля имеют одинаковые смещение и размер. Эта модель, предназначенная для суммирования комплексных
+чисел, то есть одноименных полей структуры &laquo;<span class="rdsvar">TestComplex</span>&raquo;, сможет суммировать и одноименные
+поля структуры &laquo;<span class="rdsvar">TestStruct</span>&raquo; (целесообразность такого суммирования остается на
+совести пользователя, заменившего одну структуру на другую).</p>
+
+<p>При вызове модели с параметром <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span> в поля <span class="cpp">Re</span> и <span class="cpp">Im</span>
+выхода <span class="cpp">y</span> записывается сумма одноименных полей входов
+<span class="cpp">x1</span> и <span class="cpp">x2</span>. Макросы для полей структур,
+как и макросы статических переменных, могут находиться и в левой, и в правой части выражения. Чтобы присвоить
+&laquo;<span class="rdsvar">y.Re</span>&raquo; сумму &laquo;<span class="rdsvar">x1.Re</span>&raquo; и &laquo;<span class="rdsvar">x2.Re</span>&raquo;, нужно записать</p>
+
+<pre class="cpp">  Re(y)=Re(x1)+Re(x2)</pre>
+
+<p>Точно так же записывается суммирование полей <span class="cpp">Im</span>. Для упрощения примера
+мы здесь не проверяем допустимость сложения полей структуры. Одно из них может оказаться равным специальному
+значению, сигнализирующему об ошибке вычисления, возникшей в предыдущем блоке (оно возвращается функцией
+<span class="cpp"><a href="rdsGetHugeDouble.htm" title="А.5.2.22. rdsGetHugeDouble &ndash; получение значения-индикатора математической ошибки">rdsGetHugeDouble</a></span>) &ndash; в этом случае выполнять сложение вещественных чисел
+нельзя, вместо этого соответствующему полу выхода <span class="cpp">y</span> следует
+присвоить это же значение-индикатор ошибки.</p>
+
+<div class="picright"><div class="container" id="pic5">
+<img src="../img/TestStructSum.png" width="257" height="166" alt="Схема для проверки работы со структурами" />
+<p id="light_pic5">Рис.&nbsp;28. Схема для проверки<br />работы со структурами</p>
+</div></div>
+
+
+<p>Поскольку структуру &laquo;<span class="rdsvar">TestComplex</span>&raquo; мы только что создали для этого примера,
+единственная модель, которая с ней работает &ndash; это написанная нами <span class="cpp">TestStructSum</span>. Хотя
+у нас нет других блоков и моделей, поддерживающих нашу новую структуру, проверить работу нового блока
+мы все равно можем: RDS позволяет подключать связи не только ко всей структуре как к единой
+переменной, но и к отдельным ее полям. Можно собрать схему, изображенную
+на <a href="#pic5" title="Схема для проверки работы со структурами">рис.&nbsp;28</a>:
+к полям <span class="cpp">Re</span> и <span class="cpp">Im</span> входов блока <span class="cpp">x1</span> и
+<span class="cpp">x2</span> подключены поля ввода, а к полям выхода <span class="cpp">y</span> &ndash; индикаторы.
+При запущенном расчете на индикаторе, соединенном с &laquo;<span class="rdsvar">y.Re</span>&raquo; должна отображаться сумма
+&laquo;<span class="rdsvar">x1.Re</span>&raquo; и &laquo;<span class="rdsvar">x2.Re</span>&raquo;, а на индикаторе, соединенном с &laquo;<span class="rdsvar">y.Im</span>&raquo;
+&ndash; сумма &laquo;<span class="rdsvar">x1.Im</span>&raquo; и &laquo;<span class="rdsvar">x2.Im</span>&raquo;.</p>
+
+<p>Изображенная
+на <a href="#pic5" title="Схема для проверки работы со структурами">рис.&nbsp;28</a>
+схема не показывает преимущества структур перед отдельными переменными &ndash; как было указано выше,
+у нас пока есть только один блок, работающий со структурой
+&laquo;<span class="rdsvar">TestComplex</span>&raquo;, поэтому все связи в схеме присоединяются к отдельным
+полям структур. Однако, выход этого блока мы уже можем соединить с входом другого такого же (например,
+чтобы добавить к вычисленной сумме третье комплексное число), и для этого потребуется всего одна связь.
+Мы также можем ввести выход блока в какую-либо подсистему через один
+<a href="pm_1_2.htm#light_ref6" title="Внешний вход подсистемы">внешний вход</a> типа &laquo;<span class="rdsvar">TestComplex</span>&raquo;, подключить его к
+одному каналу шины этого же типа и т.п. &ndash; нам теперь не нужно создавать пару связей для
+каждой передачи комплексного числа.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_5_4.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_5_6.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

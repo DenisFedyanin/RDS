@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.12.3. Реакция на мышь в блоках сложной формы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_12">&sect;2.12. Реакция блоков на действия пользователя</a></p>
+<div class="level"><p>&sect;2.12.3. Реакция на мышь в блоках сложной формы</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_12_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_4.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_12_3_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.12. Реакция блоков на действия пользователя</h3>
+<h4>&sect;2.12.3. Реакция на мышь в блоках сложной формы</h4>
+<p class="abstract">Рассматриваются особенности реакции на мышь в перекрывающихся блоках сложной формы,
+                в которых часть изображения одного блока просматривается сквозь изображение другого. Приводится пример блока
+                с &laquo;отверстием&raquo;, которое может открываться и закрываться, разрешая или запрещая тем самым
+                щелчки мышью по полю ввода, видимому в отверстии.</p>
+
+
+<p><span id="ref1">Модель</span>
+блока, если в его параметрах
+<a href="pm_2_12_1.htm#pic1" title="Включение реакции на мышь в параметрах блока">разрешена реакция на мышь</a>, получает информацию о нажатии
+и отпускании кнопок и перемещении курсора, если курсор находится в пределах
+<span id="light_ref1">описывающего прямоугольника</span> изображения блока (то есть прямоугольника
+с минимальной шириной и высотой, который можно описать вокруг изображения блока). Однако, довольно часто
+изображения блоков имеют сложную форму, и, если блоки в подсистеме перекрываются, в описывающий прямоугольник
+такого изображения могут попасть части изображений других блоков. При этом пользователь, щелкая мышью
+по ясно видимому в окне изображению, может не подозревать, что на самом деле это изображение перекрыто описывающим
+прямоугольником какого-либо другого блока, который перехватит этот щелчок.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/BlockIntersection.png" width="220" height="207" alt="Перекрывающиеся блоки" />
+<p id="light_pic1">Рис.&nbsp;76. Перекрывающиеся блоки</p>
+</div></div>
+
+
+<p>Например, если блок 2 со сложным изображением
+на <a href="#pic1" title="Перекрывающиеся блоки">рис.&nbsp;76</a> расположен на переднем плане, его описывающий прямоугольник
+(изображен пунктиром) будет перекрывать прямоугольник блока 1. Пользователь, щелкая мышью по изображению блока 1,
+будет ожидать реакции на этот щелчок именно от этого блока. Однако, поскольку блок 2 с его
+прямоугольником располагается поверх блока 1, информацию о нажатии кнопки мыши получит блок 2. Если
+в параметрах блока 2 не разрешена реакция на мышь, RDS не будет вызывать его модель и вызовет модель
+следующего по близости к переднему плану блока, то есть блока 1, что соответствует замыслу пользователя. Однако,
+если блок 2, как и блок 1, реагирует на мышь, будет вызвана именно его модель, что будет для пользователя полной
+неожиданностью, ведь он щелкал по ясно видимому изображению блока 1. Чтобы этого не происходило, модели
+сложных по форме блоков должны анализировать, не пришелся ли щелчок мыши на прозрачную (не занятую изображением)
+область описывающего прямоугольника и отказываться реагировать на мышь в таких случаях. Для этого
+функция модели, вызванная для реакции на мышь, должна вернуть константу
+<span class="cpp"><span id="light_ref2"><a href="RDS_BFM_MOUSEDOWN.htm#light_ref1" title="RDS_BFR_NOTPROCESSED">RDS_BFR_NOTPROCESSED</a></span></span> вместо обычной <span class="cpp"><a href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a></span> &ndash;
+это укажет RDS на то, что для реакции на мышь нужно вызвать модель другого блока.</p>
+
+<div class="picright"><div class="container" id="pic2">
+<img src="../img/MouseHoles_conns.png" width="356" height="119" alt="Подключение блока управления полем ввода" />
+<p id="light_pic2">Рис.&nbsp;77. Подключение блока управления<br />полем ввода</p>
+</div></div>
+
+
+<p><span id="ref3">В</span>
+качестве примера создадим <span id="light_ref3">блок, который можно использовать для управления полем ввода</span>.
+Блок будет иметь два вещественных входа: &laquo;<span class="rdsvar">x_ext</span>&raquo; и
+&laquo;<span class="rdsvar">x_int</span>&raquo;, вещественный выход &laquo;<span class="rdsvar">out</span>&raquo; и внутреннюю логическую переменную
+&laquo;<span class="rdsvar">bypass</span>&raquo;. У блока будет два состояния: открытое и закрытое. В открытом состоянии (&laquo;<span class="rdsvar">bypass</span>&raquo;=0)
+блок будет выглядеть как рамка зеленого цвета с прозрачным окном внутри, при этом он будет передавать на выход
+&laquo;<span class="rdsvar">out</span>&raquo; значение входа &laquo;<span class="rdsvar">x_int</span>&raquo;. В закрытом состоянии
+(&laquo;<span class="rdsvar">bypass</span>&raquo;=1) блок будет сплошным красным прямоугольником, внутри которого отображается значение
+выхода &laquo;<span class="rdsvar">out</span>&raquo;, при этом на выход должно передаваться значение входа &laquo;<span class="rdsvar">x_ext</span>&raquo;.
+Состояния блока будут переключаться по щелчку мыши. Если разместить этот блок поверх поля ввода,
+подключенного к его входу &laquo;<span class="rdsvar">x_int</span>&raquo;, блок сможет управлять этим полем ввода. В открытом состоянии
+поле ввода будет видно в окне в центре блока, и на выход блока будет передаваться значение, введенное в поле
+(чтобы пользователь смог работать с полем ввода, необходимо написать модель блока так, чтобы она не
+реагировала на щелчки мыши внутри прозрачного окна). В закрытом состоянии блок будет перекрывать поле ввода,
+и, вместо его значения, будет передавать на выход значение с входа &laquo;<span class="rdsvar">x_ext</span>&raquo;.
+На <a href="#pic2" title="Подключение блока управления полем ввода">рис.&nbsp;77</a> изображен пример подключения такого блока к
+полям ввода: в открытом состоянии на числовой индикатор будет выдаваться значение поля &laquo;<span class="rdsvar">A2</span>&raquo;, в
+закрытом &ndash; &laquo;<span class="rdsvar">A1</span>&raquo;. Выход блока &laquo;<span class="rdsvar">out</span>&raquo; на рисунке подключен еще и ко
+входу &laquo;<span class="rdsvar">v</span>&raquo; поля ввода &laquo;<span class="rdsvar">A2</span>&raquo;, чтобы в закрытом состоянии, когда значение
+&laquo;<span class="rdsvar">out</span>&raquo; совпадает с &laquo;<span class="rdsvar">x_ext</span>&raquo;, это поле автоматически получало значения с поля
+&laquo;<span class="rdsvar">A1</span>&raquo;.</p>
+
+<p>Блок управления будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">x_ext</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">x_int</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">18</td>
+<td class="vcenter">out</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">26</td>
+<td class="vcenter">bypass</td>
+<td class="center">Логический</td>
+<td class="center">1</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Модель блока должна запускаться только при поступлении на его входы новых значений, поэтому в параметрах блока
+нужно включить <a href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">запуск по сигналу</a> и установить
+<a href="pm_1_5.htm#ref18" title="Флаг запуска у входа блока">флаг &laquo;<span class="menu">пуск</span>&raquo;</a> для всех входов блока. Сама модель будет иметь
+следующий вид:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> EditControlFrame(<span class="kw">int</span> CallMode,
+            <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+            <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x_ext  (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define x_int  (*((double *)(pStart+10)))</span>
+  <span class="preproc">#define out    (*((double *)(pStart+18)))</span>
+  <span class="preproc">#define bypass (*((char *)(pStart+26)))</span>
+    <span class="kw">const</span> <span class="kw">int</span> fr=<span class="const">20</span>; <span class="rem">// Толщина рамки</span>
+    <span class="rem">// Вспомогательные переменные</span>
+    <span id="light_ref4"><a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a></span> mouse;
+    <span id="light_ref5"><a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a></span> draw;
+    <span class="kw">int</span> frz,x1,y1,x2,y2,xi1,yi1,xi2,yi2;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типов статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDDDL}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Реакция на нажатие кнопки мыши</span>
+        <span class="kw">case</span> <span id="light_ref6"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>:
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam;
+          <span class="rem">// Толщина рамки с учетом масштаба</span>
+          frz=fr*mouse-&gt;DoubleZoom;
+          <span class="rem">// В открытом состоянии при попадании курсора внутрь</span>
+          <span class="rem">// прозрачного окна на щелчок реагировать не нужно</span>
+          <span class="kw">if</span>(bypass==<span class="const">0</span> &amp;&amp;
+             mouse-&gt;x&gt;mouse-&gt;Left+frz &amp;&amp;
+             mouse-&gt;y&gt;mouse-&gt;Top+frz &amp;&amp;
+             mouse-&gt;x&lt;mouse-&gt;Left+mouse-&gt;Width-frz &amp;&amp;
+             mouse-&gt;y&lt;mouse-&gt;Top+mouse-&gt;Height-frz)
+            <span class="kw">return</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm#light_ref1" title="RDS_BFR_NOTPROCESSED">RDS_BFR_NOTPROCESSED</a>;
+          <span class="rem">// Если не левая кнопка - не обрабатываем щелчок</span>
+          <span class="rem">// и разрешаем вывести контекстное меню, если нужно</span>
+          <span class="kw">if</span>(mouse-&gt;Button!=<span id="light_ref7"><a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a></span>)
+            <span class="kw">return</span> <span id="light_ref8"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm#light_ref2" title="RDS_BFR_SHOWMENU">RDS_BFR_SHOWMENU</a></span>;
+          <span class="rem">// Нажата левая кнопка мыши, причем курсор попал</span>
+          <span class="rem">// в рамку или блок в закрытом состоянии</span>
+          bypass=!bypass; <span class="rem">// Переключаем состояние</span>
+          Ready=<span class="const">1</span>;        <span class="rem">// Взводим сигнал готовности</span>
+          <span class="rem">// Здесь намеренно не поставлен оператор break: необходимо</span>
+          <span class="rem">// выполнить действия в следующем case (такт расчета)</span>
+
+        <span class="rem">// Один такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="rem">// В зависимости от состояния, подаем на выход</span>
+          <span class="rem">// один из входов</span>
+          out=bypass?x_ext:x_int;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Рисование внешнего вида блока</span>
+        <span class="kw">case</span> <span id="light_ref9"><a class="hidden" href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a></span>:
+          draw=(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a>)ExtParam;
+          <span class="rem">// Координаты описывающего прямоугольника блока</span>
+          x1=draw-&gt;Left;
+          x2=draw-&gt;Left+draw-&gt;Width;
+          y1=draw-&gt;Top;
+          y2=draw-&gt;Top+draw-&gt;Height;
+          <span class="rem">// Толщина рамки с учетом масштаба</span>
+          frz=fr*draw-&gt;DoubleZoom;
+          <span class="rem">// Координаты окна внутри блока</span>
+          xi1=x1+frz;
+          xi2=x2-frz;
+          yi1=y1+frz;
+          yi2=y2-frz;
+          <span class="kw">if</span>(bypass)
+            { <span class="rem">// Закрытое состояние</span>
+              <span class="kw">int</span> w;
+              <span class="kw">char</span> *text;
+              <span class="rem">// Рисуем красный прямоугольник с черной рамкой</span>
+              <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,<span class="const">1</span>,<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+              <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,<span class="const">0xff</span>);
+              <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(x1,y1,x2,y2);
+              <span class="rem">// Устанавливаем шрифт выстой в окно внутри блока</span>
+              <span id="light_ref10"><a class="hidden" href="rdsXGSetFont.htm" title="А.5.18.22. rdsXGSetFont &ndash; установить шрифт">rdsXGSetFont</a></span>(<span class="const">0</span>,<span class="str">"Arial"</span>,yi2-yi1,<span class="const">0</span>,
+                <span id="light_ref11"><a class="hidden" href="RDS_SERVFONTPARAMS.htm#light_ref5" title="DEFAULT_CHARSET">DEFAULT_CHARSET</a></span>,<span class="const">0</span>,FALSE,FALSE,FALSE,FALSE);
+              <span class="rem">// Преобразуем значение выхода в динамическую строку</span>
+              text=<span id="light_ref12"><a class="hidden" href="rdsDtoA.htm" title="А.5.4.5. rdsDtoA &ndash; преобразование вещественного числа в строку">rdsDtoA</a></span>(out,-<span class="const">1</span>,NULL);
+              <span class="rem">// Определяем ширину получившейся строки на экране</span>
+              <span id="light_ref13"><a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a></span>(text,&amp;w,NULL);
+              <span class="rem">// Выводим значение выхода туда, где в открытом</span>
+              <span class="rem">// состоянии находится прозрачное окно</span>
+              <span id="light_ref14"><a class="hidden" href="rdsXGTextOut.htm" title="А.5.18.27. rdsXGTextOut &ndash; строка текста">rdsXGTextOut</a></span>(xi2-w,yi1,text);
+              <span class="rem">// Освобождаем динамическую строку</span>
+              <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(text);
+            }
+          <span class="kw">else</span>
+            { <span class="rem">// Открытое состояние</span>
+              <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,<span class="const">0xff00</span>);
+              <span class="rem">// Рисуем рамку вокруг прозрачного окна из четырех</span>
+              <span class="rem">// зеленых прямоугольников</span>
+              <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(x1,y1,x2,yi1);
+              <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(x1,yi2,x2,y2);
+              <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(x1,yi1,xi1,yi2);
+              <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(xi2,yi1,x2,yi2);
+              <span class="rem">// Обрамляем черными линиями</span>
+              <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,<span class="const">1</span>,<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+              <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<span id="light_ref15"><a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref5" title="RDS_GFS_EMPTY">RDS_GFS_EMPTY</a></span>,<span class="const">0</span>);
+              <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(x1,y1,x2,y2);
+              <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(xi1,yi1,xi2,yi2);
+            }
+          <span class="kw">break</span>;
+      }
+
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef bypass</span>
+  <span class="preproc">#undef out</span>
+  <span class="preproc">#undef x_int</span>
+  <span class="preproc">#undef x_ext</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В такте моделирования (<span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>) выходу <span class="cpp">out</span> присваивается значение
+одного из входов в зависимости от значения переменной состояния <span class="cpp">bypass</span> &ndash;
+это самая простая реакция модели. Реакция на мышь и процедура рисования немного сложнее.</p>
+
+<p>В реакции на нажатие кнопки мыши (<span class="cpp"><a href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>) модель сначала проверяет,
+не попал ли курсор в прозрачное окно внутри блока. Для этого вычисляется толщина рамки в текущем масштабе
+<span class="cpp">frz</span> (толщина рамки в единичном масштабе задана как константа
+<span class="cpp">fr</span> в начале функции). Затем, если блок в открытом состоянии
+(<span class="cpp">bypass==0</span>), и курсор мыши находится далее чем в <span class="cpp">frz</span>
+точках от его границ, функция немедленно возвращает константу
+<span class="cpp"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm#light_ref1" title="RDS_BFR_NOTPROCESSED">RDS_BFR_NOTPROCESSED</a></span>, информируя RDS о том, что щелчок пришелся
+в прозрачное окно и данная модель отказывается от его обработки. В противном случае щелчок пришелся на
+рамку или на прямоугольник блока в закрытом состоянии. Если была нажата не левая кнопка (нас интересуют
+только щелчки левой), функция возвращает константу <span class="cpp"><a href="RDS_BFM_MOUSEDOWN.htm#light_ref2" title="RDS_BFR_SHOWMENU">RDS_BFR_SHOWMENU</a></span>, информируя
+RDS о том, что, хотя модель и обработала нажатие кнопки,
+<a href="um_2_6.htm#pic3" title="Контекстное меню блока (поля ввода)">контекстное меню блока</a> по правой кнопке вызвать все
+равно нужно (это стандартная практика при написании моделей блоков &ndash; если функция модели, обработав щелчок
+мыши, не хочет блокировать вызов контекстного меню блока, она должна вернуть
+<span class="cpp"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm#light_ref2" title="RDS_BFR_SHOWMENU">RDS_BFR_SHOWMENU</a></span>). Если же была нажата именно левая кнопка мыши,
+<span class="cpp">bypass</span> инвертируется (состояние блока переключается), взводится сигнал готовности
+<span class="cpp"><a href="um_1_4.htm#ref27" title="Сигнал готовности блока">Ready</a></span> для передачи выхода блока по связям в ближайшем
+такте расчета, и, из-за опущенного оператора <span class="cpp">break</span>, выполняется следующая далее
+по тексту программы реакция на такт расчета, вычисляющая значение выхода блока
+по новому значению <span class="cpp">bypass</span>.</p>
+
+<p>При рисовании внешнего вида блока также вычисляется толщина рамки в текущем масштабе
+<span class="cpp">frz</span> &ndash; она потребуется и в открытом состоянии блока (для рисования рамки
+вокруг прозрачного окна), и в закрытом (для вывода значения выхода блока туда, где в открытом состоянии через
+окно видно поле ввода). Кроме того, во вспомогательные переменные записываются вычисленные координаты
+описывающего прямоугольника блока <span class="cpp">x1</span>, <span class="cpp">y1</span>, <span class="cpp">x2</span>,
+<span class="cpp">y2</span>, и координаты прямоугольника окна внутри блока
+<span class="cpp">xi1</span>, <span class="cpp">yi1</span>, <span class="cpp">xi2</span>, <span class="cpp">yi2</span>
+&ndash; они смещены внутрь блока на <span class="cpp">frz</span> точек. Далее рисование производится по-разному для
+открытого и закрытого состояния.</p>
+
+<p>В закрытом состоянии (<span class="cpp">bypass!=0</span>) функция рисует красный прямоугольник размером с
+описывающий прямоугольник блока. Затем, при помощи функции <span class="cpp"><a href="rdsXGSetFont.htm" title="А.5.18.22. rdsXGSetFont &ndash; установить шрифт">rdsXGSetFont</a></span>, устанавливаются
+параметры шрифта, которым будет выведено текущее значение выхода блока, причем в качестве высоты шрифта
+в функцию передается высота окна внутри блока <span class="cpp">yi2-yi1</span>. Вещественное значение
+<span class="cpp">out</span> преобразуется в динамически отведенную строку функцией
+<span class="cpp"><a href="rdsDtoA.htm" title="А.5.4.5. rdsDtoA &ndash; преобразование вещественного числа в строку">rdsDtoA</a></span>, после чего эта строка выводится на экран выровненной по правой границе
+внутреннего окна блока <span class="cpp">xi2</span>. Затем память, отведенная под строку, освобождается функцией
+<span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>, и рисование на этом завершается.</p>
+
+<p>В открытом состоянии (<span class="cpp">bypass==0</span>) необходимо нарисовать зеленый прямоугольник с
+прозрачным окном посередине. Поскольку ни в Windows API, ни в графических функциях RDS нет функции
+для рисования прямоугольника с отверстием, проще всего нарисовать рамку из четырех прямоугольников вокруг прозрачного
+окна, а затем, отключив заливку, отдельно нарисовать черные линии, ограничивающие блок и окно в его центре.
+Именно это и делается в модели блока.</p>
+
+<p>Для проверки работы модели следует задать в параметрах блока
+<a href="pm_2_10_1.htm" title="&sect;2.10.1. Рисование изображения блока в окне подсистемы">программное рисование</a>
+и разрешить ему <a href="pm_2_12_1.htm#pic1" title="Включение реакции на мышь в параметрах блока">реакцию на мышь</a>. Затем следует расположить этот
+блок поверх поля ввода, подобрав его размер так, чтобы это поле было видно сквозь прозрачное окно в
+блоке, и провести соединения блока с этим полем и еще парой дополнительных блоков, как показано
+на <a href="#pic2" title="Подключение блока управления полем ввода">рис.&nbsp;77</a>. Теперь, запустив расчет, можно подавать
+на числовой индикатор значение с &laquo;внешнего&raquo; или &laquo;внутреннего&raquo; полей ввода
+(<a href="#pic3" title="Блок управления полем ввода в открытом (а) и закрытом (б) состоянии">рис.&nbsp;78</a>, связи между блоком управления и полем A2 убраны на
+невидимый <a href="um_2_12.htm" title="&sect;2.12.1. Использование слоев">слой</a>), переключая состояние блока щелчками мыши.
+При этом, когда блок находится в открытом состоянии (зеленый цвет), поле ввода, видимое через прозрачное окно,
+должно реагировать на щелчки мыши, несмотря на то, что формально оно перекрыто блоком управления.</p>
+
+<div class="pic"><div class="container" id="pic3">
+<div class="multi" id="pic3_0"><img src="../img/MouseHoles_green.png" width="356" height="80" alt="Блок управления полем ввода в открытом (а) и закрытом (б) состоянии 1" /><p id="light_pic3_0">(а)</p></div><div class="multi" id="pic3_1"><img src="../img/MouseHoles_red.png" width="356" height="80" alt="Блок управления полем ввода в открытом (а) и закрытом (б) состоянии 2" /><p id="light_pic3_1">(б)</p></div><p id="light_pic3">Рис.&nbsp;78. Блок управления полем ввода в открытом (а) и закрытом (б) состоянии</p>
+</div></div>
+
+
+<p><span id="ref16">Можно</span>
+заметить, что у созданного блока есть один недостаток.
+В режимах <a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a>
+и <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a> все работает так, как и было задумано: щелчки в
+прозрачном окне блока не обрабатываются моделью, попадают в поле ввода и позволяют изменять
+его значение. Однако, в режиме <a href="pm_1_3.htm#ref1" title="Режим редактирования">редактирования</a> модель блока
+на действия мышью не реагирует, поэтому, хотя поле ввода и видно через окно в прямоугольнике блока,
+выбрать его мышью, вызвать окно настроек или контекстное меню невозможно: все щелчки будут
+приходиться на лежащий выше блок. <span id="light_ref16">Для того, чтобы модель могла сделать блок
+&laquo;прозрачным&raquo; для щелчков и в режиме редактирования, в нее нужно включить реакцию на
+выбор блока мышью <span class="cpp"><span id="light_ref17"><a href="RDS_BFM_MOUSESELECT.htm" title="А.2.7.3. RDS_BFM_MOUSESELECT &ndash; возможность выбора блока мышью">RDS_BFM_MOUSESELECT</a></span></span></span>. Эта реакция очень похожа на реакцию
+на нажатие кнопки мыши в режимах моделирования и расчета: в параметре
+<span class="cpp">ExtParam</span> также передается указатель на структуру <span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a></span>,
+содержащую координаты курсора мыши, размеры описывающего прямоугольника блока, текущий масштаб и т.д.,
+однако, она вызывается только в режиме редактирования. Если в ответ на этот вызов модель вернет
+<span class="cpp"><a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a></span>, точка будет считаться принадлежащей блоку, и
+RDS выполнит для него все обычные действия режима редактирования (выделит при щелчке левой кнопкой,
+откроет контекстное меню при щелчке правой, откроет окно параметров или настройки при двойном щелчке).
+Если же модель вернет <span class="cpp"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm#light_ref1" title="RDS_BFR_NOTPROCESSED">RDS_BFR_NOTPROCESSED</a></span>, RDS пропустит этот блок и
+будет искать другой, лежащий ниже, по этим же координатам.</p>
+
+<p>Добавим в нашу модель реакцию на это событие. В оператор
+<span class="cpp">switch(CallMode)</span> нужно добавить следующий <span class="cpp">case</span>:</p>
+
+<pre class="cpp">        <span class="rem">// Проверка возможности выбора блока мышью</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSESELECT.htm" title="А.2.7.3. RDS_BFM_MOUSESELECT &ndash; возможность выбора блока мышью">RDS_BFM_MOUSESELECT</a>:
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam;
+          frz=fr*mouse-&gt;DoubleZoom; <span class="rem">// Толщина рамки</span>
+          <span class="rem">// Проверка попадания в прозрачное окно</span>
+          <span class="kw">if</span>(bypass==<span class="const">0</span> &amp;&amp;
+             mouse-&gt;x&gt;mouse-&gt;Left+frz &amp;&amp;
+             mouse-&gt;y&gt;mouse-&gt;Top+frz &amp;&amp;
+             mouse-&gt;x&lt;mouse-&gt;Left+mouse-&gt;Width-frz &amp;&amp;
+             mouse-&gt;y&lt;mouse-&gt;Top+mouse-&gt;Height-frz)
+            <span class="kw">return</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm#light_ref1" title="RDS_BFR_NOTPROCESSED">RDS_BFR_NOTPROCESSED</a>;
+          <span class="rem">// В окно не попали - функция вернет </span><a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE"><span class="rem">RDS_BFR_DONE</span></a>
+          <span class="kw">break</span>;</pre>
+
+<p>Новая реакция практически идентична реакции <span class="cpp"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>, за исключением
+действий по переключению состояния блока &ndash; в режиме редактирования этого делать не нужно.
+При желании, можно совместить действия этих двух реакций, поставив их операторы <span class="cpp">case</span>
+друг за другом.</p>
+
+<p>Из-за похожести реакций на события <span class="cpp"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span> и
+<span class="cpp"><a class="hidden" href="RDS_BFM_MOUSESELECT.htm" title="А.2.7.3. RDS_BFM_MOUSESELECT &ndash; возможность выбора блока мышью">RDS_BFM_MOUSESELECT</a></span> у программиста может возникнуть искушение использовать последнее
+для реакции на щелчок мыши в режиме редактирования. Следует, однако, иметь в виду, что, независимо от того,
+какую кнопку нажмет пользователь на блоке при его выделении в режиме редактирования, в параметрах события
+<span class="cpp"><a class="hidden" href="RDS_BFM_MOUSESELECT.htm" title="А.2.7.3. RDS_BFM_MOUSESELECT &ndash; возможность выбора блока мышью">RDS_BFM_MOUSESELECT</a></span> будет указана левая. Это событие предназначено только
+для проверки возможности выделения блока щелчком мыши по указанной точке, и использовать его в других целях
+нежелательно.</p>
+
+<p>В этом примере форма блока (прямоугольник с окном) задавалась программно. Таких же результатов можно
+достичь и с использованием <a href="pm_1_4.htm#light_ref4" title="Векторная картинка блока">векторных картинок</a>: нужно каждому элементу
+картинки присвоить ненулевой идентификатор. Тогда, если функция
+<span class="cpp"><a href="rdsGetMouseObjectId.htm" title="А.5.6.31. rdsGetMouseObjectId &ndash; элемент векторной картинки блока под курсором мыши">rdsGetMouseObjectId</a></span> (см. пример в <a href="pm_2_12_1.htm#ref8" title="Пример опознания элемента векторной картинки под курсором">&sect;2.12.1</a>)
+вернет нулевое значение, это даст модели понять, что курсор не попал ни в один из элементов картинки.
+Вернув в этом случае константу <span class="cpp"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm#light_ref1" title="RDS_BFR_NOTPROCESSED">RDS_BFR_NOTPROCESSED</a></span>, модель позволит отозваться на
+щелчок мыши какому-либо другому блоку, изображение которого видно под картинкой данного. При этом следует
+помнить, что проверка попадания курсора мыши в тот или иной векторный элемент картинки блока в функции
+<span class="cpp"><a class="hidden" href="rdsGetMouseObjectId.htm" title="А.5.6.31. rdsGetMouseObjectId &ndash; элемент векторной картинки блока под курсором мыши">rdsGetMouseObjectId</a></span> также производится по описывающему прямоугольнику этого элемента.
+Например, если картинка блока 2 на <a href="#pic1" title="Перекрывающиеся блоки">рис.&nbsp;76</a> будет представлять собой
+один Г-образный многоугольник, любой щелчок мышью в пределах описывающего прямоугольника этого многоугольника
+будет считаться попаданием в сам многоугольник, и блок 1 снова окажется перекрыт. Чтобы избежать этого, нужно
+либо составить картинку блока 2 из двух прямоугольников с ненулевыми идентификаторами, либо присвоить многоугольнику
+нулевой идентификатор (исключив его тем самым из проверки на попадание курсора мыши) и наложить на него два
+специальных прямоугольных векторных элемента
+&laquo;<a href="um_2_10_7.htm" title="&sect;2.10.7. Добавление в картинку зон, чувствительных к курсору мыши">зона</a>&raquo; (которые никак не отображаются на внешнем виде блока)
+с ненулевыми идентификаторами. Эти элементы специально предназначены для того, чтобы создавать в картинке блока
+зоны, чувствительные к нажатию кнопок мыши, не затрагивая внешний вид самой картинки. В данном случае, если
+покрыть такими элементами все непрозрачные детали картинки блока, цель будет достигнута: щелчок по видимым элементам
+картинки (на самом деле пришедшийся на добавленные &laquo;зоны&raquo;) будет считаться попаданием в
+блок, щелчок по остальной площади описывающего прямоугольника блока (где зон нет) &ndash; не будет.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_12_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_4.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

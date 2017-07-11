@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.2.7.6. RDS_BFM_RESIZE &ndash; размер блока изменен пользователем</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2">А.2. События блока и связанные с ними описания</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2_7">А.2.7. События, связанные с изменением схемы пользователем</a></p>
+<div class="level"><p>А.2.7.6. <span class="cpp">RDS_BFM_RESIZE</span> &ndash; размер блока изменен пользователем</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_BFM_RENAME.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_RESIZING.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_RESIZE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.2. События блока и связанные с ними описания</h3>
+<h4 class="off">А.2.7. События, связанные с изменением схемы пользователем</h4>
+<h5>А.2.7.6. <span class="cpp">RDS_BFM_RESIZE</span> &ndash; размер блока изменен пользователем</h5>
+
+
+<p class="apphdr">Поток, в котором вызывается <a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функция модели</a></p>
+<p>Главный поток RDS или поток расчета (только если размер изменен сервисной функцией,
+вызванной в потоке расчета).</p>
+
+<p class="apphdr">Первый параметр функции модели (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_BFM_RESIZE</span>.</p>
+
+<p class="apphdr">Третий параметр функции модели (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Указатель на структуру описания события <span class="cpp"><a href="#ref2" title="Структура RDS_RESIZEDATA">RDS_RESIZEDATA</a></span>.</p>
+
+<p class="apphdr">Возвращаемое функцией модели значение</p>
+    <div class="tableshift"><div class="tcont">
+    <table>
+      <tr>
+        <td><span class="cpp">RDS_BFR_DONE</span></td>
+        <td>Изменение размеров блока подтверждено моделью (размеры могут быть скорректированы).</td>
+      </tr>
+      <tr>
+        <td><span class="cpp"><span id="light_ref1">RDS_BFR_STOP</span></span></td>
+        <td>Изменение размеров блока отменено моделью.</td>
+      </tr>
+    </table>
+    </div></div>
+
+<p class="apphdr">Примечания</p>
+<p>Событие <span class="cpp">RDS_BFM_RESIZE</span> возникает у блока, внешний вид которого рисуется
+программно, сразу после изменения его размеров пользователем. На момент вызова реакции на это
+событие размер блока еще не изменен, он изменится только после нее. Чаще всего в этой реакции
+подстраиваются размеры каких-либо внутренних элементов изображения блока
+(см. <a href="pm_2_10_2.htm" title="&sect;2.10.2. Оптимизация рисования">&sect;2.10.2 руководства программиста</a>) или корректируются изменения размера,
+сделанные пользователем, если по каким-либо причинам они не подходят для блока.</p>
+
+<p><span id="ref2">В</span> <span id="ref3">параметре</span>
+<span class="cpp">ExtParam</span> передается указатель на структуру <span class="cpp">RDS_RESIZEDATA</span>,
+описывающую изменение размеров:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span> {
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> HorzResize;         <span class="rem">// Изменение горизонтального размера</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> VertResize;         <span class="rem">// Изменение вертикального размера</span>
+    <span class="kw">int</span> newWidth,newHeight;  <span class="rem">// Новые значения ширины и высоты</span>
+    <span class="kw">int</span> GridDx,GridDy;       <span class="rem">// Шаги сетки редактора</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> SnapToGrid;         <span class="rem">// Привязка к сетке</span>
+  } <span id="light_ref2">RDS_RESIZEDATA</span>;
+  <span class="kw">typedef</span> RDS_RESIZEDATA *<span id="light_ref3">RDS_PRESIZEDATA</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">HorzResize</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd>Изменена ширина блока.</dd>
+
+  <dt><span class="cpp">VertResize</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd>Изменена высота блока. Вместе с полем <span class="cpp">HorzResize</span> это поле
+  определяет, каким именно образом пользователь изменил размер блока:
+  <div class="tablecenter"><div class="tcont">
+  <table>
+    <tr>
+      <th><span class="cpp">HorzResize</span></th>
+      <th><span class="cpp">VertResize</span></th>
+      <th>Действия пользователя</th>
+    </tr>
+    <tr>
+      <td class="center"><span class="cpp">FALSE</span></td>
+      <td class="center"><span class="cpp">FALSE</span></td>
+      <td>Новые размеры блока заданы числами в
+      <a href="pm_1_4.htm#pic2" title="Параметры блока &ndash; внешний вид">окне параметров</a> блока (кнопка
+      &laquo;<span class="menu">размер для функции DLL</span>&raquo;).</td>
+    </tr>
+    <tr>
+      <td class="center"><span class="cpp">FALSE</span></td>
+      <td class="center"><span class="cpp">TRUE</span></td>
+      <td>Пользователь
+      <a href="um_2_6.htm#ref9" title="Изменение размеров блока">перетащил</a>
+      верхнюю или нижнюю метку масштабирования вверх или вниз (изменена только высота).</td>
+    </tr>
+    <tr>
+      <td class="center"><span class="cpp">TRUE</span></td>
+      <td class="center"><span class="cpp">FALSE</span></td>
+      <td>Пользователь перетащил левую или правую метку масштабирования влево или вправо
+      (изменена только ширина).</td>
+    </tr>
+    <tr>
+      <td class="center"><span class="cpp">TRUE</span></td>
+      <td class="center"><span class="cpp">TRUE</span></td>
+      <td>Пользователь перетащил одну из угловых меток масштабирования (изменены и ширина, и высота).</td>
+    </tr>
+  </table>
+  </div></div>
+  </dd>
+
+  <dt><span class="cpp">newWidth</span>,&nbsp;<span class="cpp">newHeight</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Новые значения ширины (<span class="cpp">newWidth</span>) и высоты
+  (<span class="cpp">newHeight</span>) блока в масштабе 100%. Модель может вмешаться в изменение
+  размеров, заменив значения в этих полях. Например, можно записать вместо <span class="cpp">newHeight</span>
+  старое значение высоты блока, тогда изменение высоты, сделанное пользователем, будет
+  проигнорировано. Текущие (старые) размеры блока могут быть получены при помощи сервисных функций
+  <span class="cpp"><a href="rdsGetBlockDimensions.htm" title="А.5.6.17. rdsGetBlockDimensions &ndash; получить размеры и положение блока (устаревшая)">rdsGetBlockDimensions</a></span> и
+  <span class="cpp"><a href="rdsGetBlockDimensionsEx.htm" title="А.5.6.18. rdsGetBlockDimensionsEx &ndash; получить размеры и положение блока">rdsGetBlockDimensionsEx</a></span>.</dd>
+
+  <dt><span class="cpp">GridDx</span>,&nbsp;<span class="cpp">GridDy</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Горизонтальный (<span class="cpp">GridDx</span>) и вертикальный (<span class="cpp">GridDy</span>)
+  шаги <a href="um_2_11_4.htm#ref10" title="Привязка к сетке">сетки</a> в окне подсистемы.</dd>
+
+  <dt><span class="cpp">SnapToGrid</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если в окне подсистемы включена привязка к сетке.</dd>
+
+</dl>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_BFM_RESIZING.htm" title="А.2.7.7. RDS_BFM_RESIZING &ndash; изменение размеров блока пользователем">RDS_BFM_RESIZING</a></span>,
+<span class="cpp"><a href="rdsGetBlockDimensions.htm" title="А.5.6.17. rdsGetBlockDimensions &ndash; получить размеры и положение блока (устаревшая)">rdsGetBlockDimensions</a></span>,
+<span class="cpp"><a href="rdsGetBlockDimensionsEx.htm" title="А.5.6.18. rdsGetBlockDimensionsEx &ndash; получить размеры и положение блока">rdsGetBlockDimensionsEx</a></span>,
+<span class="cpp"><a href="rdsSetBlockRect.htm" title="А.5.6.49. rdsSetBlockRect &ndash; задать прямоугольник блока">rdsSetBlockRect</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_BFM_RENAME.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_RESIZING.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_RESIZE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

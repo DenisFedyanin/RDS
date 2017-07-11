@@ -1,0 +1,356 @@
+EXPSYSTXT
+version 1 rev 0 4016.11.5.14.28.0
+
+types
+ begin
+  struct type "Complex" 
+   begin
+    double name "Re" default "0"
+    double name "Im" default "0"
+   end
+ end
+
+pictures
+ begin
+  picture id 0
+   begin
+    rect from 0 0 size 29 29 solid color 0 fill 16777215
+    ellipse from 7 7 diameter 16 arc -0.4637339822548933632 3.926990816987241472 solid color 0
+    polygon points 3 solid color 0 fill 0 shape 25 19 20 16 19 22 end
+   end
+ end
+
+styles
+ begin
+  style name "Стандартная связь" solid scalewidth color 0 arrow 10 2 dotsize 5 default conn all types
+  style name "Стандартная шина" solid width 5 scalewidth color 0 arrow 10 5 dotsize 0 default bus
+ end
+
+system name "Sys1"
+ begin
+  layers
+   begin
+    layer id 1 name "Слой 1"
+    layer id 2 name "Пояснения"
+    config name "Основная" current layers =1 *2 end
+   end
+  editor
+   begin
+    window pos 0 150 size 790 386 open printbar 592 2 layerbar 141 2 zoombar 452 2 displaybar 654 2 calcbar 11 2 status
+    field size 2000 2000
+    grid size 5 5 snap color 16711680
+    crosscolor 16711680
+    blocknames show spacing 7 font "Arial" height 12 color 0
+    varnames show font "Arial" height 10
+   end
+  print
+   begin
+   end
+  content
+   begin
+    dllblock name "L57_FCalc1" id 2
+     begin
+      pos 165 65
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "_Start" in run default 1
+        signal name "_Ready" out default 0
+        short name "Aux_in" in hide default 0
+        short name "Aux_out" out hide default 0
+        char name "Func_in" in menu default 0
+        char name "Func_out" out menu default 0
+        double name "Calc_out" out menu default "?"
+        signal name "_allinval_dchg" default 1
+        double name "x" in menu run default "0"
+        double name "A" in menu run default "0"
+        double name "w" in menu run default "0"
+       end
+      auto
+       begin
+        var "x" ctrl "_allinval_dchg"
+        var "A" ctrl "_allinval_dchg"
+        var "w" ctrl "_allinval_dchg"
+       end
+      layout rect 140 85 fill 16777215 line 0 text "Вычисление\r\nфункции" font "Arial" height 13 color 0
+      dll file "L57_FCalc.dll" func "rdsbcppBlockEntryPoint" setup "" auto
+      autocomp file "$DLL$\\Common.dll" func "SearchComp" model "L57_FCalc.mdl" alt "C:\\Work\\ExpNew\\Samples\\L57\\L57_FCalc\\L57_FCalc.mdl\nC:\\Work\\ExpNew\\Samples\\L57\\L57_FCalc\\L57_FCalc.rds"
+     end
+    dllblock name "TextBlock1" id 3
+     begin
+      pos 10 10
+      layer id 2
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run default 0
+        signal name "Ready" out default 0
+        string name "Text" in menu default "Вычисление функции, заданной фрагментом программы"
+        logical name "alt" in menu default 0
+        int name "Flags" default 167
+        int name "BorderWidth" default 2
+        int name "BorderColor" in default 0
+        int name "AltBorderColor" in default 0
+        int name "FillColor" in default 12713983
+        int name "AltFillColor" in default 8454143
+        int name "HSpace" default 10
+        int name "VSpace" default 10
+        string name "AltText" in default ""
+        signal name "DataChanged" default 1
+        short name "FictiveIn" in hide default 0
+        short name "FictiveOut" out hide default 0
+       end
+      auto
+       begin
+        var "Text" ctrl "DataChanged"
+        var "alt" ctrl "DataChanged"
+        var "AltText" ctrl "DataChanged"
+       end
+      dll file "$DLL$\\Common.dll" func "MultiLineDisplay" draw setup "" auto
+      dlldata text
+       [Main]
+       MainFont= font "Arial" height 15 bold charset rus color 0
+       AltFont= font "Arial" height 17 bold charset rus color 0
+      enddlldata
+      rect 715 45
+     end
+    dllblock name "RTP1" id 4
+     begin
+      pos 10 65
+      layer id 1
+      name hidden
+      vars
+       begin
+        signal name "Start" in run default 1
+        signal name "Ready" out default 0
+        signal name "DoStep" out menu default 0
+        signal name "NextStep" in menu run default 0
+        double name "Time" out default "0"
+        double name "Load" out default "0"
+        signal name "Stop" in menu default 0
+        signal name "Finish" out menu default 0
+        signal name "Suspend" in default 0
+        signal name "Resume" in run default 0
+        double name "StepVal" in run default "0"
+        double name "SyncMul" in run default "0"
+        signal name "CalcStart" out menu default 0
+        signal name "ResumeNoSync" in run default 0
+       end
+      picture id 0 end
+      dll file "$DLL$\\Common.dll" func "DynamicSync" setup "Настройка" auto
+      dlldata text
+       s "0.1" a 2 b 20 t "1" r 1 c 1 f "100" d 1 e 0 x 1
+      enddlldata
+     end
+    dllblock name "DEdit2" id 5
+     begin
+      pos 10 100
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run hide default 0
+        signal name "Ready" out hide default 0
+        double name "v" in run hide default "0"
+        double name "edit" out menu hide default "0"
+       end
+      dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh mouse setup "" auto
+      dlldata text
+       value prec 1 font "Arial" height 15 color 0 set 2 initial 2
+       frame border 0 fill 16777215
+       caption text "A" font "Arial" height 15 charset 1 color 0
+       input l inc 0.1 updown arrwidth 13
+      enddlldata
+      rect 95 19
+     end
+    dllblock name "DEdit3" id 6
+     begin
+      pos 10 120
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run hide default 0
+        signal name "Ready" out hide default 0
+        double name "v" in run hide default "0"
+        double name "edit" out menu hide default "0"
+       end
+      dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh mouse setup "" auto
+      dlldata text
+       value prec 1 font "Arial" height 15 color 0 set 1 initial 1
+       frame border 0 fill 16777215
+       caption text "w" font "Arial" height 15 charset 1 color 0
+       input l inc 0.1 updown arrwidth 13
+      enddlldata
+      rect 95 19
+     end
+    dllblock name "TimeGraph1" id 10
+     begin
+      pos 415 60
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run default 0
+        signal name "Ready" out default 0
+        double name "Time" in run default "0"
+        double name "Value" in menu default "0"
+       end
+      dll file "$DLL$\\Common.dll" func "SimpleTimeGraph" draw mouse pass hint setup "Настройка" auto
+      dlldata text
+       title text "" param font "Arial" height 13 charset 1 color 0
+       layout back 16777215 frame 0 border 16777215 0
+       line color 0 width 1
+       axisx
+       begin
+       title text "Время" param font "Arial" height 13 charset 1 color 0 show current 2
+       scale min "0" max "10" step "5" numbers dec 0 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+       lines show color 0 style dot
+       zero color 0 style solid
+       end
+       axisy
+       begin
+       title text "Y" param font "Arial" height 13 charset 1 color 0 show current 2
+       scale min "-0.5" max "0.5" step "0.1" numbers dec 1 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+       lines show color 0 style dot
+       zero show color 0 style solid
+       end
+       vert auto "0.1"
+       horz mode 0 array 100 step "0.1"
+       time dyn "DynTime"
+      enddlldata
+      rect 310 195
+     end
+    dllblock name "Block1" id 13
+     begin
+      pos 215 150
+      layer id 2
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run default 0
+        signal name "Ready" out default 0
+        int name "Direction" default 3
+        int name "Color" default 255
+        int name "AltColor" default 65280
+        int name "Border" default 255
+        int name "AltBorder" default 0
+        logical name "Alt" in menu default 0
+        int name "Length" default 25
+        int name "Shift" default 10
+        int name "Flags" default 1
+        logical name "Visible" in menu default 1
+       end
+      dll file "$DLL$\\Common.dll" func "Arrow" draw setup "" auto
+      rect 40 50
+     end
+    dllblock name "TextBlock2" id 14
+     begin
+      pos 145 200
+      layer id 2
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run default 0
+        signal name "Ready" out default 0
+        string name "Text" in menu default "Вычисляемая функция и ее аргументы задаются в настройках блока"
+        logical name "alt" in menu default 0
+        int name "Flags" default 87
+        int name "BorderWidth" default 1
+        int name "BorderColor" in default 0
+        int name "AltBorderColor" in default 0
+        int name "FillColor" in default 12713983
+        int name "AltFillColor" in default 8454143
+        int name "HSpace" default 5
+        int name "VSpace" default 5
+        string name "AltText" in default ""
+        signal name "DataChanged" default 1
+        short name "FictiveIn" in hide default 0
+        short name "FictiveOut" out hide default 0
+       end
+      auto
+       begin
+        var "Text" ctrl "DataChanged"
+        var "alt" ctrl "DataChanged"
+        var "AltText" ctrl "DataChanged"
+       end
+      dll file "$DLL$\\Common.dll" func "MultiLineDisplay" draw setup "" auto
+      dlldata text
+       [Main]
+       MainFont= font "Arial" height 13 charset rus color 0
+       AltFont= font "Arial" height 17 bold charset rus color 0
+      enddlldata
+      rect 180 60
+     end
+    conn id 7
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "RTP1" var "Time" out pos 30 15 cname right up
+        id 1 block "L57_FCalc1" var "x" in pos 0 15 cname left up
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+    conn id 8
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "DEdit2" var "edit" out pos 95 10 cname right up hidden
+        id 1 block "L57_FCalc1" var "A" in pos 0 45 cname left up
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+    conn id 9
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "DEdit3" var "edit" out pos 95 10 cname right up hidden
+        id 1 block "L57_FCalc1" var "w" in pos 0 65 cname left up
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+    conn id 12
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "L57_FCalc1" var "Calc_out" out pos 140 45 cname right up
+        id 1 block "TimeGraph1" var "Value" in pos 0 50 cname left up
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+   end
+  end
+
+additional
+ begin
+  window layer pos 1010 110 size 270 390
+  window system ""
+ end

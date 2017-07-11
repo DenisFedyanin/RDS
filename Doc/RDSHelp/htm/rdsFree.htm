@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_4">А.5.4. Отведение памяти и преобразование строк</a></p>
+<div class="level"><p>А.5.4.8. <span class="cpp">rdsFree</span> &ndash; освобождение отведенной динамической памяти</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsDynStrCopy.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsGetFullFilePath.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsFree">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.4. Отведение памяти и преобразование строк</h4>
+<h5>А.5.4.8. <span class="cpp">rdsFree</span> &ndash; освобождение отведенной динамической памяти</h5>
+
+
+<p>Функция <span class="cpp">rdsFree</span> освобождает область памяти, ранее отведенную функцией 
+<span class="cpp"><a href="rdsAllocate.htm" title="А.5.4.2. rdsAllocate &ndash; динамическое отведение области памяти">rdsAllocate</a></span> или уничтожает динамическую строку, созданную одной из сервисных функций.</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsFree(
+      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Ptr    <span class="rem">// Указатель на освобождаемую область</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_VpV</span></p>
+
+<p class="apphdr">Параметр</p>
+
+<dl>
+  <dt><span class="cpp">Ptr</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></i></span>)</dt>
+  <dd>Указатель на область памяти или динамическую строку, которую нужно освободить 
+  (при передаче <span class="cpp">NULL</span> никаких действий не производится).</dd>
+</dl>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция должна быть обязательно вызвана, когда область памяти или динамическая строка больше не нужна. 
+Если этого не сделать, в программе возникнут утечки памяти: в отличие от различных объектов RDS, динамические 
+строки и отводимые области памяти не привязаны к какому-либо блоку и не уничтожаются автоматически при 
+его удалении. Функцию можно безопасно вызывать с параметром <span class="cpp">NULL</span> &ndash; 
+в этом случае она немедленно завершается, не выполняя никаких действий.</p>
+
+<p>Функцию <span class="cpp">rdsFree</span> необходимо вызывать для освобождения памяти, 
+отведенной следующими функциями:</p>
+
+<ul>
+  <li><span class="cpp"><a href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a></span></li>
+  <li><span class="cpp"><a href="rdsAllocate.htm" title="А.5.4.2. rdsAllocate &ndash; динамическое отведение области памяти">rdsAllocate</a></span></li>
+  <li><span class="cpp"><a href="rdsBlockVarToMem.htm" title="А.5.14.2. rdsBlockVarToMem &ndash; записать значение переменной блока в буфер в памяти">rdsBlockVarToMem</a></span></li>
+  <li><span class="cpp"><a href="rdsCallDirDialog.htm" title="А.5.5.2. rdsCallDirDialog &ndash; вызов диалога выбора папки">rdsCallDirDialog</a></span></li>
+  <li><span class="cpp"><a href="rdsCallFileDialog.htm" title="А.5.5.3. rdsCallFileDialog &ndash; вызов диалога выбора файла">rdsCallFileDialog</a></span></li>
+  <li><span class="cpp"><a href="rdsCreateFullBlockNameString.htm" title="А.5.6.7. rdsCreateFullBlockNameString &ndash; полное имя блока">rdsCreateFullBlockNameString</a></span></li>
+  <li><span class="cpp"><a href="rdsCreateVarDescriptionString.htm" title="А.5.14.6. rdsCreateVarDescriptionString &ndash; текстовое описание переменной">rdsCreateVarDescriptionString</a></span></li>
+  <li><span class="cpp"><a href="rdsCreateVarTypeText.htm" title="А.5.14.7. rdsCreateVarTypeText &ndash; название типа переменной">rdsCreateVarTypeText</a></span></li>
+  <li><span class="cpp"><a href="rdsDtoA.htm" title="А.5.4.5. rdsDtoA &ndash; преобразование вещественного числа в строку">rdsDtoA</a></span></li>
+  <li><span class="cpp"><a href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span></li>
+  <li><span class="cpp"><a href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a></span></li>
+  <li><span class="cpp"><a href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a></span></li>
+  <li><span class="cpp"><a href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a></span></li>
+  <li><span class="cpp"><a href="rdsGetRelFilePath.htm" title="А.5.4.10. rdsGetRelFilePath &ndash; полный путь к файлу в сокращенный">rdsGetRelFilePath</a></span></li>
+  <li><span class="cpp"><a href="rdsGetRuntimeTypeData.htm" title="А.5.14.13. rdsGetRuntimeTypeData &ndash; получить фактические данные переменной произвольного типа">rdsGetRuntimeTypeData</a></span></li>
+  <li><span class="cpp"><a href="rdsGetTextWordDyn.htm" title="А.5.11.3. rdsGetTextWordDyn &ndash; извлечение слова из текста">rdsGetTextWordDyn</a></span></li>
+  <li><span class="cpp"><a href="rdsInputString.htm" title="А.5.5.5. rdsInputString &ndash; окно ввода строки">rdsInputString</a></span></li>
+  <li><span class="cpp"><a href="rdsItoA.htm" title="А.5.4.11. rdsItoA &ndash; преобразование целого числа в строку">rdsItoA</a></span></li>
+  <li><span class="cpp"><a href="rdsListVarTypes.htm" title="А.5.2.27. rdsListVarTypes &ndash; список названий типов переменных">rdsListVarTypes</a></span></li>
+  <li><span class="cpp"><a href="rdsMakeUniqueBlockName.htm" title="А.5.6.39. rdsMakeUniqueBlockName &ndash; создать уникальное имя блока">rdsMakeUniqueBlockName</a></span></li>
+  <li><span class="cpp"><a href="rdsProcessText.htm" title="А.5.4.12. rdsProcessText &ndash; обработка строки">rdsProcessText</a></span></li>
+  <li><span class="cpp"><a href="rdsStringReplace.htm" title="А.5.4.13. rdsStringReplace &ndash; замена фрагментов строки">rdsStringReplace</a></span></li>
+  <li><span class="cpp"><a href="rdsStructToFontText.htm" title="А.5.10.3. rdsStructToFontText &ndash; формирование описания шрифта">rdsStructToFontText</a></span></li>
+  <li><span class="cpp"><a href="rdsTransformFileName.htm" title="А.5.4.14. rdsTransformFileName &ndash; преобразование имени файла">rdsTransformFileName</a></span></li>
+  <li><span class="cpp"><a href="rdsVSGetVarDefValueStr.htm" title="А.5.25.13. rdsVSGetVarDefValueStr &ndash; получить строку значения переменной по умолчанию">rdsVSGetVarDefValueStr</a></span></li>
+  <li>Команда <span class="cpp"><a href="RDS_CSV_LINE.htm" title="А.5.32.9. Команда RDS_CSV_LINE &ndash; одна строка текста">RDS_CSV_LINE</a></span></li>
+  <li>Команда <span class="cpp"><a href="RDS_CSV_TEXT.htm" title="А.5.32.20. Команда RDS_CSV_TEXT &ndash; весь текст объекта">RDS_CSV_TEXT</a></span></li>
+</ul>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsDynStrCopy.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsGetFullFilePath.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsFree">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

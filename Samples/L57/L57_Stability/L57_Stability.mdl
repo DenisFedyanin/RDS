@@ -1,0 +1,772 @@
+$BC55MODEL
+Автоматически генерируемая модель полуавтокомпилируемого блока поиска равновесия
+$NOSHARE
+$VARS
+  signal name "_Start" in run default 1
+  signal name "_Ready" out default 0
+  int name "_Stage" out default 0
+  short name "Aux_in" in hide default 0
+  short name "Aux_out" out hide default 0
+  signal name "Start_cmd" in menu run default 0
+  signal name "Restart_cmd" in menu run default 0
+  matrix logical oneindex name "Enabled_in" in run default "[ ] 0"
+  signal name "_Enabled_chg" default 1
+  logical name "_results_ok" default 0
+  logical name "_enabled_res" default 1
+  logical name "Complete_out" out default 0
+  logical name "Error_out" out default 0
+  signal name "Finished_out" out default 0
+  signal name "Started_out" out default 0
+  double name "Time_out" out default "?"
+  matrix char oneindex name "Func_in" in menu default "[ ] 0"
+  matrix char oneindex name "Func_out" default "[ ] 0"
+  int name "Iteration_out" out default 0
+  int name "Steps_out" out menu default 0
+  logical name "_TabFuncReady" default 0
+  signal name "_allinval_dchg" default 1
+  double name "x_0" in menu run default "0"
+  double name "y_0" in menu run default "0"
+  double name "A" in menu run default ""
+  double name "rx" in menu run default "1"
+  double name "ry" in menu run default "1"
+  double name "x_res" out menu default "?"
+  double name "x_res_c" out default "?"
+  double name "y_res" out menu default "?"
+  double name "y_res_c" out default "?"
+  matrix double name "Table_func" out menu default "[ ] ?"
+
+$AUTO
+  "Enabled_in","_Enabled_chg"
+  "Complete_out","_results_ok"
+  "Error_out","_results_ok"
+  "Steps_out","_results_ok"
+  "Finished_out","_results_ok"
+    "A","_allinval_dchg"
+    "rx","_allinval_dchg"
+    "ry","_allinval_dchg"
+    "x_0","_allinval_dchg"
+    "y_0","_allinval_dchg"
+  "x_res","_results_ok"
+  "y_res","_results_ok"
+  "Table_func","_TabFuncReady"
+
+$PARAM
+  BOOL name "noautostart_setup" default "FALSE"
+  int name "tactcount_setup" default "1000"
+  int name "DeltaCycles_setup" default "10"
+  double name "Delta_setup" default "0.0001"
+  int name "MaxIterations_setup" default "1000"
+  int name "TableFillMode_setup" default "0"
+  int name "TableInitCount_setup" default "100"
+  int name "TableFillStep_setup" default "1"
+  int name "TR_params" default "0"
+  rdsbcppString name "TR_text" default "" notranslate
+$REGFUN
+  name "IPU.L57.UserFuncTransfer.IsFuncSource" id "L57_BlkFunc_IsFuncSource"
+  name "IPU.L57.UserFuncTransfer.AcceptFunction" id "L57_BlkFunc_AcceptFunc" param "L57_AcceptFunc_Param*"
+  name "IPU.L57.UserFuncTransfer.AcceptParameter" id "L57_BlkFunc_AcceptParam" param "L57_AcceptParam_Param*"
+  name "IPU.L57.UserFuncTransfer.IsParameterTransferredWithFunc" id "L57_BlkFunc_CheckTransParam" param "L57_CheckParamConn_Param*"
+  name "IPU.L57.UserFuncTransfer.CheckParamTransfer" id "L57_BlkFunc_CheckTransParam2" param "L57_CheckTranser_Param*"
+$LINKS
+  manual "$RDSINCLUDE$\RdsL57Mk2\L57Mk2Stab.cpp"
+  manual "$RDSINCLUDE$\RdsL57Mk2\L57Mk2Basic.cpp"
+  manual "$RDSINCLUDE$\RdsL57Mk2\L57Mk2Basic.h"
+  manual "$RDSINCLUDE$\RdsL57Mk2\L57Mk2Bits.cpp"
+$CUSTOMERR
+|В одном из описаний функций обнаружена ошибка: видимо, текст функции написан не в синтаксисе языка C. Пожалуйста, проверьте все описания в настройках блока или откройте редактор модели и изучите ошибки, выданные компилятором.
+$ENDDECL
+$GLOBAL
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Версия модели (в норме должна соответствовать L57_LATESTMODELVERSION)
+#define L57_MODELVERSION 12
+
+// Файл и тема справки
+#define L57_HELPUIFILE "Blocks\\L57.ui"
+#define L57_HELPTOPIC "L57Mk2Stab"
+
+// Заголовки функций для индикации
+#define L57_TITLES "BR1\n" \
+"BR2"
+
+// Число вычисляемых функций
+#define L57_FUNCCOUNT 2
+// Число генерируемых табличных функций
+#define L57_GENTABLESCOUNT 1
+// Число потенциальных переменных связи
+#define L57_CONNVARSCOUNT 2
+
+#define L57MS_GLOBALS
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_GLOBALS
+
+// Служебные классы для вычисления значений функций
+#define ERRORVALUE (L57_ERROR())
+class L57_Calc_0
+{
+  public:
+    inline double L57_ERROR(void){return rdsbcppHugeDouble;};
+    double x;
+    double y;
+    double A;
+    double rx;
+    double ry;
+    // Функция вычисления (генерируемая)
+    double _Calc_gen(void);
+    // Функция вычисления (с перехватом исключений)
+    double _Calc_main(void)
+    { double __temp;
+      RDSBCPP_TRY
+        { __temp=_Calc_gen(); }
+      RDSBCPP_CATCHALL
+        { __temp=rdsbcppHugeDouble; }
+      return __temp;
+    };
+};
+// Функция вычисления (генерируемая)
+double L57_Calc_0::_Calc_gen(void)
+{
+return (A-y)/(2+1.0/rx);
+; /* */
+  return rdsbcppHugeDouble;
+}
+#undef ERRORVALUE
+//----------------------------------------------------------------------
+#define ERRORVALUE (L57_ERROR())
+class L57_Calc_1
+{
+  public:
+    inline double L57_ERROR(void){return rdsbcppHugeDouble;};
+    double x;
+    double y;
+    double A;
+    double rx;
+    double ry;
+    // Функция вычисления (генерируемая)
+    double _Calc_gen(void);
+    // Функция вычисления (с перехватом исключений)
+    double _Calc_main(void)
+    { double __temp;
+      RDSBCPP_TRY
+        { __temp=_Calc_gen(); }
+      RDSBCPP_CATCHALL
+        { __temp=rdsbcppHugeDouble; }
+      return __temp;
+    };
+};
+// Функция вычисления (генерируемая)
+double L57_Calc_1::_Calc_gen(void)
+{
+return (A-x)/(2+1.0/ry);
+; /* */
+  return rdsbcppHugeDouble;
+}
+#undef ERRORVALUE
+//----------------------------------------------------------------------
+
+$MODEL
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_MODEL
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_MODEL
+
+$SETUP
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_SETUP
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_SETUP
+
+$CLASSDEF
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_CLASS
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_CLASS
+
+  // Фиксированные значения границ и шагов
+  // Инициализация фиксированных значений
+  void L57_Init_Fixed_Data(void);
+
+  // Объекты для передачи входов-параметров функции
+  L57_FuncTransfer _Transfer;
+  L57_FuncTransferParameter *A_trans;
+  L57_FuncTransferParameter *rx_trans;
+  L57_FuncTransferParameter *ry_trans;
+  L57_FuncTransferParameter *x_0_trans;
+  L57_FuncTransferParameter *y_0_trans;
+  // Сброс
+  void L57_Reset_Trans_Data(void)
+  {
+    A_trans=NULL;
+    rx_trans=NULL;
+    ry_trans=NULL;
+    x_0_trans=NULL;
+    y_0_trans=NULL;
+  };
+  // Создание всех параметров передачи
+  void L57_Create_Trans_Data(void);
+
+  // Хранилища для проверки изменения переменных
+  double A_old;
+  double rx_old;
+  double ry_old;
+  double x_0_old;
+  double y_0_old;
+  // Инициализация хранилищ значений
+  void L57_Init_Old_Data(void)
+  {
+    A_old=rdsbcppHugeDouble;
+    rx_old=rdsbcppHugeDouble;
+    ry_old=rdsbcppHugeDouble;
+    x_0_old=rdsbcppHugeDouble;
+    y_0_old=rdsbcppHugeDouble;
+  };
+
+  // Вычислители функций
+  L57_Calc_0 _Calculator0;
+  L57_Calc_1 _Calculator1;
+
+
+$CLASSEXT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_AFTERCLASS
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_AFTERCLASS
+
+#if L57_FUNCCOUNT!=0
+// Экспорт текстов функций для взаимодействия с другими блоками по связям
+char *rdsbcppBlockClass::_FuncExportTexts[L57_FUNCCOUNT]={
+/* 0 */ "V A V \n"
+"V rx V 1\n"
+"V ry V 1\n"
+"V x V 0\n"
+"V y V 0\n"
+"F\n"
+"TBR1\n"
+"X\n"
+"Cx\n"
+"|return (A-y)/(2+1.0/rx);\n"
+"}\n"
+"#ORDER#\n"
+"x\n"
+"y\n"
+"A\n"
+"rx\n"
+"ry",
+/* 1 */ "V A V \n"
+"V rx V 1\n"
+"V ry V 1\n"
+"V x V 0\n"
+"V y V 0\n"
+"F\n"
+"TBR2\n"
+"X\n"
+"Cy\n"
+"|return (A-x)/(2+1.0/ry);\n"
+"}\n"
+"#ORDER#\n"
+"x\n"
+"y\n"
+"A\n"
+"rx\n"
+"ry"};
+#endif
+
+// Инициализация фиксированных значений
+void rdsbcppBlockClass::L57_Init_Fixed_Data(void)
+{
+
+}
+//-----------------------------------------------------------------------
+
+// Создание всех параметров передачи
+void rdsbcppBlockClass::L57_Create_Trans_Data(void)
+{
+  // Стационарных входов: 3
+  // Максимизируемых параметров: 2
+  _Transfer.ClearParameters();
+  _Transfer.EnlargeParameters(3+2);
+
+  A_trans=_Transfer.AddParameterRds("A",L57_VARSUFFIX_NONE,FALSE,A.Num(),&A);
+  rx_trans=_Transfer.AddParameterRds("rx",L57_VARSUFFIX_NONE,FALSE,rx.Num(),&rx);
+  ry_trans=_Transfer.AddParameterRds("ry",L57_VARSUFFIX_NONE,FALSE,ry.Num(),&ry);
+
+  x_0_trans=_Transfer.AddParameterRds("x",L57_VARSUFFIX_0,FALSE,x_0.Num(),&x_0);
+
+  y_0_trans=_Transfer.AddParameterRds("y",L57_VARSUFFIX_0,FALSE,y_0.Num(),&y_0);
+
+}
+//-----------------------------------------------------------------------
+
+// Проверка изменения переменных
+// *pChgSignalOn взводится при наличии сигнала изменения (независимо от фактического изменения)
+BOOL rdsbcppBlockClass::L57InputsChange(BOOL _force,BOOL *pChgSignalOn)
+{ BOOL _changes=FALSE;
+
+  // Стационарных вещественных входов: 3
+  // Служебных вещественных входов: 2
+  // Итого вещественных: 5
+
+  // Вещественные входы
+  if(_allinval_dchg!=0 || _force)
+    { _allinval_dchg=0;
+      _changes=_force;
+      if(pChgSignalOn) *pChgSignalOn=TRUE;
+
+      if(A_old!=A)
+        { _changes=TRUE;
+          _Transfer.TransferParameter(rdsbcppBlockData->Block,A_trans,_Transfer.DestBlocks,TRUE);
+        }
+      if(rx_old!=rx)
+        { _changes=TRUE;
+          _Transfer.TransferParameter(rdsbcppBlockData->Block,rx_trans,_Transfer.DestBlocks,TRUE);
+        }
+      if(ry_old!=ry)
+        { _changes=TRUE;
+          _Transfer.TransferParameter(rdsbcppBlockData->Block,ry_trans,_Transfer.DestBlocks,TRUE);
+        }
+
+      if(x_0_old!=x_0)
+        { _changes=TRUE;
+          _Transfer.TransferParameter(rdsbcppBlockData->Block,x_0_trans,_Transfer.DestBlocks,TRUE);
+        }
+      if(y_0_old!=y_0)
+        { _changes=TRUE;
+          _Transfer.TransferParameter(rdsbcppBlockData->Block,y_0_trans,_Transfer.DestBlocks,TRUE);
+        }
+
+      if(_changes)
+        { // Запоминание изменившихся
+          A_old=A;
+          rx_old=rx;
+          ry_old=ry;
+          x_0_old=x_0;
+          y_0_old=y_0;
+        }
+    }
+
+  // Матричные входы (матрицы, массивы, функции)
+
+  return _changes;
+}
+//-----------------------------------------------------------------------
+
+// Занесение стационарных переменных и начальных значений в вычислители функции
+void rdsbcppBlockClass::L57InputsToCalc(void)
+{
+  // Входы блока
+  _Calculator0.A=
+  _Calculator1.A=
+    A;
+  _Calculator0.rx=
+  _Calculator1.rx=
+    rx;
+  _Calculator0.ry=
+  _Calculator1.ry=
+    ry;
+
+  // Начальные значения
+  _Calculator0.x=
+  _Calculator1.x=
+    x_0;
+  _Calculator0.y=
+  _Calculator1.y=
+    y_0;
+}
+//-----------------------------------------------------------------------
+
+// Итерация (возвращает TRUE, если максимальное изменение с прошлой итерации не больше заданного в настройках)
+BOOL rdsbcppBlockClass::L57CalcIteration(BOOL &HugeValError)
+{
+  HugeValError=FALSE;
+#if L57_CONNVARSCOUNT!=0
+  // Значения прошлой итерации
+  double _old_0=_Calculator0.x;
+  double _old_1=_Calculator1.y;
+
+  // Значения для следующей итерации
+  double _v_0=_Calculator0._Calc_main();
+  double _v_1=_Calculator1._Calc_main();
+
+  // Копирование переменных связи
+  _Calculator0.x=
+  _Calculator1.x=
+    _v_0;
+  _Calculator0.y=
+  _Calculator1.y=
+    _v_1;
+
+  // Определение нахождения в трубке погрешности
+  if(_old_0==rdsbcppHugeDouble || _v_0==rdsbcppHugeDouble)
+    { HugeValError=TRUE;
+      return FALSE;
+    }
+  if(fabs(_old_0-_v_0)>Delta_setup)
+    return FALSE;
+  if(_old_1==rdsbcppHugeDouble || _v_1==rdsbcppHugeDouble)
+    { HugeValError=TRUE;
+      return FALSE;
+    }
+  if(fabs(_old_1-_v_1)>Delta_setup)
+    return FALSE;
+
+  // Все изменения в пределах Delta_setup
+#endif
+  return TRUE;
+}
+//-----------------------------------------------------------------------
+
+// Копирование текущих значений вычислителей в основные выходы
+void rdsbcppBlockClass::L57DataToMainOuts(void)
+{
+#if L57_CONNVARSCOUNT!=0
+  x_res=_Calculator0.x;
+  y_res=_Calculator1.y;
+#endif
+}
+//-----------------------------------------------------------------------
+
+// Копирование текущих значений вычислителей во вспомогательные выходы
+void rdsbcppBlockClass::L57DataToAuxOuts(void)
+{
+#if L57_CONNVARSCOUNT!=0
+  x_res_c=_Calculator0.x;
+  y_res_c=_Calculator1.y;
+#endif
+}
+//-----------------------------------------------------------------------
+
+// Очистка всех выходов
+void rdsbcppBlockClass::L57ClearOuts(void)
+{
+  x_res=x_res_c=rdsbcppHugeDouble;
+  y_res=y_res_c=rdsbcppHugeDouble;
+}
+//-----------------------------------------------------------------------
+
+// Генерируемая функция - переотвести все таблицы
+BOOL rdsbcppBlockClass::L57ReallocAllTables_gen(int newrowcount)
+{
+  if(!Table_func.Resize(newrowcount,2+1,TRUE))
+    return FALSE;
+  return TRUE;
+}
+//-----------------------------------------------------------------------
+
+// Генерируемая функция - упаковать все таблицы
+BOOL rdsbcppBlockClass::L57PackAllTables_gen(void)
+{
+  if(!L57PackTable(&Table_func))
+    return FALSE;
+  return TRUE;
+}
+//-----------------------------------------------------------------------
+
+// Генерируемая функция - очистить все таблицы
+void rdsbcppBlockClass::L57ClearTabFunc_gen(void)
+{
+  Table_func.Resize(0,0);
+}
+//-----------------------------------------------------------------------
+
+#if L57_GENTABLESCOUNT!=0
+// Генерируемая функция - записать строку итерации во все таблицы
+void rdsbcppBlockClass::L57WriteIteraionRow_gen(int iteration,int rowindex)
+{
+  double *base;
+  // У всех вычислителей переменные одинаковые, поэтому все можно брать
+  // из самого первого
+  base=Table_func[rowindex];
+  base[0]=iteration;
+  base[0+1]=_Calculator0.x;
+  base[1+1]=_Calculator0.y;
+}
+//-----------------------------------------------------------------------
+
+// Генерируемая функция - отрезать у всех таблиц "хвост" с ошибками и сортировать, если надо
+void rdsbcppBlockClass::L57FinalizeTables_gen(BOOL sort)
+{
+  L57FinalizeTable(&Table_func,sort);
+}
+//-----------------------------------------------------------------------
+#endif
+
+
+$INIT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_INIT
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_INIT
+
+  // Начальные значения проверочных переменных
+  A_old=rdsbcppHugeDouble;
+  rx_old=rdsbcppHugeDouble;
+  ry_old=rdsbcppHugeDouble;
+  x_0_old=rdsbcppHugeDouble;
+  y_0_old=rdsbcppHugeDouble;
+
+
+$START
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_START
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_START
+
+$CALCMODE
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_CALCMODE
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_CALCMODE
+
+$LOADTEXT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_LOADPARAMS
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_LOADPARAMS
+$SAVETEXT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_SAVEPARAMS
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_SAVEPARAMS
+$OTHER
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_OTHER
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_OTHER
+$FUNC "IPU.L57.UserFuncTransfer.IsFuncSource"
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+Result=1;
+$FUNC "IPU.L57.UserFuncTransfer.AcceptFunction"
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_ACCEPTFUNC
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_ACCEPTFUNC
+
+$FUNC "IPU.L57.UserFuncTransfer.AcceptParameter"
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_ACCEPTPARAM
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_ACCEPTPARAM
+
+$FUNC "IPU.L57.UserFuncTransfer.IsParameterTransferredWithFunc"
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_CHECKTRANSFUNC
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_CHECKTRANSFUNC
+
+
+$FUNC "IPU.L57.UserFuncTransfer.CheckParamTransfer"
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_CHECKTRANSFUNC2
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_CHECKTRANSFUNC2
+
+
+$RESET
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_RESET
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_RESET
+
+
+$VARCHECK
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_VARCHECK
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_VARCHECK
+
+
+$EDITMODE
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_EDITMODE
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_EDITMODE
+
+$DRAWADD
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_DRAWADDITIONAL
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_DRAWADDITIONAL
+
+$HINT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_HINT
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_HINT
+
+$POPUP
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_POPUP
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_POPUP
+
+$MENU
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_MENUSELECT
+#include <RdsL57Mk2/L57Mk2Stab.cpp>
+#undef L57MS_MENUSELECT
+
+
+$HIDDEN
+{N
+ W64,149
+ {V
+  Nx
+  TV
+  V*0
+  [=0
+  ]=100
+  D=10
+  E=1
+ }
+ {V
+  Ny
+  TV
+  V*0
+  [=0
+  ]=100
+  D=10
+  E=1
+ }
+}
+{I
+ W64,64,72
+ {V
+  NA
+  TV
+  V=
+ }
+ {V
+  Nrx
+  TV
+  V=1
+ }
+ {V
+  Nry
+  TV
+  V=1
+ }
+}
+{F
+ {F0
+  TBR1
+  V
+  I1
+  Cx
+  |return (A-y)/(2+1.0/rx);
+ }
+ {F1
+  TBR2
+  V
+  I0
+  Cy
+  |return (A-x)/(2+1.0/ry);
+ }
+}
+{T
+ W74,141,91
+ {F
+  NTable
+  Ttrack
+  A$iter
+  Rx,y
+ }
+}
+{O
+ :EndStep=0
+}
+$OPTIONS
+  tabs $GLOBAL
+  window pos 18 164 size 1214 837 hdiv 337 vdiv 356 fdiv 334 hidevar
+  svc 0 90 1 73 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 0
+  ignorewarnings 1
+  customerrmsg 1 showblock
+  autoreadonlyeditor 1
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

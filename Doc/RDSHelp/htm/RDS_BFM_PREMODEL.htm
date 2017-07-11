@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.2.4.10. RDS_BFM_PREMODEL &ndash; вызов модели перед тактом расчета</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2">А.2. События блока и связанные с ними описания</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2_4">А.2.4. События общего назначения</a></p>
+<div class="level"><p>А.2.4.10. <span class="cpp">RDS_BFM_PREMODEL</span> &ndash; вызов модели перед тактом расчета</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_BFM_MODEL.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_REMOTEMSG.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_PREMODEL">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.2. События блока и связанные с ними описания</h3>
+<h4 class="off">А.2.4. События общего назначения</h4>
+<h5>А.2.4.10. <span class="cpp">RDS_BFM_PREMODEL</span> &ndash; вызов модели перед тактом расчета</h5>
+
+
+<p class="apphdr">Поток, в котором вызывается <a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функция модели</a></p>
+<p>Поток расчета.</p>
+
+<p class="apphdr">Первый параметр функции модели (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_BFM_PREMODEL</span>.</p>
+
+<p class="apphdr">Третий параметр функции модели (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Не используется (<span class="cpp">NULL</span>).</p>
+
+<p class="apphdr">Возвращаемое функцией модели значение</p>
+<p>Не используется, можно возвращать любое значение.</p>
+
+<p class="apphdr">Примечания</p>
+<p>В режиме расчета реакция на событие <span class="cpp">RDS_BFM_PREMODEL</span> вызывается в начале каждого такта 
+расчета у простых блоков, модели которых взвели флаг <span class="cpp"><span id="light_ref1"><a href="RDS_BLOCKDATA.htm#light_ref16" title="Флаг RDS_CTRLCALC">RDS_CTRLCALC</a></span></span>.
+Эта реакция, как и 
+реакция на событие <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>, вызывается для блока только в том случае, если запуск 
+модели разрешен, то есть если одновременно выполняются следующие условия:</p>
+
+<ol>
+  <li>Данный блок &ndash; <a href="um_1_2.htm#light_ref9" title="Простой блок">простой</a>. У
+  <a href="um_1_2.htm#light_ref10" title="Подсистема">подсистем</a>,
+  <a href="um_1_2.htm#light_ref12" title="Внешний вход подсистемы">внешних входов</a>/<a href="um_1_2.htm#light_ref14" title="Внешний выход подсистемы">выходов</a> и
+  <a href="um_1_2.htm#light_ref15" title="Ввод шины">вводов шин</a>
+  эта реакция не вызывается, поскольку они не участвуют в расчете.</li>
+  <li>В параметрах блока установлен
+  <a href="pm_1_4.htm#ref6" title="Запуск модели каждый такт">запуск каждый такт</a>
+  <span class="emph">или</span> его <a href="pm_2_5_2.htm#light_ref3" title="Сигналы запуска и готовности">первая статическая переменная</a>
+  (сигнальный вход запуска модели, чаще всего называющийся &laquo;<span class="rdsvar">Start</span>&raquo;) имеет ненулевое
+  значение.</li>
+  <li>Данный блок не находится за пределами подсистемы, для которой в данный момент включен
+  <a href="pm_2_14_4.htm" title="&sect;2.14.4. Отдельный расчет подсистемы">режим отдельного расчета</a>
+  функцией <span class="cpp"><span id="light_ref2"><a href="rdsSetExclusiveCalc.htm" title="А.5.2.35. rdsSetExclusiveCalc &ndash; выделенный расчет подсистемы">rdsSetExclusiveCalc</a></span></span>.</li>
+</ol>
+
+<p class="noindent">Чаще всего эта реакция используется для управления расчетом, когда действия моделей в 
+такте необходимо разделить на два этапа: сначала все блоки вызываются для реакции на 
+<span class="cpp">RDS_BFM_PREMODEL</span>, затем &ndash; для реакции на <span class="cpp">RDS_BFM_MODEL</span>.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования этого события приведен в 
+<a href="pm_2_14_5.htm" title="&sect;2.14.5. Вызов модели блока перед тактом расчета">&sect;2.14.5 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>,
+<span class="cpp"><a href="RDS_BLOCKDATA.htm#light_ref16" title="Флаг RDS_CTRLCALC">RDS_CTRLCALC</a></span>,
+<span class="cpp"><a href="rdsSetExclusiveCalc.htm" title="А.5.2.35. rdsSetExclusiveCalc &ndash; выделенный расчет подсистемы">rdsSetExclusiveCalc</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_BFM_MODEL.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_REMOTEMSG.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_PREMODEL">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2">А.2. События блока и связанные с ними описания</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2_4">А.2.4. События общего назначения</a></p>
+<div class="level"><p>А.2.4.18. <span class="cpp">RDS_BFM_VARCHECK</span> &ndash; проверка допустимости структуры статических переменных блока</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_BFM_UNLOADSYSTEM.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_AFTERLOAD.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_VARCHECK">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.2. События блока и связанные с ними описания</h3>
+<h4 class="off">А.2.4. События общего назначения</h4>
+<h5>А.2.4.18. <span class="cpp">RDS_BFM_VARCHECK</span> &ndash; проверка допустимости структуры статических переменных блока</h5>
+
+
+<p class="apphdr">Поток, в котором вызывается <a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функция модели</a></p>
+<p>Главный поток RDS.</p>
+
+<p class="apphdr">Первый параметр функции модели (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_BFM_VARCHECK</span>.</p>
+
+<p class="apphdr">Третий параметр функции модели (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Указатель на <a href="pm_1_5.htm#ref19" title="Строка типа переменных блока">строку типа</a>
+(<span class="cpp">char*</span>) <a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статических переменных блока</a>.</p>
+
+<p class="apphdr">Возвращаемое функцией модели значение</p>
+    <div class="tableshift"><div class="tcont">
+    <table>
+      <tr>
+        <td><span class="cpp"><span id="light_ref1">RDS_BFR_DONE</span></span></td>
+        <td>Структура переменных блока удовлетворяет требованиям модели.</td>
+      </tr>
+      <tr>
+        <td><span class="cpp"><span id="light_ref2">RDS_BFR_ERROR</span></span></td>
+        <td>Структура переменных блока не удовлетворяет требованиям модели, все дальнейшие реакции, кроме
+        <span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span> и новых <span class="cpp">RDS_BFM_VARCHECK</span>, будут заблокированы.</td>
+      </tr>
+      <tr>
+        <td><span class="cpp"><span id="light_ref3">RDS_BFR_BADVARSMSG</span></span></td>
+        <td>Структура переменных блока не удовлетворяет требованиям модели, все дальнейшие реакции, кроме
+        <span class="cpp">RDS_BFM_CLEANUP</span> и новых <span class="cpp">RDS_BFM_VARCHECK</span>, будут заблокированы,
+        пользователю будет выведено сообщение.</td>
+      </tr>
+    </table>
+    </div></div>
+
+<p class="apphdr">Примечания</p>
+<p>Событие <span class="cpp">RDS_BFM_VARCHECK</span> возникает при подключении к
+<a href="pm_1_2.htm#light_ref3" title="Простой блок">простому блоку</a> новой модели после
+события <span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span>, а также при любом изменении структуры
+<a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статических переменных блока</a>. У
+<a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистем</a>,
+<a href="pm_1_2.htm#light_ref6" title="Внешний вход подсистемы">внешних входов</a>/<a href="pm_1_2.htm#light_ref8" title="Внешний выход подсистемы">выходов</a> и
+<a href="pm_1_2.htm#light_ref9" title="Ввод шины">вводов шин</a>
+это событие не возникает. Реагируя на это событие, функция модели должна сообщить
+RDS, подходит ли ей данная структура переменных. Если функция вернет константу
+<span class="cpp">RDS_BFR_DONE</span>, структура будет считаться подходящей, и модель блока будет вызываться
+RDS для реакции на все остальные события. Если же она вернет <span class="cpp">RDS_BFR_ERROR</span> или
+<span class="cpp">RDS_BFR_BADVARSMSG</span>, все события, кроме очистки данных блока
+(<span class="cpp">RDS_BFM_CLEANUP</span>) и повторных проверок структуры переменных не будут передаваться в
+модель блока. Таким образом, написав реакцию на событие <span class="cpp">RDS_BFM_VARCHECK</span>,
+программист может быть уверен, что структура статических переменных блока соответствует его ожиданиям, что
+даст ему возможность обращаться к этим переменным по фиксированным смещениям относительно начала дерева
+переменных. Работа со статическими переменными блока и примеры реакций на событие
+<span class="cpp">RDS_BFM_VARCHECK</span> подробно рассмотрены в
+<a href="pm_index.htm#light_htm:pm_2_5" title="&sect;2.5. Статические переменные блоков">&sect;2.5 руководства программиста</a>.</p>
+
+<p><span id="ref4">Текущая</span>
+<span id="ref5">структура</span>
+переменных блока, которую модель должна проанализировать, передается в третьем параметре
+функции в виде строки типа, в которой каждой переменной соответствует символ, обозначающий ее
+<a href="pm_1_5.htm#ref2" title="Типы переменных блока">тип</a>
+(все символы относятся к латинскому алфавиту):</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th><span id="light_ref5">Символ</span></th>
+    <th><span id="light_ref4">Константа в RDS<span class=""></th>
+    <th>Обозначаемый тип</th>
+  </tr>
+  <tr>
+    <td class="center">S</td>
+    <td><span class="cpp"><span id="light_ref6">RDS_VARTYPE_SIGNAL</span></span></td>
+    <td>Сигнал (1 байт)</td>
+  </tr>
+  <tr>
+    <td class="center">L</td>
+    <td><span class="cpp"><span id="light_ref7">RDS_VARTYPE_LOGICAL</span></span></td>
+    <td>Логический (1 байт)</td>
+  </tr>
+  <tr>
+    <td class="center">C</td>
+    <td><span class="cpp"><span id="light_ref8">RDS_VARTYPE_CHAR</span></span></td>
+    <td><span class="cpp">char</span> (целый, 1 байт)</td>
+  </tr>
+  <tr>
+    <td class="center">H</td>
+    <td><span class="cpp"><span id="light_ref9">RDS_VARTYPE_SHORT</span></span></td>
+    <td><span class="cpp">short&nbsp;int</span> (целый, 2 байта)</td>
+  </tr>
+  <tr>
+    <td class="center">I</td>
+    <td><span class="cpp"><span id="light_ref10">RDS_VARTYPE_INT</span></span></td>
+    <td><span class="cpp">int</span> (целый, 4 байта)</td>
+  </tr>
+  <tr>
+    <td class="center">F</td>
+    <td><span class="cpp"><span id="light_ref11">RDS_VARTYPE_FLOAT</span></span></td>
+    <td><span class="cpp">float</span> (вещественный, 4 байта)</td>
+  </tr>
+  <tr>
+    <td class="center">D</td>
+    <td><span class="cpp"><span id="light_ref12">RDS_VARTYPE_DOUBLE</span></span></td>
+    <td><span class="cpp">double</span> (вещественный двойной точности, 8 байтов)</td>
+  </tr>
+  <tr>
+    <td class="center">A</td>
+    <td><span class="cpp"><span id="light_ref13">RDS_VARTYPE_STRING</span></span></td>
+    <td>Строка в <span id="light_ref14">кодировке CP1251</span>
+    (<span class="cpp">char*</span>, завершается нулевым байтом)</td>
+  </tr>
+  <tr>
+    <td class="center">V</td>
+    <td><span class="cpp"><span id="light_ref15">RDS_VARTYPE_RUNTIME</span></span></td>
+    <td>Произвольный тип (изменяется в процессе работы)</td>
+  </tr>
+  <tr>
+    <td class="center">M</td>
+    <td><span class="cpp"><span id="light_ref16">RDS_VARTYPE_ARRAY</span></span></td>
+    <td>Массив или матрица (следующий символ &ndash; тип элемента)</td>
+  </tr>
+  <tr>
+    <td class="center">{</td>
+    <td><span class="cpp"><span id="light_ref17">RDS_VARTYPE_STRUCT</span></span></td>
+    <td>Начало структуры (начиная со следующего символа описываются типы полей структуры)</td>
+  </tr>
+  <tr>
+    <td class="center">}</td>
+    <td><span class="cpp"><span id="light_ref18">RDS_VARTYPE_STRUCTEND</span></span></td>
+    <td>Конец структуры (описание типов полей структуры закончилось)</td>
+  </tr>
+</table>
+</div></div>
+
+<p>Последовательность таких символов однозначно описывает структуру статических переменных блока и их
+размещение в памяти. Поскольку вся совокупность переменных блока с точки зрения RDS является
+структурой, строка типа всегда начинается с символа &laquo;{&raquo; и заканчивается символом
+&laquo;}&raquo;. Ниже приведены некоторые примеры строк типа переменных блоков:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Строка</th>
+    <th>Расшифровка</th>
+  </tr>
+  <tr>
+    <td>&laquo;{SSDD}&raquo;</td>
+    <td>Две первых переменных блока &ndash; сигналы (&laquo;S&raquo;), за ними следуют две вещественных
+    переменных двойной точности (&laquo;D&raquo;).</td>
+  </tr>
+  <tr>
+    <td>&laquo;{SSMIA}&raquo;</td>
+    <td>Две первых переменных блока &ndash; сигналы (&laquo;S&raquo;), за ними следует массив или матрица
+    целых чисел (&laquo;MI&raquo;), за ней &ndash; строка (&laquo;A&raquo;).</td>
+  </tr>
+  <tr>
+    <td>&laquo;{SSVMMD}&raquo;</td>
+    <td>Два сигнала (&laquo;S&raquo;), переменная произвольного типа (&laquo;V&raquo;), матрица матриц
+    вещественных чисел (&laquo;MMD&raquo;).</td>
+  </tr>
+  <tr>
+    <td>&laquo;{SS{DD}I{DD}}&raquo;</td>
+    <td>Два сигнала (&laquo;S&raquo;), структура с двумя вещественными полями двойной точности
+    (&laquo;{DD}&raquo;), целое число (&laquo;I&raquo;), снова структура с двумя вещественными полями
+    двойной точности (&laquo;{DD}&raquo;).</td>
+  </tr>
+  <tr>
+    <td>&laquo;{SSM{IDMA}}&raquo;</td>
+    <td>Два сигнала (&laquo;S&raquo;) и матрица (&laquo;M&raquo;) структур, содержащих три поля: целое
+    (&laquo;I&raquo;), вещественное (&laquo;D&raquo;) и матрицу строк (&laquo;MA&raquo;).</td>
+  </tr>
+</table>
+</div></div>
+
+<p>Строка типа переменных простого блока всегда начинается с двух букв &laquo;S&raquo;, поскольку
+две первых переменных любого простого блока &ndash; это
+<a href="pm_2_5_2.htm#light_ref3" title="Сигналы запуска и готовности">сигнал запуска и сигнал готовности</a>. В строке типа не содержится
+никакой информации о том, является ли переменная входом или выходом, о ее имени и об именах используемых
+структур (для структур указываются только типы их полей). Вся эта информация не влияет на собственно структуру
+дерева переменных, то есть на смещения к данным каждой переменной от начала дерева. По той же причине в строке
+типа не делается различия между матрицами и массивами &ndash; в RDS они хранятся в памяти одинаково
+(см. <a href="pm_2_5_3.htm" title="&sect;2.5.3. Доступ к матрицам и массивам">&sect;2.5.3 руководства программиста</a>).</p>
+
+<p>Модель блока должна сравнить полученную ей в реакции на событие <span class="cpp">RDS_BFM_VARCHECK</span>
+строку типа с одной или несколькими заложенными в нее строками, и вернуть RDS константу, указывающую
+на допустимость данной структуры переменных для данной модели. Возврат
+<span class="cpp">RDS_BFR_ERROR</span> отличается от возврата <span class="cpp">RDS_BFR_BADVARSMSG</span> только
+тем, что в последнем случае RDS выведет пользователю сообщение о недопустимости структуры
+переменных блока.</p>
+
+<p class="apphdr">Пример</p>
+<p>Реакция на событие <span class="cpp">RDS_BFM_VARCHECK</span> в модели, которая, помимо двух обязательных
+сигналов, должна иметь три вещественных переменных двойной точности:</p>
+
+<pre class="cpp">  <span class="kw">switch</span>(CallMode)
+      {
+        <span class="kw">case</span> <a href="#top" class="hidden">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDDD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> RDS_BFR_DONE;
+          <span class="kw">return</span> RDS_BFR_BADVARSMSG;</pre>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span>,
+<span class="cpp"><a href="RDS_BLOCKDATA.htm" title="А.2.3. RDS_BLOCKDATA &ndash; структура данных блока">RDS_BLOCKDATA</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_BFM_UNLOADSYSTEM.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_AFTERLOAD.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_VARCHECK">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

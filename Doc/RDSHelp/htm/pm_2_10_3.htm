@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.10.3. Дополнительное рисование</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_10">&sect;2.10. Программное рисование внешнего вида блока</a></p>
+<div class="level"><p>&sect;2.10.3. Дополнительное рисование</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_10_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_10_4.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_10_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_10_3_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.10. Программное рисование внешнего вида блока</h3>
+<h4>&sect;2.10.3. Дополнительное рисование</h4>
+<p class="abstract">Рассматривается рисование дополнительных элементов поверх изображения блока. В описанный
+                ранее график добавляется рисование иконки, указывающей на отсутствие доступа к необходимой ему
+                переменной времени.</p>
+
+
+<p>Достаточно часто возникает необходимость как-либо визуально пометить блок, сигнализируя
+пользователю о возникшей в блоке ошибке, особом состоянии, недопустимом сочетании настроечных параметров и т.п.
+Если внешний вид блока рисуется программно, можно отображать такие пометки в функции рисования. В блоке,
+внешний вид которого задается
+<a href="pm_1_4.htm#light_ref4" title="Векторная картинка блока">векторной картинкой</a>, для этого можно предусмотреть
+соответствующие элементы картинки и управлять их видимостью, но это будет работать только в режимах
+<a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a> и <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a>. В
+режиме <a href="pm_1_3.htm#ref1" title="Режим редактирования">редактирования</a> всегда выводятся все элементы векторной картинки,
+поэтому все предусмотренные пометки будут видны пользователю, и это будет сбивать его с толку.
+Если же внешний вид блока задается прямоугольником с текстом, модель не сможет изменять его простыми
+средствами, и не сможет как-либо привлечь внимание пользователя к проблемам этого блока.</p>
+
+<p><span id="ref1">Для</span>
+того, чтобы модель могла нарисовать что-либо поверх изображения блока, независимо от способа,
+которым задан его внешний вид, в RDS введен специальный режим вызова модели для дополнительного рисования.
+После того, как изображение блока (будь то прямоугольник с текстом, векторная картинка или результат
+программного рисования) выведено в окно подсистемы, модель вызывается в режиме
+<span id="light_ref1" class="cpp"><a href="RDS_BFM_DRAWADDITIONAL.htm" title="А.2.6.4. RDS_BFM_DRAWADDITIONAL &ndash; дополнительное рисование">RDS_BFM_DRAWADDITIONAL</a></span> и ей передается указатель
+на структуру <span class="cpp"><a href="RDS_BFM_DRAW.htm#ref1" title="Структура RDS_DRAWDATA">RDS_DRAWDATA</a></span>, как и в режиме <span class="cpp"><a href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a></span>.
+В этом дополнительном режиме модель может при помощи функций Windows API или
+<a href="app_a_graph.htm" title="А.5.18.1. Применимость графических функций">сервисных функций RDS</a>
+рисовать в окне подсистемы что угодно, как и при уже рассмотренном программном рисовании.
+Главное отличие режима вызова <span class="cpp"><a class="hidden" href="RDS_BFM_DRAWADDITIONAL.htm" title="А.2.6.4. RDS_BFM_DRAWADDITIONAL &ndash; дополнительное рисование">RDS_BFM_DRAWADDITIONAL</a></span> от
+<span class="cpp"><a class="hidden" href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a></span> заключается в том, что в режиме
+<span class="cpp"><a class="hidden" href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a></span> модель вызывается только при включенном в параметрах блока программном
+рисовании
+(см. <a href="pm_2_10_1.htm#pic1" title="Индикатор уровня и параметры его внешнего вида">рис.&nbsp;58</a>), а в режиме
+<span class="cpp"><a class="hidden" href="RDS_BFM_DRAWADDITIONAL.htm" title="А.2.6.4. RDS_BFM_DRAWADDITIONAL &ndash; дополнительное рисование">RDS_BFM_DRAWADDITIONAL</a></span> она вызывается всегда при обновлении окна подсистемы.
+Таким образом, включение в модель блока реакции на вызов в этом режиме позволяет делать на любом
+блоке произвольные пометки, на которые не будет влиять даже изменение внешнего вида блока пользователем. Модель,
+которой не нужно ничего рисовать поверх изображения блока, может просто игнорировать этот вызов.</p>
+
+<p>
+<span id="light_ref2">Для иллюстрации дополнительного рисования снова возьмем блок-график</span>, рассмотренный
+в <a href="pm_2_10_1.htm" title="&sect;2.10.1. Рисование изображения блока в окне подсистемы">&sect;2.10.1</a> и <a href="pm_2_10_2.htm" title="&sect;2.10.2. Оптимизация рисования">&sect;2.10.2</a>. Для
+построения графика зависимости своего входа от времени этот блок использует стандартную динамическую переменную
+&laquo;<span class="rdsvar">DynTime</span>&raquo;, из которой он берет текущее значение времени. Создать эту переменную и
+присваивать ей значения должен другой блок (например, стандартный <a href="pm_2_6_1.htm#ref10" title="Блок управления динамическим расчетом (планировщик)">планировщик</a>
+динамического расчета из библиотеки блоков RDS), без нее график строиться не будет, и на экран
+будут выведены только координатные оси с числами. Было бы правильно в этом случае привлечь внимание пользователя
+к графику, нарисовав на нем иконку, сигнализирующую о неработоспособности блока. Стандартные библиотечные блоки
+в этом случае рисуют красный восклицательный знак в круге на желтом поле, мы поступим так же.</p>
+
+<p>Прежде всего, введем в класс личной области данных блока новую функцию-член
+<span class="cpp">DrawAdditional</span>, которая будет выводить указанную иконку при отсутствии доступа
+к переменной &laquo;<span class="rdsvar">DynTime</span>&raquo;. Эта функция, как и две других функции рисования, уже имеющиеся
+в классе, будет принимать единственный параметр &ndash; указатель на структуру
+<span class="cpp"><a class="hidden" href="RDS_BFM_DRAW.htm#ref1" title="Структура RDS_DRAWDATA">RDS_DRAWDATA</a></span>, полученный моделью блока из RDS при ее вызове в режиме
+<span class="cpp"><a class="hidden" href="RDS_BFM_DRAWADDITIONAL.htm" title="А.2.6.4. RDS_BFM_DRAWADDITIONAL &ndash; дополнительное рисование">RDS_BFM_DRAWADDITIONAL</a></span> (добавленная функция выделена
+<span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">//=========================================</span>
+  <span class="rem">// Простой график – личная область данных</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">class</span> TSimplePlotData
+  {
+      <span class="rem">// &hellip;</span>
+
+      <span class="kw">void</span> LoadText(<span class="kw">char</span> *text);	<span class="rem">// Функция загрузки параметров</span>
+      <span class="kw">void</span> Draw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> DrawData); <span class="rem">// Функция рисования</span>
+      <span class="rem">// Функция быстрого рисования</span>
+      <span class="kw">void</span> DrawFast(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> DrawData);
+    <span class="changes">  <span class="rem">// Рисование иконки при отсутствии доступа к DynTime  </span></span>
+    <span class="changes">  <span class="kw">void</span> DrawAdditional(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> DrawData);          </span>
+      <span class="rem">// &hellip;</span>
+      <span class="rem">// &hellip; далее без изменений &hellip;</span></pre>
+
+<p>Для вызова <span class="cpp">DrawAdditional</span> из функции модели блока, в оператор
+<span class="cpp">switch</span> нужно вставить новую метку <span class="cpp">case</span>:</p>
+
+<pre class="cpp">      <span class="rem">// Рисование внешнего вида блока</span>
+      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a>:
+        <span class="rem">// data-&gt;Draw((</span><a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA"><span class="rem">RDS_PDRAWDATA</span></a><span class="rem">)ExtParam);</span>
+        data-&gt;DrawFast((<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a>)ExtParam);
+        <span class="kw">break</span>;
+
+<div class="changes">      <span class="rem">// Дополнительное рисование</span>
+      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DRAWADDITIONAL.htm" title="А.2.6.4. RDS_BFM_DRAWADDITIONAL &ndash; дополнительное рисование">RDS_BFM_DRAWADDITIONAL</a>:
+        data-&gt;DrawAdditional((<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a>)ExtParam);
+        <span class="kw">break</span>;</div></pre>
+
+<p>Теперь напишем функцию <span class="cpp">DrawAdditional</span>. Она должна проверять, есть ли у
+блока доступ к переменной &laquo;<span class="rdsvar">DynTime</span>&raquo; (необходимо проверить поле класса
+<span class="cpp">Time</span>, в котором должен храниться указатель на
+<a href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">структуру подписки</a>), и,
+при отсутствии доступа, нарисовать иконку. Красный восклицательный знак в желтом круге &ndash;
+одна из стандартных иконок RDS, поэтому для ее рисования мы будем использовать сервисную функцию.</p>
+
+<pre class="cpp">  <span class="rem">// Дополнительное рисование</span>
+  <span class="kw">void</span> TSimplePlotData::DrawAdditional(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> DrawData)
+  {
+    <span class="rem">// Проверка доступа к переменной времени</span>
+    <span class="kw">if</span>(Time==NULL || Time-&gt;Data==NULL)	<span class="rem">// Доступа нет</span>
+      { <span class="kw">int</span> w,h;
+        <span class="rem">// Константа, указывающая на стандартную иконку RDS</span>
+        <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> icon=<span id="light_ref3"><a class="hidden" href="rdsXGDrawStdIcon.htm#light_ref14" title="RDS_STDICON_YELCIRCEXCLAM">RDS_STDICON_YELCIRCEXCLAM</a></span>;
+        <span class="rem">// Определяем размер иконки и выводим ее в центре блока</span>
+        <span class="kw">if</span>(<span id="light_ref4"><a class="hidden" href="rdsXGGetStdIconSize.htm" title="А.5.18.9. rdsXGGetStdIconSize &ndash; получить размеры стандартной иконки">rdsXGGetStdIconSize</a></span>(icon,&amp;w,&amp;h))
+          <span id="light_ref5"><a class="hidden" href="rdsXGDrawStdIcon.htm" title="А.5.18.5. rdsXGDrawStdIcon &ndash; рисование стандартной иконки">rdsXGDrawStdIcon</a></span>(DrawData-&gt;Left+(DrawData-&gt;Width-w)/<span class="const">2</span>,
+                           DrawData-&gt;Top+(DrawData-&gt;Height-h)/<span class="const">2</span>,
+                           icon);
+      }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Прежде всего в этой функции проверяется наличие доступа к динамической переменной, на
+которую ссылается указатель на структуру подписки <span class="cpp">Time</span>, и все дальнейшие действия
+производятся только при отсутствии этого доступа. Чтобы нарисовать иконку в центре изображения блока,
+где она с большей вероятностью привлечет внимание пользователя, необходимо сначала определить размеры этой иконки.
+Каждой стандартной иконке RDS соответствует целая константа
+<span class="cpp"><a href="rdsXGDrawStdIcon.htm#ref1" title="Константы RDS_STDICON_*">RDS_STDICON_*</a></span>, используемая в сервисных
+функциях. Красному восклицательному знаку в желтом круге соответствует константа
+<span class="cpp"><a href="rdsXGDrawStdIcon.htm#light_ref14" title="RDS_STDICON_YELCIRCEXCLAM">RDS_STDICON_YELCIRCEXCLAM</a></span>. Для улучшения читаемости программы эта константа
+присваивается вспомогательной переменной <span class="cpp">icon</span>. Затем вызывается сервисная функция
+<span class="cpp"><a href="rdsXGGetStdIconSize.htm" title="А.5.18.9. rdsXGGetStdIconSize &ndash; получить размеры стандартной иконки">rdsXGGetStdIconSize</a></span>, которая определяет ширину и высоту указанной иконки и помещает
+их в переменные <span class="cpp">w</span> и <span class="cpp">h</span> соответственно. Поскольку мы
+используем стандартную иконку RDS, можно было бы не определять ее размеры &ndash; известно, что ее
+ширина и высота равны 16 точкам. Однако, при дальнейшей модернизации RDS эти размеры могут быть изменены,
+поэтому лучше получить их текущее значение при помощи сервисной функции. Зная размеры иконки и координаты
+прямоугольника блока, которые можно взять из структуры <span class="cpp">DrawData</span>, можно вывести эту
+иконку в центр прямоугольника вызовом сервисной функции
+<span class="cpp"><a href="rdsXGDrawStdIcon.htm" title="А.5.18.5. rdsXGDrawStdIcon &ndash; рисование стандартной иконки">rdsXGDrawStdIcon</a></span>. Первые два параметра функции &ndash; горизонтальная и вертикальная координаты
+верхнего левого угла выводимой иконки, третий &ndash; уникальный идентификатор стандартной иконки
+RDS (в нашем случае &ndash; <span class="cpp"><a class="hidden" href="rdsXGDrawStdIcon.htm#light_ref14" title="RDS_STDICON_YELCIRCEXCLAM">RDS_STDICON_YELCIRCEXCLAM</a></span>).</p>
+
+<p>Теперь, если удалить из схемы планировщик динамических вычислений, в центре графика немедленно появится
+иконка, сигнализирующая об ошибке
+(<a href="#pic1" title="Внешний вид графика без доступа к динамической переменной">рис.&nbsp;64</a>).
+Если вернуть планировщик обратно, иконка немедленно исчезнет. Это позволит пользователю, посмотрев на
+схему, сразу определить неправильно работающие блоки. На самом деле, кроме иконки, указывающей на
+наличие ошибки, было бы неплохо информировать пользователя о самой ошибке (в данном случае, указывать
+на отсутствие в системе переменной времени). Можно было бы вывести на изображении блока какой-либо
+описывающий ошибку текст, но в мелких масштабах он будет нечитаемым и ничем не поможет пользователю. Такие
+поясняющие тексты лучше всего выводить во всплывающих подсказках, которые рассмотрены
+в <a href="pm_2_11.htm" title="&sect;2.11. Отображение всплывающих подсказок к блокам">&sect;2.11</a>.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/SelfDraw_AddDraw.png" width="428" height="205" alt="Внешний вид графика без доступа к динамической переменной" />
+<p id="light_pic1">Рис.&nbsp;64. Внешний вид графика без доступа к динамической переменной</p>
+</div></div>
+
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_10_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_10_4.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_10_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

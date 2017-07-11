@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.4.6. RDS_DYNVARLINK &ndash; подписка на динамическую переменную</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_4">А.4. Структуры RDS</a></p>
+<div class="level"><p>А.4.6. <span class="cpp">RDS_DYNVARLINK</span> &ndash; подписка на динамическую переменную</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_CONNDESCRIPTION.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_EDITORPARAMETERS.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_DYNVARLINK">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.4. Структуры RDS</h3>
+<h4>А.4.6. <span class="cpp">RDS_DYNVARLINK</span> &ndash; подписка на динамическую переменную</h4>
+
+
+<p><span id="ref1">Структура</span> <span id="ref2"><span class="cpp">RDS_DYNVARLINK</span></span>
+создается во внутренней памяти RDS при подписке блока на
+<a href="um_1_5.htm" title="&sect;1.5. Динамические переменные">динамическую переменную</a>
+(см. <a href="pm_index.htm#light_htm:pm_2_6" title="&sect;2.6. Динамические переменные">&sect;2.6 руководства программиста</a>)
+и используется моделью блока для обращения к такой переменной. Модели не требуется самостоятельно
+создавать эти структуры &ndash; она всегда работает с указателями на них, возвращенными сервисными
+функциями подписки. Структура уничтожается RDS автоматически при прекращении подписки на
+переменную или удалении подписавшегося блока.</p>
+
+<pre class="cpp">  <span id="ref3"><span class="kw">typedef</span></span> <span id="ref4"><span class="kw">struct</span></span> {
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Data;          <span class="rem">// Адрес области данных переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a>  VarName;       <span class="rem">// Имя переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> VarType;       <span class="rem">// Тип переменной</span>
+    <span id="light_ref3"><a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></span> Provider; <span class="rem">// Блок-владелец переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> UID;           <span class="rem">// Служебный идентификатор переменной</span>
+                          <span class="rem">// (служебное поле, изменять нельзя)</span>
+    <span id="light_ref4"><a class="hidden" href="app_ids.htm#light_ref5" title="Идентификатор переменной">RDS_VHANDLE</a></span> Var;      <span class="rem">// Идентификатор переменной для</span>
+                          <span class="rem">// использования в сервисных функциях</span>
+  } <span id="light_ref1">RDS_DYNVARLINK</span>;
+  <span class="kw">typedef</span> RDS_DYNVARLINK *<span id="light_ref2">RDS_PDYNVARLINK</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">Data</span>&emsp;(<span class="cpp"><i>LPVOID</i></span>)</dt>
+  <dd>Указатель на область данных переменной. Структура этой области данных в точности соответствует данным
+  <a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статической переменной</a> такого же типа в дереве переменных блока
+  (см. <a href="pm_index.htm#light_htm:pm_2_5" title="&sect;2.5. Статические переменные блоков">&sect;2.5 руководства программиста</a>). Если динамическая переменная не найдена,
+  в этом поле будет находиться значение <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">VarName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку с именем динамической переменной. Строка находится во внутренней памяти RDS,
+  ее нельзя изменять.</dd>
+
+  <dt><span class="cpp">VarType</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на <a href="pm_1_5.htm#ref19" title="Строка типа переменных блока">строку типа</a> динамической переменной (она устроена
+  так же, как и строка типа статических переменных). Строка находится во внутренней памяти RDS,
+  ее нельзя изменять.</dd>
+
+  <dt><span class="cpp">Provider</span>&emsp;(<span class="cpp"><i>RDS_BHANDLE</i></span>)</dt>
+  <dd><a href="app_ids.htm#light_ref1" title="Идентификатор блока">Идентификатор блока</a>, в котором находится данная динамическая
+  переменная.</dd>
+
+  <dt><span class="cpp">UID</span>&emsp;(<span class="cpp"><i>LPVOID</i></span>)</dt>
+  <dd>Служебный идентификатор данной переменной, используемый внутри RDS. Значение этого поля
+  нельзя изменять.</dd>
+
+  <dt><span class="cpp">Var</span>&emsp;(<span class="cpp"><i>RDS_VHANDLE</i></span>)</dt>
+  <dd><a href="app_ids.htm#light_ref5" title="Идентификатор переменной">Идентификатор переменной</a>, используемый в
+  некоторых сервисных функциях для работы с переменными.</dd>
+
+</dl>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a></span>,
+<span class="cpp"><a href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a></span>,
+<span class="cpp"><a href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_CONNDESCRIPTION.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_EDITORPARAMETERS.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_DYNVARLINK">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

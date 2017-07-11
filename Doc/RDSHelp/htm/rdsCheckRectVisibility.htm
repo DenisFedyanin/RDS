@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.8.1. rdsCheckRectVisibility &ndash; проверить видимость прямоугольника</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_8">А.5.8. Работа с окнами подсистем</a></p>
+<div class="level"><p>А.5.8.1. <span class="cpp">rdsCheckRectVisibility</span> &ndash; проверить видимость прямоугольника</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsSaveSystemState.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsCheckSystemWindow.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsCheckRectVisibility">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4>А.5.8. Работа с окнами подсистем</h4>
+<p class="abstract">Описываются функции, открывающие, закрывающие и перемещающие окна подсистем, а также задающие и считывающие их параметры.</p>
+<h5>А.5.8.1. <span class="cpp">rdsCheckRectVisibility</span> &ndash; проверить видимость прямоугольника</h5>
+
+
+<p>Функция <span class="cpp">rdsCheckRectVisibility</span> проверяет, видна ли полностью указанная
+прямоугольная область в окне <a href="um_1_2.htm#light_ref10" title="Подсистема">подсистемы</a> при текущем положении полос прокрутки.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsCheckRectVisibility(
+      <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> System,     <span class="rem">// Подсистема</span>
+      <span class="kw">int</span> Left,<span class="kw">int</span> Top,       <span class="rem">// Левый верхний угол</span>
+      <span class="kw">int</span> Width,<span class="kw">int</span> Height    <span class="rem">// Размеры прямоугольника</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_BBhIIII</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">System</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор подсистемы, окно которой проверяется.</dd>
+
+  <dt><span class="cpp">Left</span>,&nbsp;<span class="cpp">Top</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Горизонтальная (<span class="cpp">Left</span>) и вертикальная (<span class="cpp">Top</span>) координаты
+  верхнего левого угла прямоугольника на рабочем поле подсистемы в масштабе 100% (горизонтальная ось координат
+  направлена вправо, вертикальная &ndash; вниз, начало координат &ndash; левый верхний угол рабочего поля).</dd>
+
+  <dt><span class="cpp">Width</span>,&nbsp;<span class="cpp">Height</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Ширина (<span class="cpp">Width</span>) и высота (<span class="cpp">Height</span>) прямоугольника
+  точках экрана в масштабе 100%.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p><span class="cpp">TRUE</span> &ndash; указанный прямоугольник полностью видим в окне подсистемы,
+<span class="cpp">FALSE</span> &ndash; прямоугольник не виден или виден частично.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция возвращает <span class="cpp">TRUE</span>, если окно подсистемы <span class="cpp">System</span>
+открыто и прямоугольник с указанными в параметрах координатами целиком находится на
+видимой в данный момент части рабочего поля подсистемы. Если окно подсистемы перекрыто другими
+окнами, прямоугольник все равно будет считаться видимым, если он попадет в отображаемую в окне
+часть рабочей области.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsScrollWindowToRect.htm" title="А.5.8.16. rdsScrollWindowToRect &ndash; показать область в окне подсистемы">rdsScrollWindowToRect</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsSaveSystemState.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsCheckSystemWindow.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsCheckRectVisibility">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

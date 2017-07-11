@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.4.17. RDS_VARDESCRIPTION &ndash; описание переменной блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_4">А.4. Структуры RDS</a></p>
+<div class="level"><p>А.4.17. <span class="cpp">RDS_VARDESCRIPTION</span> &ndash; описание переменной блока</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_TIMERDESCRIPTION.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="app_a_5_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_VARDESCRIPTION">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.4. Структуры RDS</h3>
+<h4>А.4.17. <span class="cpp">RDS_VARDESCRIPTION</span> &ndash; описание переменной блока</h4>
+
+
+<p><span id="ref1">Структура</span> <span id="ref2"><span class="cpp">RDS_VARDESCRIPTION</span></span>
+используется для получения описания
+<a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">переменной блока</a>
+и заполняется различными сервисными функциями. Примеры ее использования приведены в
+<a href="pm_2_7_4.htm" title="&sect;2.7.4. Хранение настроечных параметров в переменных блока">&sect;2.7.4</a>
+и <a href="pm_2_16_1.htm" title="&sect;2.16.1. Изменение структуры переменных блока">&sect;2.16.1 руководства программиста</a>.</p>
+
+<pre class="cpp">  <span id="ref3"><span class="kw">typedef</span></span> <span class="kw">struct</span> {
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;    <span class="rem">// Размер этой структуры в байтах</span>
+    <span class="kw">char</span> Type;         <span class="rem">// Тип переменной (RDS_VARTYPE_*)</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags;       <span class="rem">// Флаги (RDS_VARFLAG_*)</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Name;        <span class="rem">// Имя переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> StructType;  <span class="rem">// Имя типа структуры или NULL</span>
+    <span class="kw">int</span> StructFields;  <span class="rem">// Число полей (только для структур)</span>
+    <span class="kw">int</span> DataSize;      <span class="rem">// Размер блока данных</span>
+    <span id="light_ref3"><a class="hidden" href="app_ids.htm#light_ref5" title="Идентификатор переменной">RDS_VHANDLE</a></span> Var;   <span class="rem">// Идентификатор переменной</span>
+    <span class="kw">int</span> Rank;          <span class="rem">// Уровень переменной</span>
+  } <span id="light_ref1">RDS_VARDESCRIPTION</span>;
+  <span class="kw">typedef</span> RDS_VARDESCRIPTION *<span id="light_ref2">RDS_PVARDESCRIPTION</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">servSize</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</dt>
+  <dd>Размер этой структуры в байтах. Перед вызовом любой сервисной функции, работающей с этой структурой, полю
+  <span class="cpp">servSize</span> необходимо присвоить значение <span class="cpp">sizeof(RDS_VARDESCRIPTION)</span>.</dd>
+
+  <dt><span class="cpp">Type</span>&emsp;(<span class="cpp"><i>char</i></span>)</dt>
+  <dd>Символ типа переменной (одна из констант <span class="cpp"><a href="RDS_BFM_VARCHECK.htm#ref4" title="Константы типов переменных блока">RDS_VARTYPE_*</a></span>).</dd>
+
+  <dt><span id="ref4"><span class="cpp">Flags</span>&emsp;(<span class="cpp"><i>DWORD</i></span>)</span></dt>
+  <dd><span id="light_ref4">Набор битовых флагов переменной</span>:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref5">RDS_VARFLAG_INPUT</span></span></td>
+          <td>Переменная является входом блока (не может быть установлен одновременно с <span class="cpp">RDS_VARFLAG_OUTPUT</span>).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref6">RDS_VARFLAG_OUTPUT</span></span></td>
+          <td>Переменная является выходом блока (не может быть установлен одновременно с <span class="cpp">RDS_VARFLAG_INPUT</span>).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref7">RDS_VARFLAG_RUN</span></span></td>
+          <td>При срабатывании данного входа
+          <a href="pm_1_5.htm#ref18" title="Флаг запуска у входа блока">автоматически запускается модель</a>
+          (только для переменных &ndash; входов блока).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref8">RDS_VARFLAG_MENU</span></span></td>
+          <td>Имя переменной присутствует в <a href="um_2_7_1.htm#ref3" title="Меню создания связи">меню</a> присоединения связи
+          к блоку (только для входов и выходов блоков).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref9">RDS_VARFLAG_SHOWNAME</span></span></td>
+          <td>Имя переменной отображается рядом с конечной точкой присоединенной к ней связи (только для входов и
+          выходов блоков, считывается только в момент создания новой связи &ndash; далее отображение имени уже
+          определяется <a href="um_2_7_2.htm#light_ref8" title="Имя переменной в узле связи">параметрами точки</a> этой связи).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref10">RDS_VARFLAG_ONEINDEX</span></span></td>
+          <td>Переменная &ndash; <a href="um_1_4.htm#light_ref12" title="тип переменной: массив">массив</a>, а не
+          <a href="um_1_4.htm#light_ref11" title="тип переменной: матрица">матрица</a>, то есть для ее элементов используется один индекс,
+          а не два (только для переменных типа <span class="cpp">RDS_VARTYPE_ARRAY</span>).</td>
+        </tr>
+      </table>
+    </div></div>
+    Для входов и выходов блока флаги <span class="cpp">RDS_VARFLAG_INPUT</span>, <span class="cpp">RDS_VARFLAG_OUTPUT</span> и
+    <span class="cpp">RDS_VARFLAG_RUN</span> устанавливаются не только для переменных, непосредственно находящихся в
+    структуре переменных блока, но и для их элементов. Например, если какая-либо структура является входом,
+    срабатывание связи которого вызывает запуск модели, флаги <span class="cpp">RDS_VARFLAG_INPUT</span> и
+    <span class="cpp">RDS_VARFLAG_RUN</span> будут установлены не только у самой этой структуры, но и
+    у всех ее полей.</dd>
+
+  <dt><span class="cpp">Name</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на строку во внутренней памяти RDS, в которой хранится имя данной переменной. Функция
+  модели не должна как-либо изменять эту строку, для изменения и переименования переменных блока следует использовать
+  вспомогательный объект, создаваемый функцией <span class="cpp"><a href="rdsVSCreateEditor.htm" title="А.5.25.1. rdsVSCreateEditor &ndash; создать объект-редактор переменных">rdsVSCreateEditor</a></span>.</dd>
+
+  <dt><span class="cpp">StructType</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку во внутренней памяти RDS, в которой хранится название типа
+  <a href="um_1_4.htm#light_ref14" title="тип переменной: структура">структуры</a>, если данная переменная является структурой (тип
+  <span class="cpp">RDS_VARTYPE_STRUCT</span>). Функция модели не должна изменять эту строку.
+  Если переменная структурой не является, или у структуры нет имени, в этом поле находится значение
+  <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">StructFields</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Число полей в переменной, если она является структурой (тип <span class="cpp">RDS_VARTYPE_STRUCT</span>).
+  Для всех остальных переменных в это поле записывается ноль.</dd>
+
+  <dt><span class="cpp">DataSize</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Размер в байтах блока данных этой переменной
+  (см. <a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">&sect;1.5</a> и
+  <a href="pm_index.htm#light_htm:pm_2_5" title="&sect;2.5. Статические переменные блоков">&sect;2.5 руководства программиста</a>), то есть объем памяти, который занимает эта переменная
+  в дереве переменных блока. Например, вещественная переменная двойной точности
+  (<span class="cpp">double</span>, тип <span class="cpp">RDS_VARTYPE_DOUBLE</span>) занимает в памяти восемь
+  байтов, строка (тип <span class="cpp">RDS_VARTYPE_STRING</span>) &ndash; четыре байта, поскольку в дереве
+  переменных хранится только указатель на строку, и т.п.</dd>
+
+  <dt><span class="cpp">Var</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref5" title="Идентификатор переменной">RDS_VHANDLE</a></i></span>)</dt>
+  <dd>Уникальный идентификатор данной переменной для использования в различных сервисных функциях.</dd>
+
+  <dt><span class="cpp">Rank</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Уровень данной переменной, то есть максимальная вложенность элементов в этой переменной. Например, для
+  любой простой переменной уровень будет равен нулю, для массива или матрицы вещественных чисел &ndash; единице
+  (один вложенный элемент), для матрицы матриц целых &ndash; двум (внутри этой матрицы
+  &ndash; еще одна матрица, внутри которой &ndash; целое число, то есть в переменной два элемента,
+  вложенных один в другой). Для структуры уровень будет числом, на единицу большим максимального уровня всех
+  ее полей.</dd>
+</dl>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>,
+<span class="cpp"><a href="rdsGetBlockVar.htm" title="А.5.14.10. rdsGetBlockVar &ndash; переменная блока по номеру">rdsGetBlockVar</a></span>,
+<span class="cpp"><a href="rdsFindStructVar.htm" title="А.5.14.9. rdsFindStructVar &ndash; найти структуру по имени типа">rdsFindStructVar</a></span>,
+<span class="cpp"><a href="rdsGetStructVar.htm" title="А.5.14.14. rdsGetStructVar &ndash; структура по номеру">rdsGetStructVar</a></span>,
+<span class="cpp"><a href="rdsGetVarField.htm" title="А.5.14.15. rdsGetVarField &ndash; поле структуры или элемент массива по номеру">rdsGetVarField</a></span>,
+<span class="cpp"><a href="rdsFindBlockVar.htm" title="А.5.14.8. rdsFindBlockVar &ndash; найти переменную блока по имени">rdsFindBlockVar</a></span>,
+<span class="cpp"><a href="rdsSetBlockVarFlags.htm" title="А.5.14.18. rdsSetBlockVarFlags &ndash; установить флаги переменной">rdsSetBlockVarFlags</a></span>,
+<span class="cpp"><a href="rdsVSCreateEditor.htm" title="А.5.25.1. rdsVSCreateEditor &ndash; создать объект-редактор переменных">rdsVSCreateEditor</a></span>,
+<span class="cpp"><a href="rdsVSGetVarDescription.htm" title="А.5.25.14. rdsVSGetVarDescription &ndash; получить описание переменной">rdsVSGetVarDescription</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_TIMERDESCRIPTION.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="app_a_5_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_VARDESCRIPTION">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

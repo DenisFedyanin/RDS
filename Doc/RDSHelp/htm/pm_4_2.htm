@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;4.2. Инициализация, очистка и настройка параметров модуля</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_4">Глава 4. Создание модулей автоматической компиляции</a></p>
+<div class="level"><p>&sect;4.2. Инициализация, очистка и настройка параметров модуля</p>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_4_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_4_3.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_4_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_4_2_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 4. Создание модулей автоматической компиляции</h2>
+<h3>&sect;4.2. Инициализация, очистка и настройка параметров модуля</h3>
+<p class="abstract">Рассматривается пример модуля автоматической компиляции, функция которого реагирует пока 
+            только на самые основные вызовы: инициализацию данных, очистку данных и вызов окна настройки. Созданный модуль 
+            регистрируется в RDS.</p>
+
+
+<p><span id="ref1">В</span>
+качестве примера создадим модуль автоматической компиляции, который даст пользователю возможность ввести
+текст реакции модели блока на выполнение такта моделирования (<span class="cpp"><span id="light_ref2"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span></span>) в
+виде фрагмента программы на языке C и задать структуру статических переменных блока. Модуль мы сделаем настраиваемым,
+чтобы можно было использовать его вместе с одним из стандартных компиляторов, параметры командной строки которых
+различаются достаточно сильно (по умолчанию будем использовать бесплатный компилятор
+<span id="light_ref1">Borland C++ 5.5</span>).</p>
+
+<p><span id="ref3">Функцию</span>
+<span id="ref4">модуля</span>
+компиляции можно вставить в ту же библиотеку, в которой мы размещали модели блоков,
+рассмотренных в предыдущих примерах, либо создать новую, начав ее исходный текст с такой же
+<a href="pm_2_2.htm#ref8" title="Главная функция DLL">главной функции</a>. Нам не нужно явно включать файл
+&laquo;<span class="file"><span id="light_ref3">RdsComp.h</span></span>&raquo; &ndash; директива его включения
+уже содержится в файле
+&laquo;<span class="file"><span id="light_ref4">RdsFunc.h</span></span>&raquo;,
+который мы используем.</p>
+
+<p><span id="ref5">Сначала</span>
+опишем класс личной области данных нашего модуля автокомпиляции &ndash; в нем
+будут содержаться все параметры, необходимые для формирования текста DLL с моделью блока и
+вызова компилятора:</p>
+
+<pre class="cpp">  <span class="rem">// Класс личной области данных модуля автокомпиляции</span>
+  <span class="kw">class</span> <span id="light_ref5">TCAutoCompData</span>
+  { <span class="kw">private</span>:
+      <span class="rem">// Пути</span>
+      <span class="kw">char</span> *CompPath;     <span class="rem">// к компилятору</span>
+      <span class="kw">char</span> *LinkPath;     <span class="rem">// к редактору связей (link)</span>
+      <span class="kw">char</span> *IncludePath;  <span class="rem">// к файлам заголовков</span>
+      <span class="kw">char</span> *LibPath;      <span class="rem">// к библиотекам</span>
+      <span class="rem">// Параметры командной строки</span>
+      <span class="kw">char</span> *CompParams;   <span class="rem">// компилятора</span>
+      <span class="kw">char</span> *LinkParams;   <span class="rem">// редактора связей</span>
+      <span class="rem">// Параметры исходного текста</span>
+      <span class="kw">char</span> *DllMainName;  <span class="rem">// имя главной функции DLL</span>
+      <span class="kw">char</span> *ModelFuncHdr; <span class="rem">// заголовок функции модели</span>
+      <span class="kw">char</span> *Exported;     <span class="rem">// экспортированное имя функции</span>
+
+      <span class="rem">// Освободить все динамические строки</span>
+      <span class="kw">void</span> FreeAllStrings(<span class="kw">void</span>)
+        { <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(CompPath);
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(LinkPath);
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(IncludePath);
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(LibPath);
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(CompParams);
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(LinkParams);
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(DllMainName);
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(ModelFuncHdr);
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(Exported);
+        };
+
+    <span class="kw">public</span>:
+      <span class="rem">// Чтение параметров модуля из INI-файла</span>
+      <span class="kw">void</span> ReadFromIni(<span class="kw">void</span>);
+      <span class="rem">// Запись параметров модуля в INI-файл</span>
+      <span class="kw">void</span> WriteToIni(<span class="kw">void</span>);
+      <span class="rem">// Настройка параметров модуля</span>
+      <span class="kw">void</span> Setup(<span class="kw">void</span>);
+
+      <span class="rem">// Конструктор класса</span>
+      TCAutoCompData(<span class="kw">void</span>)
+        { CompPath=LinkPath=IncludePath=LibPath=NULL;
+          CompParams=<span id="light_ref6"><a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a></span>(
+            <span class="str">"-I\"$INCLUDE$;$INCLUDE$&#92;&#92;sys\" -I\"$RDSINCLUDE$\" "</span>
+            <span class="str">"-O2 -Vx -Ve -X- -a8 -k- -vi "</span>
+            <span class="str">"-tWD -tWM -c -w-inl "</span>
+            <span class="str">"\"$CPPFILE$\""</span>);
+          LinkParams=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(
+            <span class="str">"-L\"$LIB$\" -D\"\" -aa -Tpd -x -Gn -Gi -q "</span>
+            <span class="str">"c0d32.obj \"$OBJFILE$\" , \"$DLLFILE$\" , , "</span>
+            <span class="str">"import32.lib cw32mt.lib"</span>);
+          DllMainName=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<span class="str">"DllEntryPoint"</span>);
+          ModelFuncHdr=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(
+            <span class="str">"extern \"C\" __declspec(dllexport) "</span>
+            <span class="str">"int RDSCALL autocompModelFunc"</span>);
+          Exported=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<span class="str">"autocompModelFunc"</span>);
+        };
+      <span class="rem">// Деструктор класса</span>
+      ~TCAutoCompData(){ FreeAllStrings(); };
+  };
+  <span class="rem">//=========================================</span></pre>
+
+<p>Все параметры нашего модуля описаны как указатели на строки в секции
+<span class="cpp">private</span> класса <span class="cpp">TCAutoCompData</span>. Все эти строки будут
+динамическими, то есть память под них мы будем отводить различными сервисными функциями RDS, а
+освобождать ее &ndash; функцией <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>. В той же секции класса мы описали функцию
+<span class="cpp">FreeAllStrings</span> для освобождения памяти, занятой всеми этими строками &ndash;
+из-за ее простоты текст этой функции мы разместили непосредственно внутри описания класса. В секции
+<span class="cpp">public</span> мы описали функции для загрузки, сохранения и настройки параметров нашего модуля,
+а также конструктор и деструктор класса. В конструкторе мы присваиваем всем параметрам значения,
+подходящие для работы с компилятором Borland C++ 5.5, а в деструкторе освобождаем все строки параметров вызовом
+<span class="cpp">FreeAllStrings</span>. Параметры нашего модуля следует рассмотреть подробнее, поскольку
+они играют ключевую роль в его взаимодействии с компилятором.</p>
+
+<p><span id="ref7">В</span>
+<span id="ref8">строках</span>
+<span class="cpp">CompPath</span> и <span class="cpp">LinkPath</span> будут находиться пути
+к исполняемым файлам компилятора и редактора связей соответственно. Компилятор будет преобразовывать файл
+исходного текста библиотеки с моделью блока, который сформирует наш модуль, в объектный файл (обычно
+с расширением &laquo;<span class="file"><span id="light_ref7">.obj</span></span>&raquo;), и для этого ему
+потребуется путь к папке с файлами заголовков
+(&laquo;<span class="file"><span id="light_ref8">.h</span></span>&raquo;), который мы будем хранить в строке
+<span class="cpp">IncludePath</span>. Редактор связей нужно запускать только после завершения работы
+компилятора, он должен будет преобразовать объектный файл в исполняемую библиотеку, и для этого ему потребуется
+путь к папке с библиотеками стандартных функций, который будет находиться в строке
+<span class="cpp">LibPath</span>. Мы не можем заранее предсказать, в какой папке будет размещаться компилятор
+на машине пользователя, поэтому всем четырем строкам путей мы в конструкторе класса присваиваем значение
+<span class="cpp">NULL</span> &ndash; пока пользователь не настроит эти пути, мы не сможем компилировать модели
+блоков.</p>
+
+<p>И компилятору, и редактору связей в командной строке нужно передавать различные параметры, которые будут
+влиять на компиляцию: в частности, нужно передать пути к файлам заголовков и библиотек, указать, что компилируется
+именно библиотека (DLL), а не файл приложения (EXE) и т.д. Набор этих параметров зависит от конкретного
+используемого компилятора, у разных компиляторов они существенно отличаются, и мы должны дать пользователю
+возможность настроить их под свой компилятор. Параметры командной строки компилятора мы будем хранить в
+строке <span class="cpp">CompParams</span>, а параметры редактора связей &ndash; в
+<span class="cpp">LinkParams</span>. По умолчанию мы будем использовать компилятор Borland C++ 5.5,
+поэтому в конструкторе класса мы записываем в эти строки набор параметров, подходящих именно этому компилятору.
+Поскольку все строки параметров у нас динамические, мы присваиваем им динамические копии статических строк
+(символов, записанных в двойных кавычках, согласно синтаксису C), созданные при помощи сервисной функции
+<span class="cpp"><a href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a></span>.</p>
+
+<p><span id="ref9">Можно</span>
+заметить, что в строках, которые мы присваиваем в конструкторе класса полям
+<span class="cpp">CompParams</span> и <span class="cpp">LinkParams</span>, содержатся символические константы
+&laquo;$INCLUDE$&raquo;, &laquo;$RDSINCLUDE$&raquo;, &laquo;$OBJFILE$&raquo; и
+&laquo;$DLLFILE$&raquo;. Если &laquo;<span id="light_ref9">$RDSINCLUDE$</span>&raquo;
+&ndash; это <a href="rdsGetFullFilePath.htm#ref1" title="Символические обозначения стандартных путей">стандартное символическое имя</a>, используемое во всех функциях
+RDS для указания пути к папке с входящими в комплект RDS файлам заголовков
+&laquo;<span class="file">RdsDef.h</span>&raquo;, &laquo;<span class="file">RdsFunc.h</span>&raquo; и т.д., то четыре других имени в RDS
+не используются. Тем не менее, нам необходимо ввести их самостоятельно &ndash; мы не можем жестко включить
+в командную строку пути к файлам стандартных заголовков и библиотек компилятора (они настраиваются пользователем
+и хранятся в полях класса <span class="cpp">IncludePath</span> и <span class="cpp">LibPath</span>), а также
+имя исходного компилируемого файла, объектного файла и файла библиотеки (мы будем размещать их во
+временной папке, поэтому заранее мы не можем сказать, какие свободные имена удастся дать этим файлам). Перед
+запуском компилятора и редактора связей нам придется самостоятельно заменять эти символические имена на реальные.
+К счастью, в RDS есть <a href="rdsStringReplace.htm" title="А.5.4.13. rdsStringReplace &ndash; замена фрагментов строки">сервисная функция</a>,
+позволяющая достаточно легко произвести такую замену.</p>
+
+<p><span id="ref10">Последняя</span>
+группа параметров нашего модуля обеспечивает формирование исходного текста компилируемой библиотеки
+так, чтобы и компилятор, и RDS могли с ней работать. В строке
+<span class="cpp">DllMainName</span> будет находиться имя главной функции DLL, подходящей используемому
+компилятору (для  Borland C++ 5.5 это &laquo;DllEntryPoint&raquo;). В строке
+<span class="cpp">ModelFuncHdr</span> будет находиться заголовок функции модели блока, то есть имя этой
+функции вместе со всеми предшествующими ему описаниями, обеспечивающими экспорт этой функции из библиотеки
+(иначе RDS не сможет получить указатель на нее функцией Windows
+<span id="light_ref10" class="cpp">GetProcAddress</span>).
+<span id="ref11">Наконец</span>, в строке
+<span class="cpp">Exported</span> будет находиться экспортированное имя функции, которое даст ей компилятор,
+и которое наш модуль автокомпиляции должен будет записать в параметры блока, чтобы скомпилированная функция модели
+к нему подключилась. В Borland C++ 5.5 экспортированное имя совпадает с именем самой функции (то есть если
+в исходном тексте мы назвали функцию <span class="cpp">autocompModelFunc</span>, то и ее экспортированное имя будет
+&laquo;autocompModelFunc&raquo;), но другие
+<span id="light_ref11">компиляторы часто добавляют к этому имени специальные символы</span>,
+указывающие на тип передаваемых в функцию параметров. Например, функция
+<span class="cpp">autocompModelFunc</span> может получить экспортированное имя
+&laquo;autocompModelFunc@12&raquo; или &laquo;_autocompModelFunc@12&raquo; (такой способ формирования
+экспортированного имени называется &laquo;name mangling&raquo; и обычно расшифровывается в описании
+к конкретному компилятору).</p>
+
+<p><span id="ref12">Теперь</span>,
+<span id="ref13">когда</span>
+мы разобрались с тем, какие параметры нужны для работы нашего модуля, необходимо написать
+функции для их сохранения, загрузки и настройки. Хранить параметры модуля мы будем в файле
+&laquo;<span class="file">ProgGuideAutoComp.ini</span>&raquo; в папке
+&laquo;<span class="file">Dll\</span>&raquo; внутри стандартной
+<span id="light_ref13"><a href="um_2_18.htm#ref2" title="Папка настроек">папки настроек</a></span> RDS. На самом деле,
+было бы лучше сформировать имя
+INI-файла из имени нашей DLL заменой расширения на &laquo;<span class="file">.ini</span>&raquo;, но мы не будем здесь этого делать,
+чтобы не усложнять пример (имя файла DLL можно узнать при помощи функции Windows API
+<span id="light_ref12" class="cpp">GetModuleFileName</span>, в которую нужно передать дескриптор
+модуля загруженной DLL, то есть первый параметр главной функции DLL
+<span class="cpp"><a href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a></span>). Для чтения и записи параметров мы
+будем использовать вспомогательный объект RDS для работы с данными в формате INI-файлов, который
+создается функцией <span class="cpp"><span id="light_ref14"><a href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a></span></span>. Мы уже использовали его
+<a href="pm_2_8_5.htm#ref1" title="Пример сохранения параметров блока в формате INI-файла">раньше</a> для
+сохранения данных блока в текстовом виде.</p>
+
+<p>Поскольку имя файла параметров модуля нам потребуется и при загрузке, и при сохранении, имеет смысл сделать
+для него макроопределение:</p>
+
+<pre class="cpp">  <span class="rem">// Имя INI-файла с параметрами модуля</span>
+  <span class="preproc">#define TCAUTOCOMP_INI "$INI$&#92;&#92;Dll&#92;&#92;ProgGuideAutoComp.ini"</span></pre>
+
+<p>Объект для работы с INI-файлами, который мы будем использовать, способен сам преобразовывать символические
+константы в пути, поэтому в этом макросе для указания папки стандартных INI-файлов мы можем использовать строку
+&laquo;$INI$&raquo;.</p>
+
+<p>Функция сохранения параметров модуля выглядит следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Запись параметров модуля в INI-файл</span>
+  <span class="kw">void</span> TCAutoCompData::WriteToIni(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini=<a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a>(TRUE);
+
+    <span class="rem">// Создаем секцию [Paths]</span>
+    <span id="light_ref15"><a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a></span>(ini,<span id="light_ref16"><a class="hidden" href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a></span>,<span class="const">0</span>,<span class="str">"Paths"</span>);
+    <span class="rem">// Записываем в нее пути</span>
+    <span id="light_ref17"><a class="hidden" href="rdsINIWriteString.htm" title="А.5.27.9. rdsINIWriteString &ndash; установить текстовое значение параметра">rdsINIWriteString</a></span>(ini,<span class="str">"Compiler"</span>,CompPath);
+    <a class="hidden" href="rdsINIWriteString.htm" title="А.5.27.9. rdsINIWriteString &ndash; установить текстовое значение параметра">rdsINIWriteString</a>(ini,<span class="str">"Linker"</span>,LinkPath);
+    <a class="hidden" href="rdsINIWriteString.htm" title="А.5.27.9. rdsINIWriteString &ndash; установить текстовое значение параметра">rdsINIWriteString</a>(ini,<span class="str">"Include"</span>,IncludePath);
+    <a class="hidden" href="rdsINIWriteString.htm" title="А.5.27.9. rdsINIWriteString &ndash; установить текстовое значение параметра">rdsINIWriteString</a>(ini,<span class="str">"Lib"</span>,LibPath);
+
+    <span class="rem">// Создаем секцию [Params]</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a>,<span class="const">0</span>,<span class="str">"Params"</span>);
+    <span class="rem">// Записываем в нее параметры командной строки</span>
+    <a class="hidden" href="rdsINIWriteString.htm" title="А.5.27.9. rdsINIWriteString &ndash; установить текстовое значение параметра">rdsINIWriteString</a>(ini,<span class="str">"Compiler"</span>,CompParams);
+    <a class="hidden" href="rdsINIWriteString.htm" title="А.5.27.9. rdsINIWriteString &ndash; установить текстовое значение параметра">rdsINIWriteString</a>(ini,<span class="str">"Linker"</span>,LinkParams);
+
+    <span class="rem">// Создаем секцию [Func]</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a>,<span class="const">0</span>,<span class="str">"Func"</span>);
+    <span class="rem">// Записываем в нее остальные параметры</span>
+    <a class="hidden" href="rdsINIWriteString.htm" title="А.5.27.9. rdsINIWriteString &ndash; установить текстовое значение параметра">rdsINIWriteString</a>(ini,<span class="str">"DllMain"</span>,DllMainName);
+    <a class="hidden" href="rdsINIWriteString.htm" title="А.5.27.9. rdsINIWriteString &ndash; установить текстовое значение параметра">rdsINIWriteString</a>(ini,<span class="str">"ModelFunc"</span>,ModelFuncHdr);
+    <a class="hidden" href="rdsINIWriteString.htm" title="А.5.27.9. rdsINIWriteString &ndash; установить текстовое значение параметра">rdsINIWriteString</a>(ini,<span class="str">"Exported"</span>,Exported);
+
+    <span class="rem">// Сохраняем получившееся в файл</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<span id="light_ref18"><a class="hidden" href="RDS_HINI_SAVEFILE.htm" title="А.5.27.17. Команда RDS_HINI_SAVEFILE &ndash; записать текст в файл">RDS_HINI_SAVEFILE</a></span>,<span class="const">0</span>,TCAUTOCOMP_INI);
+
+    <span class="rem">// Уничтожение вспомогательного объекта</span>
+    <span id="light_ref19"><a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>(ini);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Единственное отличие этой функции от функций сохранения данных блоков, в которых мы использовали этот
+же вспомогательный объект, заключается в том, что здесь мы не передаем сформированный в объекте текст в
+RDS для сохранения в составе файла схемы, а записываем его в файл, вызывая функцию
+<span class="cpp"><a href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a></span> с параметром <span class="cpp"><a href="RDS_HINI_SAVEFILE.htm" title="А.5.27.17. Команда RDS_HINI_SAVEFILE &ndash; записать текст в файл">RDS_HINI_SAVEFILE</a></span>.</p>
+
+<p>Функция загрузки параметров из файла будет несколько сложнее функции сохранения, поскольку при
+загрузке новых значений параметров модуля нам необходимо освободить динамическую память, которую занимают старые
+строки параметров.</p>
+
+<pre class="cpp">  <span class="rem">// Чтение из INI-файла</span>
+  <span class="kw">void</span> TCAutoCompData::ReadFromIni(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini=<a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a>(TRUE);
+
+    <span class="rem">// Загружаем текст из файла во вспомогательный объект</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<span id="light_ref20"><a class="hidden" href="RDS_HINI_LOADFILE.htm" title="А.5.27.14. Команда RDS_HINI_LOADFILE &ndash; загрузить текст из файла">RDS_HINI_LOADFILE</a></span>,<span class="const">0</span>,TCAUTOCOMP_INI);
+    <span class="rem">// Проверяем, нет ли ошибок</span>
+    <span class="kw">if</span>(<span id="light_ref21"><a class="hidden" href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a></span>(ini,<span id="light_ref22"><a class="hidden" href="RDS_HINI_GETLASTERROR.htm" title="А.5.27.13. Команда RDS_HINI_GETLASTERROR &ndash; получить результат последней операции">RDS_HINI_GETLASTERROR</a></span>)) <span class="rem">// Ошибка</span>
+      <span class="kw">return</span>;
+
+    <span class="rem">// Читаем строки из секции [Paths]</span>
+    <span class="kw">if</span>(<span id="light_ref23"><a class="hidden" href="rdsINIOpenSection.htm" title="А.5.27.2. rdsINIOpenSection &ndash; установить текущую секцию">rdsINIOpenSection</a></span>(ini,<span class="str">"Paths"</span>))
+      { <span class="kw">char</span> *CompPath_old=CompPath, <span class="rem">// Старые значения</span>
+             *LinkPath_old=LinkPath,
+             *IncludePath_old=IncludePath,
+             *LibPath_old=LibPath;
+        <span class="rem">// Загружаем новые строки</span>
+        CompPath=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<span id="light_ref24"><a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a></span>(ini,<span class="str">"Compiler"</span>,CompPath_old,NULL));
+        LinkPath=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a>(ini,<span class="str">"Linker"</span>,LinkPath_old,NULL));
+        IncludePath=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a>(ini,<span class="str">"Include"</span>,IncludePath_old,NULL));
+        LibPath=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a>(ini,<span class="str">"Lib"</span>,LibPath_old,NULL));
+        <span class="rem">// Освобождаем старые строки</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(CompPath_old);
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(LinkPath_old);
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(IncludePath_old);
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(LibPath_old);
+      }
+
+    <span class="rem">// Читаем строки из секции [Params]</span>
+    <span class="kw">if</span>(<a class="hidden" href="rdsINIOpenSection.htm" title="А.5.27.2. rdsINIOpenSection &ndash; установить текущую секцию">rdsINIOpenSection</a>(ini,<span class="str">"Params"</span>))
+      { <span class="kw">char</span> *CompParams_old=CompParams, <span class="rem">// Старые значения</span>
+             *LinkParams_old=LinkParams;
+        <span class="rem">// Загружаем новые строки</span>
+        CompParams=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a>(ini,<span class="str">"Compiler"</span>,CompParams_old,NULL));
+        LinkParams=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a>(ini,<span class="str">"Linker"</span>,LinkParams_old,NULL));
+        <span class="rem">// Освобождаем старые строки</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(CompParams_old);
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(LinkParams_old);
+      }
+
+    <span class="rem">// Читаем строки из секции [Func]</span>
+    <span class="kw">if</span>(rdsINIOpenSection(ini,<span class="str">"Func"</span>))
+      { <span class="kw">char</span> *DllMainName_old=DllMainName, <span class="rem">// Старые значения</span>
+             *ModelFuncHdr_old=ModelFuncHdr,
+             *Exported_old=Exported;
+        <span class="rem">// Загружаем новые строки</span>
+        DllMainName=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a>(ini,<span class="str">"DllMain"</span>,DllMainName_old,NULL));
+        ModelFuncHdr=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a>(ini,<span class="str">"ModelFunc"</span>,ModelFuncHdr_old,NULL));
+        Exported=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a>(ini,<span class="str">"Exported"</span>,Exported_old,NULL));
+        <span class="rem">// Освобождаем старые строки</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(DllMainName_old);
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(ModelFuncHdr_old);
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(Exported_old);
+      }
+    <span class="rem">// Вспомогательный объект больше не нужен</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(ini);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции мы сначала загружаем текст из файла в созданный вспомогательный объект вызовом
+<span class="cpp"><a href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a></span> с параметром <span class="cpp"><a href="RDS_HINI_LOADFILE.htm" title="А.5.27.14. Команда RDS_HINI_LOADFILE &ndash; загрузить текст из файла">RDS_HINI_LOADFILE</a></span>, а затем вызываем
+функцию <span class="cpp"><a href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a></span> с параметром <span class="cpp"><a href="RDS_HINI_GETLASTERROR.htm" title="А.5.27.13. Команда RDS_HINI_GETLASTERROR &ndash; получить результат последней операции">RDS_HINI_GETLASTERROR</a></span>,
+которая вернет ненулевое значение, если последняя операция с INI-файлом (то есть загрузка текста из файла)
+не удалась. В этом случае мы завершаем нашу функцию загрузки: файл параметров не существует или к нему
+нет доступа по каким-либо другим причинам, и загрузить параметры из него мы не можем.</p>
+
+<p>Если же текст успешно считан во вспомогательный объект, мы начинаем читать из него параметры,
+установив название интересующей нас секции вызовом <span class="cpp"><a href="rdsINIOpenSection.htm" title="А.5.27.2. rdsINIOpenSection &ndash; установить текущую секцию">rdsINIOpenSection</a></span> и получая оттуда
+интересующие нас строки. При этом для чтения каждой строки параметров выполняются следующие действия:</p>
+
+<pre class="cpp">  <span class="rem">// Место для хранения старой строки</span>
+  <span class="kw">char</span> *<i>строка_old</i>=<i>строка</i>;
+  <span class="rem">// Создание динамической копии полученной от объекта строки</span>
+  <i>строка</i>=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a>(ini,<span class="str">"</span><i><span class="str">имя</span></i><span class="str">"</span>,<i>строка_old</i>,&hellip;));
+  <span class="rem">// Уничтожение старой строки</span>
+  <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(<i>строка_old</i>);</pre>
+
+<p>Мы не можем сначала уничтожить старую динамическую строку со значением параметра, а потом создать
+новую, получив ее из данных файла. Старое значение параметра необходимо нам в качестве значения по умолчанию,
+то есть того значения, которое вернет функция <span class="cpp"><a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a></span>, если запрошенной
+строки в файле параметров не окажется. Поэтому для каждой строки параметров мы сохраняем старое значение
+во вспомогательной переменной, затем получаем указатель на строку с нужным нам названием, вызывая
+<span class="cpp"><a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a></span> (при этом сохраненное значение передается в ее третьем параметре
+как значение по умолчанию), делаем динамическую копию этой строки функцией <span class="cpp"><a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a></span>
+и присваиваем указатель на него полю класса, которое соответствует данному параметру. Только после этого
+мы освобождаем память, занятую старым значением, при помощи функции <span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p>Теперь нужно написать функцию, которая будет открывать окно настройки модуля. Технически она ничем
+не будет отличаться от функций настройки блоков, которых мы
+<a href="pm_2_7_2.htm" title="&sect;2.7.2. Использование объектов-окон RDS">рассмотрели</a> уже немало:</p>
+
+<pre class="cpp">  <span class="rem">// Настройка модуля автокомпиляции</span>
+  <span class="kw">void</span> TCAutoCompData::Setup(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window;	<span class="rem">// Объект-окно</span>
+    <span class="kw">char</span> exefilter[]=	<span class="rem">// Фильтр для диалога выбора файла</span>
+           <span class="str">"Исполняемые файлы (*.exe)|*.exe\nВсе файлы|*.*"</span>;
+
+    <span class="rem">// Создание окна</span>
+    window=<span id="light_ref25"><a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a></span>(TRUE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Параметры модуля"</span>);
+
+    <span class="rem">// Создание вкладки</span>
+    <span id="light_ref26"><a class="hidden" href="rdsFORMAddTab.htm" title="А.5.28.4. rdsFORMAddTab &ndash; добавить вкладку">rdsFORMAddTab</a></span>(window,<span class="const">0</span>,<span class="str">"Пути"</span>);
+
+    <span class="rem">// Поле ввода выбора EXE-файла компилятора</span>
+    <span id="light_ref27"><a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a></span>(window,<span class="const">0</span>,<span class="const">1</span>,<span id="light_ref28"><a class="hidden" href="app_a_fields.htm#light_ref15" title="RDS_FORMCTRL_OPENDIALOG">RDS_FORMCTRL_OPENDIALOG</a></span>,
+        <span class="str">"Компилятор:"</span>,<span class="const">300</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<span id="light_ref29"><a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a></span>,exefilter);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<span id="light_ref30"><a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a></span>,CompPath);
+
+    <span class="rem">// Поле ввода выбора EXE-файла редактора связей</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<a class="hidden" href="app_a_fields.htm#light_ref15" title="RDS_FORMCTRL_OPENDIALOG">RDS_FORMCTRL_OPENDIALOG</a>,
+        <span class="str">"Редактор связей:"</span>,<span class="const">300</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a>,exefilter);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,LinkPath);
+
+    <span class="rem">// Выбор папки файлов заголовков</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">3</span>,<span id="light_ref31"><a class="hidden" href="app_a_fields.htm#light_ref6" title="RDS_FORMCTRL_DIRDIALOG">RDS_FORMCTRL_DIRDIALOG</a></span>,
+        <span class="str">"Папка заголовков:"</span>,<span class="const">300</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,IncludePath);
+
+    <span class="rem">// Выбор папки файлов библиотек</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">4</span>,<a class="hidden" href="app_a_fields.htm#light_ref6" title="RDS_FORMCTRL_DIRDIALOG">RDS_FORMCTRL_DIRDIALOG</a>,
+        <span class="str">"Папка библиотек:"</span>,<span class="const">300</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">4</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,LibPath);
+
+    <span class="rem">// Создание вкладки</span>
+    <a class="hidden" href="rdsFORMAddTab.htm" title="А.5.28.4. rdsFORMAddTab &ndash; добавить вкладку">rdsFORMAddTab</a>(window,<span class="const">1</span>,<span class="str">"Параметры"</span>);
+
+    <span class="rem">// Параметры командной строки компилятора</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">1</span>,<span class="const">5</span>,<span id="light_ref32"><a class="hidden" href="app_a_fields.htm#light_ref13" title="RDS_FORMCTRL_MULTILINE">RDS_FORMCTRL_MULTILINE</a></span>,
+        <span class="str">"Параметры компилятора:"</span>,<span class="const">300</span>);
+    <span id="light_ref33"><a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a></span>(window,<span class="const">5</span>,<span id="light_ref34"><a class="hidden" href="RDS_FORMVAL_MLHEIGHT.htm" title="А.5.28.19. Команда RDS_FORMVAL_MLHEIGHT &ndash; высота многострочного поля ввода">RDS_FORMVAL_MLHEIGHT</a></span>,<span class="const">3</span>*<span class="const">24</span>);<span class="rem">// Высота</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">5</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,CompParams);
+
+    <span class="rem">// Параметры командной строки редактора связей</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">1</span>,<span class="const">6</span>,<a class="hidden" href="app_a_fields.htm#light_ref13" title="RDS_FORMCTRL_MULTILINE">RDS_FORMCTRL_MULTILINE</a>,
+        <span class="str">"Параметры редактора связей:"</span>,<span class="const">300</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">6</span>,<a class="hidden" href="RDS_FORMVAL_MLHEIGHT.htm" title="А.5.28.19. Команда RDS_FORMVAL_MLHEIGHT &ndash; высота многострочного поля ввода">RDS_FORMVAL_MLHEIGHT</a>,<span class="const">3</span>*<span class="const">24</span>);<span class="rem">// Высота</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">6</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,LinkParams);
+
+    <span class="rem">// Создание вкладки</span>
+    <a class="hidden" href="rdsFORMAddTab.htm" title="А.5.28.4. rdsFORMAddTab &ndash; добавить вкладку">rdsFORMAddTab</a>(window,<span class="const">2</span>,<span class="str">"Описания"</span>);
+
+    <span class="rem">// Имя главной функции</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">2</span>,<span class="const">7</span>,<span id="light_ref35"><a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a></span>,
+        <span class="str">"Имя главной функции DLL:"</span>,<span class="const">300</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">7</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,DllMainName);
+
+    <span class="rem">// Заголовок модели</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">2</span>,<span class="const">8</span>,<a class="hidden" href="app_a_fields.htm#light_ref13" title="RDS_FORMCTRL_MULTILINE">RDS_FORMCTRL_MULTILINE</a>,
+        <span class="str">"Заголовок функции модели:"</span>,<span class="const">300</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">8</span>,<a class="hidden" href="RDS_FORMVAL_MLHEIGHT.htm" title="А.5.28.19. Команда RDS_FORMVAL_MLHEIGHT &ndash; высота многострочного поля ввода">RDS_FORMVAL_MLHEIGHT</a>,<span class="const">2</span>*<span class="const">24</span>);<span class="rem">// Высота</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">8</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,ModelFuncHdr);
+
+    <span class="rem">// Экспортированное имя</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">2</span>,<span class="const">9</span>,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,
+        <span class="str">"Экспортированное имя:"</span>,<span class="const">300</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">9</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Exported);
+
+    <span class="rem">// Открытие окна</span>
+    <span class="kw">if</span>(<span id="light_ref36"><a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span>(window,NULL)) <span class="rem">// Нажата OK</span>
+      { <span class="rem">// Освобождаем старые строки параметров</span>
+        FreeAllStrings();
+
+        <span class="rem">// Делаем динамические копии всех строк из полей ввода</span>
+        <span class="rem">// и присваиваем их полям класса</span>
+        CompPath=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>));
+        LinkPath=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>));
+        IncludePath=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>));
+        LibPath=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">4</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>));
+        CompParams=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">5</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>));
+        LinkParams=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">6</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>));
+        DllMainName=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">7</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>));
+        ModelFuncHdr=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">8</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>));
+        Exported=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">9</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>));
+        <span class="rem">// Запись изменившихся параметров в INI-файл</span>
+        WriteToIni();
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Эта функция при помощи вспомогательного объекта RDS открывает окно с тремя вкладками
+&laquo;<span class="menu">Пути</span>&raquo;, &laquo;<span class="menu">Параметры</span>&raquo; и &laquo;<span class="menu">Описания</span>&raquo;, на которых расположены поля
+для ввода описанных выше параметров модуля. Поля на вкладке &laquo;<span class="menu">Пути</span>&raquo; снабжены кнопками для
+вызова диалогов выбора файлов и папок, чтобы пользователь мог выбрать в них местоположение исполняемых файлов
+компилятора и редактора связей и папок библиотек и заголовочных файлов, вместо того, чтобы вводить их вручную.
+Если пользователь закроет это окно нажатием кнопки &laquo;<span class="menu">OK</span>&raquo;, данные из полей ввода окна будут переписаны
+в класс личной области данных модуля (функция <span class="cpp">Setup</span> является членом этого класса), после
+чего параметры модуля будут записаны в INI-файл вызовом только что написанной нами функции
+<span class="cpp">WriteToIni</span>.</p>
+
+<p>Наконец, напишем <a href="pm_4_1.htm#ref1" title="Общий вид функции модуля автоматической компиляции">функцию модуля автокомпиляции</a>
+&ndash; именно она будет создавать объект класса
+<span class="cpp">TCAutoCompData</span> и вызывать его функции. Назовем функцию нашего модуля
+&laquo;<span class="cpp">TestCAutoComp</span>&raquo;:</p>
+
+<pre class="cpp">  <span class="rem">// Функция модуля автокомпиляции</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>) <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestCAutoComp(
+      <span class="kw">int</span> CallMode,                   <span class="rem">// Событие</span>
+      <a class="hidden" href="RDS_COMPMODULEDATA.htm#ref2" title="Указатель на RDS_COMPMODULEDATA">RDS_PCOMPMODULEDATA</a> ModuleData, <span class="rem">// Данные модуля</span>
+      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)                <span class="rem">// Дополнительные параметры</span>
+  { <span class="rem">// Приведение указателя на личную область данных</span>
+    <span class="rem">// к правильному типу</span>
+    <a class="hidden" href="#ref5" title="Класс личной области данных в примере модуля">TCAutoCompData</a> *data=(<a class="hidden" href="#ref5" title="Класс личной области данных в примере модуля">TCAutoCompData</a>*)(ModuleData-&gt;ModuleData);
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация модуля</span>
+        <span class="kw">case</span> <span id="light_ref37"><a class="hidden" href="RDS_COMPM_INIT.htm" title="А.3.4.10. RDS_COMPM_INIT &ndash; инициализация модуля">RDS_COMPM_INIT</a></span>:
+          <span class="rem">// Создание личной области данных модуля</span>
+          ModuleData-&gt;ModuleData=data=<span class="kw">new</span> <a class="hidden" href="#ref5" title="Класс личной области данных в примере модуля">TCAutoCompData</a>();
+          <span class="rem">// Чтение параметров из INI-файла</span>
+          data-&gt;ReadFromIni();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка данных модуля</span>
+        <span class="kw">case</span> <span id="light_ref38"><a class="hidden" href="RDS_COMPM_CLEANUP.htm" title="А.3.4.4. RDS_COMPM_CLEANUP &ndash; очистка данных модуля">RDS_COMPM_CLEANUP</a></span>:
+          <span class="kw">delete</span> data;	<span class="rem">// Удаление личной области модуля</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов окна настройки модуля</span>
+        <span class="kw">case</span> <span id="light_ref39"><a class="hidden" href="RDS_COMPM_SETUP.htm" title="А.3.4.19. RDS_COMPM_SETUP &ndash; настройка модуля автокомпиляции">RDS_COMPM_SETUP</a></span>:
+          data-&gt;Setup();
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> RDS_COMPR_DONE;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Можно заметить, что эта функция построена точно так же, как все рассмотренные нами ранее функции
+моделей блоков: внутри нее находится оператор <span class="cpp">switch</span>, который, в зависимости от
+значение параметра <span class="cpp">CallMode</span>, выполняет то или иное действие. В данном случае
+функция реагирует всего на три события. При инициализации модуля
+(<span class="cpp"><a href="RDS_COMPM_INIT.htm" title="А.3.4.10. RDS_COMPM_INIT &ndash; инициализация модуля">RDS_COMPM_INIT</a></span>) мы создаем объект класса <span class="cpp"><a class="hidden" href="#ref5" title="Класс личной области данных в примере модуля">TCAutoCompData</a></span> и
+записываем указатель на него в поле <span class="cpp">ModuleData</span> структуры данных модуля, переданной
+во втором параметре нашей функции. Этот объект будет служить модулю в качестве личной области данных.
+Сразу после создания мы вызываем для этого объекта функцию <span class="cpp">ReadFromIni</span>, чтобы параметры
+модуля загрузились из INI-файла.</p>
+
+<p>При очистке данных модуля (<span class="cpp"><a href="RDS_COMPM_CLEANUP.htm" title="А.3.4.4. RDS_COMPM_CLEANUP &ndash; очистка данных модуля">RDS_COMPM_CLEANUP</a></span>), то есть перед выгрузкой его из
+памяти, мы уничтожаем ранее созданный объект. В самом начале функции мы уже привели значение поля
+<span class="cpp">ModuleData-&gt;ModuleData</span>, в котором хранится указатель на объект, к типу
+<span class="cpp"><a class="hidden" href="#ref5" title="Класс личной области данных в примере модуля">TCAutoCompData</a>*</span> и присвоили его переменной
+<span class="cpp">data</span>, так что во всех реакциях, кроме <span class="cpp"><a class="hidden" href="RDS_COMPM_INIT.htm" title="А.3.4.10. RDS_COMPM_INIT &ndash; инициализация модуля">RDS_COMPM_INIT</a></span>
+(на этот момент объект еще не создан), мы можем пользоваться ее значением.</p>
+
+<p>Наконец, при запросе пользователем окна настройки модуля (<span class="cpp"><a href="RDS_COMPM_SETUP.htm" title="А.3.4.19. RDS_COMPM_SETUP &ndash; настройка модуля автокомпиляции">RDS_COMPM_SETUP</a></span>) мы
+просто вызываем написанную нами функцию <span class="cpp">Setup</span>, которая откроет окно и, при
+необходимости, запишет измененные параметры в INI-файл.</p>
+
+<p><span id="ref40">Независимо</span>
+от события, из-за которого вызвана наша функция, она возвращает константу
+<span class="cpp" id="light_ref40">RDS_COMPR_DONE</span>, сигнализирующую RDS об
+отсутствии ошибок. В дальнейшем,
+когда мы добавим к нашей функции новые реакции, мы изменим это, но пока никакой обработки
+ошибок нам не требуется.</p>
+
+<p>Скомпилировав библиотеку с нашим новым модулем автокомпиляции, мы должны зарегистрировать это модуль в
+RDS, чтобы пользователь смог его настраивать и подключать к блокам. Для этого следует открыть
+<a href="um_2_19_1.htm" title="&sect;2.19.1. Подключение модулей автоматической компиляции моделей блоков">окно со списком модулей</a>, вызвав пункт главного меню
+RDS &laquo;<span class="menu">Сервис | Автокомпиляция&hellip;</span>&raquo; и добавить в список новый модуль кнопкой
+&laquo;<span class="menu">+</span>&raquo;, после чего ввести в нижней части окна путь к файлу библиотеки с нашим модулем, экспортированное
+имя функции модуля и название, которое будет отображаться в списке зарегистрированных модулей, когда
+пользователь будет с ним работать
+(<a href="#pic1" title="Регистрация созданного модуля в RDS">рис.&nbsp;133</a>).</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/Autocomp_reg_sample.png" width="533" height="372" alt="Регистрация созданного модуля в RDS" />
+<p id="light_pic1">Рис.&nbsp;133. Регистрация созданного модуля в RDS</p>
+</div></div>
+
+
+<p>Указывая имя функции модуля следует помнить о возможном искажении имен функций при экспорте &ndash; в поле
+&laquo;<span class="menu">функция</span>&raquo; окна списка модулей нужно вводить имя функции в том виде, в котором оно доступно
+для поиска функцией Windows API <span class="cpp">GetProcAddress</span>, то есть со всеми возможными искажениями.
+Если в описании компилятора не удается найти информацию об этих искажениях, можно воспользоваться какой-либо
+программой, показывающей все экспортированные имена функций в заданном файле (например,
+&laquo;tdump&raquo; из комплекта Borland C++) &ndash; в списке имен можно будет легко найти свою функцию
+и увидеть, как изменилось ее имя. Название модуля можно сделать любым, эта строка никак не влияет на работу
+самого модуля. После того, как все параметры модуля введены, следует подтвердить регистрацию нового модуля
+нажатием &laquo;<span class="menu">OK</span>&raquo;.</p>
+
+<p>Наш новый модуль пока мало что умеет, но его уже можно настроить на установленный на данной машине компилятор.
+Для этого в окне списка модулей (<a href="#pic1" title="Регистрация созданного модуля в RDS">рис.&nbsp;133</a>) следует дважды
+щелкнуть на его названии или, выбрав его в списке, нажать вторую сверху кнопку рядом с этим списком. При этом
+модуль загрузится в память RDS (что приведет к вызову его функции с параметром
+<span class="cpp"><a class="hidden" href="RDS_COMPM_INIT.htm" title="А.3.4.10. RDS_COMPM_INIT &ndash; инициализация модуля">RDS_COMPM_INIT</a></span> и загрузке параметров из INI-файла, если, конечно, он существует),
+после чего его функция будет вызвана с параметром <span class="cpp"><a class="hidden" href="RDS_COMPM_SETUP.htm" title="А.3.4.19. RDS_COMPM_SETUP &ndash; настройка модуля автокомпиляции">RDS_COMPM_SETUP</a></span>, в результате
+чего она, в свою очередь, вызовет функцию <span class="cpp">Setup</span> класса личной области данных модуля,
+которая откроет окно настройки
+(<a href="#pic2" title="Окно настройки модуля">рис.&nbsp;134</a>).</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/Autocomp_setup.png" width="541" height="310" alt="Окно настройки модуля" />
+<p id="light_pic2">Рис.&nbsp;134. Окно настройки модуля</p>
+</div></div>
+
+
+<p>При самом первом вызове окна настроек INI-файл параметров модуля еще не существует, поэтому все параметры
+будут иметь значения по умолчанию и все пути на вкладке &laquo;<span class="menu">Пути</span>&raquo; будут пустыми. Однако, если указать
+все эти пути и нажать кнопку &laquo;<span class="menu">OK</span>&raquo;, функция <span class="cpp">Setup</span> создаст файл и
+запишет в него введенные значения, после чего они будут загружаться в личную область данных модуля при каждой его
+инициализации.</p>
+
+<p>Поскольку наш модуль в данный момент не обслуживает ни одного блока схемы (это пока невозможно, мы
+еще не ввели в его функцию необходимые реакции), закрытие окна настройки приведет к его немедленной выгрузке
+из памяти.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_4_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_4_3.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_4_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

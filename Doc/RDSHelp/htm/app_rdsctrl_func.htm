@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>Б.3.1. Доступ к функциям RdsCtrl.dll</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b_3">Б.3. Б.3 Функции библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p>Б.3.1. Доступ к функциям RdsCtrl.dll</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDSCTRLEVENT_SAVEFILE.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsctrlClose.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:app_rdsctrl_func">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</h2>
+<h3>Б.3. Б.3 Функции библиотеки RdsCtrl.dll</h3>
+<p class="abstract">Описываются функции, экспортированные из библиотеки RdsCtrl.dll, с помощью которых внешняя управляющая программа организует взаимодействие с RDS.</p>
+<h4>Б.3.1. Доступ к функциям RdsCtrl.dll</h4>
+
+
+<p><span id="ref1">Все</span>
+экспортированные из библиотеки RdsCtrl.dll функции имеют тип <span class="cpp"><a href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a></span>:
+аргументы функции передаются в стеке справа налево, стек освобождается вызванной функцией.
+Для доступа к функции следует получить указатель на нее при помощи функции Windows API
+<span id="light_ref1" class="cpp">GetProcAddress</span>, привести этот указатель к
+правильному типу, учитывающему типы параметров и возвращаемого значения этой функции (тип указателя
+на каждую функцию приводится в описании этой функции в данном приложении), после чего можно будет
+вызывать эту функцию непосредственно по указателю на нее. Обычно указатели на все необходимые функции получают
+сразу после загрузки RdsCtrl.dll: до выгрузки библиотеки из памяти они не изменятся.</p>
+
+<p><span id="ref2">Чтобы</span>
+<span id="ref3">не</span>
+получать вручную все указатели на все функции библиотеки, перед включением в текст программы файла
+&laquo;<span class="file"><span id="light_ref2">RdsCtrl.h</span></span>&raquo; можно вставить следующее описание:</p>
+
+<pre class="cpp">  <span class="preproc">#define </span><span id="light_ref3"><span class="preproc">RDSCTRL_SERV_FUNC_BODY</span></span><span class="preproc"> </span><span class="changes"><i><span class="preproc">имя_функции</span></i></span>
+  <span class="preproc">#include &lt;RdsCtrl.h&gt;</span></pre>
+
+<p>В результате в это место текста будет вставлен полный набор глобальных переменных-указателей на все
+функции библиотеки, одноименных этим функциям, а также дополнительная функция с именем
+<i><span class="changes">имя_функции</span></i> для заполнения всех этих переменных. Останется только вызвать
+эту дополнительную функцию, после чего все сервисные функции можно будет вызывать непосредственно по их именам.
+<a href="app_a_5_1.htm" title="А.5.1. Доступ к сервисным функциям RDS">Такой же механизм</a>
+используется в моделях блоков для доступа к сервисным функциям RDS. Имена глобальных переменных
+совпадают с именами сервисных функций, поэтому запись вида</p>
+
+<pre class="cpp">  <a class="hidden" href="rdsctrlSetPath.htm" title="Б.3.2.9. rdsctrlSetPath &ndash; установить путь к RDS">rdsctrlSetPath</a>(<span class="str">"c:\\rds\\rds.exe"</span>);</pre>
+
+<p class="noindent">будет означать, что функция, указатель на которую находится в глобальной переменной
+<span class="cpp">rdsctrlSetPath</span>, вызывается с параметром &laquo;c:\rds\rds.exe&raquo;.
+Поскольку переменная с именем <span class="cpp">rdsctrlSetPath</span> имеет правильный тип указателя на
+функцию с нужным типом параметра, ее можно использовать вместо имени функции без всякого приведения типов.</p>
+
+<p><span id="ref4">Если</span>
+перед включением файла &laquo;<span class="file">RdsCtrl.h</span>&raquo; описать <span class="cpp">define</span>-константу
+<span id="light_ref4" class="cpp">RDSCTRL_SERV_FUNC_EXTERNAL</span> (константа может не иметь значения,
+важен сам факт описания), все описания глобальных переменных будут включены с ключевым словом <span class="cpp">extern</span>,
+то есть они будут описаны как внешние, находящиеся в другом модуле. Таким образом, если проект DLL состоит из
+нескольких модулей, в каждом из них можно включить файл &laquo;<span class="file">RdsCtrl.h</span>&raquo;,
+при этом в одном из модулей перед включением файла будет описана константа
+<span class="cpp">RDSCTRL_SERV_FUNC_BODY</span> с именем функции в качестве значения, а во всех остальных
+&ndash; константа <span class="cpp">RDSCTRL_SERV_FUNC_EXTERNAL</span>. В результате в одном модуле будут
+описаны глобальные переменные-указатели на функции и функция их заполнения, а во всех остальных эти же
+переменные будут описаны как внешние. Это даст возможность вызывать функции библиотеки по имени в любом из
+модулей проекта. В отличие от описаний в файле &laquo;<span class="file">RdsFunc.h</span>&raquo;, если перед включением
+&laquo;<span class="file">RdsCtrl.h</span>&raquo; не будет описана ни одна из этих констант, никакие описания, относящиеся
+к глобальным переменным-указателям на функции, включены в текст программы не будут.</p>
+
+<p>Примеры доступа к функциям RdsCtrl.dll приведены в
+<a href="pm_3_2.htm" title="&sect;3.2. Загрузка библиотеки и управление схемой">&sect;3.2 руководства программиста</a>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDSCTRLEVENT_SAVEFILE.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsctrlClose.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:app_rdsctrl_func">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.4.10. RDS_FORMSERVFUNCDATA &ndash; параметр функции обратного вызова модального окна</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_4">А.4. Структуры RDS</a></p>
+<div class="level"><p>А.4.10. <span class="cpp">RDS_FORMSERVFUNCDATA</span> &ndash; параметр функции обратного вызова модального окна</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_FINDBYEXTIDDATA.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_FUNCPROVIDERLINK.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_FORMSERVFUNCDATA">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.4. Структуры RDS</h3>
+<h4>А.4.10. <span class="cpp">RDS_FORMSERVFUNCDATA</span> &ndash; параметр функции обратного вызова модального окна</h4>
+
+
+<p><span id="ref1">Структура</span> <span id="ref2"><span class="cpp">RDS_FORMSERVFUNCDATA</span></span>
+используется в качестве параметра пользовательской функции обратного вызова, указатель на которую передается
+в функцию открытия модального окна <span class="cpp"><a href="rdsFORMShowModalServ.htm" title="А.5.28.7. rdsFORMShowModalServ &ndash; открыть окно с расширенной функцией обратного вызова">rdsFORMShowModalServ</a></span>. Такая функция обратного
+вызова применяется для организации реакции в модальном окне, созданном функцией
+<span class="cpp"><a href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a></span>, на изменение полей ввода, нажатие кнопок и т.п., а также для
+программного рисования в этом окне. В структуре
+<span class="cpp">RDS_FORMSERVFUNCDATA</span> в пользовательскую функцию передается идентификатор
+события, возникшего в окне, идентификатор поля ввода, с которым связано событие, а также другая информация
+об этом событии. Пример использования функции обратного вызова в модальном окне и этой структуры приведен
+в <a href="pm_2_7_3.htm" title="&sect;2.7.3. Расширенные возможности функции обратного вызова">&sect;2.7.3 руководства программиста</a></p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span> {
+    <span class="kw">int</span> Event;        <span class="rem">// Событие (RDS_FORMSERVEVENT_*)</span>
+    <span class="kw">int</span> CtrlId;       <span class="rem">// Идентификатор органа управления</span>
+    <span class="rem">// Для RDS_FORMSERVEVENT_DRAW</span>
+    <a class="hidden" href="app_ids.htm#light_ref16" title="Контекст устройства Windows">HDC</a> dc;           <span class="rem">// Контекст устройства для рисования (WinAPI)</span>
+    <span class="kw">int</span> Left,Top;     <span class="rem">// Верхний левый угол зоны рисования</span>
+    <span class="kw">int</span> Width,Height; <span class="rem">// Размеры зоны рисования</span>
+  } <span id="light_ref1">RDS_FORMSERVFUNCDATA</span>;
+  <span class="kw">typedef</span> RDS_FORMSERVFUNCDATA *<span id="light_ref2">RDS_PFORMSERVFUNCDATA</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">Event</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Идентификатор произошедшего в окне события. В этом поле находится одна из следующих констант:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref3">RDS_FORMSERVEVENT_CHANGE</span></span></td>
+          <td>Изменение одного или нескольких полей ввода. Если изменено одно поле ввода, в <span class="cpp">CtrlId</span>
+          будет находиться его идентификатор, если несколько (при первом открытии окна, когда сразу все поля получают
+          начальные значения), в <span class="cpp">CtrlId</span> будет записано значение &minus;1.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref4">RDS_FORMSERVEVENT_DRAW</span></span></td>
+          <td>Программное рисование в одной из специальных областей окна (в <span class="cpp">CtrlId</span> &ndash;
+          идентификатор области).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref5">RDS_FORMSERVEVENT_CLICK</span></span></td>
+          <td>Нажатие кнопки (в <span class="cpp">CtrlId</span> &ndash; идентификатор кнопки).</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp">CtrlId</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Идентификатор поля ввода, кнопки или другого объекта модального окна, с которым связано произошедшее
+  событие. Эти идентификаторы присваиваются объектам при их создании функцией
+  <span class="cpp"><a href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a></span>.</dd>
+
+  <dt><span class="cpp">dc</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref16" title="Контекст устройства Windows">HDC</a></i></span>)</dt>
+  <dd>Контекст устройства Windows (device context, <span class="cpp">HDC</span>), на котором функция обратного
+  вызова должна нарисовать изображение (только при <span class="cpp">Event</span>, равном
+  <span class="cpp">RDS_FORMSERVEVENT_DRAW</span>). Это значение можно использовать в вызовах графических
+  функций Windows API.</dd>
+
+  <dt><span class="cpp">Left</span>,&nbsp;<span class="cpp">Top</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Горизонтальная (<span class="cpp">Left</span>) и вертикальная (<span class="cpp">Top</span>) координаты
+  верхнего левого угла специальной области рисования, созданной в окне (только при <span class="cpp">Event</span>,
+  равном <span class="cpp">RDS_FORMSERVEVENT_DRAW</span>).</dd>
+
+  <dt><span class="cpp">Width</span>,&nbsp;<span class="cpp">Height</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Ширина (<span class="cpp">Width</span>) и высота (<span class="cpp">Height</span>) специальной
+  области рисования, созданной в окне (только при <span class="cpp">Event</span>, равном
+  <span class="cpp">RDS_FORMSERVEVENT_DRAW</span>).</dd>
+
+</dl>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsFORMShowModalServ.htm" title="А.5.28.7. rdsFORMShowModalServ &ndash; открыть окно с расширенной функцией обратного вызова">rdsFORMShowModalServ</a></span>, <span class="cpp"><a href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a></span>,
+<span class="cpp"><a href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_FINDBYEXTIDDATA.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_FUNCPROVIDERLINK.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_FORMSERVFUNCDATA">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.2.4.11. RDS_BFM_REMOTEMSG &ndash; вызов от внешнего приложения</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2">А.2. События блока и связанные с ними описания</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2_4">А.2.4. События общего назначения</a></p>
+<div class="level"><p>А.2.4.11. <span class="cpp">RDS_BFM_REMOTEMSG</span> &ndash; вызов от внешнего приложения</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_BFM_PREMODEL.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_RESETCALC.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_REMOTEMSG">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.2. События блока и связанные с ними описания</h3>
+<h4 class="off">А.2.4. События общего назначения</h4>
+<h5>А.2.4.11. <span class="cpp">RDS_BFM_REMOTEMSG</span> &ndash; вызов от внешнего приложения</h5>
+
+
+<p class="apphdr">Поток, в котором вызывается <a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функция модели</a></p>
+<p>Главный поток RDS.</p>
+
+<p class="apphdr">Первый параметр функции модели (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_BFM_REMOTEMSG</span>.</p>
+
+<p class="apphdr">Третий параметр функции модели (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Указатель на структуру <span class="cpp"><a href="#ref1" title="Структура RDS_REMOTEMSGDATA">RDS_REMOTEMSGDATA</a></span>, в которой содержится переданная внешним приложением информация.</p>
+
+<p class="apphdr">Возвращаемое функцией модели значение</p>
+<p>Передается вызвавшему приложению.</p>
+
+<p class="apphdr">Примечания</p>
+<p><span id="ref1">Событие</span> <span id="ref2"><span class="cpp">RDS_BFM_REMOTEMSG</span></span>
+возникает при
+<a href="pm_index.htm#light_htm:pm_3" title="Глава 3. Управление RDS из других приложений">управлении RDS из внешнего приложения</a> в момент вызова этим
+приложением данного блока схемы с помощью предназначенных для этого функций библиотеки
+&laquo;<span class="file"></span>&raquo;.
+Вызывая блок, приложение передает ему целое число и строку, которые
+модель блока может считать из полей структуры <span class="cpp">RDS_REMOTEMSGDATA</span>,
+указатель на которую
+передается в третьем параметре функции модели.</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span> {
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> String;         <span class="rem">// Переданная приложением строка</span>
+    <span class="kw">int</span> Value;            <span class="rem">// Переданное приложением число</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> ControllerName; <span class="rem">// Имя приложения</span>
+  } <span id="light_ref1">RDS_REMOTEMSGDATA</span>;
+  <span class="kw">typedef</span> RDS_REMOTEMSGDATA *<span id="light_ref2">RDS_PREMOTEMSGDATA</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">String</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку, переданную вызвавшим приложением (сама строка находится во внутренней памяти
+  RDS и будет удалена после завершения этой реакции).</dd>
+
+  <dt><span class="cpp">Value</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Целое число, переданное вызвавшим приложением.</dd>
+
+  <dt><span class="cpp">ControllerName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку с названием управляющего приложения во внутренней памяти RDS, если это приложение
+  сообщило RDS свое название вызовом функции <span class="cpp"><span id="light_ref3"><a href="rdsctrlSetControllerName.htm" title="Б.3.4.28. rdsctrlSetControllerName &ndash; установить имя управляющей программы">rdsctrlSetControllerName</a></span></span>. Эта строка
+  обычно никак не связана с путем к исполняемому файлу приложения или другими его параметрами, это просто некий
+  уникальный идентификатор, закладываемый одновременно в приложение и модель блока, и позволяющий вызванному блоку
+  определить, какое именно приложение его в данный момент вызывает. В большинстве случаев модели блоков,
+  реагирующие на событие <span class="cpp">RDS_BFM_REMOTEMSG</span>, разрабатываются специально под конкретное
+  управляющее приложение, поэтому анализ этой строки чаще всего не производится.</dd>
+</dl>
+
+<p>Получив от вызвавшего приложения целое число и строку, модель блока может также вернуть приложению целое
+число и строку. Для возврата строки вызывается сервисная функция <span class="cpp"><span id="light_ref4"><a href="rdsRemoteReply.htm" title="А.5.21.6. rdsRemoteReply &ndash; возврат строки управляющему приложению">rdsRemoteReply</a></span></span>, а в
+качестве возвращаемого целого числа используется результат возврата самой функции модели блока. Прием
+возвращенной блоком строки, как правило, требует от управляющего приложения регистрации специальной функции
+обратного вызова, через которую библиотека &laquo;<span class="file">RdsCtrl.dll</span>&raquo; будет возвращать полученные от
+блоков строки.</p>
+
+<p class="apphdr">Пример</p>
+<p>Различные примеры вызова блока внешним приложением и реакции на событие
+<span class="cpp">RDS_BFM_REMOTEMSG</span> в модели подробно рассмотрены в
+<a href="pm_3_3.htm" title="&sect;3.3. Вызов функции блока загруженной схемы">&sect;3.3 руководства программиста</a>. Ниже приведен набор типичных фрагментов исходных
+текстов управляющего приложения и модели блока, обеспечивающих обмен между приложением и блоком.</p>
+
+<p class="noindent">1) Служебная функция управляющего приложения, записывающая строку в буфер. Здесь
+используется фиксированный размер буфера, что, на самом деле, не очень хорошо для полноценной программы.
+Примеры подобных функций для произвольных длин строк приведены в
+<a href="pm_3_1.htm" title="&sect;3.1. Общие принципы управления RDS">&sect;3.1 руководства программиста</a>.</p>
+<pre class="cpp">  <span class="rem">// Функция обратного вызова, записывающая полученную</span>
+  <span class="rem">// из RDS строку в буфер</span>
+  <span class="preproc">#define STRBUFSIZE 1000 </span><span class="rem">// Размер буфера для возврата строк</span>
+  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> RetStrCallback(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ptr,<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> str)
+  { <span class="rem">// Определяем длину строки</span>
+    <span class="kw">int</span> len=strlen(str);
+    <span class="rem">// Приводим указатель ptr к типу "указатель на char"</span>
+    <span class="kw">char</span> *pStr=(<span class="kw">char</span>*)ptr;
+    <span class="kw">if</span>(pStr==NULL) <span class="kw">return</span>; <span class="rem">// Ошибка – нет указателя на буфер</span>
+    <span class="kw">if</span>(len&gt;=STRBUFSIZE)
+      len=STRBUFSIZE-<span class="const">1</span>;
+    strncpy(pStr,str,len); <span class="rem">// Копируем строку в буфер</span>
+    <span class="rem">// Дописываем 0 в конец строки</span>
+    pStr[len]=<span class="const">0</span>;
+  }</pre>
+
+<p class="noindent">2) Регистрация этой функции &ndash; выполняется один раз после загрузки &laquo;<span class="file">RdsCtrl.dll</span>&raquo;:</p>
+
+<pre class="cpp">  <a class="hidden" href="rdsctrlSetStringCallback.htm" title="Б.3.2.10. rdsctrlSetStringCallback &ndash; регистрация функции возврата строки">rdsctrlSetStringCallback</a>(RetStrCallback);</pre>
+
+<p class="noindent">3) Передача блоку с
+<a href="pm_1_4.htm#light_ref2" title="Полное имя блока">полным именем</a>
+&laquo;<span class="rdsvar">:Sys1:Block10</span>&raquo; числа 99 и строки &laquo;Строка 1&raquo;, запись возвращенного блоком
+числа в переменную <span class="cpp">retcode</span> и строки в буфер <span class="cpp">buffer</span> (используется
+зарегистрированная ранее служебная функция). В примере <span class="cpp">link</span> &ndash; идентификатор связи
+управляющего приложения с RDS.</p>
+
+<pre class="cpp">  <span class="kw">char</span> buffer[STRBUFSIZE]; <span class="rem">// Буфер для возврата строки</span>
+  retcode=<a class="hidden" href="rdsctrlCallBlockFunctionEx.htm" title="Б.3.4.7. rdsctrlCallBlockFunctionEx &ndash; передача блоку числа и строки">rdsctrlCallBlockFunctionEx</a>(
+    link,            <span class="rem">// Идентификатор связи с RDS</span>
+    <span class="str">":Sys1:Block10"</span>, <span class="rem">// Полное имя вызываемого блока</span>
+    <span class="const">99</span>,              <span class="rem">// Передаваемое блоку число</span>
+    <span class="str">"Строка 1"</span>,      <span class="rem">// Передаваемая блоку строка</span>
+    &amp;buffer);        <span class="rem">// Буфер для возвращаемой строки</span></pre>
+
+<p class="noindent">4) Реакция на вызов от управляющего приложения в функции модели блока. Здесь полученная
+строка выводится в сообщении пользователю, а вызвавшему приложению передается строка
+&laquo;Возвращаемая строка&raquo; (она запишется в массив <span class="cpp">buffer</span> приведенного выше
+фрагмента текста программы) и число, равное увеличенному на единицу принятому числу (в данном случае
+&ndash; 100, это число будет записано в переменную <span class="cpp">retcode</span> приведенного выше фрагмента).</p>
+
+<pre class="cpp">  <span class="rem">// Указатель на структуру с параметрами вызова</span>
+  <a class="hidden" href="#ref1" title="Структура RDS_REMOTEMSGDATA">RDS_REMOTEMSGDATA</a> *pmsgdata;
+  <span class="kw">switch</span>(CallMode)
+    { <span class="kw">case</span> <a class="hidden" href="RDS_BFM_REMOTEMSG.htm" title="А.2.4.11. RDS_BFM_REMOTEMSG &ndash; вызов от внешнего приложения">RDS_BFM_REMOTEMSG</a>: <span class="rem">// Вызов от внешнего приложения</span>
+        pmsgdata=(<a class="hidden" href="#ref1" title="Структура RDS_REMOTEMSGDATA">RDS_REMOTEMSGDATA</a>*)ExtParam;
+        <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(pmsgdata-&gt;String,<span class="str">"ДУ"</span>,MB_OK);
+        <span class="rem">// Возврат строки</span>
+        <a class="hidden" href="rdsRemoteReply.htm" title="А.5.21.6. rdsRemoteReply &ndash; возврат строки управляющему приложению">rdsRemoteReply</a>(<span class="str">"Возвращаемая строка"</span>);
+        <span class="rem">// Возврат целого числа</span>
+        <span class="kw">return</span> pmsgdata-&gt;Value+<span class="const">1</span>;
+    ...</pre>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsctrlCallBlockFunctionEx.htm" title="Б.3.4.7. rdsctrlCallBlockFunctionEx &ndash; передача блоку числа и строки">rdsctrlCallBlockFunctionEx</a></span>,
+<span class="cpp"><a href="rdsctrlSetControllerName.htm" title="Б.3.4.28. rdsctrlSetControllerName &ndash; установить имя управляющей программы">rdsctrlSetControllerName</a></span>,
+<span class="cpp"><a href="rdsRemoteReply.htm" title="А.5.21.6. rdsRemoteReply &ndash; возврат строки управляющему приложению">rdsRemoteReply</a></span>,
+<span class="cpp"><a href="rdsctrlSetStringCallback.htm" title="Б.3.2.10. rdsctrlSetStringCallback &ndash; регистрация функции возврата строки">rdsctrlSetStringCallback</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_BFM_PREMODEL.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_RESETCALC.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_REMOTEMSG">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

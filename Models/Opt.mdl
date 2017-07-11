@@ -1,0 +1,57 @@
+$BC55MODEL 0.0.0 2016.9.12.12.0.2 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$VARS
+  signal name "Start" in menu run default 0
+  signal name "Ready" out menu default 0
+  double name "A" out menu default "0"
+  double name "alpha" out menu default "0"
+  double name "delta" out menu default "0"
+  double name "d_A" in menu run default "0.01"
+  double name "d_alpha" in menu run default "0.01"
+  double name "z_opt" out menu default "0"
+  matrix double name "P" in menu run default "[ ] 0"
+  int name "r" default 0
+$ENDDECL
+$MODEL
+delta=mp(1,1);
+double x, y;
+for (x=0; x<5; x=x+d_A){
+	for (y=0; y<5; y=y+d_alpha){
+		if (mp(x,y)<delta){
+			delta=mp(x,y);
+			A=x;
+			alpha=y;
+		};
+	}
+}
+
+
+$CLASSDEF
+double mp(double A, double alpha){
+	double P_c;
+	double delta1=3;
+	int r=P.Rows();
+
+	for (int i=0; i<r; i++){
+		delta1=delta1+pow(P[i][1]-sin(A+P[i][0]*alpha),2);
+	};
+
+	return delta1;
+}
+$OPTIONS
+  tabs $MODEL $CLASSDEF
+  window pos 132 132 size 1006 470 hdiv 339 vdiv 171 fdiv 161
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 1
+  ignorewarnings 0
+  customerrmsg 0
+  autoreadonlyeditor 0
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

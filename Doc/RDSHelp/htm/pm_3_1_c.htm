@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.1. Общие принципы управления RDS</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3">Глава 3. Управление RDS из других приложений</a></p>
+<div class="level"><p>&sect;3.1. Общие принципы управления RDS</p>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_16_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_2.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_3_1.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст приложения Windows, на основе которого в дальнейшем
+рассматриваются примеры управления RDS из других приложений через библиотеку RdsCtrl.dll.
+Функции взаимодействия в RDS пока заменены заглушками.</p>
+
+<pre class="cpp">  <span class="rem">// "Скелет" управляющего приложения</span>
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Описания, необходимые для используемого компилятора Borland C++ 5.5</span>
+  <span class="rem">// (в других компиляторах они не понадобятся или будут другими)</span>
+  <span class="preproc">#define _WIN32_WINNT 0x0400</span>
+  <span class="preproc">#define WINVER 0x0400</span>
+  <span class="rem">// Необходимые для приложения файлы заголовков</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;Commctrl.h&gt;</span>
+  <span class="preproc">#include &lt;stdio.h&gt;</span>
+
+  <span class="rem">// Идентификаторы кнопок и полей окна программы</span>
+  <span class="preproc">#define IDC_OPENBUTTON  101</span>
+  <span class="preproc">#define IDC_CLOSEBUTTON 102</span>
+  <span class="preproc">#define IDC_LABEL1      103</span>
+  <span class="preproc">#define IDC_LABEL2      104</span>
+  <span class="preproc">#define IDC_LABEL3      105</span>
+  <span class="preproc">#define IDC_BLKNAMEEDIT 106</span>
+  <span class="preproc">#define IDC_VALUEEDIT   107</span>
+  <span class="preproc">#define IDC_STRINGEDIT  108</span>
+  <span class="preproc">#define IDC_CALLBUTTON  109</span>
+  <span class="preproc">#define IDC_STARTBUTTON 110</span>
+  <span class="preproc">#define IDC_STOPBUTTON  111</span>
+  <span class="preproc">#define IDC_FINDBUTTON  112</span>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Буфер для индицируемого программой текста</span>
+  <span class="kw">char</span> buffer[<span class="const">2000</span>]=<span class="str">"Программа запущена"</span>;
+  <span class="rem">// Главное окно программы (для доступа к нему из функций)</span>
+  HWND MainWin;
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция вывода текстового сообщения в окне программы</span>
+  <span class="kw">void</span> DisplayText(<span class="kw">char</span> *text)
+  { RECT rect;
+    <span class="rem">// Определяем размер клиентской области окна</span>
+    GetClientRect(MainWin,&amp;rect);
+    <span class="rem">// Ограничиваем область снизу (ниже будут располагаться кнопки)</span>
+    rect.bottom=<span class="const">30</span>;
+    <span class="kw">if</span>(text) <span class="rem">// Копируем текст в буфер</span>
+      { strncpy(buffer,text,<span class="kw">sizeof</span>(buffer)-<span class="const">1</span>);
+        buffer[<span class="kw">sizeof</span>(buffer)-<span class="const">1</span>]=<span class="const">0</span>; <span class="rem">// Если строка слишком длинная</span>
+      }
+    <span class="kw">else</span>
+      strcpy(buffer,<span class="str">"(NULL)"</span>);
+    <span class="rem">// Указываем Windows, что область rect нужно перерисовать</span>
+    InvalidateRect(MainWin,&amp;rect,TRUE);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция, вызываемая перед завершением программы</span>
+  <span class="kw">void</span> BeforeExit(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем выгружать RdsCtrl.dll</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Нажатие кнопки "Открыть"</span>
+  <span class="kw">void</span> OpenButtonClick(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем загружать схему в RDS</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Нажатие кнопки "Закрыть"</span>
+  <span class="kw">void</span> CloseButtonClick(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем завершать RDS</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Нажатие кнопки "Вызвать"</span>
+  <span class="kw">void</span> CallBlockClick(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем передавать информацию блоку схемы</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Нажатие кнопки "Старт"</span>
+  <span class="kw">void</span> StartClick(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем запускать расчет</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Нажатие кнопки "Стоп"</span>
+  <span class="kw">void</span> StopClick(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем останавливать расчет</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Нажатие кнопки "Найти"</span>
+  <span class="kw">void</span> FindFuncClick(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем искать блок, поддерживающий набор функций</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Процедура обработки сообщений главного окна</span>
+  LRESULT CALLBACK MainWndProc(
+        HWND hWindow, <span class="rem">// Окно</span>
+        UINT msg,     <span class="rem">// Сообщение</span>
+        WPARAM wParam,LPARAM lParam) <span class="rem">// Параметры</span>
+  { HINSTANCE app;
+    PAINTSTRUCT ps;
+    HDC hDC;
+    RECT rect;
+
+    <span class="kw">switch</span>(msg)
+      { <span class="rem">// Создание окна</span>
+        <span class="kw">case</span> WM_CREATE:
+          <span class="rem">// Запоминаем идентификатор окна в глобальной переменной</span>
+          MainWin=hWindow;
+          <span class="rem">// Получаем идентификатор приложения</span>
+          app=(HINSTANCE)GetWindowLong(hWindow,GWL_HINSTANCE);
+          <span class="rem">// Создаем кнопки и поля ввода</span>
+          <span class="rem">// Кнопка "Открыть"</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Открыть"</span>,<span class="rem">// Имя класса и текст</span>
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, <span class="rem">// Стили</span>
+            <span class="const">0</span>,<span class="const">30</span>,<span class="const">100</span>,<span class="const">24</span>,                  <span class="rem">// x,y,ширина,высота</span>
+            hWindow,                      <span class="rem">// Родительское окно</span>
+            (HMENU)IDC_OPENBUTTON,        <span class="rem">// Идентификатор кнопки</span>
+            app,NULL);
+          <span class="rem">// Кнопка "Закрыть"</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Закрыть"</span>,
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            <span class="const">101</span>,<span class="const">30</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,
+            (HMENU)IDC_CLOSEBUTTON,app,NULL);
+          <span class="rem">// Кнопка "Старт"</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Старт"</span>,
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            <span class="const">222</span>,<span class="const">30</span>,<span class="const">90</span>,<span class="const">24</span>,hWindow,
+            (HMENU)IDC_STARTBUTTON,app,NULL);
+          <span class="rem">// Кнопка "Стоп"</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Стоп"</span>,
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            <span class="const">313</span>,<span class="const">30</span>,<span class="const">90</span>,<span class="const">24</span>,hWindow,
+            (HMENU)IDC_STOPBUTTON,app,NULL);
+          <span class="rem">// Надпись "Имя блока"</span>
+          CreateWindow(<span class="str">"STATIC"</span>,<span class="str">"Имя блока:"</span>,
+           WS_VISIBLE | WS_CHILD | SS_LEFTNOWORDWRAP,
+           <span class="const">0</span>,<span class="const">55</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_LABEL1,app,NULL);
+          <span class="rem">// Поле ввода для имени блока</span>
+          CreateWindow(<span class="str">"EDIT"</span>,NULL,
+            WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL,
+            <span class="const">101</span>,<span class="const">55</span>,<span class="const">201</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_BLKNAMEEDIT,app,NULL);
+          <span class="rem">// Надпись "Число"</span>
+          CreateWindow(<span class="str">"STATIC"</span>,<span class="str">"Число:"</span>,
+            WS_VISIBLE | WS_CHILD | SS_LEFTNOWORDWRAP,
+            <span class="const">0</span>,<span class="const">80</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_LABEL3,app,NULL);
+          <span class="rem">// Поле ввода числа</span>
+          CreateWindow(<span class="str">"EDIT"</span>,NULL,WS_VISIBLE | WS_CHILD | WS_BORDER,
+            <span class="const">101</span>,<span class="const">80</span>,<span class="const">201</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_VALUEEDIT,app,NULL);
+          <span class="rem">// Надпись "Строка"</span>
+          CreateWindow(<span class="str">"STATIC"</span>,<span class="str">"Строка:"</span>,
+            WS_VISIBLE | WS_CHILD | SS_LEFTNOWORDWRAP,
+            <span class="const">0</span>,<span class="const">105</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_LABEL2,app,NULL);
+          <span class="rem">// Поле ввода строки</span>
+          CreateWindow(<span class="str">"EDIT"</span>,NULL,
+            WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL,
+            <span class="const">101</span>,<span class="const">105</span>,<span class="const">201</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_STRINGEDIT,app,NULL);
+          <span class="rem">// Кнопка вызова блока</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Вызвать"</span>,
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            <span class="const">303</span>,<span class="const">55</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_CALLBUTTON,app,NULL);
+          <span class="rem">// Кнопка поиска блока</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Найти"</span>,
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            <span class="const">303</span>,<span class="const">105</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_FINDBUTTON,app,NULL);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Закрытие окна</span>
+        <span class="kw">case</span> WM_DESTROY:
+          <span class="rem">// Выгрузка библиотеки, если она загружена</span>
+          BeforeExit();
+          PostQuitMessage(<span class="const">0</span>);
+          <span class="kw">return</span> <span class="const">0</span>;
+
+        <span class="rem">// Перерисовка окна</span>
+        <span class="kw">case</span> WM_PAINT:
+          <span class="rem">// Получаем контекст для рисования</span>
+          hDC=BeginPaint(hWindow,&amp;ps);
+          <span class="rem">// Получаем размеры внутреннего прямоугольника</span>
+          GetClientRect(hWindow,&amp;rect);
+          rect.bottom=<span class="const">30</span>; <span class="rem">// Обрезаем снизу</span>
+          <span class="rem">// Выводим текст из buffer</span>
+          DrawText(hDC,buffer,-<span class="const">1</span>,&amp;rect,
+              DT_SINGLELINE | DT_CENTER | DT_VCENTER);
+          <span class="rem">// Завершаем рисование</span>
+          EndPaint(hWindow,&amp;ps);
+          <span class="kw">return</span> <span class="const">0</span>;
+
+        <span class="rem">// Команда от органов управления</span>
+        <span class="kw">case</span> WM_COMMAND:
+          <span class="kw">if</span>(HIWORD(wParam) == BN_CLICKED) <span class="rem">// Нажатие кнопки</span>
+            { <span class="kw">switch</span> (LOWORD(wParam))
+                { <span class="kw">case</span> IDC_OPENBUTTON:  OpenButtonClick();  <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_CLOSEBUTTON: CloseButtonClick(); <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_CALLBUTTON:  CallBlockClick();   <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_STARTBUTTON: StartClick();       <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_STOPBUTTON:  StopClick();        <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_FINDBUTTON:  FindFuncClick();    <span class="kw">break</span>;
+                }
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="rem">// Вызов обработки сообщения по умолчанию</span>
+    <span class="kw">return</span> DefWindowProc(hWindow,msg,wParam,lParam);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Главная функция приложения</span>
+  <span class="kw">int</span> WINAPI WinMain(HINSTANCE hInstance,
+          HINSTANCE hPrevInstance,
+          PSTR szCmdLine,
+          <span class="kw">int</span> iCmdShow)
+  { <span class="kw">static</span> <span class="kw">char</span> appName[] = <span class="str">"Управление RDS"</span>,
+                className[]=<span class="str">"RDSControlTestWindow"</span>;
+    WNDCLASSEX myWin;
+    HWND hWindow;
+    MSG msg;
+
+    <span class="rem">// Создание окна</span>
+    myWin.cbSize=<span class="kw">sizeof</span>(myWin);
+    myWin.style=CS_HREDRAW | CS_VREDRAW;
+    myWin.lpfnWndProc=MainWndProc;
+    myWin.cbClsExtra=<span class="const">0</span>;
+    myWin.cbWndExtra=<span class="const">0</span>;
+    myWin.hInstance=hInstance;
+    myWin.hIcon=<span class="const">0</span>;
+    myWin.hIconSm =<span class="const">0</span>;
+    myWin.hCursor=<span class="const">0</span>;
+    myWin.hbrBackground=(HBRUSH)(COLOR_WINDOW+<span class="const">1</span>);
+    myWin.lpszMenuName=<span class="const">0</span>;
+    myWin.lpszClassName=className;
+    <span class="kw">if</span> (!RegisterClassEx(&amp;myWin)) <span class="kw">return</span> <span class="const">0</span>;
+    hWindow=CreateWindow(className,appName,
+      WS_OVERLAPPEDWINDOW,
+      CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,
+      <span class="const">0</span>,<span class="const">0</span>,hInstance,<span class="const">0</span>);
+    <span class="rem">// Открытие созданного окна</span>
+    ShowWindow(hWindow,iCmdShow);
+    UpdateWindow(hWindow);
+
+    <span class="rem">// Инициализация стандартных компонентов</span>
+    INITCOMMONCONTROLSEX icc;
+    icc.dwSize=<span class="kw">sizeof</span>(icc);
+    icc.dwICC=ICC_WIN95_CLASSES;
+    <span class="kw">if</span>(!InitCommonControlsEx(&amp;icc))
+      DisplayText(<span class="str">"Ошибка InitCommonControlsEx"</span>);
+
+    <span class="rem">// Цикл обработки сообщений приложения</span>
+    <span class="kw">while</span>(GetMessage(&amp;msg,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>))
+      { TranslateMessage(&amp;msg);
+        DispatchMessage(&amp;msg);
+      }
+    <span class="kw">return</span> <span class="const">0</span>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_16_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_2.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

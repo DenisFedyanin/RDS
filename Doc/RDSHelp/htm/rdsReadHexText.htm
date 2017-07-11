@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.11.6. rdsReadHexText &ndash; разбор шестнадцатеричного блока текста</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_11">А.5.11. Разбор текста</a></p>
+<div class="level"><p>А.5.11.6. <span class="cpp">rdsReadHexText</span> &ndash; разбор шестнадцатеричного блока текста</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsReadFontText.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsReadLineStyleText.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsReadHexText">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.11. Разбор текста</h4>
+<h5>А.5.11.6. <span class="cpp">rdsReadHexText</span> &ndash; разбор шестнадцатеричного блока текста</h5>
+
+
+<p>Функция <span class="cpp">rdsReadHexText</span> считывает шестнадцатеричный блок из переданного в параметрах
+текста и, преобразовав каждую пару шестнадцатеричных цифр в этом блоке в один байт, записывает эти байты
+последовательно в указанный буфер.</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsReadHexText(
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Start,         <span class="rem">// Начало текста</span>
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> *pNextWord,    <span class="rem">// Возврат – конец описания</span>
+      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Buffer,       <span class="rem">// Буфер для записи</span>
+      <span class="kw">int</span> MaxSize          <span class="rem">// Размер буфера</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_ISpSpVI</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Start</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на начало текста. Пробелы и табуляции в начале текста будут пропущены.</dd>
+
+  <dt><span class="cpp">pNextWord</span>&emsp;(<span class="cpp"><i>LPSTR*</i></span>)</dt>
+  <dd>Указатель на переменную типа <span class="cpp">char*</span>, в которую будет записан указатель на
+  начало следующего за шестнадцатеричным блоком слова строки <span class="cpp">Start</span>. Если вызывающей
+  программе не нужно знать начало следующего слова, в этом параметре можно передать <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">Buffer</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></i></span>)</dt>
+  <dd>Указатель общего вида (<span class="cpp">void*</span>) на заполняемый функцией буфер.</dd>
+
+  <dt><span class="cpp">MaxSize</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Размер буфера, переданного в параметре <span class="cpp">Buffer</span> (функция не станет писать в него
+  больше <span class="cpp">MaxSize</span> байтов).</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Число байтов, фактически записанное в буфер.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция извлекает из строки <span class="cpp">Start</span> блок шестнадцатеричных данных и записывает его
+побайтно в буфер <span class="cpp">Buffer</span>. Блок данных может быть заключен в кавычки, в этом случае
+функция будет автоматически обрабатывать знак продолжения &laquo;+&raquo;, используемый в текстовом формате схем
+RDS &ndash; обнаружив его, она пропустит следующий за ним перевод строки и повторение знака продолжения,
+считая следующую строку текста продолжением текущей строки. Обычно функцией <span class="cpp">rdsReadHexText</span>
+обрабатывают текст, записанный функцией <span class="cpp"><a href="rdsWriteHexText.htm" title="А.5.10.8. rdsWriteHexText &ndash; запись блока двоичных данных в текстовом формате">rdsWriteHexText</a></span> при сохранении данных блока
+&ndash; форматы данных этих двух функций полностью совместимы.</p>
+
+<p>Функция запишет в буфер <span class="cpp">Buffer</span> не более <span class="cpp">MaxSize</span> байтов. Если
+шестнадцатеричный блок окажется длиннее (то есть будет содержать больше
+2&times;<span class="cpp">MaxSize</span> шестнадцатеричных цифр), лишние байты в конце блока будут потеряны.
+Функция пишет данные в буфер побайтно, то есть в результате выполнения программы</p>
+
+<pre class="cpp">  <span class="kw">char</span> *text=<span class="str">" \"ff2e1f\""</span>;
+  BYTE Buffer[<span class="const">3</span>];
+  rdsReadHexText(text,NULL,Buffer,<span class="const">3</span>);</pre>
+
+<p class="noindent">в <span class="cpp">Buffer[0]</span> будет записано значение 255
+(<span class="cpp">0xff</span>), в <span class="cpp">Buffer[1]</span> &ndash; 46
+(<span class="cpp">0x2e</span>), а в <span class="cpp">Buffer[2]</span> &ndash; 31
+(<span class="cpp">0x1f</span>).</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsWriteHexText.htm" title="А.5.10.8. rdsWriteHexText &ndash; запись блока двоичных данных в текстовом формате">rdsWriteHexText</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsReadFontText.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsReadLineStyleText.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsReadHexText">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

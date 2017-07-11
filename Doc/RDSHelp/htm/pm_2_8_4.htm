@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.8.4. Поиск ключевых слов с помощью объекта RDS</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_8">&sect;2.8. Сохранение и загрузка параметров блока</a></p>
+<div class="level"><p>&sect;2.8.4. Поиск ключевых слов с помощью объекта RDS</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_8_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_8_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_8_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_8_4_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.8. Сохранение и загрузка параметров блока</h3>
+<h4>&sect;2.8.4. Поиск ключевых слов с помощью объекта RDS</h4>
+<p class="abstract">Рассматривается вспомогательный объект RDS, облегчающий поиск ключевых слов в
+                текстовом формате хранения личных данных блока. Модель из предыдущего примера переписывается с использованием
+                этого объекта.</p>
+
+
+<p><a href="pm_2_8_3.htm#light_ref1" title="Пример сохранения параметров блока в текстовом формате">Рассмотренный пример</a>
+имеет небольшой недостаток &ndash; при анализе загруженного текста опознание ключевого слова производится
+последовательными сравнением в конструкции <span class="cpp">if</span> &hellip; <span class="cpp">else if</span>
+&hellip; <span class="cpp">else</span> &hellip; Чем дальше в этой конструкции находится оператор сравнения
+с конкретным ключевым словом, тем больше проверок будет выполнено перед тем, как он сработает. Например, если
+считано слово &laquo;impulse&raquo;, сначала оно будет сравниваться со словами &laquo;type&raquo; и
+&laquo;period&raquo;, и только после этого будет опознано. Конечно, при трех ключевых словах
+это не вызовет сильного замедления загрузки. Тем не менее, в сложных блоках может быть несколько десятков параметров,
+и каждому из них может соответствовать ключевое слово в текстовом формате. В этом случае сравнение последовательным
+перебором может занять заметное время, особенно если таких блоков в схеме будет очень и очень много. Здесь
+логичнее использовать какой-либо другой, более быстрый, способ поиска ключевого слова. Например, можно
+отсортировать все ключевые слова по алфавиту и искать среди них считанное из текста слово методом деления
+пополам. В RDS есть механизм, позволяющий организовать такой поиск при помощи вспомогательного объекта.
+В <a href="pm_2_7_2.htm#ref2" title="Простой пример окна настроек">&sect;2.7.2</a> рассматривался вспомогательный объект RDS,
+открывающий модальные окна. Теперь воспользуемся другим объектом, позволяющим производить быстрый поиск
+слов в переданном ему массиве.</p>
+
+<p>Попутно внесем в модель блока еще одно усовершенствование. В предыдущем примере каждое ключевое
+слово фигурировало два раза: первый раз &ndash; в форматной строке функции <span class="cpp">sprintf</span> при
+сохранении параметров, второй раз &ndash; в параметре функции <span class="cpp">strcmp</span> при загрузке.
+Необходимость указывать каждое ключевое слово два раза в разных местах программы повышает вероятность ошибки при
+ее написании. Конечно, можно было бы сделать ключевые слова <span class="cpp">define</span>-константами,
+и использовать при загрузке и записи параметров их символические имена &ndash; это решило бы проблему с
+возможными опечатками. Однако, есть более удачное решение &ndash; создать глобальный массив ключевых слов.
+Такой массив все равно понадобится нам для вспомогательного объекта, разбирающего текст. При сохранении параметров
+мы будем обращаться к элементам этого массива по индексам, таким образом, один и тот же массив слов
+будет использоваться и при сохранении параметров, и при загрузке.</p>
+
+<p>С глобальным массивом ключевых слов и указанными изменениями функция <span class="cpp">SaveText</span>
+примет следующий вид:</p>
+
+<pre class="cpp">  <span class="rem">// Глобальный массив ключевых слов</span>
+  <span class="rem">// Индексы                   0       1        2</span>
+  <span class="kw">char</span> *TestGen_Keywords[]={<span class="str">"type"</span>,<span class="str">"period"</span>,<span class="str">"impulse"</span>,NULL};
+  <span class="rem">// define-константы для индексов</span>
+  <span class="preproc">#define TESTGEN_KW_TYPE     0</span>
+  <span class="preproc">#define TESTGEN_KW_PERIOD   1</span>
+  <span class="preproc">#define TESTGEN_KW_IMPULSE  2</span>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция сохранения параметров</span>
+  <span class="kw">void</span> TTestGenData::SaveText(<span class="kw">void</span>)
+  { <span class="rem">// Запись "type" и целого значения</span>
+    <a class="hidden" href="rdsWriteWordValueText.htm" title="А.5.10.12. rdsWriteWordValueText &ndash; запись целого числа в текстовом формате">rdsWriteWordValueText</a>(TestGen_Keywords[TESTGEN_KW_TYPE],Type);
+    <span class="rem">// Запись "period" и вещественного значения</span>
+    <a class="hidden" href="rdsWriteWordDoubleText.htm" title="А.5.10.10. rdsWriteWordDoubleText &ndash; запись вещественного числа в текстовом формате">rdsWriteWordDoubleText</a>(TestGen_Keywords[TESTGEN_KW_PERIOD],
+                           Period);
+    <span class="rem">// Запись "impulse" и вещественного значения</span>
+    <span class="kw">if</span>(Type==<span class="const">2</span>)
+      <a class="hidden" href="rdsWriteWordDoubleText.htm" title="А.5.10.10. rdsWriteWordDoubleText &ndash; запись вещественного числа в текстовом формате">rdsWriteWordDoubleText</a>(TestGen_Keywords[TESTGEN_KW_IMPULSE],
+                             Impulse);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Перед функцией описывается массив ключевых слов <span class="cpp">TestGen_Keywords</span>. Технически,
+его можно было бы сделать статическим членом класса <span class="cpp">TTestGenData</span>, но, для простоты
+примера, он описан как глобальный. Каждое ключевое слово &ndash; это строка (<span class="cpp">char*</span>),
+поэтому массив описан как <span class="cpp">char*<i>имя_массива</i>[]</span>. Он состоит из четырех элементов
+&ndash; трех ключевых слов и нулевого указателя (<span class="cpp">NULL</span>), который будет использоваться в
+качестве маркера конца массива. После массива описываются <span class="cpp">define</span>-константы для
+индексов каждого из трех ключевых слов. Это сделано для лучшей читаемости текста: запись
+<span class="cpp">TestGen_Keywords[TESTGEN_KW_PERIOD]</span> выглядит гораздо более информативно, чем
+<span class="cpp">TestGen_Keywords[1]</span> &ndash; сразу становится понятно, что этот элемент имеет
+отношение к периоду.</p>
+
+<p>В новой версии функции <span class="cpp">SaveText</span> больше не используется сервисная функция
+<span class="cpp"><a href="rdsWriteBlockDataText.htm" title="А.5.10.5. rdsWriteBlockDataText &ndash; добавление текста к сохраняемым в текстовом формате данным блока">rdsWriteBlockDataText</a></span>. Ее заменили вызовы
+<span class="cpp"><span id="light_ref1"><a href="rdsWriteWordValueText.htm" title="А.5.10.12. rdsWriteWordValueText &ndash; запись целого числа в текстовом формате">rdsWriteWordValueText</a></span></span> и
+<span class="cpp"><span id="light_ref2"><a href="rdsWriteWordDoubleText.htm" title="А.5.10.10. rdsWriteWordDoubleText &ndash; запись вещественного числа в текстовом формате">rdsWriteWordDoubleText</a></span></span>, специально предназначенные для передачи в RDS
+целого и вещественного значений для записи вместе с ключевыми словами. Целое значение параметра
+<span class="cpp">Type</span> записывается при помощи функции <span class="cpp"><a class="hidden" href="rdsWriteWordValueText.htm" title="А.5.10.12. rdsWriteWordValueText &ndash; запись целого числа в текстовом формате">rdsWriteWordValueText</a></span>,
+которая добавляет к уже сформированному на данный момент тексту параметров блока ключевое слово, переданное в
+первом параметре (<span class="cpp">TestGen_Keywords[TESTGEN_KW_TYPE]</span>, то есть &laquo;type&raquo;),
+и целое число <span class="cpp">Type</span>, переданное во втором. При этом перед ключевым словом и после
+него автоматически добавляется один пробел. Преобразование целого числа в символьную форму производится внутри
+сервисной функции, поэтому в новой версии <span class="cpp">SaveText</span> теперь не нужен массив символов для
+формирования текста. Вещественные значения <span class="cpp">Period</span> и <span class="cpp">Impulse</span> сохраняются
+функцией <span class="cpp"><a class="hidden" href="rdsWriteWordDoubleText.htm" title="А.5.10.10. rdsWriteWordDoubleText &ndash; запись вещественного числа в текстовом формате">rdsWriteWordDoubleText</a></span>, которая отличается от
+<span class="cpp"><a class="hidden" href="rdsWriteWordValueText.htm" title="А.5.10.12. rdsWriteWordValueText &ndash; запись целого числа в текстовом формате">rdsWriteWordValueText</a></span> только тем, что второй параметр у нее вещественный, а
+не целый. В результате трех вызовов этих функций в RDS будет передан точно такой же текст с параметрами
+блока, как и в
+<a href="pm_2_8_3.htm#ref4" title="Функция SaveText в примере модели">первом варианте <span class="cpp">SaveText</span></a>,
+в котором использовалась функция <span class="cpp">sprintf</span>. Новая версия функции стала короче и
+выглядит теперь понятнее &ndash; на каждый сохраняемый параметр приходится только один вызов
+сервисной функции.</p>
+
+<p><span id="ref3">Теперь</span>
+перепишем функцию <span class="cpp" id="light_ref3">LoadText</span>, использовав
+в ней объект для разбора текста:</p>
+
+<pre class="cpp">  <span class="rem">// Функция загрузки параметров</span>
+  <span class="kw">void</span> TTestGenData::LoadText(<span class="kw">char</span> *text)
+  { <span id="light_ref4"><a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a></span> Parser;  <span class="rem">// Вспомогательный объект</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> work=TRUE;      <span class="rem">// Флаг цикла</span>
+
+    <span class="rem">// Создание объекта для разбора текста</span>
+    Parser=<span id="light_ref5"><a class="hidden" href="rdsSTRCreateTextReader.htm" title="А.5.26.1. rdsSTRCreateTextReader &ndash; создать объект для разбора текста">rdsSTRCreateTextReader</a></span>(TRUE);
+    <span class="rem">// Передача объекту массива ключевых слов</span>
+    <span id="light_ref6"><a class="hidden" href="rdsSTRAddKeywordsArray.htm" title="А.5.26.3. rdsSTRAddKeywordsArray &ndash; добавление набора ключевых слов">rdsSTRAddKeywordsArray</a></span>(Parser,TestGen_Keywords,-<span class="const">1</span>,<span class="const">0</span>);
+    <span class="rem">// Передача объекту разбираемого текста</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(Parser,<span id="light_ref7"><a class="hidden" href="RDS_HSTR_SETTEXT.htm" title="А.5.26.12. Команда RDS_HSTR_SETTEXT &ndash; передать в объект текст для разбора">RDS_HSTR_SETTEXT</a></span>,<span class="const">0</span>,text);
+
+    <span class="rem">// Цикл до тех пор, пока в тексте не кончатся слова</span>
+    <span class="kw">while</span>(work)
+      { <span class="kw">int</span> id; <span class="rem">// Уникальный идентификатор слова</span>
+        <span class="rem">// Извлечь из текста и опознать слово</span>
+        id=<span id="light_ref8"><a class="hidden" href="rdsSTRGetWord.htm" title="А.5.26.4. rdsSTRGetWord &ndash; считать из текста очередное слово">rdsSTRGetWord</a></span>(Parser,NULL,NULL,NULL,TRUE);
+        <span class="rem">// Действия в зависимости от слова</span>
+        <span class="kw">switch</span>(id)
+          { <span class="rem">// Нет слова – конец текста</span>
+            <span class="kw">case</span> <span id="light_ref9"><a class="hidden" href="rdsSTRGetWord.htm#ref1" title="RDS_HSTR_DEFENDOFTEXT">RDS_HSTR_DEFENDOFTEXT</a></span>:
+              work=FALSE; <span class="rem">// Выйти из цикла</span>
+              <span class="kw">break</span>;
+
+            <span class="rem">// Перевод строки – пропускаем</span>
+            <span class="kw">case</span> <span id="light_ref10"><a class="hidden" href="rdsSTRGetWord.htm#ref2" title="RDS_HSTR_DEFENDOFLINE">RDS_HSTR_DEFENDOFLINE</a></span>:
+              <span class="kw">break</span>;
+
+            <span class="rem">// Слово "type"</span>
+            <span class="kw">case</span> TESTGEN_KW_TYPE:
+              <span class="rem">// Извлекаем следующее слово и переводим в целое</span>
+              Type=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(Parser,<span id="light_ref11"><a class="hidden" href="RDS_HSTR_READINT.htm" title="А.5.26.11. Команда RDS_HSTR_READINT &ndash; получить из текста целое число">RDS_HSTR_READINT</a></span>,TRUE);
+              <span class="kw">break</span>;
+
+            <span class="rem">// Слово "period"</span>
+            <span class="kw">case</span> TESTGEN_KW_PERIOD:
+              <span class="rem">// Извлекаем следующее слово и переводим в double</span>
+              Period=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(Parser,<span id="light_ref12"><a class="hidden" href="RDS_HSTR_READDOUBLE.htm" title="А.5.26.10. Команда RDS_HSTR_READDOUBLE &ndash; получить из текста вещественное число">RDS_HSTR_READDOUBLE</a></span>,TRUE);
+              <span class="kw">break</span>;
+
+            <span class="rem">// Слово "impulse"</span>
+            <span class="kw">case</span> TESTGEN_KW_IMPULSE:
+              <span class="rem">// Извлекаем следующее слово и переводим в double</span>
+              Impulse=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(Parser,<a class="hidden" href="RDS_HSTR_READDOUBLE.htm" title="А.5.26.10. Команда RDS_HSTR_READDOUBLE &ndash; получить из текста вещественное число">RDS_HSTR_READDOUBLE</a>,TRUE);
+              <span class="kw">break</span>;
+
+            <span class="kw">default</span>: <span class="rem">// Слово не опознано – ошибка</span>
+              work=FALSE; <span class="rem">// Выйти из цикла</span>
+          } <span class="rem">// Конец switch(...)</span>
+      } <span class="rem">// Конец while(work)</span>
+
+    <span class="rem">// Удаление вспомогательного объекта</span>
+    <span id="light_ref13"><a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>(Parser);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В начале функции описываются две вспомогательных переменных: <span class="cpp">Parser</span> (типа
+<span class="cpp"><a href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a></span>), для хранения идентификатора объекта, разбирающего текст,
+и логическая переменная <span class="cpp">work</span>, которая будет использоваться как условие цикла
+<span class="cpp">while</span>. Чтобы разбирать текст при помощи вспомогательного объекта RDS,
+нужно сначала создать этот объект и передать ему массив ключевых слов и текст, после чего можно будет
+вызывать его в цикле и запрашивать идентификаторы считанных из текста слов.</p>
+
+<p>Для создания объекта используется сервисная функция RDS
+<span class="cpp"><a href="rdsSTRCreateTextReader.htm" title="А.5.26.1. rdsSTRCreateTextReader &ndash; создать объект для разбора текста">rdsSTRCreateTextReader</a></span>, принимающая единственный логический параметр: <span class="cpp">TRUE</span>,
+если слова текста нужно сравнивать с ключевыми без учета регистра, и <span class="cpp">FALSE</span> в
+противном случае. В данном случае регистр слов нас не интересует, поэтому в функцию передается значение
+<span class="cpp">TRUE</span>. Возвращенный идентификатор созданного функцией объекта записывается в
+переменную <span class="cpp">Parser</span>.</p>
+
+<p>После того, как объект создан, необходимо передать ему массив ключевых слов, описанный ранее перед функцией
+<span class="cpp">SaveText</span>, и сам текст, который этот объект будет разбирать на слова. Массив передается
+объекту при помощи функции <span class="cpp"><a href="rdsSTRAddKeywordsArray.htm" title="А.5.26.3. rdsSTRAddKeywordsArray &ndash; добавление набора ключевых слов">rdsSTRAddKeywordsArray</a></span>:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsSTRAddKeywordsArray.htm" title="А.5.26.3. rdsSTRAddKeywordsArray &ndash; добавление набора ключевых слов">rdsSTRAddKeywordsArray</a>(
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> Parser, <span class="rem">// Объект</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> *pWords,      <span class="rem">// Массив слов</span>
+    <span class="kw">int</span> WordCount,      <span class="rem">// Число слов в массиве или -1</span>
+    <span class="kw">int</span> StartId);       <span class="rem">// Начальный идентификатор</span></pre>
+
+<p>В первом параметре функции передается идентификатор объекта, разбирающего текст &ndash; в нашем случае он
+хранится в переменной <span class="cpp">Parser</span>. Во втором параметре передается указатель на начало
+массива слов <span class="cpp">TestGen_Keywords</span>, имеющий тип
+<span class="cpp"><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a>*</span>. Тип <span class="cpp"><a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></span> в Windows API
+соответствует стандартному типу <span class="cpp">char*</span> языка C, поэтому
+<span class="cpp">LPSTR*</span> будет соответствовать <span class="cpp">char**</span>, то есть типу
+&laquo;указатель на указатель на <span class="cpp">char</span>&raquo;, что соответствует
+описанию массива (<span class="cpp">char *TestGen_Keywords[]</span>). В параметре <span class="cpp">WordCount</span>
+передается число ключевых слов, которое нужно считать из массива, или &minus;1, если нужно считать все слова до
+значения <span class="cpp">NULL</span>. В данном случае массив ключевых слов завершается нулевым значением,
+и из него нужно считать все слова, поэтому этот параметр в примере равен &minus;1. Наконец, в последнем параметре
+<span class="cpp">StartId</span> передается идентификатор, который получит первое ключевое слово массива.
+Следующее за ним слово получит идентификатор <span class="cpp">StartId+1</span>, следующее &ndash;
+<span class="cpp">StartId+2</span> и т.д. Эти идентификаторы будут возвращаться объектом при совпадении слова,
+считанного из текста, с одним из слов массива. В данном примере в <span class="cpp">StartId</span> передается 0,
+поэтому идентификаторы ключевых слов будут совпадать с их индексами в массиве и, таким образом, с
+<span class="cpp">define</span>-константами, описанными для этих индексов сразу после массива.</p>
+
+<p>Далее нужно указать созданному объекту на текст, который он будет разбирать. Для этого используется
+универсальная функция передачи строки объекту <span class="cpp"><a href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a></span>. Эта функция уже
+использовалась при
+<a href="pm_2_7_2.htm#light_ref13" title="Пример блока-генератора с настройкой параметров">создании окна настройки параметров</a>
+этого же блока. Как и парная ей функция получения строки <span class="cpp"><a href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a></span>, а также другие
+универсальные функции получения и установки параметров объекта
+(<span class="cpp">rdsGetObject&hellip;</span> и <span class="cpp">rdsSetObject&hellip;</span>), эта функция
+может использоваться для взаимодействия с любым вспомогательным объектом RDS. Результат ее действия зависит
+от типа объекта, идентификатор которого передан в первом параметре, и целых констант, переданных в
+втором и третьем. При вызове этой функции для объекта, созданного при помощи
+<span class="cpp"><a class="hidden" href="rdsSTRCreateTextReader.htm" title="А.5.26.1. rdsSTRCreateTextReader &ndash; создать объект для разбора текста">rdsSTRCreateTextReader</a></span>, с константой <span class="cpp"><a href="RDS_HSTR_SETTEXT.htm" title="А.5.26.12. Команда RDS_HSTR_SETTEXT &ndash; передать в объект текст для разбора">RDS_HSTR_SETTEXT</a></span>
+(вторая целая константа при этом не используется, поэтому в третьем параметре функции передается 0), в объект
+передается указатель на разбираемый текст из четвертого параметра функции, то есть значение переменной
+<span class="cpp">text</span>.</p>
+
+<p>Теперь, когда объект подготовлен к работе, можно начинать разбор текста. В цикле <span class="cpp">while</span>
+из текста будет извлекаться слово за словом до тех пор, пока текст не закончится. Чтением слова из текста
+с одновременным поиском соответствующего ему идентификатора в массиве ключевых слов занимается функция
+<span class="cpp"><a href="rdsSTRGetWord.htm" title="А.5.26.4. rdsSTRGetWord &ndash; считать из текста очередное слово">rdsSTRGetWord</a></span>:</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsSTRGetWord.htm" title="А.5.26.4. rdsSTRGetWord &ndash; считать из текста очередное слово">rdsSTRGetWord</a>(
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> Parser, <span class="rem">// Объект, разбирающий текст</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> *pWord,       <span class="rem">// Возвращаемый указатель на слово</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> *pNext,       <span class="rem">// Указатель на следующее слово</span>
+    <span class="kw">char</span> *pSym,         <span class="rem">// Тип слова или первый символ</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Analyse);      <span class="rem">// Сравнивать ли с ключевыми словами</span></pre>
+
+<p>Функция <span class="cpp"><a class="hidden" href="rdsSTRGetWord.htm" title="А.5.26.4. rdsSTRGetWord &ndash; считать из текста очередное слово">rdsSTRGetWord</a></span> очень похожа на уже рассмотренную ранее
+<span class="cpp"><a href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a></span>, но, в отличие от последней, эта функция возвращает не указатель
+на считанное во внутренний буфер слово (теперь он возвращается через параметр <span class="cpp">pWord</span>), а
+целый идентификатор опознанного ключевого слова, если параметр <span class="cpp">Analyse</span> равен
+<span class="cpp">TRUE</span>. Если считанное слово не совпадает ни с одним из ключевых, или параметр
+<span class="cpp">Analyse</span> равен <span class="cpp">FALSE</span>, возвращается специальный идентификатор
+неопознанного слова. По умолчанию это константа
+<span class="cpp"><span id="light_ref14"><a href="rdsSTRGetWord.htm#ref3" title="RDS_HSTR_DEFUNKNOWNWORD">RDS_HSTR_DEFUNKNOWNWORD</a></span></span>, равная &minus;1, но, при необходимости, для неопознанного
+слова можно установить другое значение, чтобы оно не пересекалось с используемыми для ключевых слов.
+В нашем примере ключевые слова нумеруются начиная с 0, поэтому можно оставить стандартное значение. При
+обнаружении конца строки и конца текста также возвращаются специальные идентификаторы, по умолчанию &ndash;
+<span class="cpp"><a href="rdsSTRGetWord.htm#ref2" title="RDS_HSTR_DEFENDOFLINE">RDS_HSTR_DEFENDOFLINE</a></span> (&minus;2) и
+<span class="cpp"><a href="rdsSTRGetWord.htm#ref1" title="RDS_HSTR_DEFENDOFTEXT">RDS_HSTR_DEFENDOFTEXT</a></span> (&minus;3) соответственно.</p>
+
+<p>Идентификатор считанного из текста слова присваивается вспомогательной переменной <span class="cpp">id</span>.
+Параметры <span class="cpp">pWord</span>, <span class="cpp">pNext</span> и
+<span class="cpp">pSym</span> в вызове <span class="cpp"><a class="hidden" href="rdsSTRGetWord.htm" title="А.5.26.4. rdsSTRGetWord &ndash; считать из текста очередное слово">rdsSTRGetWord</a></span> имеют значение
+<span class="cpp">NULL</span>, поскольку в данном случае нас не интересует ни само считанное слово, ни его тип,
+ни указатель на следующее &ndash; нам нужен только идентификатор. Поскольку идентификатор &ndash;
+целое число, больше не нужна конструкция <span class="cpp">if</span> &hellip; <span class="cpp">else if</span>
+&hellip;, как в прошлом примере, вместо нее используется более наглядный оператор <span class="cpp">switch(id)</span>.</p>
+
+<p>Мы не меняли у объекта значения стандартных идентификаторов, поэтому при обнаружении конца текста в
+<span class="cpp">id</span> будет записана константа <span class="cpp"><a class="hidden" href="rdsSTRGetWord.htm#ref1" title="RDS_HSTR_DEFENDOFTEXT">RDS_HSTR_DEFENDOFTEXT</a></span>. В
+этом случае необходимо выйти из цикла разбора текста, для этого условию цикла (переменной
+<span class="cpp">work</span>) присваивается значение <span class="cpp">FALSE</span>. При обнаружении конца
+строки (<span class="cpp">id</span> равно <span class="cpp"><a class="hidden" href="rdsSTRGetWord.htm#ref2" title="RDS_HSTR_DEFENDOFLINE">RDS_HSTR_DEFENDOFLINE</a></span>) необходимо просто
+пропустить его и продолжить разбор текста &ndash; после соответствующего оператора <span class="cpp">case</span>
+внутри <span class="cpp">switch</span> записан оператор <span class="cpp">break</span> без каких-либо действий.
+Далее следуют три оператора <span class="cpp">case</span> для каждого из трех ключевых слов, которые используются
+в этом блоке.</p>
+
+<p>Если из текста было считано слово &laquo;type&raquo;, функция <span class="cpp"><a class="hidden" href="rdsSTRGetWord.htm" title="А.5.26.4. rdsSTRGetWord &ndash; считать из текста очередное слово">rdsSTRGetWord</a></span>
+вернет число 0, поскольку &laquo;type&raquo; &ndash; первое слово, то есть нулевой индекс, в переданном
+объекту массиве ключевых слов <span class="cpp">TestGen_Keywords</span>, и в качестве начального идентификатора
+для слов из этого массива было указано нулевое значение: 0&nbsp;+&nbsp;0&nbsp;=&nbsp;0. Сразу после описания
+массива <span class="cpp">TestGen_Keywords</span> перед функцией <span class="cpp">SaveText</span>
+для нулевого идентификатора, соответствующего этому слову, была определена <span class="cpp">define</span>-константа
+<span class="cpp">TESTGEN_KW_TYPE</span>, поэтому действия, выполняемые при обнаружение слова
+&laquo;type&raquo;, записаны внутри <span class="cpp">switch(id)</span> после оператора
+<span class="cpp">case&nbsp;TESTGEN_KW_TYPE:</span>.</p>
+
+<p>В принципе, по аналогии с предыдущей версией функции <span class="cpp">LoadText</span>, для чтения типа
+формируемого сигнала можно было бы ввести вспомогательную переменную <span class="cpp">word</span> типа
+<span class="cpp">char*</span> и записать такую конструкцию:</p>
+
+<pre class="cpp">  <a class="hidden" href="rdsSTRGetWord.htm" title="А.5.26.4. rdsSTRGetWord &ndash; считать из текста очередное слово">rdsSTRGetWord</a>(Parser,&amp;word,NULL,NULL,FALSE);
+  Type=atoi(word);</pre>
+
+<p>В первой строке из текста считывается очередное слово, и указатель на него записывается в переменную
+<span class="cpp">word</span> (распознавание ключевых слов при этом не производится &ndash; параметр
+<span class="cpp">Analyse</span> функции <span class="cpp"><a class="hidden" href="rdsSTRGetWord.htm" title="А.5.26.4. rdsSTRGetWord &ndash; считать из текста очередное слово">rdsSTRGetWord</a></span> равен <span class="cpp">FALSE</span>),
+во второй &ndash; это слово преобразуется в целое число и присваивается параметру блока
+<span class="cpp">Type</span>. Однако, есть более простой способ &ndash; можно сразу запросить у объекта
+<span class="cpp">Parser</span> преобразование следующего слова в целое число при помощи стандартной функции
+получения данных объекта <span class="cpp"><a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a></span> с параметром
+<span class="cpp"><a href="RDS_HSTR_READINT.htm" title="А.5.26.11. Команда RDS_HSTR_READINT &ndash; получить из текста целое число">RDS_HSTR_READINT</a></span>. Третий параметр функции (<span class="cpp">TRUE</span>) в данном случае
+указывает на необходимость пропускать переводы строк, если они встретятся перед следующим словом текста.
+Таким образом, для чтения очередного слова текста и преобразования его в целое число с пропуском всех
+&laquo;лишних&raquo; переводов строк теперь требуется всего один вызов сервисной функции.</p>
+
+<p>Аналогичным образом, при обнаружении в тексте слов &laquo;period&raquo; и &laquo;impulse&raquo;
+(оператор <span class="cpp">case</span> с константами <span class="cpp">TESTGEN_KW_PERIOD</span> и
+<span class="cpp">TESTGEN_KW_IMPULSE</span> соответственно), следующее за ними слово преобразуется в
+вещественное число при помощи вызова <span class="cpp"><a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a></span> с параметром
+<span class="cpp"><a href="RDS_HSTR_READDOUBLE.htm" title="А.5.26.10. Команда RDS_HSTR_READDOUBLE &ndash; получить из текста вещественное число">RDS_HSTR_READDOUBLE</a></span> и присваивается соответствующему параметру блока. Если
+же считанное из текста ключевое слово не было опознано, будет выполнен оператор, следующий за
+<span class="cpp">default</span> внутри <span class="cpp">switch(id)</span>, и переменной <span class="cpp">work</span>
+будет присвоено значение <span class="cpp">FALSE</span>, что приведет к выходу из цикла
+<span class="cpp">while(work)</span>.</p>
+
+<p>Перед завершением функции загрузки параметров необходимо уничтожить вспомогательный объект,
+созданный функцией <span class="cpp"><a class="hidden" href="rdsSTRCreateTextReader.htm" title="А.5.26.1. rdsSTRCreateTextReader &ndash; создать объект для разбора текста">rdsSTRCreateTextReader</a></span>. Объект уничтожается при помощи
+универсальной сервисной функции <span class="cpp"><a href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>, которая уже использовалась в других
+примерах для уничтожения объектов-окон. Эта функция может корректно удалить любой вспомогательный объект
+RDS.</p>
+
+<p>Текст новой функции <span class="cpp">LoadText</span> получился несколько длиннее старого варианта, но
+зато приобрел более четкую структуру. При этом новый вариант функции будет выполняться несколько быстрее.
+Какой из способов разбора текста выбрать &ndash; решать программисту.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_8_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_8_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_8_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.13.2. Макрос RDS_FUNCPARAMPVOID &ndash; поле параметра функции</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_13">А.5.13. Вызов функций блоков</a></p>
+<div class="level"><p>А.5.13.2. Макрос <span class="cpp">RDS_FUNCPARAMPVOID</span> &ndash; поле параметра функции</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_FUNCPARAMCAST.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_FUNCPROVIDERLINK_SUCCESS.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_FUNCPARAMPVOID">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.13. Вызов функций блоков</h4>
+<h5>А.5.13.2. Макрос <span class="cpp">RDS_FUNCPARAMPVOID</span> &ndash; поле параметра функции</h5>
+
+
+<p>Макрос <span class="cpp">RDS_FUNCPARAMPVOID</span> предназначен для доступа к полю
+<span class="cpp">Data</span> структуры параметров функции
+<span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span>, если указатель на эту структуру имеет неправильный тип.</p>
+
+<pre class="cpp">  RDS_FUNCPARAMPVOID(
+      pFuncData    <span class="rem">// Указатель на </span><a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA"><span class="rem">RDS_FUNCTIONCALLDATA</span></a>
+  )</pre>
+
+<p class="apphdr">Определение</p>
+<pre class="cpp">  <span class="preproc">#define RDS_FUNCPARAMPVOID(pFuncData) \</span>
+<span class="preproc">      (((</span><a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA"><span class="preproc">RDS_PFUNCTIONCALLDATA</span></a><span class="preproc">)(pFuncData))->Data)</span></pre>
+
+<p class="apphdr">Параметр</p>
+
+<dl>
+  <dt><span id="ref1"><span class="cpp">pFuncData</span>&emsp;(<span class="cpp"><i>указатель на RDS_FUNCTIONCALLDATA</i></span>)</span></dt>
+  <dd>Указатель на структуру данных функции <span class="cpp" id="light_ref1">RDS_FUNCTIONCALLDATA</span>,
+  имеющий неправильный тип.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Значение поля <span class="cpp">Data</span> структуры данных функции, находящейся по
+переданному указателю.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Этот макрос используется достаточно редко. Единственное его назначение &ndash; несколько сократить запись
+приведения третьего параметра (<span class="cpp">ExtParam</span>) функции модели блока при реакции на событие
+<span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span>, в котором передается указатель на структуру данных функции
+<span class="cpp">RDS_FUNCTIONCALLDATA</span>, к нужному типу. В отличие от макроса
+<span class="cpp"><a href="RDS_FUNCPARAMCAST.htm" title="А.5.13.1. Макрос RDS_FUNCPARAMCAST &ndash; приведение параметра функции к нужному типу">RDS_FUNCPARAMCAST</a></span>, значение поля
+<span class="cpp">Data</span>, возвращаемое этим макросом, не приводится ни к какому типу и остается
+указателем общего вида (<span class="cpp">void*</span>). На практике, в большинстве случаев, в применении
+этого макроса нет острой необходимости &ndash; все приведения типов всегда можно записать вручную.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span>,
+<span class="cpp"><a href="RDS_FUNCPARAMCAST.htm" title="А.5.13.1. Макрос RDS_FUNCPARAMCAST &ndash; приведение параметра функции к нужному типу">RDS_FUNCPARAMCAST</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_FUNCPARAMCAST.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_FUNCPROVIDERLINK_SUCCESS.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_FUNCPARAMPVOID">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

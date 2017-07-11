@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.15.3. Способы снижения нагрузки на сеть</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_15">&sect;2.15. Обмен данными по сети</a></p>
+<div class="level"><p>&sect;2.15.3. Способы снижения нагрузки на сеть</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_15_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_16_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_15_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_15_3.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделями блоков,
+обменивающихся данными по сети, с дополнениями, призванными снизить нагрузку на сеть.
+Библиотека содержит три модели:</p>
+
+<ul>
+  <li><span class="cpp">Server</span> &ndash; блок, включающий серверные функции в RDS
+  (копия модели из <a href="pm_2_15_2.htm#light_ref1" title="Пример блока, включающего функции сервера RDS">&sect;2.15.2</a>);</li>
+  <li><span class="cpp">NetSend</span> &ndash; блок, передающий вещественное число с возможностью
+  ограничения минимального интервала передачи;</li>
+  <li><span class="cpp">NetReceive</span> &ndash; блок, принимающий вещественное число
+  (копия модели из <a href="pm_2_15_2.htm#ref4" title="Пример моделей блоков, обменивающихся данными по сети">&sect;2.15.2</a>);</li>
+  <li><span class="cpp">NetSendArray</span> &ndash; блок, передающий массив вещественных чисел с возможностью
+  ограничения минимального интервала передачи;</li>
+  <li><span class="cpp">NetReceiveArray</span> &ndash; блок, принимающий массив вещественных чисел.</li>
+</ul>
+
+<p class="noindent">Уже описанные ранее модели <span class="cpp">Server</span> и <span class="cpp">NetReceive</span>
+включены сюда для того, чтобы все модели из рассматриваемого примера схемы находились в одной библиотеке.</p>
+
+<p>Изменения относительно предыдущих версий моделей выделены <span class="changes">цветом</span>.</p>
+
+<pre class="cpp">  <span class="rem">// Передача данных по сети</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Модель блока, включающего сервер</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> Server(<span class="kw">int</span> CallMode,
+          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="kw">int</span> *pConnId;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Отводим место под личную область данных размером в int</span>
+          BlockData-&gt;BlockData=pConnId=<span class="kw">new</span> <span class="kw">int</span>;
+          <span class="rem">// Запускаем сервер и соединяемся с ним</span>
+          *pConnId=<a class="hidden" href="rdsNetServer.htm" title="А.5.20.5. rdsNetServer &ndash; запуск сервера и установка соединения с ним">rdsNetServer</a>(-<span class="const">1</span>, <span class="rem">// Порт по умолчанию</span>
+                                <span class="str">"ProgrammersGuide.Server"</span>, <span class="rem">// Канал</span>
+                                FALSE); <span class="rem">// Не принимаем данные</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Личная область данных – целое число</span>
+          pConnId=(<span class="kw">int</span>*)(BlockData-&gt;BlockData);
+          <span class="rem">// Разрываем связь с сервером (он завершится сам)</span>
+          <a class="hidden" href="rdsNetCloseConnection.htm" title="А.5.20.2. rdsNetCloseConnection &ndash; разорвать соединение">rdsNetCloseConnection</a>(*pConnId);
+          <span class="rem">// Удаляем личную область</span>
+          <span class="kw">delete</span> pConnId;
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Личная область данных блоков приема</span>
+  <span class="rem">// и передачи по сети</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">class</span> TNetSendRcvData
+  { <span class="kw">public</span>:
+      <span class="kw">int</span> Mode; <span class="rem">// Режим данного блока: прием или передача</span>
+        <span class="preproc">#define NETSRMODE_SENDER    0 </span><span class="rem">// Передатчик</span>
+        <span class="preproc">#define NETSRMODE_RECEIVER  1 </span><span class="rem">// Приемник</span>
+      <span class="kw">char</span> *ChannelName; <span class="rem">// Имя канала</span>
+<div class="changes">      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> LimitSpeed;   <span class="rem">// Задан минимальный интервал передачи</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Delay;       <span class="rem">// Минимальный интервал в мс</span></div>
+      <span class="kw">int</span> ConnId; <span class="rem">// Идентификатор соединения</span>
+
+      <span class="rem">// Переменные состояния блока-передатчика</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Connected;    <span class="rem">// Соединение установлено</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> DataWaiting;  <span class="rem">// Передача данных отложена</span>
+<div class="changes">      <a class="hidden" href="app_ids.htm#light_ref3" title="Идентификатор таймера">RDS_TIMERID</a> Timer; <span class="rem">// Таймер для отсчета интервала</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> WaitingForTimer;<span class="rem">// Таймер запущен - ждем</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> LastSendTime;  <span class="rem">// Время последней отправки</span></div>
+      <span class="rem">// Функции класса</span>
+      <span class="kw">void</span> Connect(<span class="kw">void</span>);    <span class="rem">// Установить соединение</span>
+      <span class="kw">void</span> Disconnect(<span class="kw">void</span>); <span class="rem">// Разорвать соединение</span>
+
+      <span class="kw">void</span> SendValue(<span class="kw">double</span> value); <span class="rem">// Передать число в канал</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ReceiveValue(<a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a> *rcv, <span class="rem">// Реакция на</span>
+                        <span class="kw">double</span> *pOut);            <span class="rem">// пришедшие данные</span>
+
+<div class="changes">      <span class="kw">void</span> SendArray(<span class="kw">void</span> *input); <span class="rem">// Передать массив в канал</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ReceiveArray(<a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a> *rcv, <span class="rem">// Реакция на</span>
+                        <span class="kw">void</span> *output);            <span class="rem">// пришедшие данные</span></div>
+<div class="changes">      <span class="kw">void</span> CreateTimer(<span class="kw">void</span>);    <span class="rem">// Создать таймер</span>
+      <span class="kw">void</span> DeleteTimer(<span class="kw">void</span>);    <span class="rem">// Удалить таймер</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> CheckSendTimer(<span class="kw">void</span>); <span class="rem">// Проверить, можно ли передавать,</span>
+                                 <span class="rem">// и запустить таймер, если нельзя</span></div>
+      <span class="kw">int</span> Setup(<span class="kw">char</span> *title); <span class="rem">// Функция настройки блока</span>
+      <span class="kw">void</span> SaveText(<span class="kw">void</span>);    <span class="rem">// Сохранить параметры</span>
+      <span class="kw">void</span> LoadText(<span class="kw">char</span> *text); <span class="rem">// Загрузить параметры</span>
+
+      <span class="rem">// Конструктор класса</span>
+      TNetSendRcvData(<span class="kw">int</span> mode)
+        { ConnId=-<span class="const">1</span>; <span class="rem">// Нет соединения</span>
+          Connected=DataWaiting=FALSE;
+
+<div class="changes">          LimitSpeed=WaitingForTimer=FALSE;Timer=NULL;Delay=<span class="const">100</span>;</div>
+          ChannelName=NULL;
+          Mode=mode; <span class="rem">// Режим передается в параметре конструктора</span>
+        };
+      <span class="rem">// Деструктор класса</span>
+      ~TNetSendRcvData()
+        { Disconnect();  <span class="rem">// Разорвать соединение</span>
+
+<div class="changes">          DeleteTimer(); <span class="rem">// Удалить таймер</span></div>
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(ChannelName); <span class="rem">// Освободить строку имени канала</span>
+        };
+  };
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Установка соединения</span>
+  <span class="kw">void</span> TNetSendRcvData::Connect(<span class="kw">void</span>)
+  { <span class="kw">char</span> *PrefixedName; <span class="rem">// Полное имя канала</span>
+
+    <span class="rem">// Если имя канала пустое, соединение невозможно</span>
+    <span class="kw">if</span>(ChannelName==NULL || (*ChannelName)==<span class="const">0</span>)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Добавляем префикс к имени канала</span>
+    PrefixedName=<a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a>(<span class="str">"ProgrammersGuide."</span>,ChannelName,FALSE);
+    <span class="rem">// Устанавливаем соединение с сервером</span>
+    ConnId=<a class="hidden" href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a>(NULL, <span class="rem">// Сервер по умолчанию</span>
+                         -<span class="const">1</span>,   <span class="rem">// Порт по умолчанию</span>
+                         PrefixedName,<span class="rem">// Имя канала с префиксом</span>
+                         Mode==NETSRMODE_RECEIVER); <span class="rem">// Прием данных</span>
+    <span class="rem">// Освобождаем динамически отведенную строку</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(PrefixedName);
+
+<div class="changes">    <span class="rem">// Создаем или уничтожаем таймер</span>
+    CreateTimer();</div>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Разорвать соединение</span>
+  <span class="kw">void</span> TNetSendRcvData::Disconnect(<span class="kw">void</span>)
+  { <span class="kw">if</span>(ConnId!=-<span class="const">1</span>) <span class="rem">// Соединение было создано</span>
+      <a class="hidden" href="rdsNetCloseConnection.htm" title="А.5.20.2. rdsNetCloseConnection &ndash; разорвать соединение">rdsNetCloseConnection</a>(ConnId); <span class="rem">// Разорвать</span>
+    <span class="rem">// Сбрасываем переменные состояния</span>
+    ConnId=-<span class="const">1</span>;       <span class="rem">// Соединения больше нет</span>
+    Connected=FALSE; <span class="rem">// Связи тоже больше нет</span>
+  }
+  <span class="rem">//=========================================</span>
+
+<div class="changes">  <span class="rem">// Создать таймер</span>
+  <span class="kw">void</span> TNetSendRcvData::CreateTimer(<span class="kw">void</span>)
+  {
+    <span class="kw">if</span>(Mode!=NETSRMODE_SENDER || <span class="rem">// Приемнику таймер не нужен</span>
+       (!LimitSpeed) ) <span class="rem">// Интервал передачи не ограничивается</span>
+      { DeleteTimer(); <span class="rem">// Удаляем таймер, если он создан</span>
+        <span class="kw">return</span>;
+      }
+    <span class="kw">if</span>(Timer) <span class="rem">// Таймер уже создан</span>
+      <span class="kw">return</span>;
+    <span class="rem">// Создаем таймер</span>
+    Timer=<a class="hidden" href="rdsSetBlockTimer.htm" title="А.5.12.4. rdsSetBlockTimer &ndash; создать таймер">rdsSetBlockTimer</a>(
+              NULL,   <span class="rem">// Создается новый таймер</span>
+              <span class="const">0</span>,      <span class="rem">// Задержка задается при запуске</span>
+              <a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref5" title="RDS_TIMERM_STOP">RDS_TIMERM_STOP</a> | <a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref8" title="RDS_TIMERS_TIMER">RDS_TIMERS_TIMER</a>, <span class="rem">// Однократный</span>
+              FALSE); <span class="rem">// Создается остановленным</span>
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Удалить таймер</span>
+  <span class="kw">void</span> TNetSendRcvData::DeleteTimer(<span class="kw">void</span>)
+  {
+    <span class="kw">if</span>(Timer) <span class="rem">// Таймер есть</span>
+      { <a class="hidden" href="rdsDeleteBlockTimer.htm" title="А.5.12.1. rdsDeleteBlockTimer &ndash; удалить таймер">rdsDeleteBlockTimer</a>(Timer);
+        Timer=NULL;
+      }
+    WaitingForTimer=FALSE; <span class="rem">// Сбрасываем флаг ожидания</span>
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Проверить, можно ли передать данные немедленно, и запустить</span>
+  <span class="rem">// таймер, если нельзя</span>
+  BOOL TNetSendRcvData::CheckSendTimer(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> interval;
+
+    <span class="kw">if</span>(!Connected) <span class="rem">// Нет связи с сервером</span>
+      <span class="kw">return</span> TRUE; <span class="rem">// Разрешаем отправку, чтобы попытка отправки</span>
+                   <span class="rem">// была зафиксирована в функции SendValue</span>
+
+    <span class="kw">if</span>(!LimitSpeed) <span class="rem">// Интервал не ограничивается</span>
+      <span class="kw">return</span> TRUE;
+
+    <span class="kw">if</span>(WaitingForTimer) <span class="rem">// Уже запустили таймер и ждем срабатывания</span>
+      <span class="kw">return</span> FALSE;
+
+    <span class="rem">// Интервал передачи ограничен, таймер сейчас выключен</span>
+
+    interval=GetTickCount()-LastSendTime; <span class="rem">// Время с прошлой отправки</span>
+    <span class="kw">if</span>(interval&gt;=Delay) <span class="rem">// Прошло много времени – можно передавать</span>
+      <span class="kw">return</span> TRUE;
+    <span class="rem">// С прошлой отправки прошло менее Delay мс</span>
+    <span class="rem">// Нужно подождать (Delay-interval)</span>
+    WaitingForTimer=TRUE; <span class="rem">// Взводим флаг ожидания таймера</span>
+    <a class="hidden" href="rdsRestartBlockTimer.htm" title="А.5.12.3. rdsRestartBlockTimer &ndash; перезапустить таймер">rdsRestartBlockTimer</a>(Timer,Delay-interval); <span class="rem">// Запускаем таймер</span>
+    <span class="kw">return</span> FALSE; <span class="rem">// Передавать сейчас нельзя – ждем таймера</span>
+  }
+  <span class="rem">//=========================================</span></div>
+  <span class="rem">// Передать данные</span>
+  <span class="kw">void</span> TNetSendRcvData::SendValue(<span class="kw">double</span> value)
+  {
+    <span class="kw">if</span>(!Connected) <span class="rem">// Нет связи с сервером</span>
+      { <span class="rem">// Взводим флаг наличия данных, ожидающих передачи</span>
+        DataWaiting=TRUE;
+        <span class="kw">return</span>;
+      }
+
+    <span class="rem">// Связь есть – передаем всем блокам канала</span>
+    <a class="hidden" href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a>(ConnId, <span class="rem">// Соединение</span>
+                        <a class="hidden" href="rdsNetBroadcastData.htm#light_ref6" title="RDS_NETSEND_UPDATE">RDS_NETSEND_UPDATE</a>|<a class="hidden" href="rdsNetBroadcastData.htm#light_ref4" title="RDS_NETSEND_UDP">RDS_NETSEND_UDP</a>, <span class="rem">// Флаги</span>
+                        <span class="const">0</span>,NULL, <span class="rem">// Не передаем целое число и строку</span>
+                        &amp;value, <span class="rem">// Указатель на данные</span>
+                        <span class="kw">sizeof</span>(value)); <span class="rem">// Размер данных</span>
+    <span class="rem">// Сбрасываем флаг ожидания – мы только что передали данные</span>
+    DataWaiting=FALSE;
+
+<div class="changes">    <span class="rem">// Запоминаем время последней передачи</span>
+    LastSendTime=GetTickCount();</div>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Прием данных</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> TNetSendRcvData::ReceiveValue(
+    <a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a> *rcv, <span class="rem">// Указатель на структуру с данными</span>
+    <span class="kw">double</span> *pOut)             <span class="rem">// Указатель на выход блока</span>
+  {
+    <span class="kw">if</span>(rcv==NULL || pOut==NULL) <span class="rem">// Нет одного из указателей</span>
+      <span class="kw">return</span> FALSE;
+
+    <span class="rem">// Проверяем, есть ли среди принятых данных двоичные,</span>
+    <span class="rem">// и равен ли размер этих данных размеру double</span>
+    <span class="kw">if</span>(rcv-&gt;Buffer==NULL || rcv-&gt;BufferSize!=<span class="kw">sizeof</span>(<span class="kw">double</span>))
+      <span class="kw">return</span> FALSE; <span class="rem">// Нет данных или не совпал размер</span>
+
+    <span class="rem">// Копируем принятое числов pOut</span>
+    memcpy(pOut,rcv-&gt;Buffer,<span class="kw">sizeof</span>(<span class="kw">double</span>));
+    <span class="kw">return</span> TRUE; <span class="rem">// Приняты правильные данные</span>
+  }
+  <span class="rem">//=========================================</span>
+
+<div class="changes">  <span class="rem">// Передать массив</span>
+  <span class="kw">void</span> TNetSendRcvData::SendArray(<span class="kw">void</span> *input)
+  { <span class="kw">int</span> N;
+
+    <span class="kw">if</span>(!Connected) <span class="rem">// Нет связи с сервером</span>
+      { <span class="rem">// Взводим флаг наличия данных, ожидающих передачи</span>
+        DataWaiting=TRUE;
+        <span class="kw">return</span>;
+      }
+
+    <span class="rem">// Связь есть – определяем размер массива input</span>
+    N=<a class="hidden" href="RDS_ARRAYEXISTS.htm" title="А.5.15.3. Макрос RDS_ARRAYEXISTS &ndash; проверка наличия элементов в матрице/массиве">RDS_ARRAYEXISTS</a>(input)?
+        (<a class="hidden" href="RDS_ARRAYROWS.htm" title="А.5.15.6. Макрос RDS_ARRAYROWS &ndash; число строк матрицы/массива">RDS_ARRAYROWS</a>(input)*<a class="hidden" href="RDS_ARRAYCOLS.htm" title="А.5.15.1. Макрос RDS_ARRAYCOLS &ndash; число столбцов матрицы/массива">RDS_ARRAYCOLS</a>(input)):<span class="const">0</span>;
+    <span class="kw">if</span>(N==<span class="const">0</span>) <span class="rem">// Массив пуст – передавать нечего</span>
+      <span class="kw">return</span>;
+
+    <span class="rem">// Передаем N чисел double всем блокам канала</span>
+    <a class="hidden" href="rdsNetBroadcastData.htm" title="А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала">rdsNetBroadcastData</a>(
+        ConnId, <span class="rem">// Соединение</span>
+        <a class="hidden" href="rdsNetBroadcastData.htm#light_ref6" title="RDS_NETSEND_UPDATE">RDS_NETSEND_UPDATE</a>|<a class="hidden" href="rdsNetBroadcastData.htm#light_ref4" title="RDS_NETSEND_UDP">RDS_NETSEND_UDP</a>, <span class="rem">// Флаги</span>
+        N, <span class="rem">// Целое число – размер массива</span>
+        NULL, <span class="rem">// Строка не передается</span>
+        <a class="hidden" href="RDS_ARRAYDATA.htm" title="А.5.15.2. Макрос RDS_ARRAYDATA &ndash; указатель на первый элемент матрицы/массива">RDS_ARRAYDATA</a>(input), <span class="rem">// Начало данных массива</span>
+        N*<span class="kw">sizeof</span>(<span class="kw">double</span>)); <span class="rem">// Размер массива в байтах</span>
+    <span class="rem">// Сбрасываем флаг ожидания – мы только что передали данные</span>
+    DataWaiting=FALSE;
+    <span class="rem">// Запоминаем время передачи</span>
+    LastSendTime=GetTickCount();
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Прием массива</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> TNetSendRcvData::ReceiveArray(
+    <a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a> *rcv, <span class="rem">// Указатель на структуру с данными</span>
+    <span class="kw">void</span> *output) <span class="rem">// Указатель на выход блока (массив)</span>
+  { <span class="kw">int</span> N;
+    <span class="kw">if</span>(rcv==NULL||output==NULL) <span class="rem">// Нет одного из указателей</span>
+      <span class="kw">return</span> FALSE;
+
+    <span class="rem">// Проверяем, есть ли среди принятых данных двоичные,</span>
+    <span class="rem">// и кратен ли размер блока данных размеру double</span>
+    <span class="kw">if</span>(rcv-&gt;Buffer==NULL || <span class="rem">// Нет буфера с данными</span>
+       rcv-&gt;BufferSize%<span class="kw">sizeof</span>(<span class="kw">double</span>)!=<span class="const">0</span>) <span class="rem">// Размер не кратен 8</span>
+      <span class="kw">return</span> FALSE;
+
+    <span class="rem">// Вычисляем число элементов в принятом массиве</span>
+    N=rcv-&gt;BufferSize/<span class="kw">sizeof</span>(<span class="kw">double</span>);
+    <span class="rem">// Вычисленное число элементов должно совпасть с переданным</span>
+    <span class="kw">if</span>(N!=rcv-&gt;Id)
+      <span class="kw">return</span> FALSE;
+    <span class="rem">// Принято N чисел double – отводим массив под них</span>
+    <span class="kw">if</span>(!<a class="hidden" href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a>(output,<span class="const">1</span>,N,FALSE,NULL))
+      <span class="kw">return</span> FALSE;
+    <span class="rem">// Копируем принятые данные в отведенный массив выхода</span>
+    memcpy(<a class="hidden" href="RDS_ARRAYDATA.htm" title="А.5.15.2. Макрос RDS_ARRAYDATA &ndash; указатель на первый элемент матрицы/массива">RDS_ARRAYDATA</a>(output),rcv-&gt;Buffer,rcv-&gt;BufferSize);
+    <span class="kw">return</span> TRUE;
+  }
+  <span class="rem">//=========================================</span></div>
+  <span class="rem">// Сохранение параметров блока</span>
+  <span class="kw">void</span> TNetSendRcvData::SaveText(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini; <span class="rem">// Вспомогательный объект</span>
+    <span class="rem">// Создаем вспомогательный объект</span>
+    ini=<a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a>(TRUE);
+    <span class="rem">// Создаем в объекте секцию "[General]"</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a>,<span class="const">0</span>,<span class="str">"General"</span>);
+    <span class="rem">// Записываем в эту секцию имя канала</span>
+    <a class="hidden" href="rdsINIWriteString.htm" title="А.5.27.9. rdsINIWriteString &ndash; установить текстовое значение параметра">rdsINIWriteString</a>(ini,<span class="str">"Channel"</span>,ChannelName);
+
+<div class="changes">    <span class="kw">if</span>(Mode==NETSRMODE_SENDER) <span class="rem">// Передатчик</span>
+      { <span class="rem">// Создаем новую секцию</span>
+        <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a>,<span class="const">0</span>,<span class="str">"Timer"</span>);
+        <span class="rem">// Записываем параметры</span>
+        <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"On"</span>,LimitSpeed);
+        <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"Delay"</span>,Delay);
+      }</div>
+    <span class="rem">// Сохраняем текст, сформированный объектом, как параметры блока</span>
+    <a class="hidden" href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a>(ini,<a class="hidden" href="RDS_HINI_SAVEBLOCKTEXT.htm" title="А.5.27.16. Команда RDS_HINI_SAVEBLOCKTEXT &ndash; передать текст параметров блока в RDS">RDS_HINI_SAVEBLOCKTEXT</a>);
+    <span class="rem">// Удаляем вспомогательный объект</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(ini);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Загрузка параметров блока</span>
+  <span class="kw">void</span> TNetSendRcvData::LoadText(<span class="kw">char</span> *text)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini; <span class="rem">// Вспомогательный объект</span>
+    <span class="kw">char</span> *str;
+    <span class="rem">// Создаем вспомогательный объект</span>
+    ini=<a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a>(TRUE);
+    <span class="rem">// Записываем в объект полученный текст с параметрами блока</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_SETTEXT.htm" title="А.5.27.18. Команда RDS_HINI_SETTEXT &ndash; занести текст в объект">RDS_HINI_SETTEXT</a>,<span class="const">0</span>,text);
+    <span class="rem">// Начинаем чтение секции "[General]", если она есть</span>
+    <span class="kw">if</span>(<a class="hidden" href="rdsINIOpenSection.htm" title="А.5.27.2. rdsINIOpenSection &ndash; установить текущую секцию">rdsINIOpenSection</a>(ini,<span class="str">"General"</span>)) <span class="rem">// Секция есть</span>
+      { <span class="rem">// Освобождаем старое имя канала</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(ChannelName);
+        ChannelName=NULL;
+        <span class="rem">// Получаем у объекта указатель на строку с именем</span>
+        str=<a class="hidden" href="rdsINIReadString.htm" title="А.5.27.6. rdsINIReadString &ndash; получить текст значения параметра">rdsINIReadString</a>(ini,<span class="str">"Channel"</span>,<span class="str">""</span>,NULL);
+        <span class="rem">// Если такая строка есть в тексте, копируем ее в ChannelName</span>
+        <span class="kw">if</span>(str)
+          ChannelName=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(str);
+      }
+
+<div class="changes">    <span class="kw">if</span>(Mode==NETSRMODE_SENDER &amp;&amp; <span class="rem">// Передатчик</span>
+       <a class="hidden" href="rdsINIOpenSection.htm" title="А.5.27.2. rdsINIOpenSection &ndash; установить текущую секцию">rdsINIOpenSection</a>(ini,<span class="str">"Timer"</span>)) <span class="rem">// Есть секция "[Timer]"</span>
+      { LimitSpeed=<a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"On"</span>,LimitSpeed)!=<span class="const">0</span>;
+        Delay=<a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"Delay"</span>,Delay);
+      }</div>
+    <span class="rem">// Удаляем вспомогательный объект</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(ini);
+
+    <span class="rem">// Поскольку имя канала могло измениться, соединяемся с</span>
+    <span class="rem">// сервером заново</span>
+    Disconnect(); <span class="rem">// Разрываем старое соединение</span>
+    Connect(); <span class="rem">// Создаем новое</span>
+  }
+  <span class="rem">//=========================================</span>
+
+<div class="changes">  <span class="rem">// Настройка параметров блока</span>
+  <span class="kw">int</span> TNetSendRcvData::Setup(<span class="kw">char</span> *title)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> win; <span class="rem">// Идентификатор вспомогательного объекта</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;         <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="rem">// Создание окна</span>
+    win=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,title);
+    <span class="rem">// Поле ввода имени канала</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(win,<span class="const">0</span>,<span class="const">1</span>,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,
+        <span class="str">"Имя канала:"</span>,<span class="const">200</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(win,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,ChannelName);
+
+    <span class="kw">if</span>(Mode==NETSRMODE_SENDER)
+      { <span class="rem">// Для передатчика – ввод интервала</span>
+        <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(win,<span class="const">0</span>,<span class="const">2</span>,
+            <a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a> | <a class="hidden" href="app_a_fields.htm#light_ref21" title="RDS_FORMFLAG_CHECK">RDS_FORMFLAG_CHECK</a>,
+            <span class="str">"Интервал передачи, мс:"</span>,<span class="const">80</span>);
+        <span class="rem">// Значение интервала</span>
+        <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(win,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Delay);
+        <span class="rem">// Разрешающий флаг поля</span>
+        <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(win,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_CHECK.htm" title="А.5.28.14. Команда RDS_FORMVAL_CHECK &ndash; управление разрешающим флагом поля ввода">RDS_FORMVAL_CHECK</a>,LimitSpeed);
+      }
+
+    <span class="rem">// Открытие окна</span>
+    ok=<a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a>(win,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Пользователь нажал OK</span>
+        <span class="kw">char</span> *NewName=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(win,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <span class="kw">if</span>(ChannelName==NULL || strcmp(NewName,ChannelName)!=<span class="const">0</span>)
+          { <span class="rem">// Имя канала изменилось – запоминаем новое</span>
+            <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(ChannelName);
+            ChannelName=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(NewName);
+          }
+        <span class="rem">// Флаг ограничения интервала и сам интервал</span>
+        LimitSpeed=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(win,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_CHECK.htm" title="А.5.28.14. Команда RDS_FORMVAL_CHECK &ndash; управление разрешающим флагом поля ввода">RDS_FORMVAL_CHECK</a>)!=<span class="const">0</span>;
+        Delay=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(win,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <span class="rem">// Устанавливаем соединение с сервером заново и создаем</span>
+        <span class="rem">// или удаляем таймер, если необходимо</span>
+        Disconnect();
+        Connect();
+      }
+    <span class="rem">// Уничтожаем вспомогательный объект-окно</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(win);
+    <span class="rem">// Возвращаемое значение</span>
+    <span class="kw">return</span> ok?<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></div>
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Блок-передатчик числа</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> NetSend(<span class="kw">int</span> CallMode,
+          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Указатель на личную область данных, приведенный к нужному типу</span>
+    TNetSendRcvData *data=(TNetSendRcvData*)(BlockData->BlockData);
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData->VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x      (*((double *)(pStart+2)))</span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Создаем объект класса TNetSendRcvData с</span>
+          <span class="rem">// Mode==NETSRMODE_SENDER (передатчик)</span>
+          BlockData->BlockData=<span class="kw">new</span> TNetSendRcvData(NETSRMODE_SENDER);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSD}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Связь с сервером установлена</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_NETCONNECT.htm" title="А.2.8.1. RDS_BFM_NETCONNECT &ndash; установка соединения">RDS_BFM_NETCONNECT</a>:
+          <span class="rem">// Взводим флаг наличия связи</span>
+          data->Connected=TRUE;
+          <span class="rem">// Если были данные, ожидающие отправки,</span>
+          <span class="rem">// посылаем значение входа блока</span>
+          <span class="kw">if</span>(data->DataWaiting)
+            data->SendValue(x);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Связь с сервером разорвана</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_NETDISCONNECT.htm" title="А.2.8.4. RDS_BFM_NETDISCONNECT &ndash; разрыв соединения">RDS_BFM_NETDISCONNECT</a>:
+          <span class="rem">// Сбрасываем флаг наличия связи</span>
+          data->Connected=FALSE;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Запуск расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a>:
+          <span class="rem">// Если это – первый запуск после сброса,</span>
+          <span class="rem">// передаем значение входа</span>
+          <span class="kw">if</span>(((<a class="hidden" href="RDS_BFM_STARTCALC.htm#ref2" title="Указатель на RDS_STARTSTOPDATA">RDS_PSTARTSTOPDATA</a>)ExtParam)->FirstStart)
+            data->SendValue(x);
+          <span class="kw">break</span>;
+
+<div class="changes">        <span class="rem">// Срабатывание таймера</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a>:
+          <span class="rem">// Сбрасываем флаг ожидания таймера</span>
+          data->WaitingForTimer=FALSE;
+          <span class="rem">// Передаем значение входа блока</span>
+          data->SendValue(x);
+          <span class="kw">break</span>;</div>
+        <span class="rem">// Такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+        <span class="changes">  <span class="kw">if</span>(data->CheckSendTimer()) <span class="rem">// Можно передавать немедленно  </span></span>
+            data->SendValue(x); <span class="rem">// Передаем значение входа</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="kw">return</span> data->Setup(<span class="str">"Передача double"</span>);
+
+       <span class="rem">// Сохранение параметров в текстовом виде</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a>:
+          data->SaveText();
+          <span class="kw">break</span>;
+
+       <span class="rem">// Загрузка параметров в текстовом виде</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a>:
+          data->LoadText((<span class="kw">char</span>*)ExtParam);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Блок-приемник числа</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> NetReceive(<span class="kw">int</span> CallMode,
+            <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+            <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Указатель на личную область данных, приведенный к нужному типу</span>
+    TNetSendRcvData *data=(TNetSendRcvData*)(BlockData->BlockData);
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData->VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define y      (*((double *)(pStart+2)))</span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Создаем объект класса TNetSendRcvData с</span>
+          <span class="rem">// Mode==NETSRMODE_RECEIVER (приемник)</span>
+          BlockData->BlockData=
+            <span class="kw">new</span> TNetSendRcvData(NETSRMODE_RECEIVER);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSD}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// По сети получены данные</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">RDS_BFM_NETDATARECEIVED</a>:
+          <span class="kw">if</span>(data->ReceiveValue((<a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a>*)ExtParam,&y))
+            Ready=<span class="const">1</span>; <span class="rem">// Если данные верны, взводим флаг готовности</span>
+          <span class="rem">// для передачи выхода по связям</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="kw">return</span> data->Setup(<span class="str">"Прием double"</span>);
+
+       <span class="rem">// Сохранение параметров в текстовом виде</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a>:
+          data->SaveText();
+          <span class="kw">break</span>;
+
+       <span class="rem">// Загрузка параметров в текстовом виде</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a>:
+          data->LoadText((<span class="kw">char</span>*)ExtParam);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Блок-передатчик массива</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> NetSendArray(<span class="kw">int</span> CallMode,
+          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Указатель на личную область данных, приведенный к нужному типу</span>
+    TNetSendRcvData *data=(TNetSendRcvData*)(BlockData-&gt;BlockData);
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+<span class="changes">  <span class="preproc">#define pX     ((void **)(pStart+2))  </span></span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Создаем объект класса TNetSendRcvData с</span>
+          <span class="rem">// Mode==NETSRMODE_SENDER (передатчик)</span>
+          BlockData-&gt;BlockData=<span class="kw">new</span> TNetSendRcvData(NETSRMODE_SENDER);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"</span><span class="changes"><span class="str">{SSMD}</span></span><span class="str">"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Связь с сервером установлена</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_NETCONNECT.htm" title="А.2.8.1. RDS_BFM_NETCONNECT &ndash; установка соединения">RDS_BFM_NETCONNECT</a>:
+          <span class="rem">// Взводим флаг наличия связи</span>
+          data-&gt;Connected=TRUE;
+          <span class="rem">// Если были данные, ожидающие отправки,</span>
+          <span class="rem">// посылаем значение входа блока</span>
+          <span class="kw">if</span>(data-&gt;DataWaiting)
+            <span class="changes">data-&gt;SendArray(pX);</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Связь с сервером разорвана</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_NETDISCONNECT.htm" title="А.2.8.4. RDS_BFM_NETDISCONNECT &ndash; разрыв соединения">RDS_BFM_NETDISCONNECT</a>:
+          <span class="rem">// Сбрасываем флаг наличия связи</span>
+          data-&gt;Connected=FALSE;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Запуск расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a>:
+          <span class="rem">// Если это – первый запуск после сброса,</span>
+          <span class="rem">// передаем значение входа</span>
+          <span class="kw">if</span>(((<a class="hidden" href="RDS_BFM_STARTCALC.htm#ref2" title="Указатель на RDS_STARTSTOPDATA">RDS_PSTARTSTOPDATA</a>)ExtParam)-&gt;FirstStart)
+            <span class="changes">data-&gt;SendArray(pX);</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Срабатывание таймера</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a>:
+          <span class="rem">// Сбрасываем флаг ожидания таймера</span>
+          data-&gt;WaitingForTimer=FALSE;
+          <span class="rem">// Передаем значение входа блока</span>
+          <span class="changes">data-&gt;SendArray(pX);</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">if</span>(data-&gt;CheckSendTimer()) <span class="rem">// Можно передавать немедленно</span>
+            <span class="changes">data-&gt;SendArray(pX);</span> <span class="rem">// Передаем значение входа</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="kw">return</span> data-&gt;Setup(<span class="str">"</span><span class="changes"><span class="str">Передача массива</span></span><span class="str">"</span>);
+
+       <span class="rem">// Сохранение параметров в текстовом виде</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a>:
+          data-&gt;SaveText();
+          <span class="kw">break</span>;
+
+       <span class="rem">// Загрузка параметров в текстовом виде</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a>:
+          data-&gt;LoadText((<span class="kw">char</span>*)ExtParam);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+<span class="changes">  <span class="preproc">#undef pX  </span></span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Блок-приемник массива</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> NetReceiveArray(<span class="kw">int</span> CallMode,
+            <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+            <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Указатель на личную область данных, приведенный к нужному типу</span>
+    TNetSendRcvData *data=(TNetSendRcvData*)(BlockData-&gt;BlockData);
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+<span class="changes">  <span class="preproc">#define pY     ((void **)(pStart+2))  </span></span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Создаем объект класса TNetSendRcvData с</span>
+          <span class="rem">// Mode==NETSRMODE_RECEIVER (приемник)</span>
+          BlockData-&gt;BlockData=
+            <span class="kw">new</span> TNetSendRcvData(NETSRMODE_RECEIVER);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"</span><span class="changes"><span class="str">{SSMD}</span></span><span class="str">"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// По сети получены данные</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">RDS_BFM_NETDATARECEIVED</a>:
+          <span class="kw">if</span>(<span class="changes">data-&gt;ReceiveArray((<a class="hidden" href="RDS_BFM_NETDATARECEIVED.htm#ref1" title="Структура RDS_NETRECEIVEDDATA">RDS_NETRECEIVEDDATA</a>*)ExtParam,pY)</span>)
+            Ready=<span class="const">1</span>; <span class="rem">// Если данные верны, взводим флаг готовности</span>
+          <span class="rem">// для передачи выхода по связям</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="kw">return</span> data-&gt;Setup(<span class="str">"Прием массива"</span>);
+
+       <span class="rem">// Сохранение параметров в текстовом виде</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a>:
+          data-&gt;SaveText();
+          <span class="kw">break</span>;
+
+       <span class="rem">// Загрузка параметров в текстовом виде</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a>:
+          data-&gt;LoadText((<span class="kw">char</span>*)ExtParam);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef pY</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_15_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_16_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_15_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

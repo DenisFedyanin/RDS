@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.13.4. rdsBroadcastFuncCallsDelayed &ndash; отложенный вызов функции всех блоков подсистемы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_13">А.5.13. Вызов функций блоков</a></p>
+<div class="level"><p>А.5.13.4. <span class="cpp">rdsBroadcastFuncCallsDelayed</span> &ndash; отложенный вызов функции всех блоков подсистемы</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_FUNCPROVIDERLINK_SUCCESS.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsBroadcastFunctionCalls.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsBroadcastFuncCallsDelayed">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.13. Вызов функций блоков</h4>
+<h5>А.5.13.4. <span class="cpp">rdsBroadcastFuncCallsDelayed</span> &ndash; отложенный вызов функции всех блоков подсистемы</h5>
+
+
+<p>Функция <span class="cpp">rdsBroadcastFuncCallsDelayed</span> ставит указанную функцию в очередь на
+выполнение для всех блоков указанной <a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистемы</a>.
+После этого управление немедленно возвращается модели вызвавшего блока, а модели блоков указанной подсистемы
+будут вызваны только после завершения этой модели.</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsBroadcastFuncCallsDelayed(
+      <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Parent,    <span class="rem">// Подсистема с вызываемыми блоками</span>
+      <span class="kw">int</span> FuncId,            <span class="rem">// Идентификатор функции</span>
+      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> pParamBuf,      <span class="rem">// Указатель на область параметров функции</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> ParamBufSize,    <span class="rem">// Размер области параметров</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags            <span class="rem">// Флаги (RDS_BCALL_*)</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_VBhIpVDwDw</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Parent</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор подсистемы, у блоков которой будет вызываться функция (модели этих блоков
+  будут реагировать на событие <span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span>).</dd>
+
+  <dt><span class="cpp">FuncId</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Целый идентификатор вызываемой функции, полученный при ее регистрации вызовом
+  <span class="cpp"><a href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a></span>.</dd>
+
+  <dt><span class="cpp">pParamBuf</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></i></span>)</dt>
+  <dd>Указатель на область параметров функции, которая будет скопирована во внутреннюю память RDS.
+  Область параметров не должна содержать внутри себя какие-либо указатели на другие области памяти и объекты.
+  Может равняться <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">ParamBufSize</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</dt>
+  <dd>Размер (в байтах) области параметров, указатель на которую передан в <span class="cpp">pParams</span>.</dd>
+
+  <dt><span id="ref1"><span class="cpp">Flags</span>&emsp;(<span class="cpp"><i>DWORD</i></span>)</span></dt>
+  <dd>Один или несколько объединенных битовым ИЛИ <span id="light_ref1">флагов</span>, управляющих вызовом функции:<br />
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref2">RDS_BCALL_ALLOWSTOP</span></span></td>
+          <td>Разрешить вызываемым моделям блоков прекращать дальнейшие вызовы присвоением значения <span class="cpp">TRUE</span>
+          полю <span class="cpp">Stop</span> структуры <span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span>.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref3">RDS_BCALL_CHECKSUPPORT</span></span></td>
+          <td>Перед вызовом проверить поддержку этой функции блоком, вызвав его модель для реакции на событие
+          <span class="cpp"><a href="RDS_BFM_CHECKFUNCSUPPORT.htm" title="А.2.4.2. RDS_BFM_CHECKFUNCSUPPORT &ndash; проверка поддержки блоком функции с заданным идентификатором">RDS_BFM_CHECKFUNCSUPPORT</a></span>. В настоящее время этот режим практически не используется.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref4">RDS_BCALL_SUBSYSTEMS</span></span></td>
+          <td>Вызывать функции у всех блоков внутри подсистемы <span class="cpp">Parent</span> на всех уровнях иерархии
+          (то есть не только у блоков и подсистем, непосредственно находящихся в <span class="cpp">Parent</span>, но и у
+          всех внутренних блоков этих подсистем).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref5">RDS_BCALL_FIRST</span></span></td>
+          <td>Поставить вызов функции блоков в начало очереди (не может использоваться одновременно с
+          <span class="cpp">RDS_BCALL_LAST</span>).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref6">RDS_BCALL_LAST</span></span></td>
+          <td>Поставить вызов функции блоков в конец очереди (не может использоваться одновременно с
+          <span class="cpp">RDS_BCALL_FIRST</span>).</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+</dl>
+
+<p class="apphdr">Примечания</p>
+<p>Вызов этой функции приводит к тому, что после завершения модели вызвавшего блока все модели блоков в
+подсистеме <span class="cpp">Parent</span> будут последовательно (в произвольном порядке) вызываться
+для реакции на событие <span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span>. Поля структуры данных функции
+<span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span>, указатель на которую передается в модель блока в параметре
+<span class="cpp">ExtParam</span>, при этом будут заполнены следующим образом:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Поле</th>
+    <th>Значение</th>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span class="kw">int</span> Function</span></td>
+    <td>значение параметра <span class="cpp">FuncId</span></td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Data</span></td>
+    <td>указатель на внутреннюю область памяти RDS размером в <span class="cpp">ParamBufSize</span>
+    байтов, в которую скопирована область <span class="cpp">pParamBuf</span></td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Caller</span></td>
+    <td>идентификатор блока, из модели которого вызвана <span class="cpp">rdsBroadcastFuncCallsDelayed</span></td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Broadcast</span></td>
+    <td><span class="cpp">TRUE</span></td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span class="kw">int</span> BroadcastCnt</span></td>
+    <td>исходно &ndash; 0, увеличивается на 1 при вызове каждого следующего блока</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Stop</span></td>
+    <td>исходно &ndash; <span class="cpp">FALSE</span>, вызванная модель может присвоить
+    <span class="cpp">TRUE</span>, что прекратит вызов других моделей (при указании флага 
+    <span class="cpp">RDS_BCALL_ALLOWSTOP</span>)</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Delayed</span></td>
+    <td><span class="cpp">TRUE</span></td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> DataBufSize</span></td>
+    <td>значение параметра <span class="cpp">ParamBufSize</span></td>
+  </tr>
+</table>
+</div></div>
+
+<p>Модели блоков, находящихся в <span class="cpp">Parent</span>, будут вызываться до тех пор, пока не
+будут вызваны все, или пока какая-либо модель не присвоит полю <span class="cpp">Stop</span> структуры
+<span class="cpp">RDS_FUNCTIONCALLDATA</span> значение <span class="cpp">TRUE</span>.</p>
+
+<p>Отложенный вызов функций блоков рассматривается
+в <a href="pm_2_13_5.htm" title="&sect;2.13.5. Отложенный вызов функций блоков">&sect;2.13.5 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span>,
+<span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span>,
+<span class="cpp"><a href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a></span>,
+<span class="cpp"><a href="rdsQueueCallBlockFunction.htm" title="А.5.13.10. rdsQueueCallBlockFunction &ndash; отложенный вызов функции блока">rdsQueueCallBlockFunction</a></span>,
+<span class="cpp"><a href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_FUNCPROVIDERLINK_SUCCESS.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsBroadcastFunctionCalls.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsBroadcastFuncCallsDelayed">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,51 @@
+EXPBLKTXT
+version 1 rev 0 4016.10.10.17.34.0
+
+dllblock name "Block1"
+ begin
+  name hidden
+  options sizeable
+  vars
+   begin
+    signal name "_Start" in run default 1
+    signal name "_Ready" out default 0
+    short name "Aux_in" in hide default 0
+    short name "Aux_out" out hide default 0
+    signal name "Start_cmd" in menu run default 0
+    signal name "Restart_cmd" in menu run default 0
+    matrix logical oneindex name "Enabled_in" in run default "[ ] 0"
+    signal name "_Enabled_chg" default 1
+    signal name "_allinval_dchg" default 1
+    int name "_Stage" out default 0
+    logical name "_results_ok" default 0
+    logical name "_enabled_res" default 1
+    logical name "Complete_out" out default 0
+    logical name "Error_out" out default 0
+    signal name "Finished_out" out default 0
+    signal name "Started_out" out default 0
+    double name "Time_out" out default "?"
+    char name "Func_in" in menu default 0
+    char name "Func_out" out menu default 0
+    double name "Progress_out" out default "0"
+    matrix double name "Table_out" out menu default "[ ] ?"
+   end
+  auto
+   begin
+    var "Enabled_in" ctrl "_Enabled_chg"
+    var "Complete_out" ctrl "_results_ok"
+    var "Error_out" ctrl "_results_ok"
+    var "Table_out" ctrl "_results_ok"
+   end
+  layout rect 140 135 fill 16777215 line 0 text "Вычисление\r\nтабличной\r\nфункции" font "Arial" height 13 color 0
+  dll file "IpuL57Mk2TableCalc.dll" func "rdsbcppBlockEntryPoint" setup "" auto
+  dlldata text
+   rdsbcppsetupparameters
+   begin
+   var tactcount_setup 1000
+   var noautostart_setup 0
+   var TR_params 0
+   var TR_text "Вычисление\r\nтабличной\r\nфункции"
+   end
+  enddlldata
+  autocomp file "$DLL$\\Common.dll" func "SearchComp" model "L57_3Func.mdl"
+ end

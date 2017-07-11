@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.8.11.7. Вызов контекстного меню</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8_11">&sect;3.8.11. Прочие реакции</a></p>
+<div class="level"><p>&sect;3.8.11.7. Вызов контекстного меню</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_POPUPHINT.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_MENUFUNCTION.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_CONTEXTPOPUP">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</h3>
+<h4 class="off">&sect;3.8.11. Прочие реакции</h4>
+<h5>&sect;3.8.11.7. Вызов контекстного меню</h5>
+
+
+<p>Это событие возникает непосредственно перед появлением на экране контекстного меню блока.
+Как правило, реакция на него используется для добавления в это меню дополнительных пунктов, при выборе
+которых модель блока будет вызываться для выполнения каких-либо действий. Примеры моделей, добавляющих свои
+пункты в контекстное меню, приведены
+в <a href="um_3_7_11.htm" title="&sect;3.7.12. Добавление пунктов в контекстное и системное меню">&sect;3.7.12</a>.</p>
+
+<p><span id="ref1">Текст</span> реакции на это событие вводится
+на вкладке &laquo;<span class="menu"><a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">события</a></span>&raquo; левой панели редактора модели: раздел
+&laquo;<span class="menu">разное</span>&raquo;, подраздел &laquo;<span class="menu">вызов контекстного меню</span>&raquo;. В классе блока для нее создается функция
+с именем <span class="cpp" id="light_ref1">rdsbcppContextPopup</span> следующего вида:</p>
+
+<pre class="cpp">  // Действия перед вызовом контекстного меню
+  void rdsbcppBlockClass::rdsbcppContextPopup(<a class="hidden" href="RDS_BFM_CONTEXTPOPUP.htm#ref2" title="Указатель на RDS_CONTEXTPOPUPDATA">RDS_PCONTEXTPOPUPDATA</a> MenuData)
+  {
+    <span class="changes"><i>&nbsp;&hellip; пользовательский текст реакции &hellip;&nbsp;</i></span>
+  }</pre>
+
+<p><span id="ref2">Параметр</span> функции <span class="cpp">MenuData</span> &ndash;
+это указатель на структуру с именем <span class="cpp" id="light_ref2">RDS_CONTEXTPOPUPDATA</span>:</p>
+
+<pre class="cpp">  typedef struct {
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> EditMode;   // Включен режим редактирования
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> FreeSpace;  // Щелчок на свободном месте окна
+  } <a class="hidden" href="RDS_BFM_CONTEXTPOPUP.htm#ref1" title="Структура RDS_CONTEXTPOPUPDATA">RDS_CONTEXTPOPUPDATA</a>;
+  typedef <a class="hidden" href="RDS_BFM_CONTEXTPOPUP.htm#ref1" title="Структура RDS_CONTEXTPOPUPDATA">RDS_CONTEXTPOPUPDATA</a> *<a class="hidden" href="RDS_BFM_CONTEXTPOPUP.htm#ref2" title="Указатель на RDS_CONTEXTPOPUPDATA">RDS_PCONTEXTPOPUPDATA</a>;</pre>
+
+<p>Поля структуры имеют следующий смысл:</p>
+<dl>
+  <dt><span class="cpp">EditMode</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если RDS в момент вызова меню находится в режиме
+  <a href="um_1_3.htm#ref1" title="Режим редактирования">редактирования</a>, и <span class="cpp">FALSE</span>, если RDS находится в режимах
+  <a href="um_1_3.htm#ref2" title="Режим моделирования">моделирования</a> или <a href="um_1_3.htm#ref3" title="Режим расчета">расчета</a> (пункты меню в режиме
+  редактирования, как правило, отличаются).</dd>
+
+  <dt><span class="cpp">FreeSpace</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd><span class="cpp">FALSE</span>, если вызвано контекстное меню самого блока, и
+  <span class="cpp">TRUE</span>, если контекстное меню вызвано щелчком не на изображении блока, а на свободном
+  месте окна подсистемы. Это поле может принимать значение <span class="cpp">TRUE</span> только в том случае,
+  если данный блок &ndash; подсистема, и ее окно в данный момент открыто. Поскольку автокомпилируемые модели
+  подсистем практически не используются, необходимости в анализе значения этого поля обычно не возникает.</dd>
+</dl>
+
+<p class="noindent">При написании моделей блоков без использования модуля автокомпиляции вызову контекстного меню блока
+соответствует константа RDS <span class="cpp"><a href="RDS_BFM_CONTEXTPOPUP.htm" title="А.2.6.2. RDS_BFM_CONTEXTPOPUP &ndash; вызов контекстного меню блока">RDS_BFM_CONTEXTPOPUP</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_POPUPHINT.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_MENUFUNCTION.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_CONTEXTPOPUP">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.32.19. Команда RDS_CSV_STRTOFILE &ndash; записать строку в файл</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_32">А.5.32. Вспомогательный объект для работы с форматом CSV</a></p>
+<div class="level"><p>А.5.32.19. Команда <span class="cpp">RDS_CSV_STRTOFILE</span> &ndash; записать строку в файл</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_CSV_STRFROMFILE.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_CSV_TEXT.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_CSV_STRTOFILE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.32. Вспомогательный объект для работы с форматом CSV</h4>
+<h5>А.5.32.19. Команда <span class="cpp">RDS_CSV_STRTOFILE</span> &ndash; записать строку в файл</h5>
+
+
+<p>Команда <span class="cpp">RDS_CSV_STRTOFILE</span> записывает в файл, открытый для построчной записи
+командой <span class="cpp"><a href="RDS_CSV_OPENFILEWRITE.htm" title="А.5.32.15. Команда RDS_CSV_OPENFILEWRITE &ndash; открыть файл для записи">RDS_CSV_OPENFILEWRITE</a></span>, очередную строку.</p>
+
+<p class="apphdr">Вызов команды</p>
+
+<pre class="cpp">  <span class="kw">int</span> iStrNum= &hellip;  <span class="rem">// Номер строки в объекте</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> bOk=<a class="hidden" href="rdsCommandObjectEx.htm" title="А.5.22.3. rdsCommandObjectEx &ndash; команда объекту">rdsCommandObjectEx</a>(Csv,RDS_CSV_STRTOFILE,iStrNum,NULL);</pre>
+
+<p class="apphdr">Параметры и результат</p>
+
+<dl>
+  <dt><span class="cpp">Csv</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a></i></span>)</dt>
+  <dd>Идентификатор вспомогательного объекта для работы с CSV, ранее созданного функцией
+  <span class="cpp"><a href="rdsCSVCreate.htm" title="А.5.32.1. rdsCSVCreate &ndash; создать объект для работы с текстом в формате CSV">rdsCSVCreate</a></span>.</dd>
+
+  <dt><span class="cpp">iStrNum</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Номер строки в памяти объекта, которая будет записана в файл. Строки нумеруются начиная с нуля.</dd>
+
+  <dt><span class="cpp">bOk</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd>Результат записи: <span class="cpp">TRUE</span> &ndash; строка записана,
+  <span class="cpp"></span> &ndash; произошла ошибка (ошибка записи или в объекте нет строки
+  <span class="cpp">iStrNum</span>).</dd>
+</dl>
+
+<p class="apphdr">Примечания</p>
+<p>Эта команда записывает в файл, ранее открытый командой <span class="cpp">RDS_CSV_OPENFILEWRITE</span>, строку
+с номером <span class="cpp">iStrNum</span> из внутренней памяти объекта <span class="cpp">Csv</span>. Чтобы узнать,
+удалось ли записать строку в файл, следует проверить результат возврата команды или выполнить команду
+<span class="cpp"><a href="RDS_CSV_FILEERROR.htm" title="А.5.32.7. Команда RDS_CSV_FILEERROR &ndash; проверка ошибки в последней операции с файлом">RDS_CSV_FILEERROR</a></span>.</p>
+
+<p>Строки в файл пишутся последовательно, одна за другой. Последовательность строк в файле не обязательно
+будет совпадать с последовательностью строк в памяти объекта, она будет зависеть от параметров
+<span class="cpp">iStrNum</span>, с которыми будут вызываться команды <span class="cpp">RDS_CSV_STRTOFILE</span>.
+Например, для записи в файл строк в порядке, обратном их следованию в памяти объекта, можно использовать
+следующий цикл:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> Csv=<a class="hidden" href="rdsCSVCreate.htm" title="А.5.32.1. rdsCSVCreate &ndash; создать объект для работы с текстом в формате CSV">rdsCSVCreate</a>();
+    <i>&hellip; формирование текста в объекте &hellip;</i>
+  <span class="rem">// Число строк в объекте</span>
+  <span class="kw">int</span> LineCount=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(Csv,<a class="hidden" href="RDS_CSV_LINECOUNT.htm" title="А.5.32.11. Команда RDS_CSV_LINECOUNT &ndash; число строк в тексте">RDS_CSV_LINECOUNT</a>,<span class="const">0</span>);
+  <span class="rem">// Открытие файла</span>
+  <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(Csv,<a class="hidden" href="RDS_CSV_OPENFILEWRITE.htm" title="А.5.32.15. Команда RDS_CSV_OPENFILEWRITE &ndash; открыть файл для записи">RDS_CSV_OPENFILEWRITE</a>,<span class="const">0</span>,<span class="str">"file.csv"</span>);
+  <span class="kw">for</span>(<span class="kw">int</span> i=LineCount-<span class="const">1</span>;i>=<span class="const">0</span>;i--)
+    <a class="hidden" href="rdsCommandObjectEx.htm" title="А.5.22.3. rdsCommandObjectEx &ndash; команда объекту">rdsCommandObjectEx</a>(Csv,RDS_CSV_STRTOFILE,i,NULL);
+  <span class="rem">// Закрытие файла</span>
+  <a class="hidden" href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a>(Csv,<a class="hidden" href="RDS_CSV_CLOSEFILE.htm" title="А.5.32.5. Команда RDS_CSV_CLOSEFILE &ndash; закрыть файл">RDS_CSV_CLOSEFILE</a>);
+  <span class="rem">// Удаление объекта</span>
+  <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(Csv);</pre>
+
+<p>Можно также, например, все время работать с нулевой строкой объекта: устанавливать в ней элементы вызовом
+<span class="cpp"><a href="rdsCSVSetItem.htm" title="А.5.32.3. rdsCSVSetItem &ndash; установить элемент текста">rdsCSVSetItem</a></span>, а затем сбрасывать ее в файл.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsCSVCreate.htm" title="А.5.32.1. rdsCSVCreate &ndash; создать объект для работы с текстом в формате CSV">rdsCSVCreate</a></span>,
+<span class="cpp"><a href="rdsCommandObjectEx.htm" title="А.5.22.3. rdsCommandObjectEx &ndash; команда объекту">rdsCommandObjectEx</a></span>,
+<span class="cpp"><a href="RDS_CSV_LINECOUNT.htm" title="А.5.32.11. Команда RDS_CSV_LINECOUNT &ndash; число строк в тексте">RDS_CSV_LINECOUNT</a></span>,
+<span class="cpp"><a href="RDS_CSV_OPENFILEWRITE.htm" title="А.5.32.15. Команда RDS_CSV_OPENFILEWRITE &ndash; открыть файл для записи">RDS_CSV_OPENFILEWRITE</a></span>,
+<span class="cpp"><a href="RDS_CSV_CLOSEFILE.htm" title="А.5.32.5. Команда RDS_CSV_CLOSEFILE &ndash; закрыть файл">RDS_CSV_CLOSEFILE</a></span>,
+<span class="cpp"><a href="RDS_CSV_FILEERROR.htm" title="А.5.32.7. Команда RDS_CSV_FILEERROR &ndash; проверка ошибки в последней операции с файлом">RDS_CSV_FILEERROR</a></span>,
+<span class="cpp"><a href="RDS_CSV_STRFROMFILE.htm" title="А.5.32.18. Команда RDS_CSV_STRFROMFILE &ndash; считать строку из файла">RDS_CSV_STRFROMFILE</a></span>,
+<span class="cpp"><a href="rdsCSVSetItem.htm" title="А.5.32.3. rdsCSVSetItem &ndash; установить элемент текста">rdsCSVSetItem</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_CSV_STRFROMFILE.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_CSV_TEXT.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_CSV_STRTOFILE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.2. Загрузка библиотеки и управление схемой</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3">Глава 3. Управление RDS из других приложений</a></p>
+<div class="level"><p>&sect;3.2. Загрузка библиотеки и управление схемой</p>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_3_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_3.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_3_2.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст приложения Windows, управляющего RDS через библиотеку RdsCtrl.dll.
+Приложение может открывать и закрывать выбранный пользователем файл схемы, запускать и
+останавливать расчет.</p>
+
+<p>Изменения относительно &laquo;скелета&raquo; приложения, рассмотренного в
+<a href="pm_3_1.htm" title="&sect;3.1. Общие принципы управления RDS">&sect;3.1</a>, выделены <span class="changes">цветом</span>.</p>
+
+<pre class="cpp">  <span class="rem">// Управляющее приложение (загрузка схемы, переключение режимов)</span>
+  <span class="rem">// Скомпилированный EXE должен запускаться из папки RDS</span>
+  <span class="rem">//=====================================================================</span>
+  <span class="rem">// Описания, необходимые для используемого компилятора Borland C++ 5.5</span>
+  <span class="rem">// (в других компиляторах они не понадобятся или будут другими)</span>
+  <span class="preproc">#define _WIN32_WINNT 0x0400</span>
+  <span class="preproc">#define WINVER 0x0400</span>
+  <span class="rem">// Необходимые для приложения файлы заголовков</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;Commctrl.h&gt;</span>
+  <span class="preproc">#include &lt;stdio.h&gt;</span>
+  <span class="rem">//=========================================</span>
+<div class="changes">  <span class="rem">// Описания, необходимые для работы с RdsCtrl.dll</span>
+  <a class="hidden" href="pm_3_2.htm#ref3" title="Доступ к функциям библиотеки RdsCtrl.dll"><span class="preproc">#define RDSCTRL_SERV_FUNC_BODY GetRdsCtrlFuncs</span></a>
+  <span class="preproc">#include &lt;RdsCtrl.h&gt;</span>
+  <span class="rem">//=========================================</span></div>
+  <span class="rem">// Идентификаторы кнопок и полей окна программы</span>
+  <span class="preproc">#define IDC_OPENBUTTON  101</span>
+  <span class="preproc">#define IDC_CLOSEBUTTON 102</span>
+  <span class="preproc">#define IDC_LABEL1      103</span>
+  <span class="preproc">#define IDC_LABEL2      104</span>
+  <span class="preproc">#define IDC_LABEL3      105</span>
+  <span class="preproc">#define IDC_BLKNAMEEDIT 106</span>
+  <span class="preproc">#define IDC_VALUEEDIT   107</span>
+  <span class="preproc">#define IDC_STRINGEDIT  108</span>
+  <span class="preproc">#define IDC_CALLBUTTON  109</span>
+  <span class="preproc">#define IDC_STARTBUTTON 110</span>
+  <span class="preproc">#define IDC_STOPBUTTON  111</span>
+  <span class="preproc">#define IDC_FINDBUTTON  112</span>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Буфер для индицируемого программой текста</span>
+  <span class="kw">char</span> buffer[<span class="const">2000</span>]=<span class="str">"Программа запущена"</span>;
+  <span class="rem">// Главное окно программы (для доступа к нему из функций)</span>
+  <a class="hidden" href="app_ids.htm#light_ref18" title="Дескриптор окна">HWND</a> MainWin;
+  <span class="rem">//=========================================</span>
+<div class="changes">  <span class="rem">// Глобальные переменные для связи с RDS</span>
+  HMODULE RdsCtrl=NULL; <span class="rem">// Модуль библиотеки RdsCtrl.dll</span>
+  <span class="kw">int</span> RdsLink=-<span class="const">1</span>;       <span class="rem">// Связь с RDS</span>
+  <span class="rem">//=========================================</span></div>
+  <span class="rem">// Функция вывода текстового сообщения в окне программы</span>
+  <span class="kw">void</span> DisplayText(<span class="kw">char</span> *text)
+  { <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> rect;
+    <span class="rem">// Определяем размер клиентской области окна</span>
+    GetClientRect(MainWin,&amp;rect);
+    <span class="rem">// Ограничиваем область снизу (ниже будут располагаться кнопки)</span>
+    rect.bottom=<span class="const">30</span>;
+    <span class="kw">if</span>(text) <span class="rem">// Копируем текст в буфер</span>
+      { strncpy(buffer,text,<span class="kw">sizeof</span>(buffer)-<span class="const">1</span>);
+        buffer[<span class="kw">sizeof</span>(buffer)-<span class="const">1</span>]=<span class="const">0</span>; <span class="rem">// Если строка слишком длинная</span>
+      }
+    <span class="kw">else</span>
+      strcpy(buffer,<span class="str">"(NULL)"</span>);
+    <span class="rem">// Указываем Windows, что область rect нужно перерисовать</span>
+    InvalidateRect(MainWin,&amp;rect,TRUE);
+  }
+  <span class="rem">//=========================================</span>
+
+<div class="changes">  <span class="rem">// Разрешение событий и регистрация их функций</span>
+  <span class="kw">void</span> RegisterEvents(<span class="kw">void</span>)
+  { <span class="rem">// Пока оставим эту функцию пустой</span>
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Функция возврата строки</span>
+  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> ReturnString(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ptr,<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> str)
+  { <span class="rem">// Пока пустая</span>
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Загрузка RdsCtrl.dll и создание связи</span>
+  <span class="kw">void</span> InitRdsCtrl(<span class="kw">void</span>)
+  {
+    <span class="kw">if</span>(RdsCtrl==NULL) <span class="rem">// Библиотека еще не загружена</span>
+      { <span class="kw">char</span> rdsctrldll[MAX_PATH+<span class="const">1</span>],*s;
+        <span class="rem">// Считаем, что наша программа находится в одной папке с RDS</span>
+        <span class="rem">// Получаем путь к RdsCtrl.dll из пути к нашей программе</span>
+        GetModuleFileName(NULL,rdsctrldll,MAX_PATH);
+        s=strrchr(rdsctrldll,<span class="str">'&#92;&#92;'</span>); <span class="rem">// Ищем последний '&#92;'</span>
+        <span class="kw">if</span>(!s) <span class="rem">// Ошибка</span>
+          { DisplayText(<span class="str">"Библиотека не найдена"</span>);
+            <span class="kw">return</span>;
+          }
+        <span class="rem">// Заменяем имя файла в пути</span>
+        strcpy(s+<span class="const">1</span>,<span class="str">"RdsCtrl.dll"</span>);
+
+        <span class="rem">// Загружаем библиотеку RdsCtrl.dll</span>
+        RdsCtrl=LoadLibrary(rdsctrldll);
+        <span class="kw">if</span>(RdsCtrl==NULL) <span class="rem">// Загрузка не удалась</span>
+          { DisplayText(<span class="str">"Ошибка загрузки RdsCtrl.dll"</span>);
+            <span class="kw">return</span>;
+          }
+        <span class="rem">// Получаем доступ к функциям библиотеки</span>
+        <span class="kw">if</span>(!GetRdsCtrlFuncs(RdsCtrl))
+          { <span class="rem">// Ошибка</span>
+            DisplayText(<span class="str">"Нет доступа к функциям RdsCtrl.dll"</span>);
+            <span class="rem">// Выгружаем библиотеку - она бесполезна</span>
+            FreeLibrary(RdsCtrl);
+            RdsCtrl=NULL;
+            <span class="kw">return</span>;
+          }
+        <span class="rem">// Доступ к функциям получен – можно их вызывать</span>
+
+        <span class="rem">// Установка функции возврата строки</span>
+        <a class="hidden" href="rdsctrlSetStringCallback.htm" title="Б.3.2.10. rdsctrlSetStringCallback &ndash; регистрация функции возврата строки">rdsctrlSetStringCallback</a>(ReturnString);
+        <span class="rem">// Сброс идентификатора связи (если он почему-то не сброшен)</span>
+        RdsLink=-<span class="const">1</span>;
+      } <span class="rem">// if(RdsCtrl==NULL)</span>
+
+    <span class="rem">// Создание связи с RDS</span>
+    <span class="kw">if</span>(RdsLink&lt;<span class="const">0</span>) <span class="rem">// Связь не создана</span>
+      { <span class="rem">// Создаем связь (rds.exe пока не запускается)</span>
+        RdsLink=<a class="hidden" href="rdsctrlCreateLink.htm" title="Б.3.2.3. rdsctrlCreateLink &ndash; создать связь с RDS">rdsctrlCreateLink</a>();
+        <span class="kw">if</span>(RdsLink&lt;<span class="const">0</span>) <span class="rem">// Ошибка</span>
+          { DisplayText(<span class="str">"Ошибка создания связи с RDS"</span>);
+            <span class="kw">return</span>;
+          }
+        <span class="rem">// Запрет главного окна RDS</span>
+        <a class="hidden" href="rdsctrlShowMainWindow.htm" title="Б.3.3.13. rdsctrlShowMainWindow &ndash; видимость главного окна RDS">rdsctrlShowMainWindow</a>(RdsLink,FALSE);
+        <span class="rem">// Регистрация откликов на события</span>
+        RegisterEvents();
+      }
+  }
+  <span class="rem">//=========================================</span></div>
+
+  <span class="rem">// Функция, вызываемая перед завершением программы</span>
+  <span class="kw">void</span> BeforeExit(<span class="kw">void</span>)
+  {
+
+<div class="changes">    <span class="kw">if</span>(RdsCtrl!=NULL) <span class="rem">// Библиотека загружена</span>
+      { <span class="kw">if</span>(RdsLink&gt;=<span class="const">0</span>) <span class="rem">// Создана связь с RDS</span>
+          { <span class="rem">// Завершаем RDS</span>
+            <a class="hidden" href="rdsctrlClose.htm" title="Б.3.2.1. rdsctrlClose &ndash; завершить RDS">rdsctrlClose</a>(RdsLink);
+            <span class="rem">// Удаляем связь</span>
+            <a class="hidden" href="rdsctrlDeleteLink.htm" title="Б.3.2.4. rdsctrlDeleteLink &ndash; уничтожить связь с RDS">rdsctrlDeleteLink</a>(RdsLink);
+            RdsLink=-<span class="const">1</span>;
+          }
+        <span class="rem">// Выгружаем библиотеку</span>
+        FreeLibrary(RdsCtrl);
+        RdsCtrl=NULL;
+      }</div>
+  }
+  <span class="rem">//=========================================</span>
+
+<div class="changes">  <span class="rem">// Открыть файл схемы (filename – имя файла)</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> LoadScheme(<span class="kw">char</span> *filename)
+  { <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span>)
+      { <span class="rem">// Библиотека RdsCtrl.dll еще не загружена</span>
+        InitRdsCtrl(); <span class="rem">// Загружаем</span>
+        <span class="kw">if</span>(RdsCtrl==NULL) <span class="rem">// Ошибка</span>
+          <span class="kw">return</span> FALSE;
+        <span class="rem">// Запускаем rds.exe</span>
+        <span class="kw">if</span>(!<a class="hidden" href="rdsctrlConnect.htm" title="Б.3.2.2. rdsctrlConnect &ndash; запустить RDS">rdsctrlConnect</a>(RdsLink))
+          { DisplayText(<span class="str">"Ошибка запуска RDS"</span>);
+            <span class="kw">return</span> FALSE;
+          }
+      }
+    <span class="rem">// Если rds.exe не работает (пользователь вышел из RDS),</span>
+    <span class="rem">// перезапускаем RDS</span>
+    <a class="hidden" href="rdsctrlRestoreConnection.htm" title="Б.3.2.8. rdsctrlRestoreConnection &ndash; перезапустить RDS при необходимости">rdsctrlRestoreConnection</a>(RdsLink);
+
+    <span class="rem">// RDS работает - загружаем схему</span>
+    <span class="kw">if</span>(!<a class="hidden" href="rdsctrlLoadSystemFromFile.htm" title="Б.3.5.6. rdsctrlLoadSystemFromFile &ndash; загрузить схему из файла">rdsctrlLoadSystemFromFile</a>(RdsLink,filename,FALSE))
+      { <span class="rem">// Ошибка загрузки</span>
+        DisplayText(<span class="str">"Ошибка загрузки схемы"</span>);
+        <span class="kw">return</span> FALSE;
+      }
+    <span class="rem">// Переходим в режим моделирования</span>
+    <a class="hidden" href="rdsctrlSetCalcMode.htm" title="Б.3.4.27. rdsctrlSetCalcMode &ndash; включить режим моделирования">rdsctrlSetCalcMode</a>(RdsLink);
+    <span class="kw">return</span> TRUE;
+  }
+  <span class="rem">//=========================================</span></div>
+  <span class="rem">// Нажатие кнопки "Открыть"</span>
+  <span class="kw">void</span> OpenButtonClick(<span class="kw">void</span>)
+  {
+
+<div class="changes">    <span class="kw">char</span> filename[MAX_PATH+<span class="const">1</span>]=<span class="str">""</span>; <span class="rem">// Буфер для имени файла</span>
+    OPENFILENAME ofn;
+    <span class="rem">// Заполняем структуру OPENFILENAME</span>
+    ZeroMemory(&amp;ofn,<span class="kw">sizeof</span>(ofn));
+    ofn.lStructSize=<span class="kw">sizeof</span>(ofn);
+    ofn.hwndOwner=MainWin;
+    ofn.lpstrFile=filename;
+    ofn.nMaxFile=<span class="kw">sizeof</span>(filename);
+    ofn.lpstrFilter=<span class="str">"Схемы (*.rds)\0*.rds\0Все файлы\0*.*\0"</span>;
+    ofn.nFilterIndex=<span class="const">1</span>;
+    ofn.Flags=OFN_EXPLORER | OFN_FILEMUSTEXIST;
+    <span class="rem">// Вызываем стандартный диалог открытия файла</span>
+    <span class="kw">if</span>(GetOpenFileName(&amp;ofn)) <span class="rem">// Пользователь выбрал файл</span>
+      { <span class="rem">// Загружаем схему</span>
+        <span class="kw">if</span>(LoadScheme(filename))
+          DisplayText(filename);
+      }</div>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Нажатие кнопки "Закрыть"</span>
+  <span class="kw">void</span> CloseButtonClick(<span class="kw">void</span>)
+  {
+
+<div class="changes">    <span class="kw">if</span>(RdsLink&gt;=<span class="const">0</span>) <span class="rem">// Есть связь</span>
+      { <a class="hidden" href="rdsctrlClose.htm" title="Б.3.2.1. rdsctrlClose &ndash; завершить RDS">rdsctrlClose</a>(RdsLink); <span class="rem">// Завершаем RDS</span>
+        DisplayText(<span class="str">"Схема закрыта"</span>);
+      }</div>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Нажатие кнопки "Вызвать"</span>
+  <span class="kw">void</span> CallBlockClick(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем передавать информацию блоку схемы</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Нажатие кнопки "Старт"</span>
+  <span class="kw">void</span> StartClick(<span class="kw">void</span>)
+  {
+
+<div class="changes">    <span class="kw">if</span>(RdsLink&gt;=<span class="const">0</span>) <span class="rem">// Есть связь</span>
+      <a class="hidden" href="rdsctrlStartCalc.htm" title="Б.3.4.32. rdsctrlStartCalc &ndash; запустить расчет">rdsctrlStartCalc</a>(RdsLink);</div>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Нажатие кнопки "Стоп"</span>
+  <span class="kw">void</span> StopClick(<span class="kw">void</span>)
+  {
+
+<div class="changes">    <span class="kw">if</span>(RdsLink&gt;=<span class="const">0</span>) <span class="rem">// Есть связь</span>
+     <a class="hidden" href="rdsctrlStopCalc.htm" title="Б.3.4.33. rdsctrlStopCalc &ndash; остановить расчет">rdsctrlStopCalc</a>(RdsLink);</div>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Нажатие кнопки "Найти"</span>
+  <span class="kw">void</span> FindFuncClick(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем искать блок, поддерживающий набор функций</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Процедура обработки сообщений главного окна</span>
+  LRESULT CALLBACK MainWndProc(
+        <a class="hidden" href="app_ids.htm#light_ref18" title="Дескриптор окна">HWND</a> hWindow, <span class="rem">// Окно</span>
+        UINT msg,     <span class="rem">// Сообщение</span>
+        WPARAM wParam,LPARAM lParam) <span class="rem">// Параметры</span>
+  { <a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> app;
+    PAINTSTRUCT ps;
+    <a class="hidden" href="app_ids.htm#light_ref16" title="Контекст устройства Windows">HDC</a> hDC;
+    <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> rect;
+
+    <span class="kw">switch</span>(msg)
+      { <span class="rem">// Создание окна</span>
+        <span class="kw">case</span> WM_CREATE:
+          <span class="rem">// Запоминаем идентификатор окна в глобальной переменной</span>
+          MainWin=hWindow;
+          <span class="rem">// Получаем идентификатор приложения</span>
+          app=(HINSTANCE)GetWindowLong(hWindow,GWL_HINSTANCE);
+          <span class="rem">// Создаем кнопки и поля ввода</span>
+          <span class="rem">// Кнопка "Открыть"</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Открыть"</span>, <span class="rem">// Имя класса и текст</span>
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, <span class="rem">// Стили</span>
+            <span class="const">0</span>,<span class="const">30</span>,<span class="const">100</span>,<span class="const">24</span>,                   <span class="rem">// x,y,ширина,высота</span>
+            hWindow,                       <span class="rem">// Родительское окно</span>
+            (HMENU)IDC_OPENBUTTON,         <span class="rem">// Идентификатор кнопки</span>
+            app,NULL);
+          <span class="rem">// Кнопка "Закрыть"</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Закрыть"</span>,
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            <span class="const">101</span>,<span class="const">30</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,
+            (HMENU)IDC_CLOSEBUTTON,app,NULL);
+          <span class="rem">// Кнопка "Старт"</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Старт"</span>,
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            <span class="const">222</span>,<span class="const">30</span>,<span class="const">90</span>,<span class="const">24</span>,hWindow,
+            (HMENU)IDC_STARTBUTTON,app,NULL);
+          <span class="rem">// Кнопка "Стоп"</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Стоп"</span>,
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            <span class="const">313</span>,<span class="const">30</span>,<span class="const">90</span>,<span class="const">24</span>,hWindow,
+            (HMENU)IDC_STOPBUTTON,app,NULL);
+          <span class="rem">// Надпись "Имя блока"</span>
+          CreateWindow(<span class="str">"STATIC"</span>,<span class="str">"Имя блока:"</span>,
+           WS_VISIBLE | WS_CHILD | SS_LEFTNOWORDWRAP,
+           <span class="const">0</span>,<span class="const">55</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_LABEL1,app,NULL);
+          <span class="rem">// Поле ввода для имени блока</span>
+          CreateWindow(<span class="str">"EDIT"</span>,NULL,
+            WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL,
+            <span class="const">101</span>,<span class="const">55</span>,<span class="const">201</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_BLKNAMEEDIT,app,NULL);
+          <span class="rem">// Надпись "Число"</span>
+          CreateWindow(<span class="str">"STATIC"</span>,<span class="str">"Число:"</span>,
+            WS_VISIBLE | WS_CHILD | SS_LEFTNOWORDWRAP,
+            <span class="const">0</span>,<span class="const">80</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_LABEL3,app,NULL);
+          <span class="rem">// Поле ввода числа</span>
+          CreateWindow(<span class="str">"EDIT"</span>,NULL,WS_VISIBLE | WS_CHILD | WS_BORDER,
+            <span class="const">101</span>,<span class="const">80</span>,<span class="const">201</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_VALUEEDIT,app,NULL);
+          <span class="rem">// Надпись "Строка"</span>
+          CreateWindow(<span class="str">"STATIC"</span>,<span class="str">"Строка:"</span>,
+            WS_VISIBLE | WS_CHILD | SS_LEFTNOWORDWRAP,
+            <span class="const">0</span>,<span class="const">105</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_LABEL2,app,NULL);
+          <span class="rem">// Поле ввода строки</span>
+          CreateWindow(<span class="str">"EDIT"</span>,NULL,
+            WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL,
+            <span class="const">101</span>,<span class="const">105</span>,<span class="const">201</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_STRINGEDIT,app,NULL);
+          <span class="rem">// Кнопка вызова блока</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Вызвать"</span>,
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            <span class="const">303</span>,<span class="const">55</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_CALLBUTTON,app,NULL);
+          <span class="rem">// Кнопка поиска блока</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Найти"</span>,
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            <span class="const">303</span>,<span class="const">105</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_FINDBUTTON,app,NULL);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Закрытие окна</span>
+        <span class="kw">case</span> WM_DESTROY:
+          <span class="rem">// Выгрузка библиотеки, если она загружена</span>
+          BeforeExit();
+          PostQuitMessage(<span class="const">0</span>);
+          <span class="kw">return</span> <span class="const">0</span>;
+
+        <span class="rem">// Перерисовка окна</span>
+        <span class="kw">case</span> WM_PAINT:
+          <span class="rem">// Получаем контекст для рисования</span>
+          hDC = BeginPaint(hWindow,&amp;ps);
+          <span class="rem">// Получаем размеры внутреннего прямоугольника</span>
+          GetClientRect(hWindow,&amp;rect);
+          rect.bottom=<span class="const">30</span>; <span class="rem">// Обрезаем снизу</span>
+          <span class="rem">// Выводим текст из buffer</span>
+          DrawText(hDC,buffer,-<span class="const">1</span>,&amp;rect,
+              DT_SINGLELINE | DT_CENTER | DT_VCENTER);
+          <span class="rem">// Завершаем рисование</span>
+          EndPaint(hWindow,&amp;ps);
+          <span class="kw">return</span> <span class="const">0</span>;
+
+        <span class="rem">// Команда от органов управления</span>
+        <span class="kw">case</span> WM_COMMAND:
+          <span class="kw">if</span>(HIWORD(wParam) == BN_CLICKED) <span class="rem">// Нажатие кнопки</span>
+            { <span class="kw">switch</span> (LOWORD(wParam))
+                { <span class="kw">case</span> IDC_OPENBUTTON:  OpenButtonClick();  <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_CLOSEBUTTON: CloseButtonClick(); <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_CALLBUTTON:  CallBlockClick();   <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_STARTBUTTON: StartClick();       <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_STOPBUTTON:  StopClick();        <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_FINDBUTTON:  FindFuncClick();    <span class="kw">break</span>;
+                }
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="rem">// Вызов обработки сообщения по умолчанию</span>
+    <span class="kw">return</span> DefWindowProc(hWindow,msg,wParam,lParam);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Главная функция приложения</span>
+  <span class="kw">int</span> WINAPI WinMain(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> hInstance,
+          HINSTANCE hPrevInstance,
+          PSTR szCmdLine,
+          <span class="kw">int</span> iCmdShow)
+  { <span class="kw">static</span> <span class="kw">char</span> appName[] = <span class="str">"Управление RDS"</span>,
+                className[]=<span class="str">"RDSControlTestWindow"</span>;
+    WNDCLASSEX myWin;
+    <a class="hidden" href="app_ids.htm#light_ref18" title="Дескриптор окна">HWND</a> hWindow;
+    MSG msg;
+
+    <span class="rem">// Создание окна</span>
+    myWin.cbSize=<span class="kw">sizeof</span>(myWin);
+    myWin.style=CS_HREDRAW | CS_VREDRAW;
+    myWin.lpfnWndProc=MainWndProc;
+    myWin.cbClsExtra=<span class="const">0</span>;
+    myWin.cbWndExtra=<span class="const">0</span>;
+    myWin.hInstance=hInstance;
+    myWin.hIcon=<span class="const">0</span>;
+    myWin.hIconSm =<span class="const">0</span>;
+    myWin.hCursor=<span class="const">0</span>;
+    myWin.hbrBackground=(HBRUSH)(COLOR_WINDOW+<span class="const">1</span>);
+    myWin.lpszMenuName=<span class="const">0</span>;
+    myWin.lpszClassName=className;
+    <span class="kw">if</span>(!RegisterClassEx(&amp;myWin)) <span class="kw">return</span> <span class="const">0</span>;
+    hWindow=CreateWindow(className,appName,
+      WS_OVERLAPPEDWINDOW,
+      CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,
+      <span class="const">0</span>,<span class="const">0</span>,hInstance,<span class="const">0</span>);
+    <span class="rem">// Открытие созданного окна</span>
+    ShowWindow(hWindow,iCmdShow);
+    UpdateWindow(hWindow);
+
+    <span class="rem">// Инициализация стандартных компонентов</span>
+    INITCOMMONCONTROLSEX icc;
+    icc.dwSize=<span class="kw">sizeof</span>(icc);
+    icc.dwICC=ICC_WIN95_CLASSES;
+    <span class="kw">if</span>(!InitCommonControlsEx(&amp;icc))
+      DisplayText(<span class="str">"Ошибка InitCommonControlsEx"</span>);
+
+    <span class="rem">// Цикл обработки сообщений приложения</span>
+    <span class="kw">while</span>(GetMessage(&amp;msg,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>))
+      { TranslateMessage(&amp;msg);
+        DispatchMessage(&amp;msg);
+      }
+    <span class="kw">return</span> <span class="const">0</span>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_3_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_3.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

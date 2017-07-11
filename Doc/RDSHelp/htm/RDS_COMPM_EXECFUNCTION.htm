@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.3.4.8. RDS_COMPM_EXECFUNCTION &ndash; реакция на действия пользователя</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_3">А.3. События модуля автокомпиляции и связанные с ними структуры</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_3_4">А.3.4. События модуля автокомпиляции</a></p>
+<div class="level"><p>А.3.4.8. <span class="cpp">RDS_COMPM_EXECFUNCTION</span> &ndash; реакция на действия пользователя</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_COMPM_DETACHBLOCK.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_COMPM_GETOPTIONS.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_COMPM_EXECFUNCTION">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.3. События модуля автокомпиляции и связанные с ними структуры</h3>
+<h4 class="off">А.3.4. События модуля автокомпиляции</h4>
+<h5>А.3.4.8. <span class="cpp">RDS_COMPM_EXECFUNCTION</span> &ndash; реакция на действия пользователя</h5>
+
+
+<p class="apphdr">Первый параметр <a href="app_a_3_1.htm" title="А.3.1. Функция модуля автокомпиляции">функции модуля</a> (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_COMPM_EXECFUNCTION</span>.</p>
+
+<p class="apphdr">Третий параметр функции модуля (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Указатель на структуру <span class="cpp"><a href="#ref3" title="Структура RDS_COMPEXECFUNCDATA">RDS_COMPEXECFUNCDATA</a></span>, содержащую команду пользователя
+и дополнительные данные.</p>
+
+<p class="apphdr">Возвращаемое функцией модуля значение</p>
+    <div class="tableshift"><div class="tcont">
+    <table>
+      <tr>
+        <td><span class="cpp"><span id="light_ref1">RDS_COMPR_DONE</span></span></td>
+        <td>Команда пользователя выполнена.</td>
+      </tr>
+      <tr>
+        <td><span class="cpp"><span id="light_ref2">RDS_COMPR_ERROR</span></span></td>
+        <td>При выполнении команды возникли ошибки.</td>
+      </tr>
+    </table>
+    </div></div>
+
+<p class="apphdr">Примечания</p>
+<p>Событие <span class="cpp">RDS_COMPM_EXECFUNCTION</span> возникает при различных действиях
+пользователя на
+<a href="um_2_9_1.htm#pic12" title="Вкладка компиляция окна параметров блока (модель не подключена)">вкладке &laquo;<span class="menu">Компиляция</span>&raquo;</a>
+окна параметров блока. На момент этого события модель может быть еще не подключена к блоку, и
+действия пользователя, вызвавшие это событие, могут быть направлены на подключение новой модели.
+Эта реакция вызывается при нажатии пользователем кнопок &laquo;<span class="menu">Обзор</span>&raquo;,
+&laquo;<span class="menu">Сохранить как</span>&raquo; и т.п., в результате функция модуля может вернуть в RDS
+измененное имя модели вызовом <span class="cpp"><a href="rdscompReturnModelName.htm" title="А.5.34.9. rdscompReturnModelName &ndash; возврат имени модели из функции пользовательского интерфейса">rdscompReturnModelName</a></span>.</p>
+
+<p><span id="ref3">В</span> <span id="ref4">параметре</span>
+<span class="cpp">ExtParam</span> при реакции на событие <span class="cpp">RDS_COMPM_EXECFUNCTION</span>
+передается указатель на структуру <span class="cpp">RDS_COMPEXECFUNCDATA</span>:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span> {
+    <span class="kw">int</span> Function;           <span class="rem">// Действие (RDS_COMPFLAG_FUNC*)</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> ModelName;        <span class="rem">// Содержимое строки имени модели</span>
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> BlockVars;  <span class="rem">// Переменные блока</span>
+    <span class="kw">int</span> BlockType;          <span class="rem">// Тип блока (RDS_BT* или RDS_TUNKNOWN)</span>
+  } <span id="light_ref3">RDS_COMPEXECFUNCDATA</span>;
+  <span class="kw">typedef</span> RDS_COMPEXECFUNCDATA *<span id="light_ref4">RDS_PCOMPEXECFUNCDATA</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp"><spanid="ref5">Function</span></span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+    <dd>Одна из <span id="light_ref5">констант</span>, описывающих действие, совершенное пользователем
+    (они частично совпадают с флагами, возвращаемыми функцией модуля при реакции на событие
+    <span class="cpp"><a href="RDS_COMPM_GETOPTIONS.htm" title="А.3.4.9. RDS_COMPM_GETOPTIONS &ndash; описание возможностей модуля">RDS_COMPM_GETOPTIONS</a></span>):
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref6">RDS_COMPFLAG_FUNCMODELBROWSE</span></span></td>
+          <td>Пользователь нажал кнопку &laquo;<span class="menu">Обзор&hellip;</span>&raquo;</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref7">RDS_COMPFLAG_FUNCMODELCREATE</span></span></td>
+          <td>Пользователь нажал кнопку &laquo;<span class="menu">Новый&hellip;</span>&raquo;</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref8">RDS_COMPFLAG_FUNCMODELSAVEAS</span></span></td>
+          <td>Пользователь нажал кнопку &laquo;<span class="menu">Сохранить как&hellip;</span>&raquo;</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref9">RDS_COMPFLAG_FUNCMODELUSERINPUT</span></span></td>
+          <td>Пользователь ввел текст имени модели вручную (вызывается в момент закрытия окна параметров
+          блока кнопкой &laquo;<span class="menu">OK</span>&raquo;.</td>
+        </tr>
+      </table>
+    </div></div>
+    </dd>
+
+  <dt><span class="cpp">ModelName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку с именем модели на вкладке &laquo;<span class="menu">Компиляция</span>&raquo; окна параметров блока.
+  Это текст во внутренней памяти RDS, функция модуля не может изменять его значение. Если в
+  результате реакции необходимо изменить этот текст (например, если пользователь выбрал новое имя
+  модели кнопкой &laquo;<span class="menu">Обзор</span>&raquo;), необходимо вызвать сервисную функцию
+  <span class="cpp"><a href="rdscompReturnModelName.htm" title="А.5.34.9. rdscompReturnModelName &ndash; возврат имени модели из функции пользовательского интерфейса">rdscompReturnModelName</a></span>.</dd>
+
+  <dt><span class="cpp">BlockVars</span>&emsp;(<span class="cpp"><i>RDS_HOBJECT</i></span>)</dt>
+  <dd><a href="app_index.htm#light_htm:app_a_5_25" title="А.5.25. Вспомогательный объект для изменения структуры переменных блока">Вспомогательный объект</a>, содержащий
+  <a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">структуру переменных</a> текущего блока. Это поле может
+  использоваться только в реакции на нажатие кнопки &laquo;<span class="menu">Новый</span>&raquo;, то есть при
+  <span class="cpp">Function==RDS_COMPFLAG_FUNCMODELCREATE</span>).</dd>
+
+  <dt><span class="cpp">BlockType</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd><a href="RDS_BLOCKDESCRIPTION.htm#ref4" title="Константы типа блоков">Тип блока</a>, в окне параметров которого производятся
+  действия:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref10">RDS_BTSYSTEM</span></span></td>
+          <td>Подсистема.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref11">RDS_BTSIMPLEBLOCK</span></span></td>
+          <td>Простой блок.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref12">RDS_BTINPUTBLOCK</span></span></td>
+          <td>Внешний вход.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref13">RDS_BTOUTPUTBLOCK</span></span></td>
+          <td>Внешний выход.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref14">RDS_BTBUSPORT</span></span></td>
+          <td>Ввод шины.</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+</dl>
+
+<p class="noindent">Для всех действий, кроме ввода имени модели вручную
+(<span class="cpp">RDS_COMPFLAG_FUNCMODELUSERINPUT</span>), функция модуля вызывается немедленно при
+нажатии пользователем соответствующей кнопки. При ручном редактировании строки имени модели этот
+факт запоминается, а затем функция модуля вызывается при закрытии окна параметров блока кнопкой
+&laquo;<span class="menu">OK</span>&raquo; &ndash; в этот момент модуль может проверить, есть ли модель с введенным
+вручную именем, и создать ее, если это необходимо.</p>
+
+<p class="apphdr">Пример</p>
+<p> Пример реакции на это событие приведен в
+<a href="pm_4_3.htm" title="&sect;4.3. Подключение моделей к блокам и вызов редактора">&sect;4.3 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_COMPM_GETOPTIONS.htm" title="А.3.4.9. RDS_COMPM_GETOPTIONS &ndash; описание возможностей модуля">RDS_COMPM_GETOPTIONS</a></span>,
+<span class="cpp"><a href="RDS_BLOCKDESCRIPTION.htm" title="А.4.2. RDS_BLOCKDESCRIPTION &ndash; описание блока">RDS_BLOCKDESCRIPTION</a></span>,
+<span class="cpp"><a href="rdscompReturnModelName.htm" title="А.5.34.9. rdscompReturnModelName &ndash; возврат имени модели из функции пользовательского интерфейса">rdscompReturnModelName</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_COMPM_DETACHBLOCK.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_COMPM_GETOPTIONS.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_COMPM_EXECFUNCTION">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

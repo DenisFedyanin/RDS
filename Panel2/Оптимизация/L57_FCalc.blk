@@ -1,0 +1,36 @@
+EXPBLKTXT
+version 1 rev 0 4016.5.18.19.53.3
+
+dllblock name "Block1"
+ begin
+  name hidden pos 72 59
+  options sizeable
+  vars
+   begin
+    signal name "Start" in run default 1
+    signal name "Ready" out default 0
+    double name "x" in menu run default "0"
+    double name "y" in menu run default "0"
+    double name "z" in menu run default "0"
+    double name "f" out menu default "0"
+    matrix double oneindex name "A" in menu run default "[ ] 0"
+    matrix matrix double oneindex name "F" in menu run default "[ ] [ ] 0"
+    signal name "func_chg" default 1
+    matrix matrix double oneindex name "FS" out menu default "[ ] [ ] 0"
+    int name "test" out default 0
+    int name "FuncId" in run default -1
+   end
+  auto
+   begin
+    var "F" ctrl "func_chg"
+   end
+  layout rect 145 45 fill 16777215 line 0 text "Вычисление функции\r\nпользователя" font "Arial" height 13 color 0
+  dll file "L57_FCalc.dll" func "rdsbcppBlockEntryPoint" setup "" auto
+  dlldata text
+   rdsbcppsetupparameters
+   begin
+   var SetupFuncId 0
+   end
+  enddlldata
+  autocomp file "$DLL$\\Common.dll" func "SearchComp" model "L57_FCalc.mdl" alt "$PANEL$\\Оптимизация\\L57_FCalc.mdl\n$PANEL$\\Оптимизация\\L57_FCalc.blk"
+ end

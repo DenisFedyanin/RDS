@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.2.6.5. RDS_BFM_KEYDOWN &ndash; нажатие клавиши</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2">А.2. События блока и связанные с ними описания</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2_6">А.2.6. События пользовательского интерфейса и рисования внешнего вида блоков</a></p>
+<div class="level"><p>А.2.6.5. <span class="cpp">RDS_BFM_KEYDOWN</span> &ndash; нажатие клавиши</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_BFM_DRAWADDITIONAL.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_KEYUP.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_KEYDOWN">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.2. События блока и связанные с ними описания</h3>
+<h4 class="off">А.2.6. События пользовательского интерфейса и рисования внешнего вида блоков</h4>
+<h5>А.2.6.5. <span class="cpp">RDS_BFM_KEYDOWN</span> &ndash; нажатие клавиши</h5>
+
+
+<p class="apphdr">Поток, в котором вызывается <a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функция модели</a></p>
+<p>Главный поток RDS.</p>
+
+<p class="apphdr">Первый параметр функции модели (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_BFM_KEYDOWN</span>.</p>
+
+<p class="apphdr">Третий параметр функции модели (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Указатель на структуру описания события <span class="cpp"><a href="#ref2" title="Структура RDS_KEYDATA">RDS_KEYDATA</a></span>.</p>
+
+<p class="apphdr">Возвращаемое функцией модели значение</p>
+    <div class="tableshift"><div class="tcont">
+    <table>
+      <tr>
+        <td><span class="cpp">RDS_BFR_DONE</span></td>
+        <td>Нажатие клавиши не обработано блоком.</td>
+      </tr>
+      <tr>
+        <td><span class="cpp"><span id="light_ref1">RDS_BFR_STOP</span></span></td>
+        <td>Нажатие клавиши обработано, его не нужно передавать в остальные блоки подсистемы и вызывать
+        соответствующий ей пункт главного меню RDS, если такой имеется.</td>
+      </tr>
+    </table>
+    </div></div>
+
+
+<p class="apphdr">Примечания</p>
+<p>Реакция на событие <span class="cpp">RDS_BFM_KEYDOWN</span> вызывается при нажатии какой-либо клавиши
+клавиатуры в том случае, если одновременно выполняются следующие условия:</p>
+<ul>
+  <li>RDS находится в режиме <a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a> или
+  <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a>;</li>
+  <li>окно подсистемы, в которой находится данный блок, имеет фокус ввода (то есть это самое верхнее окно и
+  RDS &ndash; активное приложение);</li>
+  <li>в <a href="pm_1_4.htm#pic3" title="Параметры блока &ndash; модель и реакции">параметрах блока</a>
+  разрешена реакция на клавиатуру.</li>
+</ul>
+
+<p class="noindent">В режимах моделирования и расчета при нажатии клавиши поочередно (в произвольном порядке) вызываются модели
+всех блоков активного окна подсистемы, для которых разрешена реакция на клавиатуру. В параметре
+<span class="cpp">ExtParam</span> при этом передается указатель на структуру <span class="cpp">RDS_KEYDATA</span>, в
+которой содержится описание нажатой клавиши. Если функция модели вернет константу
+<span class="cpp">RDS_BFR_DONE</span>, нажатие клавиши будет считаться не обработанным, и вызовется модель
+следующего блока; если же она вернет <span class="cpp">RDS_BFR_STOP</span>, перебор моделей блоков будет
+прекращен, кроме того, если нажатая клавиша соответствует какому-либо пункту меню RDS, этот пункт не
+будет вызван. Если ни одна из моделей блоков подсистемы не вернула <span class="cpp">RDS_BFR_STOP</span>,
+будет вызвана модель самой подсистемы для реакции на событие <span class="cpp"><a href="RDS_BFM_WINDOWKEYDOWN.htm" title="А.2.6.14. RDS_BFM_WINDOWKEYDOWN &ndash; реакция подсистемы на нажатие клавиши в своем окне">RDS_BFM_WINDOWKEYDOWN</a></span>.
+Если и модель подсистемы не сообщит об успешной обработке нажатия клавиши, нажатие будет обработано
+RDS (вызовется пункт главного меню, которому соответствует эта клавиша, если такой пункт есть). Реакция
+блоков на нажатие и отпускание клавиш подробно рассмотрена в
+<a href="pm_2_12_4.htm" title="&sect;2.12.4. Реакция блоков на клавиатуру">&sect;2.12.4 руководства программиста</a>.</p>
+
+<p>В <a href="pm_1_3.htm#ref1" title="Режим редактирования">режиме редактирования</a> модели блоков не могут реагировать на нажатия клавиш.
+Единственный способ связать
+вызов модели блока с нажатием клавиши или сочетания клавиш в режиме редактирования &ndash; это
+<a href="pm_2_12_7.htm" title="&sect;2.12.7. Добавление пунктов в системное меню RDS">зарегистрировать дополнительный пункт системного меню</a>
+функцией <span class="cpp"><a href="rdsRegisterMenuItem.htm" title="А.5.17.8. rdsRegisterMenuItem &ndash; создать пункт системного меню RDS">rdsRegisterMenuItem</a></span> и связать с ним &laquo;горячую клавишу&raquo;.</p>
+
+<p><span id="ref2">Для</span> <span id="ref3">описания</span>
+нажатой клавиши служит структура <span class="cpp">RDS_KEYDATA</span> (она используется и в других событиях
+реакции на клавиатуру):</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span> {
+    <span class="kw">int</span> KeyCode;     <span class="rem">// Виртуальный код клавиши</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Repeat;     <span class="rem">// Признак автоповтора</span>
+    <span class="kw">int</span> RepeatCount; <span class="rem">// Число повторений</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Shift;     <span class="rem">// Флаги клавиатуры (RDS_M*, RDS_K*)</span>
+    <span class="kw">int</span> KeyEvent;    <span class="rem">// Событие - </span><a href="#top" class="hidden"><span class="rem">RDS_BFM_KEYDOWN</span></a><span class="rem"> или</span>
+                     <span class="rem">// </span><a class="hidden" href="RDS_BFM_KEYUP.htm" title="А.2.6.6. RDS_BFM_KEYUP &ndash; отпускание клавиши"><span class="rem">RDS_BFM_KEYUP</span></a>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Handled;    <span class="rem">// Событие обработано (возврат)</span>
+    <span class="kw">int</span> Viewport;    <span class="rem">// Номер порта вывода или -1</span>
+  } <span id="light_ref2">RDS_KEYDATA</span>;
+  <span class="kw">typedef</span> RDS_KEYDATA *<span id="light_ref3">RDS_PKEYDATA</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">KeyCode</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Виртуальный код клавиши (<span class="cpp">VK_*</span>) согласно описаниям Windows API.</dd>
+
+  <dt><span class="cpp">Repeat</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd>Только для события нажатия клавиши: <span class="cpp">TRUE</span>, если нажатие клавиши сгенерировано
+  автоповтором клавиатуры, и <span class="cpp">FALSE</span> в противном случае. Таким образом, при одиночных
+  нажатиях клавиш в этом поле всегда находится <span class="cpp">FALSE</span>.</dd>
+
+  <dt><span class="cpp">RepeatCount</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Только при автоповторе нажатия клавиши &ndash; число повторов с момента прошлого вызова реакции на событие.</dd>
+
+  <dt><span class="cpp">Shift</span>&emsp;(<span class="cpp"><i>DWORD</i></span>)</dt>
+  <dd><span id="light_ref4">Битовые флаги</span>,
+  описывающие состояние специальных клавиш клавиатуры и кнопок мыши в момент нажатия
+  данной клавиши:
+    <div class="tableleft"><div class="tcont">
+    <table class="list">
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref5">RDS_MLEFTBUTTON</span></span></td>
+        <td>Нажата левая кнопка мыши.</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref6">RDS_MRIGHTBUTTON</span></span></td>
+        <td>Нажата правая кнопка мыши.</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref7">RDS_MMIDDLEBUTTON</span></span></td>
+        <td>Нажата средняя кнопка мыши.</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref8">RDS_KSHIFT</span></span></td>
+        <td>Нажата клавиша <span class="keys">Shift</span>.</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref9">RDS_KALT</span></span></td>
+        <td>Нажата клавиша <span class="keys">Alt</span>.</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref10">RDS_KCTRL</span></span></td>
+        <td>Нажата клавиша <span class="keys">Ctrl</span></td>
+      </tr>
+      </table>
+    </div></div>
+    Для выделения флагов, относящихся только к кнопкам мыши или только к специальным клавишам,
+    можно использовать специальные константы-маски:
+    <div class="tableleft"><div class="tcont">
+    <table class="list">
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref11">RDS_MOUSEFLAGS</span></span></td>
+        <td>Все флаги кнопок мыши (<span class="cpp">RDS_MLEFTBUTTON | RDS_MRIGHTBUTTON | RDS_MMIDDLEBUTTON</span>).</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref12">RDS_KBDFLAGS</span></span></td>
+        <td>Все флаги специальных клавиш (<span class="cpp">RDS_KSHIFT | RDS_KALT | RDS_KCTRL</span>).</td>
+      </tr>
+      </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp">KeyEvent</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Произошедшее событие: <span class="cpp">RDS_BFM_KEYDOWN</span> для нажатия клавиши и
+  <span class="cpp"><a href="RDS_BFM_KEYUP.htm" title="А.2.6.6. RDS_BFM_KEYUP &ndash; отпускание клавиши">RDS_BFM_KEYUP</a></span> для отпускания. В реакциях на события <span class="cpp">RDS_BFM_KEY*</span>
+  это поле дублирует параметр <span class="cpp">CallMode</span>
+  <a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функции модели</a>. В реакциях подсистем на нажатия и отпускания клавиш
+  в окне <span class="cpp">RDS_BFM_WINDOWKEY*</span> в это поле записывается идентификатор события, близкого по
+  смыслу к произошедшему событию: для <span class="cpp"><a href="RDS_BFM_WINDOWKEYDOWN.htm" title="А.2.6.14. RDS_BFM_WINDOWKEYDOWN &ndash; реакция подсистемы на нажатие клавиши в своем окне">RDS_BFM_WINDOWKEYDOWN</a></span> в это поле записывается
+  <span class="cpp">RDS_BFM_KEYDOWN</span>, для <span class="cpp"><a href="RDS_BFM_WINDOWKEYUP.htm" title="А.2.6.15. RDS_BFM_WINDOWKEYUP &ndash; реакция подсистемы на отпускание клавиши в своем окне">RDS_BFM_WINDOWKEYUP</a></span> &ndash;
+  <span class="cpp">RDS_BFM_KEYUP</span>:
+  <div class="tablecenter"><div class="tcont">
+  <table>
+    <tr>
+      <th>Событие</th>
+      <th><span class="cpp">CallMode</span></th>
+      <th>Поле <span class="cpp">KeyEvent</span></th>
+    </tr>
+    <tr>
+      <td>Нажатие клавиши, обрабатывается блоком</td>
+      <td class="center"><span class="cpp">RDS_BFM_KEYDOWN</span></td>
+      <td class="center"><span class="cpp">RDS_BFM_KEYDOWN</span></td>
+    </tr>
+    <tr>
+      <td>Отпускание клавиши, обрабатывается блоком</td>
+      <td class="center"><span class="cpp">RDS_BFM_KEYUP</span></td>
+      <td class="center"><span class="cpp">RDS_BFM_KEYUP</span></td>
+    </tr>
+    <tr>
+      <td>Не обработанное блоками нажатие клавиши, обрабатывается подсистемой</td>
+      <td class="center"><span class="cpp">RDS_BFM_WINDOWKEYDOWN</span></td>
+      <td class="center"><span class="cpp">RDS_BFM_KEYDOWN</span></td>
+    </tr>
+    <tr>
+      <td>Не обработанное блоками отпускание клавиши, обрабатывается подсистемой</td>
+      <td class="center"><span class="cpp">RDS_BFM_WINDOWKEYUP</span></td>
+      <td class="center"><span class="cpp">RDS_BFM_KEYUP</span></td>
+    </tr>
+  </table>
+  </div></div>
+  </dd>
+
+  <dt><span class="cpp">Handled</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd>Перед вызовом самого первого блока подсистемы это поле устанавливается в <span class="cpp">FALSE</span>. Модель
+  блока может присвоить ему <span class="cpp">TRUE</span> для того, чтобы сообщить RDS об успешной обработке
+  клавиши &ndash; это равносильно возврату <span class="cpp">RDS_BFR_STOP</span>.</dd>
+
+  <dt><span class="cpp">Viewport</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Номер <a href="pm_3_6_1.htm" title="&sect;3.6.1. Общие принципы работы с портом вывода">порта вывода</a>, из которого пришла информация о нажатии клавиши,
+  или &minus;1, если клавиша нажата в обычном окне подсистемы.</dd>
+</dl>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_BFM_KEYUP.htm" title="А.2.6.6. RDS_BFM_KEYUP &ndash; отпускание клавиши">RDS_BFM_KEYUP</a></span>,
+<span class="cpp"><a href="RDS_BFM_WINDOWKEYDOWN.htm" title="А.2.6.14. RDS_BFM_WINDOWKEYDOWN &ndash; реакция подсистемы на нажатие клавиши в своем окне">RDS_BFM_WINDOWKEYDOWN</a></span>,
+<span class="cpp"><a href="RDS_BFM_WINDOWKEYUP.htm" title="А.2.6.15. RDS_BFM_WINDOWKEYUP &ndash; реакция подсистемы на отпускание клавиши в своем окне">RDS_BFM_WINDOWKEYUP</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_BFM_DRAWADDITIONAL.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_KEYUP.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_KEYDOWN">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

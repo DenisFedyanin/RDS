@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.2.1. Функция модели блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2">А.2. События блока и связанные с ними описания</a></p>
+<div class="level"><p>А.2.1. Функция модели блока</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="app_ids.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="DllEntryPoint.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:app_a_2_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3>А.2. События блока и связанные с ними описания</h3>
+<p class="abstract">Описываются все события, на которые может реагировать модель блока, а также структуры данных, связанные с этими событиями.</p>
+<h4>А.2.1. Функция модели блока</h4>
+
+
+<p>Функция модели блока &ndash; это связанная с блоком функция, которую RDS вызывает в ответ на различные
+события, происходящие с этим блоком. Функции моделей должны размещаться в динамически подключаемых библиотеках
+(DLL), в <a href="um_2_9_1.htm#ref21" title="Вкладка DLL параметров блока">параметрах блока</a>
+указывается имя такой библиотеки и имя экспортированной из нее функции.
+<span id="ref1">Все</span> функции моделей блоков имеют тип вызова
+<span class="cpp" id="light_ref1">RDSCALL</span>, описанный в файле
+&laquo;<span class="file">RdsDef.h</span>&raquo; &ndash; ему полностью соответствует тип <span class="cpp">CALLBACK</span> в Windows API:
+аргументы функции передаются в стеке справа налево, стек освобождается вызванной функцией. Функции моделей
+вызываются как в главном потоке RDS, обслуживающем интерфейс пользователя, так и в потоке расчета,
+выполняющем такты моделирования: вызвавший поток зависит от конкретного события, для реакции на которое
+вызывается функция. Функция модели имеет следующий вид:</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции_модели</i>(
+    <span class="kw">int</span> CallMode,             <span class="rem">// Режим вызова (событие)</span>
+    <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData, <span class="rem">// Данные блока</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam           <span class="rem">// Дополнительные параметры</span>
+  );</pre>
+
+<p class="apphdr">Параметры функции</p>
+
+<dl>
+  <dt><span class="cpp">CallMode</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Событие, для реакции на которое вызывается функция модели блока. Это одна из целых констант
+  <span class="cpp">RDS_BFM_*</span>, описанных далее.</dd>
+
+  <dt><span class="cpp">BlockData</span>&emsp;(<span class="cpp"><i>RDS_PBLOCKDATA</i></span>)</dt>
+  <dd>Указатель на структуру данных блока <span class="cpp"><a href="RDS_BLOCKDATA.htm" title="А.2.3. RDS_BLOCKDATA &ndash; структура данных блока">RDS_BLOCKDATA</a></span>. В этой структуре хранятся
+  общие данные блока, модель которого вызывается.</dd>
+
+  <dt><span class="cpp">ExtParam</span>&emsp;(<span class="cpp"><i>LPVOID</i></span>)</dt>
+  <dd>Указатель на дополнительные параметры события. Формат данных, на которые ссылается это указатель
+  общего вида, зависит от конкретного события, то есть от значения параметра <span class="cpp">CallMode</span>.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемые значения</p>
+
+<p>Функция возвращает целое число, указывающее RDS на результат реакции на событие. В зависимости от
+события эти числа интерпретируются по-разному, возможные возвращаемые значения указаны в описании конкретных
+событий.
+<span id="ref2">В большинстве случаев</span>
+возврат константы <span class="cpp" id="light_ref2">RDS_BFR_DONE</span>, равной нулю, информирует
+RDS о том, что реакция на событие выполнена успешно.</p>
+
+<p class="apphdr">Примечания</p>
+
+<p>Чаще всего функция модели содержит внутри оператор <span class="cpp">switch</span>, в котором, в
+зависимости от произошедшего события (то есть от значения параметра <span class="cpp">CallMode</span>),
+выполняются различные действия:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> RDSCALL <i>имя_модели</i>(
+      <span class="kw">int</span> CallMode,
+      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+      LPVOID ExtParam)
+  {
+    <span class="kw">switch</span>(CallMode)
+      { <span class="kw">case</span> <i>событие_1</i>:
+          <i>действия</i>
+          <span class="kw">return</span> <i>результат</i>;
+        <span class="kw">case</span> <i>событие_2</i>:
+          <i>действия</i>
+          <span class="kw">break</span>;
+        ...
+      }
+    <span class="kw">return</span> RDS_BFR_DONE;
+  }</pre>
+
+<p>Если блок имеет личную область данных, то есть область памяти, в которой хранятся его внутренние параметры,
+не обрабатываемые RDS, эта область обычно отводится в реакции на событие инициализации
+<span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span> и освобождается в реакции на событие
+<span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="app_ids.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="DllEntryPoint.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:app_a_2_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.9.1. Таймеры в RDS</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_9">&sect;2.9. Использование таймеров</a></p>
+<div class="level"><p>&sect;2.9.1. Таймеры в RDS</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_8_5.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_9_2.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_9_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3>&sect;2.9. Использование таймеров</h3>
+<p class="abstract">Рассматривается использование таймеров &ndash; объектов RDS, позволяющих организовать вызов модели
+            блока через определенные промежутки времени. Описываются циклические таймеры, вызывающие модель постоянно с
+            заданным интервалом, и однократные, вызывающие модель один раз через указанный промежуток времени и
+            требующие явного перезапуска. Отдельно рассматриваются особенности работы модели блока с несколькими таймерами
+            одновременно.</p>
+<h4>&sect;2.9.1. Таймеры в RDS</h4>
+<p class="abstract">Описывается создание таймеров в RDS, режимы их работы и возможные способы вызова
+                модели блока при срабатывании таймера.</p>
+
+
+<p>Достаточно часто модели блока приходится выполнять различные действия через заданный интервал
+времени. Это может быть опрос каких-либо датчиков, обновление информации на экране и т.п. RDS включает
+в себя набор сервисных функций, позволяющих модели создавать произвольное число <span class="emph">таймеров</span>
+и получать информацию об их срабатывании. Таймеры могут быть как однократными, срабатывающими один
+раз по истечении заданного интервала времени, так и циклическими, вызывающими функцию модели
+с заданной периодичностью.</p>
+
+<p><span id="ref1">Для</span>
+создания нового таймера или изменения параметров существующего используется сервисная функция
+<span id="light_ref1" class="cpp"><a href="rdsSetBlockTimer.htm" title="А.5.12.4. rdsSetBlockTimer &ndash; создать таймер">rdsSetBlockTimer</a></span>,
+которая возвращает идентификатор созданного таймера:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref3" title="Идентификатор таймера">RDS_TIMERID</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsSetBlockTimer.htm" title="А.5.12.4. rdsSetBlockTimer &ndash; создать таймер">rdsSetBlockTimer</a>(
+    <a class="hidden" href="app_ids.htm#light_ref3" title="Идентификатор таймера">RDS_TIMERID</a> timer, <span class="rem">// Идентификатор таймера</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> delay,       <span class="rem">// Интервал срабатывания, мс</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> mode,        <span class="rem">// Режим и флаги</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> start);       <span class="rem">// Запустить таймер немедленно</span></pre>
+
+<p>Первый параметр функции <span class="cpp">timer</span> &ndash; это идентификатор таймера, параметры
+которого необходимо изменить, или <span class="cpp">NULL</span>, если необходимо создать новый таймер.
+Параметр <span class="cpp">delay</span> указывает интервал работы таймера в миллисекундах.
+Если логический параметр <span class="cpp">start</span> &ndash; истина (<span class="cpp">TRUE</span>),
+созданный или измененный таймер будет немедленно запущен и начнет отсчитывать время до интервала
+<span class="cpp">delay</span>, в противном случае он будет ждать команды запуска. И, наконец, в параметре
+<span class="cpp">mode</span> передается режим работы таймера, способ информирования модели о его
+срабатывании, а также дополнительные флаги, объединенные побитовой операцией ИЛИ (или простым сложением)
+в одно целое число типа <span class="cpp"><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></span>.</p>
+
+<p>Таймер может работать в одном из трех режимов:</p>
+
+<ul>
+  <li><span class="cpp"><span id="light_ref2">RDS_TIMERM_LOOP</span></span> &ndash;
+  <span id="light_ref3">циклическая работа</span>. Отсчитав заданный интервал времени, таймер уведомляет об этом модель и автоматически
+  перезапускается. Этот режим используется в тех случаях, когда модели необходимо получать сигнал от таймера
+  через равные промежутки времени.</li>
+
+  <li><span class="cpp"><span id="light_ref4">RDS_TIMERM_STOP</span></span> &ndash;
+  <span id="light_ref5">однократное срабатывание</span>.
+  Запущенный таймер отсчитывает заданный интервал, уведомляет модель и останавливается.
+  После этого его, при необходимости, можно запустить снова. Этот режим используется для создания задержек, или
+  в тех случаях, когда нужно динамически менять интервал срабатывания у постоянно работающего таймера.</li>
+
+  <li><span class="cpp"><span id="light_ref6">RDS_TIMERM_DELETE</span></span> &ndash;
+  однократное срабатывание с автоматическим удалением таймера. Запущенный таймер отсчитывает заданный интервал,
+  сообщает об этом модели и удаляется. Этот режим удобен для блоков, достаточно редко выполняющих какое-либо
+  действие с задержкой.</li>
+</ul>
+
+<p class="noindent">Таймер уведомляет модель о своем срабатывании несколькими разными способами:</p>
+
+<ul>
+  <li><span class="cpp"><span id="light_ref7">RDS_TIMERS_SIGNAL</span></span> &ndash;
+  при срабатывании таймера первой сигнальной переменной блока (то есть
+  <a href="um_1_4.htm#ref25" title="Сигнал запуска блока">сигналу запуска</a>, по умолчанию он называется &laquo;<span class="rdsvar">Start</span>&raquo;)
+  присваивается значение 1. Таким образом, если блок в <a href="pm_1_3.htm#ref3" title="Режим расчета">режиме расчета</a>
+  <a href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">работает по сигналу</a>, модель блока будет автоматически вызвана в режиме
+  <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span> в первом после срабатывания таймера такте расчета. Никаких других
+  вызовов модели при срабатывании таймера не производится. Такое уведомление удобно тем, что в
+  текст модели блока не нужно добавлять каких-либо новых реакций, однако, модель в данном случае
+  не сможет определить, вызвана она из-за срабатывания таймера или из-за срабатывания связи, подключенной к
+  сигнальному входу запуска.</li>
+
+  <li><span class="cpp"><span id="light_ref8">RDS_TIMERS_TIMER</span></span> &ndash;
+  при срабатывании таймера модель вызывается в потоке расчета в режиме <span class="cpp"><span id="light_ref9"><a href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a></span></span>.
+  При этом в третьем параметре функции модели (<span class="cpp"><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam</span>)
+  передается идентификатор сработавшего таймера.</li>
+
+  <li><span class="cpp"><span id="light_ref10">RDS_TIMERS_WINREF</span></span> &ndash;
+  при срабатывании таймера модель блока вызывается в главном потоке в режиме
+  <span class="cpp"><span id="light_ref11"><a href="RDS_BFM_WINREFRESH.htm" title="А.2.6.21. RDS_BFM_WINREFRESH &ndash; обновление окон блока">RDS_BFM_WINREFRESH</a></span></span>. Этот способ используется для обновления окон, принадлежащих блокам.
+  В третьем параметре функции модели при этом передается указатель на структуру <span class="cpp"><a href="RDS_BFM_WINREFRESH.htm#ref1" title="Структура RDS_WINREFRESHDATA">RDS_WINREFRESHDATA</a></span>,
+  по полям которой модель может понять, вызвана ли необходимость обновлять окна таймером или вызовом сервисной
+  функции, и если таймером, то каким именно.</li>
+
+  <li><span class="cpp"><span id="light_ref12">RDS_TIMERS_SYSTIMER</span></span> &ndash;
+  при срабатывании таймера модель вызывается в главном потоке в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a></span>.
+  От всех остальных способов срабатывания, включая <span class="cpp"><a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref8" title="RDS_TIMERS_TIMER">RDS_TIMERS_TIMER</a></span> (при котором
+  модель вызывается в этом же режиме, но в потоке расчета) этот отличается тем, что таймер работает не
+  только в режиме расчета, но и в режимах <a href="pm_1_3.htm#ref1" title="Режим редактирования">редактирования</a>
+  и <a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a>. Таймеры, для которых указаны способы срабатывания
+  <span class="cpp"><a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref7" title="RDS_TIMERS_SIGNAL">RDS_TIMERS_SIGNAL</a></span>, <span class="cpp"><a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref8" title="RDS_TIMERS_TIMER">RDS_TIMERS_TIMER</a></span> и
+  <span class="cpp"><a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref9" title="RDS_TIMERS_WINREF">RDS_TIMERS_WINREF</a></span>, останавливаются в момент остановки расчета и продолжают
+  работу при его повторном запуске. Таймер <span class="cpp"><a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref10" title="RDS_TIMERS_SYSTIMER">RDS_TIMERS_SYSTIMER</a></span> работает все время,
+  вне зависимости от режима работы RDS.</li>
+</ul>
+
+<p class="noindent"><span id="ref13">Вместе</span>
+со способом уведомления модели <span class="cpp"><a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref9" title="RDS_TIMERS_WINREF">RDS_TIMERS_WINREF</a></span> можно, при необходимости,
+указать флаг <span id="light_ref13" class="cpp"><a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref11" title="RDS_TIMERF_FIXFREQ">RDS_TIMERF_FIXFREQ</a></span>
+&ndash; это исключит данный таймер из
+<a href="um_2_18.htm#ref23" title="Автоподстройка частоты обновления окон">автоподстройки частоты обновления окон</a>.
+При включенной автоподстройке RDS постоянно вычисляет суммарное время обновления всех
+окон системы, и, если это время будет слишком большим, частота обновления будет автоматически понижаться.
+Если в параметрах таймера указать флаг <span class="cpp"><a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref11" title="RDS_TIMERF_FIXFREQ">RDS_TIMERF_FIXFREQ</a></span>, его частота изменяться
+не будет. При всех остальных способах уведомления модели о срабатывании таймера никакой автоподстройки не
+происходит и этот флаг игнорируется.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_8_5.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_9_2.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_9_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

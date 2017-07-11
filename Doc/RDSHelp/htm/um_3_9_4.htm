@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.9.4. Символические имена параметров в настройках</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_9">&sect;3.9. Настройки стандартного модуля автокомпиляции</a></p>
+<div class="level"><p>&sect;3.9.4. Символические имена параметров в настройках</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="um_3_9_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_9_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_9_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.9. Настройки стандартного модуля автокомпиляции</h3>
+<h4>&sect;3.9.4. Символические имена параметров в настройках</h4>
+<p class="abstract">Описываются символические обозначения путей и параметров, которые можно использовать при задании настроек модуля автокомпиляции. Использование обозначений вместо самих значений параметров позволяет сделать настройки более гибкими: при изменении какого-либо параметра не нужно будет исправлять его значение во всех полях окна настроек, где он встречается.</p>
+
+
+<p>Для того, чтобы вызвать компилятор и редактор связей, нужно передать операционной системе командную
+строку с указанием вызываемой программы (компилятора и редактора связей) с полным путем к этой программе
+и ее параметрами, указывающими, какой именно файл исходного текста необходимо обработать, в каких папках
+находятся библиотеки и файлы заголовков и т.п. Эта командная строка вводится в параметрах модуля
+автокомпиляции. В ней можно использовать специальные символические обозначения, вместо которых модуль подставит
+пути к различным папкам и файлам, заданным в
+<a href="um_2_18.htm#ref8" title="Стандартные папки RDS">настройках RDS</a>
+и <a href="um_3_9_1.htm" title="&sect;3.9.1. Общие настройки модуля">самого модуля</a>. Использование таких обозначений гораздо
+удобнее ручного прописывания всей путей в командной строке.</p>
+
+<p><span id="ref1">Проиллюстрируем</span>
+удобство символических обозначений на простом примере. При использовании компилятора
+<span id="light_ref1">Open Watcom C++</span>
+(см. <a href="um_3_2_2.htm" title="&sect;3.2.2. Установка и подключение компилятора Open Watcom C++">&sect;3.2.2</a>) пути к файлам заголовков необходимо указывать в его
+командной строке в параметре &laquo;/i&raquo;. В состав компилятора входит папка
+&laquo;<span class="file">h</span>&raquo;, внутри которой находятся необходимые заголовки. Кроме того, заголовки, которые
+нужно включить, находятся внутри этой папки &laquo;<span class="file">h</span>&raquo; во вложенных папках
+&laquo;<span class="file">sys</span>&raquo; и &laquo;<span class="file">nt</span>&raquo;. Пусть сам компилятор находится в папке
+&laquo;<span class="file">C:\Compilers\OpenWatcom</span>&raquo;. Если указывать все пути вручную, в командную строку придется добавить
+такой параметр:</p>
+
+<pre class="cpp">  /i="C:\Compilers\OpenWatcom;C:\Compilers\OpenWatcom\sys;C:\Compilers\OpenWatcom\nt"</pre>
+
+<p>С использованием символических обозначений этот параметр будет значительно короче:</p>
+
+<pre class="cpp">  /i="$INCLUDE$;$INCLUDE$\sys;$INCLUDE$\nt"</pre>
+
+<p>Разумеется, чтобы можно было использовать обозначение &laquo;$INCLUDE$&raquo;, путь к папке заголовков должен
+быть задан на вкладке &laquo;<span class="menu"><a href="um_3_9_3.htm#pic2" title="Настройка путей для компилятора">компилятор</a></span>&raquo;.</p>
+
+<p>Стандартный модуль автокомпиляции позволяет использовать следующие символические обозначения:</p>
+
+<dl>
+  <dt><span id="light_ref2">$AUXDIR$</span></dt>
+  <dd>Полный путь к дополнительной папке, заданный в настройках модуля на вкладке &laquo;<span class="menu">компилятор</span>&raquo;.</dd>
+
+  <dt><span id="light_ref3">$BC$</span></dt>
+  <dd>Полный путь к папке установки компилятора, заданный в настройках модуля, без символа обратной косой черты
+  (&laquo;\&raquo;) в конце.</dd>
+
+  <dt><span id="light_ref4">$COMP$</span></dt>
+  <dd>Полный путь к исполняемому файлу компилятора, указанный в настройках модуля.</dd>
+
+  <dt><span id="light_ref5">$CPPFILE$</span></dt>
+  <dd>Имя исходного файла текста программы модели без пути с расширением &laquo;cpp&raquo;. Этот файл
+  автоматически формируется модулем, компилятор должен преобразовать его в объектный.</dd>
+
+  <dt><span id="light_ref6">$DLLFILE$</span></dt>
+  <dd>Имя скомпилированного файла DLL без пути. Этот файл создается редактором связей из объектного файла и
+  необходимых библиотек.</dd>
+
+  <dt><span id="light_ref7">$FILE$</span></dt>
+  <dd><span id="ref8">Имя</span>
+  исходного файла текста программы модели без пути и расширения. Этот файл автоматически
+  формируется модулем.</dd>
+
+  <dt><span id="light_ref9">$FUNC$</span></dt>
+  <dd>Имя функции модели блока (всегда &laquo;<span class="cpp"><span id="light_ref8">rdsbcppBlockEntryPoint</span></span>&raquo;).</dd>
+
+  <dt><span id="light_ref10">$FUNCLC$</span></dt>
+  <dd>Имя функции модели блока, приведенное к нижнему регистру (всегда &laquo;rdsbcppblockentrypoint&raquo;).</dd>
+
+  <dt><span id="light_ref11">$FUNCUC$</span></dt>
+  <dd>Имя функции модели блока, приведенное к верхнему регистру (всегда &laquo;RDSBCPPBLOCKENTRYPOINT&raquo;).</dd>
+
+  <dt><span id="light_ref12">$INCLUDE$</span></dt>
+  <dd>Полный путь к папке стандартных заголовков компилятора, указанной в настройках модуля, без символа обратной
+  косой черты (&laquo;\&raquo;) в конце. Обычно файлы заголовков имеют расширения
+  &laquo;h&raquo; и &laquo;hpp&raquo;.</dd>
+
+  <dt><span id="light_ref13">$LIB$</span></dt>
+  <dd>Полный путь к папке стандартных библиотек компилятора, указанной в настройках модуля, без символа
+  обратной косой черты (&laquo;\&raquo;) в конце. Обычно файлы библиотек имеют расширения
+  &laquo;lib&raquo; и &laquo;obj&raquo;.</dd>
+
+  <dt><span id="light_ref14">$LINK$</span></dt>
+  <dd>Полный путь к исполняемому файлу редактора связей, указанный в настройках модуля. Некоторые компиляторы
+  способны сами вызывать редактор связей по окончании компиляции &ndash; в этом случае путь к редактору связей
+  в настройках модуля может не указываться, и это символическое обозначение использовать нельзя.</dd>
+
+  <dt><span id="light_ref15">$MODELDIR$</span></dt>
+  <dd>Полный путь к папке, внутри которой размещается файл модели блока, без символа обратной косой черты
+  (&laquo;\&raquo;) в конце. Файл модели имеет расширение &laquo;mdl&raquo;, на его основе модуль
+  автокомпиляции формирует текст программы, который затем передается компилятору.</dd>
+
+  <dt><span id="light_ref16">$OBJFILE$</span></dt>
+  <dd>Имя скомпилированного объектного файла без пути с расширением &laquo;obj&raquo;. Этот файл создается
+  компилятором и передается редактору связей для окончательной сборки DLL.</dd>
+
+  <dt><span id="light_ref17">$POSTEXE$</span></dt>
+  <dd>Полный путь к исполняемому файлу дополнительной программы, вызываемой после редактора связей, если этот
+  путь задан в настройках модуля. Большинство компиляторов не требует никаких дополнительных программ, и этот путь
+  задается редко.</dd>
+
+  <dt><span id="light_ref18">$RDSINCLUDE$</span></dt>
+  <dd>Полный путь к папке заголовков RDS, указанной в
+  <a href="um_2_18.htm#ref8" title="Стандартные папки RDS">настройках RDS</a>, без символа обратной косой черты
+  (&laquo;\&raquo;) в конце. Эти заголовки необходимы для успешной компиляции моделей, поскольку в
+  них описаны типы, структуры и классы, используемые модулем при автоматическом формировании текста программы
+  модели.</dd>
+
+  <dt><span id="light_ref19">$RDSTEMP$</span></dt>
+  <dd><span id="ref20">Полный</span>
+  путь к папке временных файлов, указанной в
+  настройках RDS, без символа обратной косой черты (&laquo;\&raquo;) в конце. Именно в этой
+  папке модуль автокомпиляции формирует временные файлы, включая файл с параметрами
+  (response file), описанный ниже.</dd>
+
+  <dt><span id="light_ref21">$RESPONSE$</span></dt>
+  <dd>Имя файла с параметрами компилятора или редактора связей, если он используется. Многие компиляторы
+  позволяют вместо указания всех параметров непосредственно в командной строке запуска записать их в
+  текстовый файл (т.н. <span id="light_ref20">response file</span>), а в командной строке указать только имя
+  этого файла. При большом количестве параметров этот путь предпочтительнее, поскольку размер командной строки
+  ограничен и его нельзя превышать. Настройки запуска компилятора и редактора связей
+  (см. <a href="um_3_9_6.htm" title="&sect;3.9.6. Запуск компилятора и редактора связей">&sect;3.9.6</a>) позволяют организовать передачу параметров обоими
+  способами.</dd>
+
+</dl>
+
+<p><span id="ref22">Для</span> пояснения работы описанных символических обозначений рассмотрим
+небольшой пример. Допустим, что мы используем модуль автокомпиляции, предназначенный для работы с компилятором
+<span id="light_ref22">Borland C++ 5.5</span>.
+На вкладке &laquo;<span class="menu"><a href="um_3_9_3.htm#pic2" title="Настройка путей для компилятора">компилятор</a></span>&raquo; окна настройки этого модуля
+заданы следующие пути (следует учитывать, что у модулей, рассчитанных на конкретные компиляторы, названия
+полей ввода на вкладке немного отличаются от универсальных, изображенных
+на <a href="um_3_9_3.htm#pic2" title="Настройка путей для компилятора">рис.&nbsp;489</a>, хотя смысл их сохраняется):</p>
+
+<ul>
+  <li>папка установки компилятора (папка Borland C++) &ndash; &laquo;<span class="file">C:\Program Files\bcpp55</span>&raquo;;</li>
+  <li>путь к компилятору &ndash; &laquo;<span class="file">$BC$\bin\bcc32.exe</span>&raquo;;</li>
+  <li>путь к редактору связей &ndash; &laquo;<span class="file">$BC$\bin\ilink32.exe</span>&raquo;;</li>
+  <li>папка заголовков (H-файлов) &ndash; &laquo;<span class="file">$BC$\Include</span>&raquo;;</li>
+  <li>папка библиотек &ndash; &laquo;<span class="file">$BC$\Lib</span>&raquo;.</li>
+</ul>
+
+<p class="noindent">Пусть RDS находится в папке
+&laquo;<span class="file">C:Rds</span>&raquo;, и в настройках RDS на вкладке &laquo;<span class="menu">папки</span>&raquo; указаны следующие пути:</p>
+
+<ul>
+  <li>файлы заголовков &ndash; &laquo;<span class="file">$RDS$\Include\</span>&raquo;;</li>
+  <li>настройки &ndash; &laquo;<span class="file">$RDS$\</span>&raquo;;</li>
+  <li>временные файлы &ndash; &laquo;<span class="file">$INI$\Temp\</span>&raquo;.</li>
+</ul>
+
+<p class="noindent">Пусть теперь мы компилируем модель &laquo;<span class="file">model.mdl</span>&raquo;,
+находящуюся в папке &laquo;<span class="file">C:\User\Schemes\</span>&raquo;. При вызове компилятора символические обозначения,
+перечисленные выше, будут заменены на следующие значения:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Обозначение</th>
+    <th>Подставляемое значение</th>
+  </tr>
+  <tr>
+    <td>$AUXDIR$</td>
+    <td>Нет (для Borland C++ 5.5 дополнительная папка не задается)</td>
+  </tr>
+  <tr>
+    <td>$BC$</td>
+    <td>&laquo;<span class="file">C:\Program Files\bcpp55</span>&raquo;</td>
+  </tr>
+  <tr>
+    <td>$COMP$</td>
+    <td>&laquo;<span class="file">C:\Program Files\bcpp55\bin\bcc32.exe</span>&raquo;</td>
+  </tr>
+  <tr>
+    <td>$CPPFILE$</td>
+    <td>&laquo;<span class="file">model.cpp</span>&raquo; (имя файла исходного текста формируется из имени файла модели заменой
+    расширения на &laquo;cpp&raquo;)</td>
+  </tr>
+  <tr>
+    <td>$DLLFILE$</td>
+    <td>&laquo;<span class="file">model.dll</span>&raquo;</td>
+  </tr>
+  <tr>
+    <td>$FILE$</td>
+    <td>&laquo;<span class="file">model</span>&raquo;</td>
+  </tr>
+  <tr>
+    <td>$FUNC$</td>
+    <td>&laquo;rdsbcppBlockEntryPoint&raquo; (этот имя жестко встроено в модуль автокомпиляции)</td>
+  </tr>
+  <tr>
+    <td>$FUNCLC$</td>
+    <td>&laquo;rdsbcppblockentrypoint&raquo;</td>
+  </tr>
+  <tr>
+    <td>$FUNCUC$</td>
+    <td>&laquo;RDSBCPPBLOCKENTRYPOINT&raquo;</td>
+  </tr>
+  <tr>
+    <td>$INCLUDE$</td>
+    <td>&laquo;<span class="file">C:\Program Files\bcpp55\Include</span>&raquo;</td>
+  </tr>
+  <tr>
+    <td>$LIB$</td>
+    <td>&laquo;<span class="file">C:\Program Files\bcpp55\Lib</span>&raquo;</td>
+  </tr>
+  <tr>
+    <td>$LINK$</td>
+    <td>&laquo;<span class="file">C:\Program Files\bcpp55\bin\ilink32.exe</span>&raquo;</td>
+  </tr>
+  <tr>
+    <td>$MODELDIR$</td>
+    <td>&laquo;<span class="file">C:\User\Schemes</span>&raquo;</td>
+  </tr>
+  <tr>
+    <td>$OBJFILE$</td>
+    <td>&laquo;<span class="file">model.obj</span>&raquo;</td>
+  </tr>
+  <tr>
+    <td>$POSTEXE$</td>
+    <td>Нет (для Borland C++ 5.5 дополнительная программа не задается)</td>
+  </tr>
+  <tr>
+    <td>$RDSINCLUDE$</td>
+    <td>&laquo;<span class="file">C:\Rds\Include</span>&raquo;</td>
+  </tr>
+  <tr>
+    <td>$RDSTEMP$</td>
+    <td>&laquo;<span class="file">C:\Rds\Temp</span>&raquo;</td>
+  </tr>
+  <tr>
+    <td>$RESPONSE$</td>
+    <td>&laquo;<span class="file">response.txt</span>&raquo; (это имя жестко встроено в модуль автокомпиляции)</td>
+  </tr>
+</table>
+</div></div>
+
+<p>Из таблицы видно, что вместо символических обозначений всегда подставляются полностью развернутые
+значения. Вместо обозначения &laquo;$COMP$&raquo;, например, подставится не строка
+&laquo;<span class="file">$BC$\bin\bcc32.exe</span>&raquo;, указанная в настройках в качестве пути к компилятору, а,
+поскольку &laquo;$BC$&raquo; тоже является обозначением, строка
+&laquo;<span class="file">C:\Program Files\bcpp55\bin\bcc32.exe</span>&raquo;. Точно так же путь к папке временных файлов
+RDS, обозначаемый &laquo;$RDSTEMP$&raquo;, будет развернут до полного пути
+&laquo;<span class="file">C:\Rds\Temp</span>&raquo;, несмотря на то, что в настройках RDS он указан со специфическим для
+RDS обозначением &laquo;$INI$&raquo;. Полный список символических обозначений стандартных папок
+RDS, отличающихся от обозначений модуля автокомпиляции, рассматриваемых здесь, приводится в
+<a href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">А.5.4.9 приложений</a>.</p>
+
+<p>Для вызова компилятора в настройках модуля, работающего с Borland C++ 5.5, используется следующая строка:</p>
+
+<pre class="cpp">  "$COMP$" @"$RDSTEMP$\$RESPONSE$"</pre>
+
+<p>При этом для файла параметров (response file) задан такой текст:</p>
+
+<pre class="cpp">  -I"$INCLUDE$;$INCLUDE$\sys"
+  -I"$RDSINCLUDE$"
+  -I"$MODELDIR$"
+  -O2 -Vx -Ve -X- -a8 -k- -vi -tWD -tWM -c -w-inl -w-aus -q
+  "$CPPFILE$"</pre>
+
+<p>С учетом описанных выше подстановок, в Windows для вызова компилятора будет передана строка</p>
+
+<pre class="cpp">  "C:\Program Files\bcpp55\bin\bcc32.exe" @"C:\Rds\Temp\response.txt"</pre>
+
+<p>В файл параметров &laquo;<span class="file">response.txt</span>&raquo; в папке
+&laquo;<span class="file">C:\Rds\Temp</span>&raquo; модуль запишет следующий текст:</p>
+
+<pre class="cpp">  -I"C:\Program Files\bcpp55\Include;C:\Program Files\bcpp55\Include\sys"
+  -I"C:\Rds\Include"
+  -I"C:\User\Schemes"
+  -O2 -Vx -Ve -X- -a8 -k- -vi -tWD -tWM -c -w-inl -w-aus -q
+  "model.cpp"</pre>
+
+<p>В этой командой строке и этом файле параметров указаны полные пути ко всем папкам и конкретные имена файлов,
+которые компилятор сможет обработать.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="um_3_9_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_9_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_9_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

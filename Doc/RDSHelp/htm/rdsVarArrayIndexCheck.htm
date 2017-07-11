@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.15.11. rdsVarArrayIndexCheck &ndash; проверить допустимость индексов матрицы/массива</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_15">А.5.15. Работа с матрицами и массивами</a></p>
+<div class="level"><p>А.5.15.11. <span class="cpp">rdsVarArrayIndexCheck</span> &ndash; проверить допустимость индексов матрицы/массива</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsResizeVarArray.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsCreateAndSubscribeDV.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsVarArrayIndexCheck">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.15. Работа с матрицами и массивами</h4>
+<h5>А.5.15.11. <span class="cpp">rdsVarArrayIndexCheck</span> &ndash; проверить допустимость индексов матрицы/массива</h5>
+
+
+<p>Функция <span class="cpp">rdsVarArrayIndexCheck</span> проверяет допустимость значений индексов строки и столбца
+для указанной <a href="pm_1_5.htm#light_ref14" title="тип переменной: матрица">матрицы</a> и выводит сообщение пользователю
+при необходимости.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsVarArrayIndexCheck(
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> BaseAddr,  <span class="rem">// Базовый адрес переменной</span>
+    <span class="kw">int</span> Row,          <span class="rem">// Индекс строки</span>
+    <span class="kw">int</span> Col,          <span class="rem">// Индекс столбца</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags,      <span class="rem">// Флаги RDS_VAIC_*</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> VarName,    <span class="rem">// Имя переменной или NULL</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> BlockName	  <span class="rem">// Имя блока или NULL</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">zzzz</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">BaseAddr</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></i></span>)</dt>
+  <dd>Указатель (может быть любого типа, в т.ч. и <span class="cpp">void*</span>) на данные матрицы в дереве
+  переменных блока, то есть указатель на область из восьми байтов, которые эта матрицы занимает в дереве
+  переменных (см. <a href="pm_2_5_3.htm" title="&sect;2.5.3. Доступ к матрицам и массивам">&sect;2.5.3 руководства программиста</a>).</dd>
+
+  <dt><span class="cpp">Row</span>,&nbsp;<span class="cpp">Col</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Индекс строки (<span class="cpp">Row</span>) и столбца (<span class="cpp">Col</span>) в матрице, нумерация начинается с нуля.</dd>
+
+  <dt><span class="cpp">Flags</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</dt>
+  <dd>Один или несколько объединенных битовым ИЛИ флагов, управляющих поведением функции:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref1">RDS_VAIC_SINGLE</span></span></td>
+          <td>Указанная переменная &ndash; <a href="pm_1_5.htm#light_ref13" title="тип переменной: массив">массив</a>, а не матрица.
+          Для массива вместо проверки индексов по отдельности произведение этих индексов будет
+          сравниваться с общим числом элементов (обычная проверка для массивов, имеющих, с точки зрения
+          пользователя, всего один индекс). Этот флаг также влияет на выводимое сообщение &ndash; если
+          он взведен, в тексте будет использоваться слово &laquo;массив&raquo; вместо слова
+          &laquo;матрица&raquo;.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref2">RDS_VAIC_MESSAGE</span></span></td>
+          <td>Выводить пользователю сообщение в случае недопустимости индексов.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref3">RDS_VAIC_SINGLEMSG</span></span></td>
+          <td>При взведенном <span class="cpp">RDS_VAIC_MESSAGE</span>: выводить сообщение только один раз
+          за <a href="pm_1_3.htm#ref3" title="Режим расчета">расчет</a>. До тех пор, пока расчет не будет остановлен или сброшен,
+          функция не будет выводить новых сообщений пользователю.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref4">RDS_VAIC_STOPCALC</span></span></td>
+          <td>Останавливать расчет при недопустимых индексах.</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp">VarName</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Имя переменной для отображения в сообщении пользователю, или <span class="cpp">NULL</span>,
+  если имя переменной в сообщение вставлять не нужно.</dd>
+
+
+  <dt><span class="cpp">BlockName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Имя блока, в котором произошла ошибка, для отображения сообщения пользователю, или
+  <span class="cpp">NULL</span>, если нужно использовать имя вызвавшего функцию блока.</dd>
+
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p><span class="cpp">TRUE</span> &ndash; индексы в пределах размера матрицы,
+<span class="cpp">FALSE</span> &ndash; недопустимые индексы.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Доступ к элементам матриц и массивов в RDS производится по смещениям относительно базового адреса
+(см. <a href="pm_2_5_3.htm" title="&sect;2.5.3. Доступ к матрицам и массивам">&sect;2.5.3 руководства программиста</a>) &ndash; это обеспечивает высокую скорость работы
+модели, но при этом, очевидно, никаких автоматических проверок допустимости индексов не производится.
+Функция <span class="cpp">rdsVarArrayIndexCheck</span> позволяет организовать простейшую проверку индексов
+с выводом сообщения пользователю или без него. Такая проверка может, например, использоваться для
+организации классов доступа к матрицам и массивам в моделях, создаваемых модулями автокомпиляции
+(см. <a href="pm_index.htm#light_htm:pm_4" title="Глава 4. Создание модулей автоматической компиляции">главу 4 руководства программиста</a>). При взведенном в параметре
+<span class="cpp">Flags</span> флаге <span class="cpp">RDS_VAIC_SINGLE</span> (при этом считается,
+что переменная &ndash; массив, а не матрица), функция возвращает <span class="cpp">TRUE</span>, если произведение
+параметров <span class="cpp">Row</span> и <span class="cpp">Col</span> больше или равно нуля и меньше
+произведения числа строк и числа столбцов матрицы. При сброшенном
+<span class="cpp">RDS_VAIC_SINGLE</span> функция возвращает <span class="cpp">TRUE</span>, если
+<span class="cpp">Row</span> больше или равно нуля и меньше числа строк в матрице, и при этом
+<span class="cpp">Col</span> больше или равно нуля и меньше числа столбцов в матрице.</p>
+
+<p>При взведенном флаге <span class="cpp">RDS_VAIC_MESSAGE</span> функция будет выводить сообщение вида
+&laquo;Выход индекса матрицы за диапазон: переменная <i>ИМЯ1</i>, блок
+<i>ИМЯ2</i>, размер [<i>N</i>,<i>M</i>], обращение к ячейке [<i>r</i>,<i>c</i>]&raquo;, где
+<i>ИМЯ1</i> &ndash; значение параметра <span class="cpp">VarName</span> (имя переменной),
+<i>ИМЯ2</i> &ndash; имя блока (значение параметра <span class="cpp">BlockName</span> или имя вызвавшего функцию
+блока), <i>N</i> &ndash; число строк в матрице, <i>M</i> &ndash; число столбцов, <i>r</i>
+&ndash; значение параметра <span class="cpp">Row</span>, <i>с</i> &ndash; значение параметра
+<span class="cpp">Col</span>. Если переменная не матрица, а массив, текст сообщения немного изменяется. Сообщение
+выводится в отдельном окне через функцию <span class="cpp"><a href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a></span>.</p>
+
+<p>Если взведен флаг <span class="cpp">RDS_VAIC_SINGLEMSG</span>, при запущенном расчете сообщение будет выведено
+только один раз (при самом первом вызове функции для самого первого вызвавшего ее блока), все остальные сообщения
+будут пропускаться до тех пор, пока расчет не будет остановлен или сброшен. Это может быть полезно,
+если проверка производится в реакции на выполнение такта расчета <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span> &ndash;
+если ошибка в значениях индексов будет повторяться каждый такт и при этом каждый раз будет выводиться сообщение,
+эти сообщения не дадут пользователю нормально работать.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_ARRAYCOLS.htm" title="А.5.15.1. Макрос RDS_ARRAYCOLS &ndash; число столбцов матрицы/массива">RDS_ARRAYCOLS</a></span>,
+<span class="cpp"><a href="RDS_ARRAYROWS.htm" title="А.5.15.6. Макрос RDS_ARRAYROWS &ndash; число строк матрицы/массива">RDS_ARRAYROWS</a></span>,
+<span class="cpp"><a href="rdsGetVarArrayAccessData.htm" title="А.5.15.8. rdsGetVarArrayAccessData &ndash; заполнить структуру описания матрицы/массива">rdsGetVarArrayAccessData</a></span>,
+<span class="cpp"><a href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsResizeVarArray.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsCreateAndSubscribeDV.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsVarArrayIndexCheck">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

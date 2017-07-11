@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.3.4.6. RDS_COMPM_COMPILE &ndash; компиляция моделей</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_3">А.3. События модуля автокомпиляции и связанные с ними структуры</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_3_4">А.3.4. События модуля автокомпиляции</a></p>
+<div class="level"><p>А.3.4.6. <span class="cpp">RDS_COMPM_COMPILE</span> &ndash; компиляция моделей</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_COMPM_CLOSEALLWIN.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_COMPM_DETACHBLOCK.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_COMPM_COMPILE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.3. События модуля автокомпиляции и связанные с ними структуры</h3>
+<h4 class="off">А.3.4. События модуля автокомпиляции</h4>
+<h5>А.3.4.6. <span class="cpp">RDS_COMPM_COMPILE</span> &ndash; компиляция моделей</h5>
+
+
+<p class="apphdr">Первый параметр <a href="app_a_3_1.htm" title="А.3.1. Функция модуля автокомпиляции">функции модуля</a> (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_COMPM_COMPILE</span>.</p>
+
+<p class="apphdr">Третий параметр функции модуля (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Указатель на структуру <span class="cpp"><a href="#ref3" title="Структура RDS_COMPILEDATA">RDS_COMPILEDATA</a></span>, содержащую список моделей,
+которые должны быть скомпилированы.</p>
+
+<p class="apphdr">Возвращаемое функцией модуля значение</p>
+    <div class="tableshift"><div class="tcont">
+    <table>
+      <tr>
+        <td><span class="cpp"><span id="light_ref1">RDS_COMPR_DONE</span></span></td>
+        <td>Модели скомпилированы.</td>
+      </tr>
+      <tr>
+        <td><span class="cpp"><span id="light_ref2">RDS_COMPR_ERROR</span></span></td>
+        <td>Модели не скомпилированы.</td>
+      </tr>
+    </table>
+    </div></div>
+
+<p class="apphdr">Примечания</p>
+<p>Событие <span class="cpp">RDS_COMPM_COMPILE</span> возникает в тот момент, когда нужно
+скомпилировать все обслуживаемые модулем модели. Необходимость компиляции проверяется при вызове
+реакции на другое событие, <span class="cpp"><a href="RDS_COMPM_PREPARE.htm" title="А.3.4.16. RDS_COMPM_PREPARE &ndash; подготовка модели к компиляции">RDS_COMPM_PREPARE</a></span>, которая вызывается для каждой
+модели в отдельности. В отличие от
+<span class="cpp">RDS_COMPM_PREPARE</span>, событие <span class="cpp">RDS_COMPM_COMPILE</span>
+возникает не для каждой модели, а один раз для всего модуля. Именно в реакции на него обычно
+выполняются все основные действия модуля: формирование исходного текста программы, вызов
+компилятора, обработка ошибок компиляции и т.п. Кроме того, если в параметрах модели задается
+структура
+<a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статических переменных</a> блока (а, как правило, это
+необходимо), в этой реакции всем блокам, которым назначена эта модель, присваивается указанная
+структура переменных.</p>
+
+<p><span id="ref3">В</span> <span id="ref4">параметре</span>
+<span class="cpp">ExtParam</span> при реакции на событие <span class="cpp">RDS_COMPM_COMPILE</span>
+передается указатель на структуру <span class="cpp">RDS_COMPILEDATA</span>:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span> {
+    <a class="hidden" href="RDS_COMPMODELDATA.htm#ref2" title="Указатель на RDS_COMPMODELDATA">RDS_PCOMPMODELDATA</a> *InvalidModels; <span class="rem">// Модели, которые нужно компилировать</span>
+    <span class="kw">int</span> IMCount;                       <span class="rem">// Размер массива InvalidModels</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Rebuild;                      <span class="rem">// Принудительная перекомпиляция всех моделей</span>
+  } <span id="light_ref3">RDS_COMPILEDATA</span>;
+  <span class="kw">typedef</span> RDS_COMPILEDATA *<span id="light_ref4">RDS_PCOMPILEDATA</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">InvalidModels</span>&emsp;(<span class="cpp"><i>RDS_PCOMPMODELDATA*</i></span>)</dt>
+  <dd>Массив указателей на структуры данных <span class="cpp"><a href="RDS_COMPMODELDATA.htm" title="А.3.3. RDS_COMPMODELDATA &ndash; структура данных модели">RDS_COMPMODELDATA</a></span> тех моделей,
+  которые должны быть скомпилированы. Этот массив формируется RDS, функция модуля не должна
+  менять его элементы. Модуль должен скомпилировать модели
+  <span class="cpp">InvalidModels[0]</span> &hellip; <span class="cpp">InvalidModels[IMCount-1]</span>.</dd>
+
+  <dt><span class="cpp">IMCount</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Число моделей, которые необходимо скомпилировать, то есть размер массива
+  <span class="cpp">InvalidModels</span>.</dd>
+
+  <dt><span class="cpp">Rebuild</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если пользователь выбрал принудительную компиляцию всех
+  моделей схемы, <span class="cpp">FALSE</span> в противном случае. Независимо от значения этого
+  поля, функция модуля должна скомпилировать только те модели, указатели на данные которых
+  находятся в массиве <span class="cpp">InvalidModels</span>. При принудительной компиляции этот
+  массив будет содержать все модели блоков, обслуживаемые данным модулем.</dd>
+</dl>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_COMPM_PREPARE.htm" title="А.3.4.16. RDS_COMPM_PREPARE &ndash; подготовка модели к компиляции">RDS_COMPM_PREPARE</a></span>,
+<span class="cpp"><a href="rdscompCompileModel.htm" title="А.5.34.2. rdscompCompileModel &ndash; компилировать модель">rdscompCompileModel</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_COMPM_CLOSEALLWIN.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_COMPM_DETACHBLOCK.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_COMPM_COMPILE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

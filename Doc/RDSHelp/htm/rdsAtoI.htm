@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.4.4. rdsAtoI &ndash; преобразование строки в целое число</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_4">А.5.4. Отведение памяти и преобразование строк</a></p>
+<div class="level"><p>А.5.4.4. <span class="cpp">rdsAtoI</span> &ndash; преобразование строки в целое число</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsAtoD.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsDtoA.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsAtoI">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.4. Отведение памяти и преобразование строк</h4>
+<h5>А.5.4.4. <span class="cpp">rdsAtoI</span> &ndash; преобразование строки в целое число</h5>
+
+
+<p>Функция <span class="cpp">rdsAtoI</span> переводит строку с символьным представлением целого числа в
+число типа <span class="cpp">int</span>. В строке может содержаться указание на используемую систему счисления.</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsAtoI(
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Str,     <span class="rem">// Строка с представлением числа</span>
+      <span class="kw">int</span> *pRadix    <span class="rem">// Возвращаемая система счисления</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_ISpI</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Str</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Строка с символьным представлением целого числа. В зависимости от префикса, то есть символов,
+  стоящих в строке между необязательным знаком и цифрами числа, для преобразования строки в число будут
+  использоваться следующие системы счисления:<br />
+  <div class="tablecenter"><div class="tcont">
+  <table>
+    <tr>
+      <th>Префикс</th>
+      <th>Система счисления</th>
+    </tr>
+    <tr>
+      <td class="center">0B</td>
+      <td>Двоичная (строка &laquo;0b11&raquo; будет преобразована в число 3).</td>
+    </tr>
+    <tr>
+      <td class="center">0 или 0О (ноль и латинская буква &laquo;O&raquo;)</td>
+      <td>Восьмеричная (строка &laquo;011&raquo; или &laquo;0o11&raquo; будет преобразована в число 9).</td>
+    </tr>
+    <tr>
+      <td class="center">0X или 0H</td>
+      <td>Шестнадцатеричная (строка &laquo;0x1f&raquo; будет преобразована в число 31).</td>
+    </tr>
+    <tr>
+      <td class="center">0D или без префикса</td>
+      <td>Десятичная (строка &laquo;123&raquo; или &laquo;0d123&raquo; будет преобразована в число 123).</td>
+    </tr>
+  </table>
+  </div></div>
+  Знак &laquo;+&raquo; (необязательный) или &laquo;&minus;&raquo; должен находиться перед префиксом, если
+  он есть. Таким образом, если за необязательным знаком числа в строке находится цифра 1&nbsp;&ndash;&nbsp;9,
+  то будет использована десятичная система; если цифра 0 и буква, то будет использована система счисления,
+  определяемая этой буквой; если же там будет находиться цифра 0, за которой следуют другие цифры, то будет
+  использована восьмеричная система.
+  </dd>
+
+  <dt><span class="cpp">pRadix</span>&emsp;(<span class="cpp"><i>int*</i></span>)</dt>
+  <dd>Указатель на целую переменную, в которую нужно записать основание системы счисления, использованной
+  в переданной строке для записи целого числа. Если вызывающей программе не нужна информация о системе счисления,
+  в этом параметре можно передать <span class="cpp">NULL</span>.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Полученное из строки целое число или 0, если строка не может быть преобразована в число.</p>
+
+<p class="apphdr"><span id="ref1">Примечания</span></p>
+<p>Функция <span class="cpp">rdsAtoI</span> похожа на стандартную функцию языка C
+<span class="cpp" id="light_ref1">strtol</span>,
+но поддерживает больше префиксов и двоичную систему счисления.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsAtoD.htm" title="А.5.4.3. rdsAtoD &ndash; преобразование строки в вещественное число">rdsAtoD</a></span>,
+<span class="cpp"><a href="rdsItoA.htm" title="А.5.4.11. rdsItoA &ndash; преобразование целого числа в строку">rdsItoA</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsAtoD.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsDtoA.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsAtoI">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

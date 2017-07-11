@@ -1,0 +1,432 @@
+EXPSYSTXT
+version 1 rev 0 4017.4.12.12.6.3
+
+pictures
+ begin
+  picture id 0
+   begin
+    rect from 0 0 size 29 29 solid scalewidth color 0 fill 16777215
+    rect from 2 2 size 15 15 solid scalewidth color 0
+    line from 7 2 to 7 17 solid color 0
+    line from 12 2 to 12 17 solid color 0
+    line from 2 7 to 17 7 solid color 0
+    line from 2 12 to 17 12 solid color 0
+    line from 17 10 to 26 10 solid scalewidth color 0 arrow 5 2 to
+    textblock from 2 19 size 26 9 text "dbl" font "Arial" height 9 color 0
+   end
+  picture id 1
+   begin
+    rect from 0 0 size 29 29 solid scalewidth color 0 fill 16777215
+    rect from 12 2 size 15 15 solid scalewidth color 0
+    line from 17 2 to 17 17 solid color 0
+    line from 22 2 to 22 17 solid color 0
+    line from 12 7 to 27 7 solid color 0
+    line from 12 12 to 27 12 solid color 0
+    line from 3 10 to 12 10 solid scalewidth color 0 arrow 5 2 to
+    textblock from 2 19 size 26 9 text "dbl" font "Arial" height 9 color 0
+   end
+  picture id 2
+   begin
+    rect from 0 0 size 154 189 solid color 0 fill 16777215
+    label pos 31 7 text "Пишем" font "Arial" height 13 color 0
+    ellipse from -99 -1 size 71 93 solid color 0
+    roundrect from -70 56 size 146 101 solid color 0 corner 20 20
+   end
+ end
+
+styles
+ begin
+  style name "Стандартная связь" solid color 0 arrow 10 2 dotsize 5 default conn all types
+  style name "Стандартная шина" solid width 5 color 0 arrow 10 5 dotsize 0 default bus
+ end
+
+system name "Sys1"
+ begin
+  layers
+   begin
+    layer id 1 name "Слой 1"
+    layer id 2 name "Слой 2"
+    config name "Основная" current layers *2 =1 end
+    config name "Вариант 1" layers ~2 ~1 end
+   end
+  editor
+   begin
+    window pos -3929 32 size 963 708 open printbar 592 2 layerbar 141 2 zoombar 452 2 displaybar 654 2 calcbar 11 2 status
+    field size 2000 2000
+    grid size 5 5 snap color 16711680
+    crosscolor 16711680
+    blocknames show spacing 7 font "Arial" height 9 color 0
+    varnames show font "Arial" height 8
+   end
+  print
+   begin
+   end
+  content
+   begin
+    system name "Sys1" id 2
+     begin
+      pos 65 80
+      layer id 1
+      vars
+       begin
+        double name "Output1" out menu default "0"
+        double name "Input1" in menu default "0"
+       end
+      layers
+       begin
+        layer id 1 name "Слой 1"
+        config name "Основная" current layers =1 end
+       end
+      editor
+       begin
+        window pos -2728 121 size 640 720 printbar 592 2 layerbar 141 2 zoombar 452 2 displaybar 654 2 calcbar 11 2 status
+        field size 2000 2000
+        grid size 5 5 snap color 16711680
+        crosscolor 16711680
+        blocknames show spacing 7 font "Arial" height 9 color 0
+        varnames show font "Arial" height 8
+       end
+      print
+       begin
+       end
+      content
+       begin
+        dllblock name "Block1" id 3
+         begin
+          pos 285 255
+          layer id 1
+          vars
+           begin
+            signal name "Start" in menu run default 0
+            signal name "Ready" out menu default 0
+           end
+         end
+        output name "Output1" id 18
+         begin
+          pos 435 255
+          layer id 1
+          vars
+           begin
+            double name "Output1" in menu default "0"
+           end
+         end
+        input name "Input1" id 19
+         begin
+          pos 145 275
+          layer id 1
+          vars
+           begin
+            double name "Input1" out menu default "0"
+           end
+         end
+       end
+      end
+    dllblock name "TrackBar1" id 7
+     begin
+      pos 285 50
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run default 1
+        signal name "Ready" out default 0
+        double name "Val" out menu hide default "0"
+        signal name "SetMin" in run default 0
+        signal name "SetAvg" in run default 0
+        signal name "SetMax" in run default 0
+        double name "ExtSetting" in run default "0"
+        signal name "ExtSettingS" default 0
+        double name "VMin" in run default "0"
+        double name "VMax" in run default "1"
+        signal name "DiapS" default 0
+       end
+      auto
+       begin
+        var "ExtSetting" ctrl "ExtSettingS"
+        var "VMin" ctrl "DiapS"
+        var "VMax" ctrl "DiapS"
+       end
+      dll file "$DLL$\\Common.dll" func "TrackBar" draw mouse setup "Настройка" auto
+      dlldata data 180 3D0000000000000000000000000000000000F03FC0C0C00000000000FFFFFF00E3E3E300A0A0+
+       +A00069696900F0F0F000F0F0F000000000000F0000001C0000000A00000005000000050000000700000000000000+
+       +0000E03F417269616C0000000000000000000000000000000000000000000000000000000000000000000000F3FF+
+       +FFFF0000000000000000000000000000000000000000870000000000000001000000040000000500000000000000+
+       +00000000
+      rect 70 275
+     end
+    dllblock name "DDisplay1" id 10
+     begin
+      pos 820 175
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run hide default 0
+        signal name "Ready" out hide default 0
+        double name "v" in menu run hide default "0"
+       end
+      dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "" auto
+      dlldata text
+       value prec 3 font "Arial" height 15 color 0 set 0.119767 initial
+       frame border 0 fill 12632256
+      enddlldata
+      rect 75 19
+     end
+    dllblock name "MDEdit1" id 11
+     begin
+      pos 465 30
+      layer id 1
+      name hidden
+      vars
+       begin
+        signal name "Start" in run default 0
+        signal name "Ready" out default 0
+        matrix double name "M" out menu hide default "[ ] 0"
+        matrix double name "GraphMark" in menu run default "[ ] 0"
+        matrix double oneindex name "EDbl" in menu run default "[ ] 0"
+        matrix int oneindex name "EInt" in menu run default "[ ] 0"
+        matrix double name "MInput" in default "[ ] 0"
+        signal name "MInputSet" in run default 0
+        matrix string oneindex name "RowHdr" in run default "[ ] "
+        matrix string oneindex name "ColHdr" in run default "[ ] "
+        signal name "HdrChange" default 1
+       end
+      auto
+       begin
+        var "RowHdr" ctrl "HdrChange"
+        var "ColHdr" ctrl "HdrChange"
+       end
+      picture id 0 end
+      dll file "$DLL$\\Common.dll" func "MatEdit" mouse setup "Открыть" auto
+      blob 0 0 1
+       4404000000050000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000184000000000000000
+       0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+       000000000000000000
+      endblob
+      dlldata text
+       window -2952 162 565 480 horz "50" filename ""
+       grid col 64 dec 1 open setmod
+       export label "" file ""
+       expfam label "" file ""
+       bitmap file "" color 255 horz 0 16 "0" "1" vert 0 16 "0" "1"
+       graph row autox "0.1" autoy "0.1" legend 50 xfix
+       title text "" param font "Arial" height -13 charset 1 color 0
+       layout back 16777215 frame 0 border 16777215 0
+       axisx
+       begin
+       title text "" param font "Arial" height -13 charset 1 color 0
+       scale min "0" max "1" step "1" numbers dec 0 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+       lines show color 0 style dot
+       zero show color 0 style solid
+       end
+       axisy
+       begin
+       title text "" param font "Arial" height -13 charset 1 color 0
+       scale min "0" max "1" step "1" numbers dec 0 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+       lines show color 0 style dot
+       zero show color 0 style solid
+       end
+       curblob
+       csv 44 34 0
+       extmark horz 5 1 0 vert 5 1 0 type 1 5 0
+      enddlldata
+     end
+    dllblock name "MDDisplay1" id 12
+     begin
+      pos 590 30
+      layer id 1
+      name hidden
+      vars
+       begin
+        signal name "Start" in run default 0
+        signal name "Ready" out default 0
+        matrix double name "M" in menu run hide default "[ ] 0"
+        matrix double name "GraphMark" in menu run default "[ ] 0"
+        matrix double oneindex name "EDbl" in menu run default "[ ] 0"
+        matrix int oneindex name "EInt" in menu run default "[ ] 0"
+        matrix double name "MInput" in default "[ ] 0"
+        signal name "MInputSet" in run default 0
+        matrix string oneindex name "RowHdr" in run default "[ ] "
+        matrix string oneindex name "ColHdr" in run default "[ ] "
+        signal name "HdrChange" default 1
+       end
+      auto
+       begin
+        var "RowHdr" ctrl "HdrChange"
+        var "ColHdr" ctrl "HdrChange"
+       end
+      picture id 1 end
+      dll file "$DLL$\\Common.dll" func "MatDisplay" mouse setup "Открыть" auto
+      dlldata text
+       window -2522 314 636 461 open horz "53.254438" filename ""
+       grid col 84 dec 1 open
+       export label "" file ""
+       expfam label "" file ""
+       bitmap file "" color 255 horz 0 16 "0" "1" vert 0 16 "0" "1"
+       graph row autox "0.1" autoy "0.1" legend 50 xfix
+       title text "" param font "Arial" height -13 charset 1 color 0
+       layout back 16777215 frame 0 border 16777215 0
+       axisx
+       begin
+       title text "" param font "Arial" height -13 charset 1 color 0
+       scale min "0" max "1" step "1" numbers dec 1 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+       lines show color 0 style dot
+       zero show color 0 style solid
+       end
+       axisy
+       begin
+       title text "" param font "Arial" height -13 charset 1 color 0
+       scale min "0" max "1" step "1" numbers dec 1 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+       lines show color 0 style dot
+       zero show color 0 style solid
+       end
+       line color 0 width 1 style 0 index 0
+       csv 44 34 0
+       extmark horz 5 1 0 vert 5 1 0 type 1 5 0
+      enddlldata
+     end
+    dllblock name "Block1" id 14
+     begin
+      pos 570 120
+      layer id 2
+      options sizeable
+      vars
+       begin
+        signal name "Start" in menu run default 0
+        signal name "Ready" out menu default 0
+        double name "X" in menu default "0"
+        double name "Y" out menu default "0"
+        matrix double name "Z" out menu default "[ ] 0"
+       end
+      auto
+       begin
+       end
+      picture id 2 end
+      dll file "$MODELS$\\hg.dll" func "rdsbcppBlockEntryPoint" cycle
+      autocomp file "$DLL$\\Common.dll" func "SearchComp" model "$MODELS$\\hg.mdl" alt "C:\\RDS\\Models\\hg.mdl\nUntitled.rds"
+     end
+    dllblock name "MDDisplay2" id 16
+     begin
+      pos 815 315
+      layer id 1
+      name hidden
+      vars
+       begin
+        signal name "Start" in run default 0
+        signal name "Ready" out default 0
+        matrix double name "M" in menu run hide default "[ ] 0"
+        matrix double name "GraphMark" in menu run default "[ ] 0"
+        matrix double oneindex name "EDbl" in menu run default "[ ] 0"
+        matrix int oneindex name "EInt" in menu run default "[ ] 0"
+        matrix double name "MInput" in default "[ ] 0"
+        signal name "MInputSet" in run default 0
+        matrix string oneindex name "RowHdr" in run default "[ ] "
+        matrix string oneindex name "ColHdr" in run default "[ ] "
+        signal name "HdrChange" default 1
+       end
+      auto
+       begin
+        var "RowHdr" ctrl "HdrChange"
+        var "ColHdr" ctrl "HdrChange"
+       end
+      picture id 1 end
+      dll file "$DLL$\\Common.dll" func "MatDisplay" mouse setup "Открыть" auto
+      dlldata text
+       window -2522 314 636 461 horz "53.254438" filename ""
+       grid col 84 dec 1 open
+       export label "" file ""
+       expfam label "" file ""
+       bitmap file "" color 255 horz 0 16 "0" "1" vert 0 16 "0" "1"
+       graph row autox "0.1" autoy "0.1" legend 50 xfix
+       title text "" param font "Arial" height -13 charset 1 color 0
+       layout back 16777215 frame 0 border 16777215 0
+       axisx
+       begin
+       title text "" param font "Arial" height -13 charset 1 color 0
+       scale min "0" max "1" step "1" numbers dec 1 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+       lines show color 0 style dot
+       zero show color 0 style solid
+       end
+       axisy
+       begin
+       title text "" param font "Arial" height -13 charset 1 color 0
+       scale min "0" max "1" step "1" numbers dec 1 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+       lines show color 0 style dot
+       zero show color 0 style solid
+       end
+       line color 0 width 1 style 0 index 0
+       csv 44 34 0
+       extmark horz 5 1 0 vert 5 1 0 type 1 5 0
+      enddlldata
+     end
+    dllblock name "Block2" id 17
+     begin
+      pos 570 120
+      layer id 2
+      options sizeable
+      vars
+       begin
+        signal name "Start" in menu run default 0
+        signal name "Ready" out menu default 0
+        double name "X" in menu default "0"
+        double name "Y" out menu default "0"
+        matrix double name "Z" out menu default "[ ] 0"
+       end
+      auto
+       begin
+       end
+      picture id 2 end
+     end
+    conn id 8
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "TrackBar1" var "Val" out pos 70 140 cname right up hidden
+        id 1 block "Block1" var "X" in pos -100 70 cname left up
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+    conn id 13
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "MDEdit1" var "M" out pos 20 10 cname right up hidden
+        id 1 block "MDDisplay1" var "M" in pos 0 10 cname left up hidden
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+    conn id 15
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "Block1" var "Y" out pos 155 65 cname right up
+        id 1 block "DDisplay1" var "v" in pos 0 10 cname left up hidden
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+   end
+  end
+
+additional
+ begin
+  window layer pos -2901 267 size 270 390
+  window system ""
+  window id "MDDisplay1"
+ end

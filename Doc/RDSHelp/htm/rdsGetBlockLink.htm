@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_6">А.5.6. Операции с блоками и связями</a></p>
+<div class="level"><p>А.5.6.20. <span class="cpp">rdsGetBlockLink</span> &ndash; найти очередную связь, соединенную с блоком</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsGetBlockFlags.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsGetChildBlockByName.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsGetBlockLink">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.6. Операции с блоками и связями</h4>
+<h5>А.5.6.20. <span class="cpp">rdsGetBlockLink</span> &ndash; найти очередную связь, соединенную с блоком</h5>
+
+
+<p><span id="ref1">Функция</span>
+<span class="cpp">rdsGetBlockLink</span> возвращает идентификатор очередной (первой или следующей,
+в зависимости от параметров) <a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связи</a>, соединенной с заданным блоком.</p>
+
+<pre class="cpp">  <span id="light_ref1"><a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsGetBlockLink(
+      <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,              <span class="rem">// Блок</span>
+      <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> Conn,               <span class="rem">// Предыдущая найденная связь</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Inputs,                    <span class="rem">// Перебирать связи ко входам</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Outputs,                   <span class="rem">// Перебирать связи от выходов</span>
+      <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> pPoint    <span class="rem">// Заполняемое описание точки</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_ChBhChBBPd</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Block</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор блока, с которым должна быть соединена связь.</dd>
+
+  <dt><span class="cpp">Conn</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор предыдущей найденной связи. В этом параметре передают <span class="cpp">NULL</span>,
+  если нужно найти самую первую связь, присоединенную к блоку, или результат предыдущего вызова этой функции,
+  если нужно найти следующую связь.</dd>
+
+  <dt><span class="cpp">Inputs</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если нужно искать среди связей, соединенных со входами блока
+  <span class="cpp">Block</span>, и <span class="cpp">FALSE</span>, если такие связи нужно пропускать.</dd>
+
+  <dt><span class="cpp">Outputs</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если нужно искать среди связей, соединенных с выходами блока
+  <span class="cpp">Block</span>, и <span class="cpp">FALSE</span>, если такие связи нужно пропускать.</dd>
+
+  <dt><span id="ref2"><span class="cpp">pPoint</span>&emsp;(<span class="cpp"><i><a href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a></i></span>)</span></dt>
+  <dd>Указатель на заполняемую функцией структуру описания точки связи
+  <span class="cpp" id="light_ref2"><a href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">RDS_POINTDESCRIPTION</a></span>, соединяющей блок
+  <span class="cpp">Block</span> с найденной связью. Если вызывающей программе не нужно это описание,
+  в этом параметре можно передать <span class="cpp"></span>.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Идентификатор найденной связи (<span class="cpp"><a href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></span>) или <span class="cpp">NULL</span>, если
+больше связей не найдено (то есть <span class="cpp">Conn</span> была последней связью, соединенной с
+блоком <span class="cpp">Block</span>).</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция позволяет последовательно перебрать все связи, соединенные с указанным блоком. Для
+этого нужно сначала вызвать ее с параметром <span class="cpp">NULL</span> для поиска самой первой связи,
+а затем вызывать в цикле, каждый раз передавая в параметре <span class="cpp">Conn</span> идентификатор предыдущей
+найденной связи, то есть результат ее прошлого вызова. Цикл нужно завершить тогда, когда функция вернет
+<span class="cpp">NULL</span>, указывая на то, что больше соединенных связей нет:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> cn=NULL;
+  <span class="kw">for</span>(;;)
+    { <span class="rem">// Очередная связь, соединенная с блоком Block</span>
+      cn=<a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a>(Block,cn,TRUE,TRUE,NULL);
+      <span class="kw">if</span>(cn==NULL) <span class="rem">// Больше нет связей</span>
+        <span class="kw">break</span>;
+      <span class="rem">// Какие-то действия со связью cn</span>
+        ...
+    }</pre>
+
+<p>Такой перебор может использоваться, например, для визуального выделения связей, или при анализе графа схемы.</p>
+
+<p>Параметры <span class="cpp">Inputs</span> и <span class="cpp">Outputs</span> определяют допустимые направления
+связей &ndash; включать ли в поиск связи, соединенные с входами и выходами блока соответственно. Хотя бы один
+из них должен иметь значение <span class="cpp">TRUE</span>, иначе функция не найдет ни одной связи. Функция
+перебирает связи в порядке, определяемом внутренней логикой RDS, программист никак не может
+изменить этот порядок.</p>
+
+<p class="apphdr">Пример</p>
+<p>Примеры использования функции <span class="cpp">rdsGetBlockLink</span> приведены
+в <a href="pm_2_7_4.htm" title="&sect;2.7.4. Хранение настроечных параметров в переменных блока">&sect;2.7.4</a> и
+<a href="pm_2_13_4.htm" title="&sect;2.13.4. Пример использования функций блоков для поиска пути в графе">&sect;2.13.4 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">RDS_POINTDESCRIPTION</a></span>,
+<span class="cpp"><a href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span>,
+<span class="cpp"><a href="rdsEnumConnectedBlocksByVar.htm" title="А.5.6.13. rdsEnumConnectedBlocksByVar &ndash; перебрать все блоки, соединенные с заданной переменной">rdsEnumConnectedBlocksByVar</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsGetBlockFlags.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsGetChildBlockByName.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsGetBlockLink">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

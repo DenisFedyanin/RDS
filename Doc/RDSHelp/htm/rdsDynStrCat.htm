@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.4.6. rdsDynStrCat &ndash; сложение двух строк</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_4">А.5.4. Отведение памяти и преобразование строк</a></p>
+<div class="level"><p>А.5.4.6. <span class="cpp">rdsDynStrCat</span> &ndash; сложение двух строк</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsDtoA.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsDynStrCopy.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsDynStrCat">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.4. Отведение памяти и преобразование строк</h4>
+<h5>А.5.4.6. <span class="cpp">rdsDynStrCat</span> &ndash; сложение двух строк</h5>
+
+
+<p>Функция <span class="cpp">rdsDynStrCat</span> возвращает динамическую строку, содержащую сумму
+(последовательную запись) двух переданных ей строк.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsDynStrCat(
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> String1,    <span class="rem">// Первое слагаемое-строка</span>
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> String2,    <span class="rem">// Второе слагаемое-строка</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> NullEmpty    <span class="rem">// Можно ли возвращать NULL</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_SSSB</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">String1</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на строку, с которой будет начинаться строка-результат. Значение <span class="cpp">NULL</span>
+  в этом параметре эквивалентно передаче пустой строки.</dd>
+
+  <dt><span class="cpp">String2</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку, которой будет заканчиваться строка-результат. Значение <span class="cpp">NULL</span>
+  в этом параметре эквивалентно передаче пустой строки.</dd>
+
+  <dt><span class="cpp">NullEmpty</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если вместо пустой строки функция должна возвращать <span class="cpp">NULL</span>,
+  и <span class="cpp">FALSE</span>, если она должна будет динамически отвести в памяти пустую строку (то есть
+  массив <span class="cpp">char</span> из единственного символа с нулевым кодом) и вернуть указатель на нее.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Указатель на созданную в динамической памяти строку, содержащую сумму двух переданных строк. Например, если в
+<span class="cpp">String1</span> передать &laquo;12&raquo;, а в <span class="cpp">String2</span> &ndash;
+&laquo;34&raquo;, будет создана строка &laquo;1234&raquo;.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Динамическая строка, созданная функцией <span class="cpp">rdsDynStrCat</span>, должна быть
+<span class="emph">обязательно</span> освобождена вызовом <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции приведен
+в <a href="pm_2_5_4.htm" title="&sect;2.5.4. Работа со строками">&sect;2.5.4 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a></span>,
+<span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsDtoA.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsDynStrCopy.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsDynStrCat">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

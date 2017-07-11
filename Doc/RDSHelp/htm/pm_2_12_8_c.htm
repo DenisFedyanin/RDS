@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.12.8. Реакция на действия пользователя при редактировании схемы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_12">&sect;2.12. Реакция блоков на действия пользователя</a></p>
+<div class="level"><p>&sect;2.12.8. Реакция на действия пользователя при редактировании схемы</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_12_7.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_8">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_12_8.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделями блоков,
+реагирующих на действия пользователя в режиме <a href="pm_1_3.htm#ref1" title="Режим редактирования">редактирования</a>.
+Библиотека содержит три модели:</p>
+
+<ul>
+  <li><span class="cpp">OpenSysWin</span> &ndash; модель блока, добавляющего в главное меню RDS
+  пункт для открытия родительской подсистемы (см. <a href="pm_2_12_7.htm" title="&sect;2.12.7. Добавление пунктов в системное меню RDS">&sect;2.12.7</a>,
+  теперь окно настроек автоматически открывается при добавлении блока из библиотеки);</li>
+
+  <li><span class="cpp">TestBlkMoveSetter</span> &ndash; модель блока, записывающего в динамические переменные значения скорости и
+  угла поворота (см. <a href="pm_2_6_4.htm#light_ref1" title="Пример модели подвижного блока">&sect;2.6.4</a>, теперь при удалении
+  этого блока пользователем выводится предупреждение о том, что другие блоки
+  потеряют с ном связь);</li>
+
+  <li><span class="cpp">TestBlkMoveObject</span> &ndash; модель блока, перемещающегося в окне подсистемы со
+  скоростью и в направлении, считанными из динамических переменных (изменений в модели нет);</li>
+
+  <li><span class="cpp">SimpleJoystick</span> &ndash; модель блока, изображающего двухкоординатную рукоятку,
+  которую пользователь может перемещать мышью (см. <a href="pm_2_12_2.htm#ref2" title="Пример модели двухкоординатной рукоятки">&sect;2.12.2</a>,
+  теперь блок все время остается квадратным).</li>
+</ul>
+
+<p>Изменения относительно предыдущих версий этих моделей выделены <span class="changes">цветом</span>.</p>
+
+<pre class="cpp">  <span class="rem">// Реакция на действия пользователя в режиме редактирования</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;math.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+  <span class="rem">//=========================================================================</span>
+  <span class="rem">// Реакция на ручную вставку блока</span>
+  <span class="rem">//=========================================================================</span>
+
+  <span class="rem">// Класс личной области данных блока</span>
+  <span class="kw">class</span> TOpenSysWinData
+  { <span class="kw">public</span>:
+      <a class="hidden" href="app_ids.htm#light_ref4" title="Идентификатор пункта меню">RDS_MENUITEM</a> MenuItem; <span class="rem">// Идентификатор созданного пункта меню</span>
+      <span class="rem">// Настроечные параметры</span>
+      <span class="kw">char</span> *Caption;         <span class="rem">// Название пункта</span>
+      <span class="kw">int</span> Key;               <span class="rem">// Клавиша (или 0,если ее нет)</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> KeyShifts;       <span class="rem">// Состояние Ctrl, Alt и Shift</span>
+
+      <span class="rem">// Создание пункта меню с заданными параметрами или</span>
+      <span class="rem">// изменение параметров уже созданного пункта</span>
+      <span class="kw">void</span> RegisterMenuItem(<span class="kw">void</span>);
+
+      <span class="kw">int</span> Setup(<span class="kw">void</span>);    <span class="rem">// Открыть окно настройки</span>
+      <span class="kw">void</span> SaveBin(<span class="kw">void</span>); <span class="rem">// Сохранить параметры</span>
+      <span class="kw">int</span> LoadBin(<span class="kw">void</span>);  <span class="rem">// Загрузить параметры</span>
+
+      <span class="rem">// Конструктор класса</span>
+      TOpenSysWinData(<span class="kw">void</span>)
+        { Caption=NULL;
+          Key=<span class="const">0</span>; KeyShifts=<span class="const">0</span>;
+          MenuItem=NULL;
+        };
+      <span class="rem">// Деструктор класса</span>
+      ~TOpenSysWinData()
+        { <span class="rem">// Освободить память, занятую строкой Caption</span>
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(Caption);
+          <span class="rem">// Удалить пункт меню</span>
+          <a class="hidden" href="rdsUnregisterMenuItem.htm" title="А.5.17.10. rdsUnregisterMenuItem &ndash; удалить постоянный пункт меню">rdsUnregisterMenuItem</a>(MenuItem);
+        };
+  };
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Создание или модификация пункта меню</span>
+  <span class="kw">void</span> TOpenSysWinData::RegisterMenuItem(<span class="kw">void</span>)
+  { <span class="rem">// Вспомогательная переменная для заголовка пункта меню:</span>
+    <span class="rem">// если Caption==NULL, пункт получит заголовок "Открыть окно"</span>
+    <span class="kw">char</span> *text=Caption?Caption:<span class="str">"Открыть окно"</span>;
+    <span class="rem">// Флаги пункта меню: если клавиша определена (Key!=0),</span>
+    <span class="rem">// пункт будет иметь "горячую клавишу"</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> options=Key?<a class="hidden" href="rdsChangeMenuItem.htm#light_ref6" title="RDS_MENU_SHORTCUT">RDS_MENU_SHORTCUT</a>:<span class="const">0</span>;
+
+    <span class="kw">if</span>(MenuItem) <span class="rem">// Пункт уже есть - изменяем</span>
+      <a class="hidden" href="rdsChangeMenuItem.htm" title="А.5.17.3. rdsChangeMenuItem &ndash; изменить параметры пункта меню">rdsChangeMenuItem</a>(MenuItem,text,options,Key,KeyShifts,<span class="const">0</span>,<span class="const">0</span>);
+    <span class="kw">else</span> <span class="rem">// Пункта еще нет - создаем</span>
+      MenuItem=<a class="hidden" href="rdsRegisterMenuItem.htm" title="А.5.17.8. rdsRegisterMenuItem &ndash; создать пункт системного меню RDS">rdsRegisterMenuItem</a>(text,options,Key,KeyShifts,<span class="const">0</span>,<span class="const">0</span>);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Запись параметров блока</span>
+  <span class="kw">void</span> TOpenSysWinData::SaveBin(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref12" title="Однобайтовая переменная">BYTE</a> tag; <span class="rem">// Переменная для байта тега</span>
+    <span class="kw">int</span> len=Caption?strlen(Caption):<span class="const">0</span>; <span class="rem">// Длина строки Caption</span>
+
+    tag=<span class="const">1</span>; <span class="rem">// Тег 1 – название пункта меню</span>
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;len,<span class="kw">sizeof</span>(len)); <span class="rem">// Длина строки</span>
+    <span class="kw">if</span>(len) <span class="rem">// При ненулевой длине – запись самой строки</span>
+      <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(Caption,len);
+
+    tag=<span class="const">2</span>; <span class="rem">// Тег 2 – "горячая клавиша"</span>
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;Key,<span class="kw">sizeof</span>(Key));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;KeyShifts,<span class="kw">sizeof</span>(KeyShifts));
+
+    tag=<span class="const">0</span>; <span class="rem">// Тег 0 – конец данных</span>
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag));
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Загрузка параметров блока</span>
+  <span class="kw">int</span> TOpenSysWinData::LoadBin(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref12" title="Однобайтовая переменная">BYTE</a> tag; <span class="rem">// Переменная для байта тега</span>
+    <span class="kw">int</span> len;
+
+    <span class="rem">// Прежде всего, освобождаем память, которую занимало старое</span>
+    <span class="rem">// название пункта меню – сейчас загрузится новое</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(Caption);
+    Caption=NULL;
+
+    <span class="kw">for</span>(;;)
+      { <span class="kw">if</span>(!<a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag)))
+          <span class="kw">break</span>; <span class="rem">// Тег не считан – данные неожиданно кончились</span>
+        <span class="kw">switch</span>(tag)
+          { <span class="kw">case</span> <span class="const">0</span>: <span class="rem">// Конец данных</span>
+              RegisterMenuItem(); <span class="rem">// Создаем или изменяем пункт меню</span>
+              <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+            <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Название пункта</span>
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;len,<span class="kw">sizeof</span>(len)); <span class="rem">// Читаем длину</span>
+              <span class="kw">if</span>(len) <span class="rem">// Длина ненулевая – читаем len байтов строки</span>
+                { <span class="rem">// Отводим место с учетом нуля в конце строки</span>
+                  Caption=(<span class="kw">char</span>*)<a class="hidden" href="rdsAllocate.htm" title="А.5.4.2. rdsAllocate &ndash; динамическое отведение области памяти">rdsAllocate</a>(len+<span class="const">1</span>);
+                  <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(Caption,len); <span class="rem">// Читаем строку</span>
+                  Caption[len]=<span class="const">0</span>; <span class="rem">// Дописываем нулевой байт в конец</span>
+                }
+              <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Данные "горячей клавиши"</span>
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;Key,<span class="kw">sizeof</span>(Key));
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;KeyShifts,<span class="kw">sizeof</span>(KeyShifts));
+              <span class="kw">break</span>;
+            <span class="kw">default</span>: <span class="rem">// Тег не опознан – ошибка</span>
+              <span class="kw">return</span> RDS_BFR_ERROR;
+          }
+      }
+    <span class="rem">// Вышли из цикла из-за неожиданного конца данных блока - ошибка</span>
+    <span class="kw">return</span> RDS_BFR_ERROR;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Настройка параметров блока</span>
+  <span class="kw">int</span> TOpenSysWinData::Setup(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window; <span class="rem">// Идентификатор объекта-окна</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;            <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="rem">// Создание окна</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Открытие окна"</span>);
+    <span class="rem">// Поле ввода для строки названия</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">1</span>,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,
+        <span class="str">"Текст пункта меню:"</span>,<span class="const">200</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Caption);
+    <span class="rem">// Поле ввода для "горячей клавиши"</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<a class="hidden" href="app_a_fields.htm#light_ref10" title="RDS_FORMCTRL_HOTKEY">RDS_FORMCTRL_HOTKEY</a>,
+        <span class="str">"Клавиша:"</span>,<span class="const">150</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Key);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_HKSHIFTS.htm" title="А.5.28.16. Команда RDS_FORMVAL_HKSHIFTS &ndash; состояние Ctrl, Alt и Shift в поле ввода кода клавиши">RDS_FORMVAL_HKSHIFTS</a>,KeyShifts);
+    <span class="rem">// Открытие окна</span>
+    ok=<a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Нажата кнопка OK – запись параметров в блок</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(Caption); <span class="rem">// Уничтожение старой строки</span>
+        <span class="rem">// Создание динамической копии введенной строки</span>
+        Caption=<a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a>(<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">1</span>,
+            <a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>));
+        <span class="rem">// Чтение параметров клавиши</span>
+        Key=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        KeyShifts=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_HKSHIFTS.htm" title="А.5.28.16. Команда RDS_FORMVAL_HKSHIFTS &ndash; состояние Ctrl, Alt и Shift в поле ввода кода клавиши">RDS_FORMVAL_HKSHIFTS</a>);
+        <span class="rem">// Создание пункта меню на основе изменившихся параметров</span>
+        RegisterMenuItem();
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="rem">// Возвращаемое значение</span>
+    <span class="kw">return</span> ok?<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Блок, открывающий окно родительской подсистемы</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> OpenSysWin(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Указатель на личную область данных блока,приведенный к</span>
+    <span class="rem">// правильному типу</span>
+    TOpenSysWinData *data=(TOpenSysWinData*)(BlockData-&gt;BlockData);
+    <span class="kw">switch</span>(CallMode)
+      { <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>: <span class="rem">// Инициализация</span>
+          BlockData-&gt;BlockData=data=<span class="kw">new</span> TOpenSysWinData();
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>: <span class="rem">// Очистка</span>
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>: <span class="rem">// Настройка</span>
+          <span class="kw">return</span> data-&gt;Setup();
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVEBIN.htm" title="А.2.5.6. RDS_BFM_SAVEBIN &ndash; запись данных блока в двоичном формате">RDS_BFM_SAVEBIN</a>: <span class="rem">// Сохранение параметров</span>
+          data-&gt;SaveBin();
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADBIN.htm" title="А.2.5.4. RDS_BFM_LOADBIN &ndash; загрузка данных блока в двоичном формате">RDS_BFM_LOADBIN</a>: <span class="rem">// Загрузка параметров</span>
+          <span class="kw">return</span> data-&gt;LoadBin();
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a>:<span class="rem">// Выбор пункта меню</span>
+          <a class="hidden" href="rdsOpenSystemWindow.htm" title="А.5.8.12. rdsOpenSystemWindow &ndash; открыть окно подсистемы">rdsOpenSystemWindow</a>(BlockData-&gt;Parent);
+          <span class="kw">break</span>;
+
+<div class="changes">        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MANUALINSERT.htm" title="А.2.7.2. RDS_BFM_MANUALINSERT &ndash; вставка блока пользователем">RDS_BFM_MANUALINSERT</a>: <span class="rem">// Добавление блока пользователем</span>
+          <span class="kw">if</span>( ((<a class="hidden" href="RDS_BFM_MANUALINSERT.htm#ref2" title="Указатель на RDS_MANUALINSERTDATA">RDS_PMANUALINSERTDATA</a>)ExtParam)-&gt;Single )
+            { <span class="kw">if</span>(data-&gt;Setup()) <span class="rem">// Параметры изменены</span>
+                <a class="hidden" href="rdsSetModifiedFlag.htm" title="А.5.2.36. rdsSetModifiedFlag &ndash; установка флага наличия изменений в схеме">rdsSetModifiedFlag</a>(TRUE);<span class="rem">// Взвести флаг изменений</span>
+            }
+          <span class="kw">break</span>;</div>
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span>
+
+
+  <span class="rem">//=========================================================================</span>
+  <span class="rem">// Реакция на удаление блока</span>
+  <span class="rem">//=========================================================================</span>
+
+  <span class="rem">//=========== Блок управления =============</span>
+  <span class="rem">// Структура личной области данных блока</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="rem">// Указатель на структуру подписки на скорость</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> VLink;
+    <span class="rem">// Указатель на структуру подписки на направление</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> ALink;
+  } TestBlkMoveSetterData;
+  <span class="rem">//=========================================</span>
+
+<div class="changes">  <span class="rem">// Функция обратного вызова для подсчета подписчиков</span>
+  <span class="rem">// динамической переменной</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> DynVarUsersCountEnum(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> <span class="rem">/*block*/</span>,
+      <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> <span class="rem">/*link*/</span>,<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ptr)
+  { <span class="rem">// Приводим ptr к типу "указатель на целое"</span>
+    <span class="kw">int</span> *pCount=(<span class="kw">int</span>*)ptr;
+    (*pCount)++; <span class="rem">// Увеличиваем счетчик</span>
+    <span class="kw">return</span> TRUE;
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Подсчет числа подписчиков на динамическую переменную</span>
+  <span class="kw">int</span> CountDynVarUsers(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> link)
+  { <span class="kw">int</span> count=<span class="const">0</span>;
+    <span class="rem">// Перебрать всех подписчиков переменной link</span>
+    <a class="hidden" href="rdsEnumDynVarSubscribers.htm" title="А.5.16.5. rdsEnumDynVarSubscribers &ndash; перебрать всех подписчиков переменной">rdsEnumDynVarSubscribers</a>(link,DynVarUsersCountEnum,&amp;count);
+    <span class="kw">return</span> count;
+  }
+  <span class="rem">//=========================================</span></div>
+
+  <span class="rem">// Модель блока управления</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestBlkMoveSetter(<span class="kw">int</span> CallMode,
+                                  <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                                  <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define Speed  (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define Angle  (*((double *)(pStart+10)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на личную область</span>
+    <span class="rem">// данных блока, приведенный к правильному типу</span>
+    TestBlkMoveSetterData *privdata;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Отведение памяти под личную область данных</span>
+          privdata=(TestBlkMoveSetterData*)
+                    malloc(<span class="kw">sizeof</span>(TestBlkMoveSetterData));
+          BlockData-&gt;BlockData=privdata;
+          <span class="rem">// Создание переменной для передачи скорости</span>
+          privdata-&gt;VLink=<a class="hidden" href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a>(
+                            <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,   <span class="rem">// В родительской</span>
+                            <span class="str">"BlkMove_Speed"</span>,<span class="rem">// Имя переменной</span>
+                            <span class="str">"D"</span>,            <span class="rem">// Тип double</span>
+                            TRUE,           <span class="rem">// Запрет удаления</span>
+                            NULL);          <span class="rem">// Без нач.значения</span>
+          <span class="rem">// Создание переменной для передачи направления</span>
+          privdata-&gt;ALink=<a class="hidden" href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a>(
+                            <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,
+                            <span class="str">"BlkMove_Angle"</span>,
+                            <span class="str">"D"</span>,
+                            TRUE,
+                            NULL);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка данных блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Приведение указателя на личную область данных к</span>
+          <span class="rem">// правильному типу</span>
+          privdata=(TestBlkMoveSetterData*)(BlockData-&gt;BlockData);
+          <span class="rem">// Удаление динамических переменных</span>
+          <a class="hidden" href="rdsDeleteDVByLink.htm" title="А.5.16.3. rdsDeleteDVByLink &ndash; удалить динамическую переменную и прекратить подписку на нее">rdsDeleteDVByLink</a>(privdata-&gt;VLink);
+          <a class="hidden" href="rdsDeleteDVByLink.htm" title="А.5.16.3. rdsDeleteDVByLink &ndash; удалить динамическую переменную и прекратить подписку на нее">rdsDeleteDVByLink</a>(privdata-&gt;ALink);
+          <span class="rem">// Освобождение отведенной памяти</span>
+          free(privdata);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="rem">// Приведение указателя на личную область данных к</span>
+          <span class="rem">// правильному типу</span>
+          privdata=(TestBlkMoveSetterData*)(BlockData-&gt;BlockData);
+          <span class="rem">// Проверка существования переменной направления</span>
+          <span class="kw">if</span>(privdata-&gt;ALink!=NULL &amp;&amp; privdata-&gt;ALink-&gt;Data!=NULL)
+            { <span class="rem">// Переменная существует – привести к типу double*</span>
+              <span class="kw">double</span> *pa=(<span class="kw">double</span>*)privdata-&gt;ALink-&gt;Data;
+              <span class="kw">if</span>(*pa!=Angle) <span class="rem">// Значение направления изменилось</span>
+                { <span class="rem">// Записать значение в динамическую переменную</span>
+                  *pa=Angle;
+                  <span class="rem">// Уведомить всех подписчиков об изменении</span>
+                  <a class="hidden" href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a>(privdata-&gt;ALink);
+                }
+            }
+          <span class="rem">// Проверка существования переменной скорости</span>
+          <span class="kw">if</span>(privdata-&gt;VLink!=NULL &amp;&amp; privdata-&gt;VLink-&gt;Data!=NULL)
+            { <span class="rem">// Переменная существует – привести к типу double*</span>
+              <span class="kw">double</span> *pv=(<span class="kw">double</span>*)privdata-&gt;VLink-&gt;Data;
+              <span class="kw">if</span>(*pv!=Speed)
+                { <span class="rem">// Записать значение в динамическую переменную</span>
+                  *pv=Speed;
+                  <span class="rem">// Уведомить всех подписчиков об изменении</span>
+                  <a class="hidden" href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a>(privdata-&gt;VLink);
+                }
+            }
+          <span class="kw">break</span>;
+
+<div class="changes">        <span class="rem">// Удаление блока пользователем</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MANUALDELETE.htm" title="А.2.7.1. RDS_BFM_MANUALDELETE &ndash; удаление блока пользователем">RDS_BFM_MANUALDELETE</a>:
+          <span class="rem">// Приведение указателя на личную область данных к</span>
+          <span class="rem">// правильному типу</span>
+          privdata=(TestBlkMoveSetterData*)(BlockData-&gt;BlockData);
+          <span class="rem">// Если блок удаляется в составе подсистемы,</span>
+          <span class="rem">// предупреждать не нужно</span>
+          <span class="kw">if</span>( ((<a class="hidden" href="RDS_BFM_MANUALDELETE.htm#ref2" title="Указатель на RDS_MANUALDELETEDATA">RDS_PMANUALDELETEDATA</a>)ExtParam)-&gt;WithSys)
+            <span class="kw">break</span>;
+          <span class="rem">// Считаем число подписчиков на переменные этого блока</span>
+          <span class="kw">if</span>(CountDynVarUsers(privdata-&gt;VLink)&gt;<span class="const">1</span> ||
+             CountDynVarUsers(privdata-&gt;ALink)&gt;<span class="const">1</span>)
+            <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(<span class="str">"Внимание! Этот блок предоставляет "</span>
+                          <span class="str">"данные другим блокам. Его удаление "</span>
+                          <span class="str">"приведет к их отключению."</span>,
+                          BlockData-&gt;BlockName,
+                          MB_OK | MB_ICONWARNING);
+          <span class="kw">break</span>;</div>
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef Angle</span>
+  <span class="preproc">#undef Speed</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//============ Подвижный блок =============</span>
+  <span class="rem">// Структура личной области данных блока</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="rem">// Указатель на структуру подписки на скорость</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> VLink;
+    <span class="rem">// Указатель на структуру подписки на направление</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> ALink;
+    <span class="rem">// Указатель на структуру подписки на время</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> Time;
+
+    <span class="rem">// Дополнительные поля для хранения значений синуса</span>
+    <span class="rem">// и косинуса направления движения блока</span>
+    <span class="kw">double</span> SinA;
+    <span class="kw">double</span> CosA;
+  } TestBlkMoveObjectData;
+
+  <span class="rem">// Модель перемещающегося блока</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestBlkMoveObject(<span class="kw">int</span> CallMode,
+                                  <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                                  <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x      (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define y      (*((double *)(pStart+10)))</span>
+  <span class="preproc">#define a      (*((double *)(pStart+18)))</span>
+  <span class="preproc">#define t0     (*((double *)(pStart+26)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на личную область</span>
+    <span class="rem">// данных блока, приведенный к правильному типу</span>
+    TestBlkMoveObjectData *privdata;
+    <span class="rem">// Вспомогательные переменные для скорости и времени</span>
+    <span class="kw">double</span> v,time;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Отведение памяти под личную область данных</span>
+          privdata=(TestBlkMoveObjectData*)
+                    malloc(<span class="kw">sizeof</span>(TestBlkMoveObjectData));
+          BlockData-&gt;BlockData=privdata;
+          <span class="rem">// Подписка на переменную скорости</span>
+          privdata-&gt;VLink=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(
+                          <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,    <span class="rem">// В родительской</span>
+                          <span class="str">"BlkMove_Speed"</span>, <span class="rem">// Имя переменной</span>
+                          <span class="str">"D"</span>,             <span class="rem">// Тип double</span>
+                          FALSE);          <span class="rem">// Без поиска</span>
+          <span class="rem">// Подписка на переменную направления</span>
+          privdata-&gt;ALink=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(
+                          <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,    <span class="rem">// В родительской</span>
+                          <span class="str">"BlkMove_Angle"</span>, <span class="rem">// Имя переменной</span>
+                          <span class="str">"D"</span>,             <span class="rem">// Тип double</span>
+                          FALSE);          <span class="rem">// Без поиска</span>
+          <span class="rem">// Подписка на переменную времени</span>
+          privdata-&gt;Time=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(
+                          <a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,    <span class="rem">// В родительской</span>
+                          <span class="str">"DynTime"</span>,       <span class="rem">// Имя переменной</span>
+                          <span class="str">"D"</span>,             <span class="rem">// Тип double</span>
+                          TRUE);           <span class="rem">// Поиск в иерархии</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка данных блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Приведение указателя на личную область данных к правильному типу</span>
+          privdata=(TestBlkMoveObjectData*)(BlockData-&gt;BlockData);
+          <span class="rem">// Прекращение подписки на все динамические переменные</span>
+          <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(privdata-&gt;VLink);
+          <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(privdata-&gt;ALink);
+          <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(privdata-&gt;Time);
+          <span class="rem">// Освобождение отведенной памяти</span>
+          free(privdata);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDDDD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Реакция на изменение динамической переменной</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a>:
+          <span class="rem">// Приведение указателя на личную область данных к правильному типу</span>
+          privdata=(TestBlkMoveObjectData*)(BlockData-&gt;BlockData);
+          <span class="rem">// Проверка – удалось ли подписаться на все переменные</span>
+          <span class="rem">// (если хотя бы один указатель – NULL, значит, не удалось)</span>
+          <span class="kw">if</span>(privdata-&gt;VLink==NULL || <span class="rem">// Скорость</span>
+             privdata-&gt;ALink==NULL || <span class="rem">// Направление</span>
+             privdata-&gt;Time==NULL)    <span class="rem">// Время</span>
+            <span class="kw">break</span>;
+          <span class="rem">// Проверка – существуют ли все переменные</span>
+          <span class="rem">// (если хотя бы один указатель – NULL, значит, не удалось)</span>
+          <span class="kw">if</span>(privdata-&gt;VLink-&gt;Data==NULL || <span class="rem">// Скорость</span>
+             privdata-&gt;ALink-&gt;Data==NULL || <span class="rem">// Направление</span>
+             privdata-&gt;Time-&gt;Data==NULL)    <span class="rem">// Время</span>
+            <span class="kw">break</span>;
+          <span class="rem">// Если изменилась переменная направления, нужно вычислить</span>
+          <span class="rem">// и запомнить новые значения ыинуса и косинуса угла</span>
+          <span class="kw">if</span>(ExtParam==(<span class="kw">void</span>*)(privdata-&gt;ALink))
+            { <span class="rem">// Изменилось направление – привести к типу double*</span>
+              <span class="kw">double</span> *pa=(<span class="kw">double</span>*)privdata-&gt;ALink-&gt;Data;
+              <span class="rem">// Значение угла в радианах</span>
+              a=(*pa)*M_PI/<span class="const">180.0</span>;
+              <span class="rem">// Значения синуса и косинуса</span>
+              privdata-&gt;SinA=sin(a);
+              privdata-&gt;CosA=cos(a);
+            }
+          <span class="rem">// Записать во вспомогательные переменные v и time значения</span>
+          <span class="rem">// скорости и времени</span>
+          v=*(<span class="kw">double</span>*)privdata-&gt;VLink-&gt;Data;
+          time=*(<span class="kw">double</span>*)privdata-&gt;Time-&gt;Data;
+          <span class="rem">// Вычислить новое смещение изображения блока</span>
+          x+=v*(time-t0)*privdata-&gt;CosA;
+          y-=v*(time-t0)*privdata-&gt;SinA;
+          <span class="rem">// Запомнить значение времени, для которого вычислены</span>
+          <span class="rem">// новые координаты</span>
+          t0=time;
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef t0</span>
+  <span class="preproc">#undef a</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+
+  <span class="rem">//============================================================================</span>
+  <span class="rem">// Реакция на изменение размеров блока (в двухкоординатной рукоятке)</span>
+  <span class="rem">//============================================================================</span>
+
+  <span class="rem">//====== Класс личной области данных ======</span>
+  <span class="kw">class</span> TSimpleJoystick
+  { <span class="kw">private</span>:
+      <span class="rem">// Центр круга (рукоятки) до начала перетаскивания</span>
+      <span class="kw">int</span> OldHandleX,OldHandleY;
+      <span class="rem">// Координаты курсора на момент начала перетаскивания</span>
+      <span class="kw">int</span> OldMouseX,OldMouseY;
+      <span class="rem">// Флаги фиксации одной из координат</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> LockX,LockY;
+      <span class="rem">// Идентификаторы добавленных пунктов меню</span>
+      <a class="hidden" href="app_ids.htm#light_ref4" title="Идентификатор пункта меню">RDS_MENUITEM</a> MenuLockX,MenuLockY;
+    <span class="kw">public</span>:
+      <span class="rem">// Настроечные параметры блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> BorderColor;       <span class="rem">// Цвет рамки блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> FieldColor;        <span class="rem">// Цвет прямоугольника</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> HandleColor;       <span class="rem">// Цвет круга в покое</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> MovingHandleColor; <span class="rem">// Цвет круга при таскании</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> GrayedColor;       <span class="rem">// Цвет недоступной области</span>
+      <span class="kw">int</span> HandleSize;             <span class="rem">// Диаметр круга</span>
+
+      <span class="rem">// Реакция на нажатие кнопки мыши</span>
+      <span class="kw">int</span> MouseDown(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,<span class="kw">double</span> x,<span class="kw">double</span> y,<a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> *pFlags);
+      <span class="rem">// Реакция на перемещение курсора мыши</span>
+      <span class="kw">void</span> MouseMove(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,<span class="kw">double</span> *px,<span class="kw">double</span> *py);
+      <span class="rem">// Рисование изображения блока</span>
+      <span class="kw">void</span> Draw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw,<span class="kw">double</span> x,<span class="kw">double</span> y,<a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> moving);
+      <span class="rem">// Реакция на выбор добавленного пункта меню</span>
+      <span class="kw">void</span> MenuFunction(<a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a> MenuData);
+
+<div class="changes">      <span class="rem">// Реакция на изменение размеров блока</span>
+      <span class="kw">void</span> Resizing(<a class="hidden" href="RDS_BFM_RESIZE.htm#ref3" title="Указатель на RDS_RESIZEDATA">RDS_PRESIZEDATA</a> ResData);</div>
+      <span class="rem">// Конструктор класса</span>
+      TSimpleJoystick(<span class="kw">void</span>)
+        { BorderColor=<span class="const">0</span>;          <span class="rem">// Черная рамка</span>
+          FieldColor=<span class="const">0xffffff</span>;    <span class="rem">// Белое поле</span>
+          HandleColor=<span class="const">0xff0000</span>;   <span class="rem">// Синий круг</span>
+          MovingHandleColor=<span class="const">0xff</span>; <span class="rem">// Красный при таскании</span>
+          HandleSize=<span class="const">20</span>;          <span class="rem">// Диаметр круга</span>
+          GrayedColor=<span class="const">0x7f7f7f</span>;   <span class="rem">// Серый</span>
+          LockX=LockY=FALSE;      <span class="rem">// Фиксация выключена</span>
+          <span class="rem">// Создание пунктов меню</span>
+          MenuLockX=<a class="hidden" href="rdsRegisterContextMenuItem.htm" title="А.5.17.6. rdsRegisterContextMenuItem &ndash; создать постоянный пункт контекстного меню блока">rdsRegisterContextMenuItem</a>(<span class="str">"Фиксировать X"</span>,<span class="const">1</span>,<span class="const">0</span>);
+          MenuLockY=<a class="hidden" href="rdsRegisterContextMenuItem.htm" title="А.5.17.6. rdsRegisterContextMenuItem &ndash; создать постоянный пункт контекстного меню блока">rdsRegisterContextMenuItem</a>(<span class="str">"Фиксировать Y"</span>,<span class="const">2</span>,<span class="const">0</span>);
+
+        };
+      <span class="rem">// Деструктор класса</span>
+      ~TSimpleJoystick()
+        { <span class="rem">// Уничтожение пунктов меню</span>
+          <a class="hidden" href="rdsUnregisterMenuItem.htm" title="А.5.17.10. rdsUnregisterMenuItem &ndash; удалить постоянный пункт меню">rdsUnregisterMenuItem</a>(MenuLockX);
+          <a class="hidden" href="rdsUnregisterMenuItem.htm" title="А.5.17.10. rdsUnregisterMenuItem &ndash; удалить постоянный пункт меню">rdsUnregisterMenuItem</a>(MenuLockY);
+        };
+  };
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Рисование изображения блока</span>
+  <span class="kw">void</span> TSimpleJoystick::Draw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw,
+                             <span class="kw">double</span> x,<span class="kw">double</span> y,BOOL moving)
+  { <span class="kw">int</span> hx,hy,cx,cy;
+    <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> r;
+    <span class="kw">int</span> hR=HandleSize*draw-&gt;DoubleZoom/<span class="const">2</span>; <span class="rem">// Радиус круга-рукоятки</span>
+
+    <span class="rem">// Если размер блока - нулевой, рисовать негде</span>
+    <span class="kw">if</span>(draw-&gt;Height==<span class="const">0</span> || draw-&gt;Width==<span class="const">0</span>)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Рисование поля блока</span>
+    <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,<span class="const">1</span>,BorderColor,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+    <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,FieldColor);
+    <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(draw-&gt;Left,draw-&gt;Top,
+                   draw-&gt;Left+draw-&gt;Width,draw-&gt;Top+draw-&gt;Height);
+
+    <span class="rem">// Вычисление центра прямоугольника блока</span>
+    cx=draw-&gt;Left+draw-&gt;Width/<span class="const">2</span>;
+    cy=draw-&gt;Top+draw-&gt;Height/<span class="const">2</span>;
+
+    <span class="rem">// Вычисление координат центра круга-рукоятки</span>
+    hx=cx+x*draw-&gt;Width/<span class="const">2</span>;
+    hy=cy-y*draw-&gt;Height/<span class="const">2</span>;
+
+    <span class="rem">// Установка области отсечения</span>
+    r.left=draw-&gt;Left+<span class="const">1</span>;
+    r.top=draw-&gt;Top+<span class="const">1</span>;
+    r.right=draw-&gt;Left+draw-&gt;Width-<span class="const">1</span>;
+    r.bottom=draw-&gt;Top+draw-&gt;Height-<span class="const">1</span>;
+    <a class="hidden" href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a>(&amp;r);
+
+    <span class="rem">// Рисование ограничений</span>
+    <span class="kw">if</span>(LockX||LockY) <span class="rem">// Фиксируется одна из координат</span>
+      { <span class="rem">// Установка серого цвета заливки</span>
+        <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,GrayedColor);
+        <span class="kw">if</span>(LockX) <span class="rem">// Фиксируется X</span>
+          { <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(r.left,r.top,hx-hR,r.bottom);  <span class="rem">// Слева</span>
+            <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(hx+hR,r.top,r.right,r.bottom); <span class="rem">// Справа</span>
+          }
+        <span class="kw">else</span> <span class="rem">// Фиксируется Y</span>
+          { <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(r.left,r.top,r.right,hy-hR);   <span class="rem">// Сверху</span>
+            <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(r.left,hy+hR,r.right,r.bottom);<span class="rem">// Снизу</span>
+          }
+      }
+
+    <span class="rem">// Линии перекрестия</span>
+    <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(cx,draw-&gt;Top);
+    <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(cx,draw-&gt;Top+draw-&gt;Height);
+    <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(draw-&gt;Left,cy);
+    <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(draw-&gt;Left+draw-&gt;Width,cy);
+
+    <span class="rem">// Рисование круга (цвет зависит от параметра moving)</span>
+    <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref4" title="RDS_GFSTYLE">RDS_GFSTYLE</a>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref11" title="PS_NULL">PS_NULL</a>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>);
+    <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,
+                       moving?MovingHandleColor:HandleColor);
+    <a class="hidden" href="rdsXGEllipse.htm" title="А.5.18.6. rdsXGEllipse &ndash; эллипс или окружность">rdsXGEllipse</a>(hx-hR,hy-hR,hx+hR+<span class="const">1</span>,hy+hR+<span class="const">1</span>);
+
+    <span class="rem">// Отмена отсечения</span>
+    <a class="hidden" href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a>(NULL);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Реакция на нажатие кнопки мыши</span>
+  <span class="kw">int</span> TSimpleJoystick::MouseDown(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,
+                                 <span class="kw">double</span> x,<span class="kw">double</span> y,<a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> *pFlags)
+  { <span class="kw">int</span> hx,hy,cx,cy,
+        hR=HandleSize*mouse-&gt;DoubleZoom/<span class="const">2</span>; <span class="rem">// Радиус круга</span>
+
+    <span class="rem">// Если размер - нулевой, реакция не имеет смысла</span>
+    <span class="kw">if</span>(mouse-&gt;Height==<span class="const">0</span> || mouse-&gt;Width==<span class="const">0</span>)
+      <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+    <span class="rem">// Если нажата не левая кнопка, перетаскивать не надо</span>
+    <span class="rem">// Разрешаем в этом случае вызов контекстного меню блока</span>
+    <span class="kw">if</span>(mouse-&gt;Button!=<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a>)
+      <span class="kw">return</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm#light_ref2" title="RDS_BFR_SHOWMENU">RDS_BFR_SHOWMENU</a>;
+
+    <span class="rem">// Координаты цента блока</span>
+    cx=mouse-&gt;Left+mouse-&gt;Width/<span class="const">2</span>;
+    cy=mouse-&gt;Top+mouse-&gt;Height/<span class="const">2</span>;
+    <span class="rem">// Координаты центра круга-рукоятки</span>
+    hx=cx+x*mouse-&gt;Width/<span class="const">2</span>;
+    hy=cy-y*mouse-&gt;Height/<span class="const">2</span>;
+
+    <span class="rem">// Проверка попадания курсора в круг</span>
+    <span class="kw">if</span>(abs(mouse-&gt;x-hx)&lt;=hR &amp;&amp; abs(mouse-&gt;y-hy)&lt;=hR)
+      { <span class="rem">// Курсор попал в круг</span>
+        <span class="rem">// Запоминаем координаты центр круга на момент</span>
+        <span class="rem">// начала перетаскивания</span>
+        OldHandleX=hx;
+        OldHandleY=hy;
+        <span class="rem">// Координаты курсора на начало перетаскивания</span>
+        OldMouseX=mouse-&gt;x;
+        OldMouseY=mouse-&gt;y;
+        <span class="rem">// Взводим флаг захвата мыши</span>
+        *pFlags|=<a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>;
+      }
+    <span class="rem">// Курсор не попал в рукоятку - захватывать мышь</span>
+    <span class="rem">// и подготавливать перетаскивание не нужно</span>
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Реакция на перемещение курсора мыши</span>
+  <span class="kw">void</span> TSimpleJoystick::MouseMove(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,
+                                  <span class="kw">double</span> *px,<span class="kw">double</span> *py)
+  { <span class="kw">int</span> hx,hy,cx,cy;
+
+    <span class="rem">// Если размер - нулевой, реакция не имеет смысла</span>
+    <span class="kw">if</span>(mouse-&gt;Height==<span class="const">0</span> || mouse-&gt;Width==<span class="const">0</span>)
+      { *px=*py=<span class="const">0</span>.<span class="const">0</span>;
+        <span class="kw">return</span>;
+      }
+
+    <span class="rem">// Новые координаты центра рукоятки</span>
+    hx=OldHandleX+(mouse-&gt;x-OldMouseX);
+    hy=OldHandleY+(mouse-&gt;y-OldMouseY);
+
+    <span class="rem">// Координаты центра блока</span>
+    cx=mouse-&gt;Left+mouse-&gt;Width/<span class="const">2</span>;
+    cy=mouse-&gt;Top+mouse-&gt;Height/<span class="const">2</span>;
+
+    <span class="rem">// По новым координатам центра рукоятки вычисляем соответствующие</span>
+    <span class="rem">// им вещественные значения выходов, ограничивая их</span>
+    <span class="rem">// диапазоном [-1...1]</span>
+    <span class="kw">if</span>(!LockX)
+      { *px=<span class="const">2.0</span>*(hx-cx)/mouse-&gt;Width;
+        <span class="kw">if</span>(*px&gt;<span class="const">1.0</span>) *px=<span class="const">1.0</span>;
+        <span class="kw">else</span> <span class="kw">if</span>(*px&lt;-<span class="const">1.0</span>) *px=-<span class="const">1.0</span>;
+      }
+    <span class="kw">if</span>(!LockY)
+      { *py=-<span class="const">2.0</span>*(hy-cy)/mouse-&gt;Height;
+        <span class="kw">if</span>(*py&gt;<span class="const">1.0</span>) *py=<span class="const">1.0</span>;
+        <span class="kw">else</span> <span class="kw">if</span>(*py&lt;-<span class="const">1.0</span>) *py=-<span class="const">1.0</span>;
+      }
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция реакции на выбор одного из пунктов меню</span>
+  <span class="kw">void</span> TSimpleJoystick::MenuFunction(<a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a> MenuData)
+  { <span class="kw">switch</span>(MenuData-&gt;Function)
+      { <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Выбран пункт "Фиксировать X"</span>
+          LockX=!LockX; <span class="rem">// Переключаем флаг фиксации X</span>
+          LockY=FALSE;  <span class="rem">// Отключаем фиксацию Y</span>
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Выбран пункт "Фиксировать Y"</span>
+          LockY=!LockY; <span class="rem">// Переключаем флаг фиксации Y</span>
+          LockX=FALSE;  <span class="rem">// Отключаем фиксацию X</span>
+          <span class="kw">break</span>;
+      }
+    <span class="rem">// Установка галочек у пунктов меню в зависимости от</span>
+    <span class="rem">// флагов фиксации координат</span>
+    <a class="hidden" href="rdsSetMenuItemOptions.htm" title="А.5.17.9. rdsSetMenuItemOptions &ndash; установить флаги пункта меню">rdsSetMenuItemOptions</a>(MenuLockX,LockX?<a class="hidden" href="rdsChangeMenuItem.htm#light_ref3" title="RDS_MENU_CHECKED">RDS_MENU_CHECKED</a>:<span class="const">0</span>);
+    <a class="hidden" href="rdsSetMenuItemOptions.htm" title="А.5.17.9. rdsSetMenuItemOptions &ndash; установить флаги пункта меню">rdsSetMenuItemOptions</a>(MenuLockY,LockY?<a class="hidden" href="rdsChangeMenuItem.htm#light_ref3" title="RDS_MENU_CHECKED">RDS_MENU_CHECKED</a>:<span class="const">0</span>);
+  }
+  <span class="rem">//=========================================</span>
+
+<div class="changes">  <span class="rem">// Реакция на изменение размеров блока</span>
+  <span class="kw">void</span> TSimpleJoystick::Resizing(<a class="hidden" href="RDS_BFM_RESIZE.htm#ref3" title="Указатель на RDS_RESIZEDATA">RDS_PRESIZEDATA</a> ResData)
+  {
+    <span class="kw">if</span>(ResData-&gt;HorzResize &amp;&amp; (!ResData-&gt;VertResize))
+      <span class="rem">// Перетаскивается левый или правый маркер</span>
+      ResData-&gt;newHeight=ResData-&gt;newWidth;
+    <span class="kw">else</span> <span class="kw">if</span>((!ResData-&gt;HorzResize) &amp;&amp; ResData-&gt;VertResize)
+      <span class="rem">// Перетаскивается верхний или нижний маркер</span>
+      ResData-&gt;newWidth=ResData-&gt;newHeight;
+    <span class="kw">else</span> <span class="rem">// Перетаскивается угловой маркер или размер задан точно</span>
+      { <span class="rem">// Вычисляем среднее арифметическое</span>
+        <span class="kw">int</span> avg=(ResData-&gt;newWidth+ResData-&gt;newHeight)/<span class="const">2</span>;
+        <span class="rem">// Присваиваем его ширине и высоте</span>
+        ResData-&gt;newWidth=ResData-&gt;newHeight=avg;
+      }
+  }
+  <span class="rem">//=========================================</span></div>
+  <span class="rem">// Функция модели блока</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> SimpleJoystick(<span class="kw">int</span> CallMode,
+            <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+            <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x     (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define y     (*((double *)(pStart+10)))</span>
+    <span class="rem">// Вспомогательная переменная - указатель на личную область,</span>
+    <span class="rem">//приведенный к правильному типу</span>
+    TSimpleJoystick *data=(TSimpleJoystick*)(BlockData-&gt;BlockData);
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          BlockData-&gt;BlockData=<span class="kw">new</span> TSimpleJoystick();
+          <span class="kw">break</span>;
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+        <span class="rem">// Проверка допустимости типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDD}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+        <span class="rem">// Нажатие кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a>:
+          <span class="kw">return</span> data-&gt;MouseDown((<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam,x,y,
+            &amp;(BlockData-&gt;Flags));
+        <span class="rem">// Отпускание кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEUP.htm" title="А.2.6.11. RDS_BFM_MOUSEUP &ndash; отпускание кнопки мыши">RDS_BFM_MOUSEUP</a>:
+          <span class="rem">// Снятие захвата мыши</span>
+          <a class="hidden" href="RDS_SETFLAG.htm" title="А.5.2.4. Макрос RDS_SETFLAG &ndash; установка битового флага">RDS_SETFLAG</a>(BlockData-&gt;Flags,<a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>,FALSE);
+          <span class="kw">break</span>;
+        <span class="rem">// Перемещение курсора мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEMOVE.htm" title="А.2.6.10. RDS_BFM_MOUSEMOVE &ndash; перемещение курсора мыши">RDS_BFM_MOUSEMOVE</a>:
+          <span class="rem">// Проверка: включен ли захват мыши</span>
+          <span class="kw">if</span>(BlockData-&gt;Flags &amp; <a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>)	<span class="rem">// Включен</span>
+            { <span class="rem">// Вызываем функцию реакции</span>
+              data-&gt;MouseMove((<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam,&amp;x,&amp;y);
+              Ready=<span class="const">1</span>; <span class="rem">// Взводим сигнал готовности</span>
+            }
+          <span class="kw">break</span>;
+        <span class="rem">// Рисование</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a>:
+          data-&gt;Draw((<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a>)ExtParam,x,y,
+                     BlockData-&gt;Flags &amp; <a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Выбор пользователем добавленного пункта меню</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a>:
+          data-&gt;MenuFunction((<a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a>)ExtParam);
+          <span class="kw">break</span>;
+
+<div class="changes">        <span class="rem">// Изменение размеров блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_RESIZE.htm" title="А.2.7.6. RDS_BFM_RESIZE &ndash; размер блока изменен пользователем">RDS_BFM_RESIZE</a>:
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_RESIZING.htm" title="А.2.7.7. RDS_BFM_RESIZING &ndash; изменение размеров блока пользователем">RDS_BFM_RESIZING</a>:
+          data-&gt;Resizing((<a class="hidden" href="RDS_BFM_RESIZE.htm#ref3" title="Указатель на RDS_RESIZEDATA">RDS_PRESIZEDATA</a>)ExtParam);
+          <span class="kw">break</span>;</div>
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_12_7.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_8">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

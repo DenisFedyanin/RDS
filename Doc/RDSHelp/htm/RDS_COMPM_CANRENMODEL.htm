@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.3.4.3. RDS_COMPM_CANRENMODEL &ndash; проверка возможности переименования модели</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_3">А.3. События модуля автокомпиляции и связанные с ними структуры</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_3_4">А.3.4. События модуля автокомпиляции</a></p>
+<div class="level"><p>А.3.4.3. <span class="cpp">RDS_COMPM_CANRENMODEL</span> &ndash; проверка возможности переименования модели</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_COMPM_CANATTACHBLK.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_COMPM_CLEANUP.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_COMPM_CANRENMODEL">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.3. События модуля автокомпиляции и связанные с ними структуры</h3>
+<h4 class="off">А.3.4. События модуля автокомпиляции</h4>
+<h5>А.3.4.3. <span class="cpp">RDS_COMPM_CANRENMODEL</span> &ndash; проверка возможности переименования модели</h5>
+
+
+<p class="apphdr">Первый параметр <a href="app_a_3_1.htm" title="А.3.1. Функция модуля автокомпиляции">функции модуля</a> (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_COMPM_CANRENMODEL</span>.</p>
+
+<p class="apphdr">Третий параметр функции модуля (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Указатель на структуру <span class="cpp"><a href="#ref1" title="Структура RDS_COMPMODELRENAMEDATA">RDS_COMPMODELRENAMEDATA</a></span>, содержащую старое и новое имя модели.</p>
+
+<p class="apphdr">Возвращаемое функцией модуля значение</p>
+<p>Не используется, можно возвращать любое значение.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Событие <span class="cpp">RDS_COMPM_CANRENMODEL</span> возникает перед переименованием модели,
+то есть перед тем, как имя модели будет изменено сервисной функцией
+<span class="cpp"><a href="rdscompRenameModel.htm" title="А.5.34.8. rdscompRenameModel &ndash; переименовать модель">rdscompRenameModel</a></span>. Реагируя на это событие, модуль автокомпиляции
+может разрешить или запретить переименование модели. Если новое имя модели совпадает с
+каким-либо уже используемым именем модели в этом же модуле, при определенных параметрах функции
+<span class="cpp">rdscompRenameModel</span> переименованная модель может заменить собой модель с
+совпавшим именем, то есть все блоки, ранее обслуживавшиеся той моделью, теперь будут
+обслуживаться переименованной.</p>
+
+<p><span id="ref1">В</span> <span id="ref2">параметре</span>
+<span class="cpp">ExtParam</span> при реакции на событие <span class="cpp">RDS_COMPM_CANRENMODEL</span>
+передается указатель на структуру <span class="cpp">RDS_COMPMODELRENAMEDATA</span> (эта же структура
+используется в реакции на событие <span class="cpp"><a href="RDS_COMPM_MODELRENAMED.htm" title="А.3.4.14. RDS_COMPM_MODELRENAMED &ndash; модель переименована">RDS_COMPM_MODELRENAMED</a></span>):</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span> {
+    <a class="hidden" href="RDS_COMPMODELDATA.htm#ref2" title="Указатель на RDS_COMPMODELDATA">RDS_PCOMPMODELDATA</a> Model; <span class="rem">// Данные переименовываемой</span>
+                              <span class="rem">// (переименованной) модели</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> OldModelName;       <span class="rem">// Старое имя модели</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> NewModelName;       <span class="rem">// Новое имя модели</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> AllowRename;         <span class="rem">// Переименование разрешено</span>
+                              <span class="rem">// (возврат для RDS_COMPM_CANRENMODEL)</span>
+  } <span id="light_ref1">RDS_COMPMODELRENAMEDATA</span>;
+  <span class="kw">typedef</span> RDS_COMPMODELRENAMEDATA *<span id="light_ref2">RDS_PCOMPMODELRENAMEDATA</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">Model</span>&emsp;(<span class="cpp"><i>RDS_PCOMPMODELDATA</i></span>)</dt>
+  <dd>Указатель на структуру данных модели <span class="cpp"><a href="RDS_COMPMODELDATA.htm" title="А.3.3. RDS_COMPMODELDATA &ndash; структура данных модели">RDS_COMPMODELDATA</a></span>, которая
+  переименовывается (в реакции на <span class="cpp"><a href="#top">RDS_COMPM_CANRENMODEL</a></span>)
+  или уже переименована (в реакции на <span class="cpp"><a href="RDS_COMPM_MODELRENAMED.htm" title="А.3.4.14. RDS_COMPM_MODELRENAMED &ndash; модель переименована">RDS_COMPM_MODELRENAMED</a></span>).</dd>
+
+  <dt><span class="cpp">OldModelName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку во внутренней памяти RDS, содержащую имя модели до переименования.
+  Функция модуля не должна изменять это поле.</dd>
+
+  <dt><span class="cpp">NewModelName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку во внутренней памяти RDS, содержащую имя модели после переименования.
+  Функция модуля не должна изменять это поле.</dd>
+
+  <dt><span class="cpp">AllowRename</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd>Возвращаемый флаг разрешения переименования (только в реакции на
+  <span class="cpp">RDS_COMPM_CANRENMODEL</span>). По умолчанию в этом поле находится значение
+  <span class="cpp">TRUE</span>, означающее, что переименование разрешено. Если переименование запрещено,
+  функция модуля должна записать в это поле значение <span class="cpp">FALSE</span>.</dd>
+
+</dl>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_COMPM_MODELRENAMED.htm" title="А.3.4.14. RDS_COMPM_MODELRENAMED &ndash; модель переименована">RDS_COMPM_MODELRENAMED</a></span>,
+<span class="cpp"><a href="rdscompRenameModel.htm" title="А.5.34.8. rdscompRenameModel &ndash; переименовать модель">rdscompRenameModel</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_COMPM_CANATTACHBLK.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_COMPM_CLEANUP.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_COMPM_CANRENMODEL">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

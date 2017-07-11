@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.12.8. Реакция на действия пользователя при редактировании схемы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_12">&sect;2.12. Реакция блоков на действия пользователя</a></p>
+<div class="level"><p>&sect;2.12.8. Реакция на действия пользователя при редактировании схемы</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_12_7.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_8">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_12_8_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.12. Реакция блоков на действия пользователя</h3>
+<h4>&sect;2.12.8. Реакция на действия пользователя при редактировании схемы</h4>
+<p class="abstract">Рассматриваются различные реакции модели на действия пользователя, связанные с редактированием схемы:
+                добавлением и удалением блоков, изменением их размера и т.п. В рассмотренные ранее примеры добавляются новые
+                функции, влияющие на редактирование схемы пользователем.</p>
+
+
+<p>Реакция модели блока на действия пользователя в режиме <a href="pm_1_3.htm#ref1" title="Режим редактирования">редактирования</a>
+существенно отличается от реакции в режимах <a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a> и <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a>.
+В двух последних режимах пользователь управляет работой схемы &ndash; нажимает кнопки, перемещает рукоятки и т.п.,
+и реакции моделей, предусмотренные в RDS, ориентированы именно на эти действия. В режиме
+редактирования же пользователь собирает схему: добавляет и удаляет блоки, перемещает их, изменяет их параметры и
+названия.
+<span id="ref1">Для</span>
+того, чтобы облегчить пользователю редактирование схемы и, при необходимости, частично автоматизировать
+его работу, модель блока может реагировать на эти действия. Такие реакции также иногда применяются в тех
+случаях, когда RDS работает
+<a href="pm_index.htm#light_htm:pm_3" title="Глава 3. Управление RDS из других приложений">под управлением внешней программы</a>
+через библиотеку &laquo;<span class="file"><span id="">RdsCtrl.h</span></span>&raquo;
+&ndash; например, для того, чтобы
+ставить управляющую программу в известность о добавлении и удалении блоков схемы.</p>
+
+<p>Мы уже рассматривали некоторые реакции на действия пользователя в режиме редактирования, в том
+числе и используемый практически в каждом более-менее сложном блоке вызов функции настройки
+<span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>. Реакции на вывод всплывающей подсказки
+<span class="cpp"><a href="RDS_BFM_POPUPHINT.htm" title="А.2.6.12. RDS_BFM_POPUPHINT &ndash; вывод всплывающей подсказки">RDS_BFM_POPUPHINT</a></span>, открытие контекстного меню блока
+<span class="cpp"><a href="RDS_BFM_CONTEXTPOPUP.htm" title="А.2.6.2. RDS_BFM_CONTEXTPOPUP &ndash; вызов контекстного меню блока">RDS_BFM_CONTEXTPOPUP</a></span> и выбор пункта меню
+<span class="cpp"><a href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a></span> вызываются в любом режиме RDS, поэтому их тоже
+можно отнести к реакциям в режиме редактирования, тем более, что они чаще всего используются именно
+для облегчения работы пользователя при сборке и настройке схемы. Также нами уже рассмотрена реакция
+на выбор блока мышью <span class="cpp"><a href="RDS_BFM_MOUSESELECT.htm" title="А.2.7.3. RDS_BFM_MOUSESELECT &ndash; возможность выбора блока мышью">RDS_BFM_MOUSESELECT</a></span> (см. <a href="pm_2_12_3.htm#ref16" title="Пример использования реакции RDS_BFM_MOUSESELECT">&sect;2.12.3</a>),
+позволяющая определить, относится ли конкретная точка внутри описывающего прямоугольника блока к
+изображению этого блока и может ли он быть выбран щелчком по этой точке. В RDS предусмотрено еще несколько
+реакций, которые мы здесь и рассмотрим.</p>
+
+<p>В <a href="pm_2_12_7.htm" title="&sect;2.12.7. Добавление пунктов в системное меню RDS">&sect;2.12.7</a> мы создали блок, добавляющий в системное меню
+RDS пункт для открытия окна
+<a href="pm_1_2.htm#ref7" title="Родительская подсистема">родительской подсистемы</a>, причем название пункта и его
+&laquo;горячая клавиша&raquo; задаются в настройках блока. Если записать этот блок в
+<a href="um_index.htm#light_htm:um_2_16" title="&sect;2.16. Создание и редактирование библиотек и вкладок панели блоков">библиотеку</a>, пользователь сможет легко
+&laquo;вытаскивать&raquo; его оттуда и добавлять в важные подсистемы, которые он хотел бы
+быстро открывать нажатием какого-либо сочетания клавиш. Однако, в библиотеке блок будет записан с
+какими-то конкретными настройками, поэтому пользователю придется после каждой вставки блока
+из библиотеки открывать окно его настроек и менять название пункта меню и связанное с ним сочетание клавиш.
+Было бы логично автоматически открывать окно настроек блока при добавлении его в схему.
+Воспользуемся для этого специальной реакцией RDS <span class="cpp"><span id="light_ref2"><a href="RDS_BFM_MANUALINSERT.htm" title="А.2.7.2. RDS_BFM_MANUALINSERT &ndash; вставка блока пользователем">RDS_BFM_MANUALINSERT</a></span></span>,
+которая вызывается сразу после того, как пользователь загрузил в схему новый блок из файла,
+из библиотеки или вставил его из буфера обмена (заметим, что эта реакция не вызывается,
+если блок появляется в схеме при добавлении в нее подсистемы, внутри которой он содержится).</p>
+
+<p><span id="ref3">Добавим</span>
+в оператор <span class="cpp">switch</span> внутри функции модели
+<span class="cpp"><a href="pm_2_12_7.htm#ref15" title="Функция модели блока, открывающего окно родительской подсистемы">OpenSysWin</a></span> новый оператор <span class="cpp">case</span>:</p>
+
+<pre class="cpp">      <span class="rem">// Добавление блока пользователем</span>
+      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MANUALINSERT.htm" title="А.2.7.2. RDS_BFM_MANUALINSERT &ndash; вставка блока пользователем">RDS_BFM_MANUALINSERT</a>:
+        <span class="kw">if</span>(data-&gt;Setup()) <span class="rem">// Параметры изменены</span>
+          <span id="light_ref4"><a class="hidden" href="rdsSetModifiedFlag.htm" title="А.5.2.36. rdsSetModifiedFlag &ndash; установка флага наличия изменений в схеме">rdsSetModifiedFlag</a></span>(TRUE); <span class="rem">// Взвести флаг изменений</span>
+        <span class="kw">break</span>;</pre>
+
+<p>Теперь, если блок будет добавлен в схему, модель вызовет функцию <span class="cpp">Setup</span> класса
+личной области данных блока, которая открывает окно настройки и возвращает ненулевое значение,
+если параметры в нем были изменены. При этом вызовется сервисная функция RDS
+<span id=""><span class="cpp"><a href="rdsSetModifiedFlag.htm" title="А.5.2.36. rdsSetModifiedFlag &ndash; установка флага наличия изменений в схеме">rdsSetModifiedFlag</a></span></span> с параметром
+<span class="cpp">TRUE</span>, которая взведет флаг наличия изменений в схеме. В реакции
+<span class="cpp"><a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span> нам не приходилось взводить этот флаг вручную: при возврате
+функцией модели, вызванной для этой реакции, ненулевого значения RDS автоматически взводил этот флаг
+и предупреждал пользователя, если он хотел завершить работу со схемой, не сохранив изменения. В реакции
+<span class="cpp"><a class="hidden" href="RDS_BFM_MANUALINSERT.htm" title="А.2.7.2. RDS_BFM_MANUALINSERT &ndash; вставка блока пользователем">RDS_BFM_MANUALINSERT</a></span> это не предусмотрено, поэтому флаг приходится взводить при
+помощи сервисной функции.</p>
+
+<p>Проверяя работу измененной модели блока, можно заметить в ней один недостаток. Если пользователь выделит
+несколько таких блоков, скопирует их в буфер обмена, а затем вставит его содержимое в какую-либо подсистему,
+окно настройки откроется столько раз, сколько блоков было в буфере обмена. Реакция
+<span class="cpp"><a class="hidden" href="RDS_BFM_MANUALINSERT.htm" title="А.2.7.2. RDS_BFM_MANUALINSERT &ndash; вставка блока пользователем">RDS_BFM_MANUALINSERT</a></span> будет вызвана для каждого вставляемого блока, и
+каждый раз функция <span class="cpp">Setup</span> будет открывать окно настройки. Можно не обращать внимания
+на этот недостаток, поскольку в подсистеме не должно быть более одного такого блока &ndash;
+помещать в подсистему несколько блоков, открывающих ее окно, бессмысленно. Однако, можно и исправить его,
+проанализировав поля структуры <span class="cpp"><span id="light_ref5"><a href="RDS_BFM_MANUALINSERT.htm#ref1" title="Структура RDS_MANUALINSERTDATA">RDS_MANUALINSERTDATA</a></span></span>, указатель на которую передается в
+<span class="cpp">ExtParam</span> при реакции на событие <span class="cpp"><a class="hidden" href="RDS_BFM_MANUALINSERT.htm" title="А.2.7.2. RDS_BFM_MANUALINSERT &ndash; вставка блока пользователем">RDS_BFM_MANUALINSERT</a></span>.
+Эта структура описана в &laquo;<span class="file">RdsDef.h</span>&raquo; следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="kw">int</span> Reason;  <span class="rem">// Причина добавления: загрузка из файла</span>
+                 <span class="rem">// (</span><a class="hidden" href="rdsGetSystemInt.htm#light_ref19" title="RDS_LS_LOADFROMFILE"><span class="rem">RDS_LS_LOADFROMFILE</span></a><span class="rem">) или из буфера</span>
+                 <span class="rem">// обмена (</span><a class="hidden" href="rdsGetSystemInt.htm#light_ref17" title="RDS_LS_LOADCLIPBRD"><span class="rem">RDS_LS_LOADCLIPBRD</span></a><span class="rem">)</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Single; <span class="rem">// Добавляется единственный блок</span>
+  } <a class="hidden" href="RDS_BFM_MANUALINSERT.htm#ref1" title="Структура RDS_MANUALINSERTDATA">RDS_MANUALINSERTDATA</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_BFM_MANUALINSERT.htm#ref1" title="Структура RDS_MANUALINSERTDATA">RDS_MANUALINSERTDATA</a> *<a class="hidden" href="RDS_BFM_MANUALINSERT.htm#ref2" title="Указатель на RDS_MANUALINSERTDATA">RDS_PMANUALINSERTDATA</a>;</pre>
+
+<p>Нам нужно проверить значение поля <span class="cpp">Single</span> и открывать окно настроек только
+в том случае, если оно истинно (<span class="cpp">TRUE</span>). Если оно ложно, значит, в
+схему добавляется сразу несколько блоков, и окно открывать не нужно. В приведенный выше оператор
+<span class="cpp">case</span> необходимо внести следующие <span class="changes">изменения</span>:</p>
+
+<pre class="cpp">      <span class="rem">// Добавление блока пользователем</span>
+      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MANUALINSERT.htm" title="А.2.7.2. RDS_BFM_MANUALINSERT &ndash; вставка блока пользователем">RDS_BFM_MANUALINSERT</a>:
+        <span class="changes"><span class="kw">if</span>( ((<a class="hidden" href="RDS_BFM_MANUALINSERT.htm#ref2" title="Указатель на RDS_MANUALINSERTDATA">RDS_PMANUALINSERTDATA</a>)ExtParam)-&gt;Single )</span>
+          <span class="changes">{</span> <span class="kw">if</span>(data-&gt;Setup()) <span class="rem">// Параметры изменены</span>
+              <a class="hidden" href="rdsSetModifiedFlag.htm" title="А.5.2.36. rdsSetModifiedFlag &ndash; установка флага наличия изменений в схеме">rdsSetModifiedFlag</a>(TRUE);<span class="rem">// Взвести флаг изменений</span>
+          <span class="changes">}</span>
+        <span class="kw">break</span>;</pre>
+
+<p>Теперь вызов функции настройки заключен внутрь оператора <span class="cpp">if</span>, который проверяет значение
+поля <span class="cpp">Single</span> переданной структуры, предварительно приведя
+<span class="cpp">ExtParam</span> к правильному типу.</p>
+
+<p>Кроме добавления блоков в схему иногда имеет смысл реагировать на их удаление, например,
+чтобы предупредить пользователя об изменениях работы схемы, которые удаление этого блока может повлечь.
+Для этого используется реакция <span class="cpp"><span id="light_ref6"><a href="RDS_BFM_MANUALDELETE.htm" title="А.2.7.1. RDS_BFM_MANUALDELETE &ndash; удаление блока пользователем">RDS_BFM_MANUALDELETE</a></span></span> &ndash;
+RDS вызывает модель блока в этом режиме непосредственно перед удалением блока из схемы по
+команде пользователя (при удалении подсистемы в этом режиме также вызываются модели всех ее
+внутренних блоков). Следует помнить, что модель, реагируя на этот вызов, не может отменить удаление блока &ndash;
+оно будет выполнено, независимо от того, что будет делать функция модели в этой реакции и какое значение
+она вернет.</p>
+
+<p>Не следует путать реакции <span class="cpp"><a class="hidden" href="RDS_BFM_MANUALDELETE.htm" title="А.2.7.1. RDS_BFM_MANUALDELETE &ndash; удаление блока пользователем">RDS_BFM_MANUALDELETE</a></span> и
+<span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span>. Первая вызывается только при удалении блока пользователем вручную,
+вторая же &ndash; при любом отключении модели от блока. В реакции <span class="cpp"><a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span>
+невозможно определить, по какой причине отключается модель: из-за удаления блока, из-за подключения к
+нему другой функции модели, при закрытии RDS и т.д.</p>
+
+<p>Рассмотрим пример, в котором будем реагировать на удаление блока.
+В <a href="pm_2_6_4.htm#light_ref1" title="Пример модели подвижного блока">&sect;2.6.4</a> мы создали пару блоков, один из которых
+перемещается в окне подсистемы, а второй задает скорость и направление его движения через пару
+<a href="pm_2_6_1.htm" title="&sect;2.6.1. Использование динамических переменных">динамических переменных</a>. Если удалить из подсистемы блок-задатчик,
+подвижный блок прекратит работу, поскольку не сможет получать значения скорости и направления.
+Будем предупреждать об этом пользователя, выводя ему текстовое сообщение.</p>
+
+<p>Прежде, чем предупреждать пользователя о последствиях удаления этого блока, необходимо проверить,
+подписан ли какой-либо другой блок на созданные им динамические переменные. Если переменными никто не
+пользуется, блок можно удалять без предупреждения &ndash; на другие блоки это не повлияет. Мы будем
+подсчитывать число подписчиков на каждую динамическую переменных блока. Один подписчик всегда будет обнаружен &ndash;
+это сам создавший переменные блок. Если число подписчиков окажется большим или равным двум,
+значит, на переменные подписан кто-то еще, и об этом необходимо предупредить пользователя.</p>
+
+<p>В RDS нет сервисной функции, определяющей число подписчиков на динамическую переменную, однако,
+есть функция <span class="cpp"><span id="light_ref7"><a href="rdsEnumDynVarSubscribers.htm" title="А.5.16.5. rdsEnumDynVarSubscribers &ndash; перебрать всех подписчиков переменной">rdsEnumDynVarSubscribers</a></span></span>, перечисляющая всех подписчиков
+(то есть вызывающая для каждого блока-подписчика указанную функцию обратного вызова). Ей мы
+и воспользуемся. Сначала напишем функцию обратного вызова &ndash; она должна иметь следующий формат:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции</i>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block,    <span class="rem">// Блок-подписчик</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> link, <span class="rem">// Связь с переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ptr);          <span class="rem">// Дополнительный параметр</span></pre>
+
+<p>В первом параметре функции передается идентификатор обнаруженного блока-подписчика, во втором &ndash;
+указатель на структуру подписки на динамическую переменную, подписчики которой перечисляются, в третьем
+&ndash; дополнительный указатель произвольного типа, который передается в функцию
+<span class="cpp"><a class="hidden" href="rdsEnumDynVarSubscribers.htm" title="А.5.16.5. rdsEnumDynVarSubscribers &ndash; перебрать всех подписчиков переменной">rdsEnumDynVarSubscribers</a></span> при ее вызове и переносится в функцию обратного
+вызова без изменений. Мы в этом третьем параметре будем передавать указатель на целое число,
+которое функция обратного вызова будет увеличивать на единицу для каждого подписчика &ndash; таким
+образом, мы сможем их сосчитать. Возвращаемое функцией обратного вызова значение указывает на
+необходимость остановить перебор подписчиков (<span class="cpp">FALSE</span>) или продолжить его
+(<span class="cpp">TRUE</span>). Нам не нужно останавливать перебор, поэтому мы всегда будем возвращать
+<span class="cpp">TRUE</span>.</p>
+
+<p>Функция обратного вызова будет иметь следующий вид:</p>
+
+<pre class="cpp">  <span class="rem">// Функция обратного вызова для подсчета подписчиков динамической переменной</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> DynVarUsersCountEnum(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> <span class="rem">/*block*/</span>,
+      <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> <span class="rem">/*link*/</span>,<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ptr)
+  { <span class="rem">// Приводим ptr к типу "указатель на целое"</span>
+    <span class="kw">int</span> *pCount=(<span class="kw">int</span>*)ptr;
+    (*pCount)++; <span class="rem">// Увеличиваем счетчик</span>
+    <span class="kw">return</span> TRUE;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Теперь напишем функцию, которая, пользуясь <span class="cpp">DynVarUsersCountEnum</span>, вернет
+число подписчиков на заданную переменную. Она будет совсем простой:</p>
+
+<pre class="cpp">  <span class="rem">// Подсчет числа подписчиков на динамическую переменную</span>
+  <span class="kw">int</span> CountDynVarUsers(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> link)
+  { <span class="kw">int</span> count=<span class="const">0</span>;
+    <span class="rem">// Перебрать всех подписчиков переменной link</span>
+    <a class="hidden" href="rdsEnumDynVarSubscribers.htm" title="А.5.16.5. rdsEnumDynVarSubscribers &ndash; перебрать всех подписчиков переменной">rdsEnumDynVarSubscribers</a>(link,DynVarUsersCountEnum,&amp;count);
+    <span class="kw">return</span> count;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Используемая нами сервисная функция <span class="cpp"><a class="hidden" href="rdsEnumDynVarSubscribers.htm" title="А.5.16.5. rdsEnumDynVarSubscribers &ndash; перебрать всех подписчиков переменной">rdsEnumDynVarSubscribers</a></span> принимает три
+параметра. Первый &ndash; указатель на структуру подписки на переменную, подписчиков которой
+нужно перечислить. Второй &ndash; функция обратного вызова (точнее, указатель на нее), которую нужно
+вызвать для каждого подписчика. Третий &ndash; указатель произвольного типа, который без изменений
+передается в третий параметр функции обратного вызова. В нашем случае это указатель на целую переменную &ndash;
+счетчик подписчиков. После перебора всех подписчиков в переменной <span class="cpp">count</span> будет находиться
+их число, которое функция и возвращает.</p>
+
+<p>Теперь внесем изменения в модель. В оператор <span class="cpp">switch</span> функции модели задатчика
+<span class="cpp">TestBlkMoveSetter</span> необходимо добавить новый оператор <span class="cpp">case</span>:</p>
+
+<pre class="cpp">        <span class="rem">// Удаление блока пользователем</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MANUALDELETE.htm" title="А.2.7.1. RDS_BFM_MANUALDELETE &ndash; удаление блока пользователем">RDS_BFM_MANUALDELETE</a>:
+          <span class="rem">// Приведение указателя на личную область данных к</span>
+          <span class="rem">// правильному типу</span>
+          privdata=(TestBlkMoveSetterData*)(BlockData-&gt;BlockData);
+          <span class="rem">// Если блок удаляется в составе подсистемы,</span>
+          <span class="rem">// предупреждать не нужно</span>
+          <span class="kw">if</span>( ((<span id="light_ref8"><a class="hidden" href="RDS_BFM_MANUALDELETE.htm#ref2" title="Указатель на RDS_MANUALDELETEDATA">RDS_PMANUALDELETEDATA</a></span>)ExtParam)-&gt;WithSys)
+            <span class="kw">break</span>;
+          <span class="rem">// Считаем число подписчиков на переменные этого блока</span>
+          <span class="kw">if</span>(CountDynVarUsers(privdata-&gt;VLink)&gt;<span class="const">1</span> ||
+             CountDynVarUsers(privdata-&gt;ALink)&gt;<span class="const">1</span>)
+            <span id="light_ref9"><a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a></span>(<span class="str">"Внимание! Этот блок предоставляет "</span>
+                          <span class="str">"данные другим блокам. Его удаление "</span>
+                          <span class="str">"приведет к их отключению."</span>,
+                          BlockData-&gt;BlockName,
+                          MB_OK | MB_ICONWARNING);
+          <span class="kw">break</span>;</pre>
+
+<p>Прежде всего, мы проверяем, что удаляется: сам блок-задатчик или вся подсистема, в которой он содержится.
+В последнем случае вместе с ним будут удалены и все блоки, которые могли пользоваться его
+динамическими переменными (они создаются задатчиком в родительской подсистеме), поэтому никаких
+предупреждений выводить не нужно. Для этой проверки анализируется структура
+<span class="cpp"><span id="light_ref10"><a href="RDS_BFM_MANUALDELETE.htm#ref1" title="Структура RDS_MANUALDELETEDATA">RDS_MANUALDELETEDATA</a></span></span>, указатель на которую передается в
+<span class="cpp">ExtParam</span> в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_MANUALDELETE.htm" title="А.2.7.1. RDS_BFM_MANUALDELETE &ndash; удаление блока пользователем">RDS_BFM_MANUALDELETE</a></span>. Эта
+структура описана в &laquo;<span class="file">RdsDef.h</span>&raquo; следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Single;  <span class="rem">// Удаляется один блок (TRUE)</span>
+                  <span class="rem">// или несколько (FALSE)</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> WithSys; <span class="rem">// Удаляется внутри подсистемы (TRUE)</span>
+                  <span class="rem">// или самостоятельно, то есть один или в группе</span>
+                  <span class="rem">// выделенных блоков (FALSE)</span>
+  } <a class="hidden" href="RDS_BFM_MANUALDELETE.htm#ref1" title="Структура RDS_MANUALDELETEDATA">RDS_MANUALDELETEDATA</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_BFM_MANUALDELETE.htm#ref1" title="Структура RDS_MANUALDELETEDATA">RDS_MANUALDELETEDATA</a> *<a class="hidden" href="RDS_BFM_MANUALDELETE.htm#ref2" title="Указатель на RDS_MANUALDELETEDATA">RDS_PMANUALDELETEDATA</a>;</pre>
+
+<p>Нас в этой структуре интересует поле <span class="cpp">WithSys</span>, значение
+<span class="cpp">TRUE</span> которого указывает на удаление блока в составе подсистемы. Если это
+так, реакция завершается оператором <span class="cpp">break</span>. В противном случае подсчитывается
+число подписчиков на две созданные блоком динамические переменные, и, если хотя бы одно из этих чисел
+больше единицы (то есть на переменную подписан кто-то кроме создавшего ее блока), выводится сообщение
+пользователю.</p>
+
+<p>Еще одно событие, реакцию на которое достаточно часто включают в модели блоков, это
+изменение размеров блока. На самом деле, это не одна, а две реакции. Одна из них &ndash;
+<span class="cpp"><span id="light_ref11"><a href="RDS_BFM_RESIZE.htm" title="А.2.7.6. RDS_BFM_RESIZE &ndash; размер блока изменен пользователем">RDS_BFM_RESIZE</a></span></span> &ndash; вызывается после изменения размеров блока, другая &ndash;
+<span class="cpp"><span id="light_ref12"><a href="RDS_BFM_RESIZING.htm" title="А.2.7.7. RDS_BFM_RESIZING &ndash; изменение размеров блока пользователем">RDS_BFM_RESIZING</a></span></span> &ndash; при изменении размеров блока
+<a href="um_2_6.htm#ref9" title="Изменение размеров блока">мышью</a> в
+процессе перетаскивания пользователем одного из восьми прямоугольных маркеров выделения. Реакцию
+<span class="cpp"><a class="hidden" href="RDS_BFM_RESIZE.htm" title="А.2.7.6. RDS_BFM_RESIZE &ndash; размер блока изменен пользователем">RDS_BFM_RESIZE</a></span> мы уже использовали при создании
+<a href="pm_2_10_1.htm#ref12" title="Пример модели графика">блока-графика</a> для того, чтобы заново вычислить координаты рабочего
+поля графика при изменении размера всего блока. Эта реакция вызывается один раз после изменения размеров
+блока, независимо от того, каким способом это изменение размеров было выполнено: перетаскиванием маркеров
+выделения, вводом <a href="um_2_9_1.htm#ref16" title="Кнопка точного задания размеров блока">точных значений ширины и высоты</a> в
+окне параметров блока или значения масштабного коэффициента для блоков с
+<a href="pm_1_4.htm#light_ref4" title="Векторная картинка блока">векторной картинкой</a>. Реакция
+<span class="cpp"><a class="hidden" href="RDS_BFM_RESIZING.htm" title="А.2.7.7. RDS_BFM_RESIZING &ndash; изменение размеров блока пользователем">RDS_BFM_RESIZING</a></span> вызывается только при перетаскивании маркеров выделения блока,
+то есть при изменении размеров блока мышью, причем вызывается она каждый раз при перемещении курсора.
+В обеих реакциях модель может скорректировать задаваемый пользователем размер, при этом в
+<span class="cpp"><a class="hidden" href="RDS_BFM_RESIZING.htm" title="А.2.7.7. RDS_BFM_RESIZING &ndash; изменение размеров блока пользователем">RDS_BFM_RESIZING</a></span> пользователь будет сразу же видеть это изменение,
+поскольку оно отразится на размере перетаскиваемого мышью прямоугольника.</p>
+
+<p>Изменим модель блока, имитирующего
+<a href="pm_2_12_2.htm#ref2" title="Пример модели двухкоординатной рукоятки">двухкоординатную рукоятку</a> так, чтобы блок всегда оставался квадратным.
+При этом масштаб блока по горизонтали и вертикали будет одинаковым, то есть горизонтальное и вертикальное
+перемещение рукоятки на одну и ту же величину будет приводить к одинаковому изменению выходных переменных.</p>
+
+<p>Прежде всего добавим в класс личной области данных блока новую функцию для
+реакции на изменение размеров блока:</p>
+
+<pre class="cpp">  <span class="kw">void</span> Resizing(<span id="light_ref13"><a class="hidden" href="RDS_BFM_RESIZE.htm#ref3" title="Указатель на RDS_RESIZEDATA">RDS_PRESIZEDATA</a></span> ResData);</pre>
+
+<p>Эта функция будет принимать один параметр &ndash; указатель на структуру <span class="cpp"><span id="light_ref14"><a href="RDS_BFM_RESIZE.htm#ref2" title="Структура RDS_RESIZEDATA">RDS_RESIZEDATA</a></span></span>,
+который передается в функцию модели в параметре <span class="cpp">ExtParam</span> и в режиме
+<span class="cpp"><a class="hidden" href="RDS_BFM_RESIZE.htm" title="А.2.7.6. RDS_BFM_RESIZE &ndash; размер блока изменен пользователем">RDS_BFM_RESIZE</a></span>, и в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_RESIZING.htm" title="А.2.7.7. RDS_BFM_RESIZING &ndash; изменение размеров блока пользователем">RDS_BFM_RESIZING</a></span>. Структура
+описана в &laquo;<span class="file">RdsDef.h</span>&raquo; следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> HorzResize;        <span class="rem">// Изменение размера по горизонтали</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> VertResize;        <span class="rem">// Изменение размера по вертикали</span>
+    <span class="kw">int</span> newWidth,newHeight; <span class="rem">// Новые значения ширины и высоты</span>
+    <span class="rem">// Данные о сетке редактора</span>
+    <span class="kw">int</span> GridDx,GridDy;      <span class="rem">// Шаг сетки</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> SnapToGrid;        <span class="rem">// Включена привязка к сетке</span>
+  } <a class="hidden" href="RDS_BFM_RESIZE.htm#ref2" title="Структура RDS_RESIZEDATA">RDS_RESIZEDATA</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_BFM_RESIZE.htm#ref2" title="Структура RDS_RESIZEDATA">RDS_RESIZEDATA</a> *<a class="hidden" href="RDS_BFM_RESIZE.htm#ref3" title="Указатель на RDS_RESIZEDATA">RDS_PRESIZEDATA</a>;</pre>
+
+<p>Логические поля структуры <span class="cpp">HorzResize</span> и
+<span class="cpp">VertResize</span> указывают на то, каким именно образом производится изменение размеров блока:</p>
+
+  <div class="tablecenter"><div class="tcont">
+  <table>
+    <tr>
+      <th><span class="cpp">HorzResize</span></th>
+      <th><span class="cpp">VertResize</span></th>
+      <th>Способ изменения</th>
+    </tr>
+    <tr>
+      <td class="center"><span class="cpp">FALSE</span></td>
+      <td class="center"><span class="cpp">FALSE</span></td>
+      <td>Новые размеры блока заданы числами в
+      <a href="pm_1_4.htm#pic2" title="Параметры блока &ndash; внешний вид">окне параметров</a> блока (кнопка
+      &laquo;<span class="menu">размер для функции DLL</span>&raquo;).</td>
+    </tr>
+    <tr>
+      <td class="center"><span class="cpp">FALSE</span></td>
+      <td class="center"><span class="cpp">TRUE</span></td>
+      <td>Пользователь перетащил верхнюю или нижнюю метку масштабирования вверх или вниз (изменена только высота).</td>
+    </tr>
+    <tr>
+      <td class="center"><span class="cpp">TRUE</span></td>
+      <td class="center"><span class="cpp">FALSE</span></td>
+      <td>Пользователь перетащил левую или правую метку масштабирования влево или вправо
+      (изменена только ширина).</td>
+    </tr>
+    <tr>
+      <td class="center"><span class="cpp">TRUE</span></td>
+      <td class="center"><span class="cpp">TRUE</span></td>
+      <td>Пользователь перетащил одну из угловых меток масштабирования (изменены и ширина, и высота).</td>
+    </tr>
+  </table>
+  </div></div>
+
+
+<p>В полях <span class="cpp">newWidth</span> и <span class="cpp">newHeight</span> содержатся новые значения
+ширины и высоты блока. Если необходимо скорректировать размер блока, функция модели может перед
+возвратом изменить эти значения. В нашем случае, чтобы блок всегда оставался квадратным, его
+ширина и высота должны быть равны. Нужно только определить, как правильно изменить значения
+ширины и высоты. Если пользователь перетаскивает левый или правый маркер выделения, он, тем самым,
+задает ширину блока &ndash; в этом случае нужно сделать высоту блока, равной ширине. Если он перетаскивает
+верхний или нижний маркер, он задает высоту, при этом нужно сделать ширину равной высоте. Если же он
+перетаскивает один из угловых маркеров, задавая одновременно оба размера блока, или размеры введены
+в окне параметров, проще всего присвоить ширине и высоте среднее арифметическое заданных пользователем размеров,
+при этом поведение блока будет выглядеть более-менее естественным.</p>
+
+<p>Реализуем описанный выше алгоритм в функции:</p>
+
+<pre class="cpp">  <span class="rem">// Реакция на изменение размеров блока</span>
+  <span class="kw">void</span> TSimpleJoystick::Resizing(<a class="hidden" href="RDS_BFM_RESIZE.htm#ref3" title="Указатель на RDS_RESIZEDATA">RDS_PRESIZEDATA</a> ResData)
+  {
+    <span class="kw">if</span>(ResData-&gt;HorzResize &amp;&amp; (!ResData-&gt;VertResize))
+      <span class="rem">// Перетаскивается левый или правый маркер</span>
+      ResData-&gt;newHeight=ResData-&gt;newWidth;
+    <span class="kw">else</span> <span class="kw">if</span>((!ResData-&gt;HorzResize) &amp;&amp; ResData-&gt;VertResize)
+      <span class="rem">// Перетаскивается верхний или нижний маркер</span>
+      ResData-&gt;newWidth=ResData-&gt;newHeight;
+    <span class="kw">else</span> <span class="rem">// Перетаскивается угловой маркер или размер задан точно</span>
+      { <span class="rem">// Вычисляем среднее арифметическое</span>
+        <span class="kw">int</span> avg=(ResData-&gt;newWidth+ResData-&gt;newHeight)/<span class="const">2</span>;
+        <span class="rem">// Присваиваем его ширине и высоте</span>
+        ResData-&gt;newWidth=ResData-&gt;newHeight=avg;
+      }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Теперь осталось добавить вызов этой функции в функцию модели блока <span class="cpp">SimpleJoystick</span>.
+Внутрь оператора <span class="cpp">switch</span> нужно вставить следующий <span class="cpp">case</span>:</p>
+
+<pre class="cpp">        <span class="rem">// Изменение размеров блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_RESIZE.htm" title="А.2.7.6. RDS_BFM_RESIZE &ndash; размер блока изменен пользователем">RDS_BFM_RESIZE</a>:
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_RESIZING.htm" title="А.2.7.7. RDS_BFM_RESIZING &ndash; изменение размеров блока пользователем">RDS_BFM_RESIZING</a>:
+          data-&gt;Resizing((<a class="hidden" href="RDS_BFM_RESIZE.htm#ref3" title="Указатель на RDS_RESIZEDATA">RDS_PRESIZEDATA</a>)ExtParam);
+          <span class="kw">break</span>;</pre>
+
+<p>Здесь мы вызываем функцию <span class="cpp">Resizing</span> в реакциях на оба события,
+связанных с изменением размера блока. Дело в том, что если вызывать ее только в реакции на
+<span class="cpp"><a class="hidden" href="RDS_BFM_RESIZE.htm" title="А.2.7.6. RDS_BFM_RESIZE &ndash; размер блока изменен пользователем">RDS_BFM_RESIZE</a></span>, блок будет всегда оставаться квадратным, но у
+пользователя при перетаскивании маркеров выделения не будет визуальной обратной связи. Если же вызывать ее
+только в <span class="cpp"><a class="hidden" href="RDS_BFM_RESIZING.htm" title="А.2.7.7. RDS_BFM_RESIZING &ndash; изменение размеров блока пользователем">RDS_BFM_RESIZING</a></span>, визуальная обратная связь будет, но при
+вводе размеров блока в окне параметров они не будут скорректированы моделью, поскольку
+<span class="cpp"><a class="hidden" href="RDS_BFM_RESIZING.htm" title="А.2.7.7. RDS_BFM_RESIZING &ndash; изменение размеров блока пользователем">RDS_BFM_RESIZING</a></span> при этом не вызывается. Таким образом,
+корректировать заданные пользователем размеры необходимо в обеих реакциях.</p>
+
+<p>Теперь легальными способами пользователь никак не сможет сделать блок-рукоятку не квадратным.
+На самом деле, эту функцию следовало бы сделать отключаемой, но мы не стали делать этого, чтобы
+не усложнять пример.</p>
+
+<p>В RDS предусмотрены и другие реакции моделей блоков на действия пользователя, связанные
+с редактированием схемы. Они применяются значительно реже, и мы не будем приводить примеры их использования.
+Просто перечислим их с кратким указанием возможного применения:</p>
+
+<ul>
+  <li>Реакция на перемещение блока <span class="cpp"><span id="light_ref15"><a href="RDS_BFM_MOVED.htm" title="А.2.7.4. RDS_BFM_MOVED &ndash; перемещение блока">RDS_BFM_MOVED</a></span></span>. Может применяться, например,
+  для синхронного перемещения группы блоков при перемещении одного из них, или для сообщения новых
+  координат блока управляющей программе, если такая есть.</li>
+
+  <li>Реакция на переименование блока <span class="cpp"><span id="light_ref16"><a href="RDS_BFM_RENAME.htm" title="А.2.7.5. RDS_BFM_RENAME &ndash; переименование блока">RDS_BFM_RENAME</a></span></span>. Может применяться для
+  синхронного с блоком переименования каких-либо связанных с блоком объектов (например,
+  динамических переменных), имена которых формируются из имени блока.</li>
+
+  <li>Реакция на загрузку схемы <span class="cpp"><span id="light_ref17"><a href="RDS_BFM_AFTERLOAD.htm" title="А.2.5.1. RDS_BFM_AFTERLOAD &ndash; завершена загрузка схемы">RDS_BFM_AFTERLOAD</a></span></span>, вызываемая у всех блоков
+  схемы сразу после ее загрузки в память. Может применяться для инициализации общесистемных переменных и
+  объектов, которую, по каким-либо причинам, неудобно проводить при подключении модели к блоку.</li>
+
+  <li>Реакция на завершение работы со схемой <span class="cpp"><span id="light_ref18"><a href="RDS_BFM_UNLOADSYSTEM.htm" title="А.2.4.17. RDS_BFM_UNLOADSYSTEM &ndash; схема будет выгружена из памяти">RDS_BFM_UNLOADSYSTEM</a></span></span>, то есть на
+  ее выгрузку из памяти. Может применяться, например, для удаления каких-либо временных файлов,
+  созданных для работы с этой схемой.</li>
+
+  <li>Пара реакций на сохранение всей схемы: одна из них (<span class="cpp"><span id="light_ref19"><a href="RDS_BFM_BEFORESAVE.htm" title="А.2.5.3. RDS_BFM_BEFORESAVE &ndash; начато сохранение схемы">RDS_BFM_BEFORESAVE</a></span></span>)
+  вызывается до сохранения, другая (<span class="cpp"><span id="light_ref20"><a href="RDS_BFM_AFTERSAVE.htm" title="А.2.5.2. RDS_BFM_AFTERSAVE &ndash; завершено сохранение схемы">RDS_BFM_AFTERSAVE</a></span></span>) &ndash; после.
+  Могут применяться, например, для преобразования файла схемы в какой-либо другой формат.</li>
+</ul>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_12_7.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_8">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

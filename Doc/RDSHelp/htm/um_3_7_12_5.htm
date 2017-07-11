@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.7.13.5. Объекты функций в автокомпилируемых моделях</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_7">&sect;3.7. Принципы создания автокомпилируемых моделей блоков</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_7_12">&sect;3.7.13. Вызов функций блоков</a></p>
+<div class="level"><p>&sect;3.7.13.5. Объекты функций в автокомпилируемых моделях</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="um_3_7_12_4.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_8_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_12_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.7. Принципы создания автокомпилируемых моделей блоков</h3>
+<h4 class="off">&sect;3.7.13. Вызов функций блоков</h4>
+<h5>&sect;3.7.13.5. Объекты функций в автокомпилируемых моделях</h5>
+<p class="abstract">Рассматриваются технические особенности классов и объектов, автоматически создаваемых в программе модели для работы с функциями блоков.</p>
+
+
+<p>В <a href="um_3_7_12_1.htm" title="&sect;3.7.13.1. Общие принципы работы с функциями блока">&sect;3.7.13.1</a> объяснялось, что для каждой функции блока
+модуль автокомпиляции создает объект специально сформированного для нее класса, и перечислялись основные
+функции-члены такого класса. При этом для некоторых из этих функций было указано, что их можно вызывать
+только из модели блока, то есть только из функций, являющихся членами класса самого блока (например, из
+любой функции реакции на событие). Может возникнуть вопрос: почему доступность публичной функции-члена
+объекта C++ может зависеть от места ее вызова?</p>
+
+<p>Дело в том, что, на самом деле, для каждой функции создается не один класс и объект этого класса,
+а два разных класса и два объекта этих классов: один такой объект является глобальным, второй принадлежит
+классу блока. Функции-члены, относящиеся к функции блока в целом (например, вызов ее у
+конкретного блока или всех блоков конкретной подсистемы) описаны как в классе для глобального объекта,
+так и в классе объекта, принадлежащего блоку. Функции-члены, относящиеся к действиям, связанным с
+конкретным блоком (например, регистрация этого блока как исполнителя функции), описаны только в классе,
+объект которого добавляется в класс блока, и их нельзя вызвать из глобальных функций, поскольку оттуда этот
+объект недоступен. Имя глобального объекта и объекта в классе блока совпадают, поэтому разработчик
+модели везде использует одно и то же имя для обращения к объекту функции. Объект в классе блока
+перекрывает видимость одноименного глобального объекта, поэтому в функциях класса блока можно использовать
+расширенный набор функций-членов этого объекта. Из глобальных же функций будет виден только глобальный
+объект, класс которого не содержит функций-членов, оперирующих данными конкретного блока.</p>
+
+<p>Рассмотрим, например, описания, автоматически добавляемые модулем автокомпиляции в программу модели блока
+проверки уровня, рассмотренного в <a href="um_3_7_12_4.htm" title="&sect;3.7.13.4. Регистрация и поиск исполнителя функции">&sect;3.7.13.4</a> для функции
+&laquo;<span class="rdsvar">UserManual.Message</span>&raquo;
+(см. <a href="um_3_7_12_4.htm#pic3" title="Добавление в модель блока функции UserManual.Message (рамкой выделен флажок, включающий поиск исполнителя функции)">рис.&nbsp;475</a>). Их можно увидеть,
+выбрав в окне редактора модели пункт меню
+&laquo;<span class="menu">модель | показать текст C++</span>&raquo; и прокрутив текст вниз до комментария
+&laquo;объекты для функций блока&raquo; (подсветка синтаксиса добавлена для большей наглядности,
+редактор модели такой подсветки не имеет):</p>
+
+<pre class="cpp">  <span class="rem">//---------------------------</span>
+  <span class="rem">// Объекты для функций блока</span>
+  <span class="rem">//---------------------------</span>
+  <span class="rem">// Функция "UserManual.Message"</span>
+  <span class="kw">class</span> rdsbcppFunction0G : <span class="kw">public</span> rdsbcppFunction <span class="rem">// Глобальный</span>
+  { <span class="kw">public</span>:
+      <span class="rem">// Вызов у блока</span>
+      <span class="kw">int</span> <a class="hidden" href="um_3_7_12_1.htm#light_ref4" title="Функция Call класса функции блока">Call</a>(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,TUserMessageFuncParam* param)
+        {<span class="kw">return</span> <a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(Block,_Id,param);};
+      <span class="rem">// Вызов у блоков подсистемы</span>
+      <span class="kw">int</span> <a class="hidden" href="um_3_7_12_1.htm#light_ref8" title="Функция Broadcast класса функции блока">Broadcast</a>(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Parent,
+          <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags,TUserMessageFuncParam* param)
+        {<span class="kw">return</span> <a class="hidden" href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a>(Parent,
+                _Id,param,Flags);};
+      rdsbcppFunction0G(<span class="kw">void</span>):rdsbcppFunction(){};
+      ~rdsbcppFunction0G(){};
+  };
+  rdsbcppFunction0G rdsfuncUM_Message;
+  <span class="kw">class</span> rdsbcppFunction0L : <span class="kw">public</span> rdsbcppFunction <span class="rem">// Локальный</span>
+  { <span class="kw">public</span>:
+      <span class="rem">// Вызов у блока</span>
+      <span class="kw">int</span> <a class="hidden" href="um_3_7_12_1.htm#light_ref4" title="Функция Call класса функции блока">Call</a>(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,TUserMessageFuncParam* param)
+        {<span class="kw">return</span> <a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(Block,_Id,param);};
+      <span class="rem">// Вызов у блоков подсистемы</span>
+      <span class="kw">int</span> <a class="hidden" href="um_3_7_12_1.htm#light_ref8" title="Функция Broadcast класса функции блока">Broadcast</a>(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Parent,
+          <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags,TUserMessageFuncParam* param)
+        {<span class="kw">return</span> <a class="hidden" href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a>(Parent,
+                _Id,param,Flags);};
+      <span class="rem">// Вызов у исполнителя функции</span>
+      <span class="kw">int</span> <a class="hidden" href="um_3_7_12_1.htm#light_ref6" title="Функция Call класса функции блока (у исполнителя)">Call</a>(TUserMessageFuncParam* param)
+        {<span class="kw">return</span> _Link?
+              <a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(_Link-&gt;Block,_Id,param):<span class="const">0</span>;};
+      <span class="rem">// Перевод функций подписки/регистрации в public</span>
+      <span class="kw">inline</span> <span class="kw">void</span> <a class="hidden" href="um_3_7_12_1.htm#light_ref10" title="Функция RegisterProvider класса функции блока">RegisterProvider</a>(<span class="kw">void</span>){_RegisterProvider();};
+      <span class="kw">inline</span> <span class="kw">void</span> <a class="hidden" href="um_3_7_12_1.htm#light_ref11" title="Функция UnregisterProvider класса функции блока">UnregisterProvider</a>(<span class="kw">void</span>){_UnregisterProvider();};
+      <span class="kw">inline</span> <span class="kw">void</span> <a class="hidden" href="um_3_7_12_1.htm#light_ref12" title="Функция SubscribeToProvider класса функции блока">SubscribeToProvider</a>(<span class="kw">void</span>){_SubscribeToProvider();};
+      <span class="kw">inline</span> <span class="kw">void</span> <a class="hidden" href="um_3_7_12_1.htm#light_ref13" title="Функция UnsubscribeFromProvider класса функции блока">UnsubscribeFromProvider</a>(<span class="kw">void</span>)
+          {_UnsubscribeFromProvider();};
+      rdsbcppFunction0L(<span class="kw">void</span>):rdsbcppFunction(){};
+      ~rdsbcppFunction0L(){};
+  };
+  <span class="rem">//---------------------------</span></pre>
+
+<p><span id="ref1">Здесь</span> описаны два класса с именами <span class="cpp">rdsbcppFunction0G</span> и
+<span class="cpp">rdsbcppFunction0L</span> (эти имена модуль автокомпиляции создает автоматически). Оба класса
+являются потомками класса <span class="cpp">rdsbcppFunction</span>, описанного в
+&laquo;<span class="file"><span id="light_ref1">CommonAC.hpp</span></span>&raquo; и содержащего основные поля и
+функции, необходимые для работы с функциями блока. Класс
+<span class="cpp">rdsbcppFunction0G</span> используется для создания глобального объекта: сразу за описанием
+этого класса следует объявление глобальной переменной <span class="cpp">rdsfuncUM_Message</span> этого типа
+(такое имя мы выбрали для объекта функции при ее создании &ndash;
+см. <a href="um_3_7_12_4.htm#pic3" title="Добавление в модель блока функции UserManual.Message (рамкой выделен флажок, включающий поиск исполнителя функции)">рис.&nbsp;475</a>). Класс
+<span class="cpp">rdsbcppFunction0L</span>, содержащий дополнительные функции-члены для регистрации
+и поиска исполнителя функции, будет использован для описания поля класса блока, которое тоже будет иметь имя
+<span class="cpp">rdsfuncUM_Message</span> (это описание выделено <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">//---------------------------</span>
+  <span class="rem">// Класс блока</span>
+  <span class="rem">//---------------------------</span>
+  <span class="kw">class</span> rdsbcppBlockClass
+  { <span class="kw">public</span>:
+      <span class="rem">// Структура данных блока</span>
+      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> rdsbcppBlockData;
+      <span class="rem">// Статические переменные</span>
+      rdsbcstSignal Start;
+      rdsbcstSignal Ready;
+      rdsbcstDouble x;
+      rdsbcstDouble L;
+      rdsbcstLogical out;
+      rdsbcstDouble delta;
+
+      <span class="changes"><span class="rem">// Объекты функций блоков (те же имена, что и у глобальных)</span></span>
+      <span class="changes">rdsbcppFunction0L rdsfuncUM_Message;</span>
+
+      <span class="rem">// Инициализация переменных блока</span>
+      <span class="kw">void</span> rdsbcppInitVars(<span class="kw">void</span> *base)
+      {
+      &hellip;</pre>
+
+<p>Таким образом, использование имени <span class="cpp">rdsfuncUM_Message</span> внутри реакций на события
+и любых других функций, принадлежащих классу блока, будет обращением к объекту типа
+<span class="cpp">rdsbcppFunction0L</span>. Использование этого же имени в функциях, не принадлежащих
+к классу блока, будет обращением к объекту типа <span class="cpp">rdsbcppFunction0G</span>.</p>
+
+<p>Ситуация, когда из глобальной функции необходимо обратиться к функциям, относящимся к регистрации
+и поиску исполнителей, возникает крайне редко: любая работа с исполнителем функции связана с каким-либо
+конкретным блоком, который либо объявляет себя таким исполнителем, либо запрашивает его поиск, то
+есть приказывает RDS постоянно сообщать данному конкретному блоку о появлении и исчезновении исполнителей
+заданной функции. Таким образом, регистрация исполнителей обычно производится из модели регистрирующегося
+блока, а поиск &ndash; из модели блока, запрашивающего этот поиск. Разработчик модели может захотеть вынести
+какие-либо действия из модели блока в отдельную функцию просто для своего удобства, и, если среди этих
+действий будет вызов специфических функций-членов рассматриваемых здесь объектов, лучше всего оформить такую
+функцию как член класса блока, то есть описать ее в разделе
+&laquo;<span class="menu"><a href="um_3_7_8.htm#pic7" title="Описания внутри класса в списке событий">описания внутри класса блока</a></span>&raquo;. Есть также возможность,
+при необходимости, вызвать функцию у блока-исполнителя не через объект внутри класса блока (в примере выше
+&ndash; объект типа <span class="cpp">rdsbcppFunction0L</span>), а через глобальный объект. Для этого нужно
+просто явно указать идентификатор блока, у которого вызывается функция.</p>
+
+<p>В примере, рассматриваемом в <a href="um_3_7_12_4.htm" title="&sect;3.7.13.4. Регистрация и поиск исполнителя функции">&sect;3.7.13.4</a>,
+мы выводили сообщение пользователю, вызывая функцию
+&laquo;<span class="rdsvar">UserManual.Message</span>&raquo; у ее исполнителя следующим образом:</p>
+
+<pre class="cpp">  rdsfuncUM_Message.<a class="hidden" href="um_3_7_12_1.htm#light_ref6" title="Функция Call класса функции блока (у исполнителя)">Call</a>(&amp;param);</pre>
+
+<p class="noindent">(здесь <span class="cpp">param</span> &ndash; структура параметров функции типа
+<span class="cpp">TUserMessageFuncParam</span>). В
+<a href="um_3_7_12_1.htm#light_ref6" title="Функция Call класса функции блока (у исполнителя)">эту версию функции <span class="cpp">Call</span></a>
+не передается идентификатор блока &ndash; он будет автоматически определен, и функция будет вызвана у
+ближайшего найденного исполнителя. Допустим, мы, по каким-то причинам, хотим вынести этот вызов в
+отдельную глобальную функцию. В этом случае мы уже не сможем пользоваться <span class="cpp">Call</span>
+с одним параметром &ndash; в глобальном объекте, который будет виден из глобальной функции, такой
+версии функции-члена <span class="cpp">Call</span> просто нет. Но у него есть
+<a href="um_3_7_12_1.htm#light_ref4" title="Функция Call класса функции блока">обычная версия <span class="cpp">Call</span></a>, в первом параметре которой явно передается идентификатор
+вызываемого блока. В нашей глобальной функции мы можем воспользоваться только ей, поэтому в
+параметрах этой функции нужно будет передать идентификатор блока:</p>
+
+<pre class="cpp">  // Наша глобальная функция для вызова "UserManual.Message"
+  void OurGlobalCaller(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block,            // вызываемый блок
+                       TUserMessageFuncParam *param) // параметр
+  { rdsfuncUM_Message.<a class="hidden" href="um_3_7_12_1.htm#light_ref4" title="Функция Call класса функции блока">Call</a>(block,param);}</pre>
+
+<p>Этот идентификатор блока-исполнителя можно получить у объекта типа <span class="cpp">rdsbcppFunction0L</span>
+при помощи функции-члена <span class="cpp"><a href="um_3_7_12_1.htm#light_ref15" title="Функция Provider класса функции блока">Provider</a></span>. Таким образом, изнутри нашей
+модели вызов <span class="cpp">OurGlobalCaller</span> выглядел бы так:</p>
+
+<pre class="cpp">  OurGlobalCaller(rdsfuncUM_Message.<a class="hidden" href="um_3_7_12_1.htm#light_ref15" title="Функция Provider класса функции блока">Provider</a>(),&amp;param);</pre>
+
+<p>В большинстве случаев, разработчику модели можно не задумываться об организации классов для функций блоков:
+если он обращается к этим функциям из модели, ему всегда доступны все возможности. Принимать во внимание
+наличие двух разных классов для одной функции блока нужно только при обращении к ним из глобальных функций
+&ndash; например, из функций обратного вызова, подобных
+<a href="um_3_7_12_3.htm#ref5" title="Функция обратного вызова ControlValChanged_Callback">рассматриваемой в &sect;3.7.13.3</a>: такие функции не
+могут быть членами какого-либо класса по требованиям RDS. В этом случае нужно каким-либо образом
+передавать в глобальные функции идентификатор блока &ndash; например, описанным выше способом. К счастью,
+все функции обратного вызова в RDS имеют дополнительный параметр типа
+<span class="cpp">void*</span>, через который в них можно передать указатель на любые необходимые данные.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="um_3_7_12_4.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_8_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_12_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

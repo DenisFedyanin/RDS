@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.3.5. rdsUnlockBlockData &ndash; выключение блокировки данных</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_3">А.5.3. Синхронизация потоков RDS</a></p>
+<div class="level"><p>А.5.3.5. <span class="cpp">rdsUnlockBlockData</span> &ndash; выключение блокировки данных</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsUnlockAndCall.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsAddToDynStr.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsUnlockBlockData">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.3. Синхронизация потоков RDS</h4>
+<h5>А.5.3.5. <span class="cpp">rdsUnlockBlockData</span> &ndash; выключение блокировки данных</h5>
+
+
+<p>Функция <span class="cpp">rdsUnlockBlockData</span> выключает блокировку данных загруженной схемы,
+включенную ранее функцией <span class="cpp"><a href="rdsLockBlockData.htm" title="А.5.3.3. rdsLockBlockData &ndash; включение блокировки данных">rdsLockBlockData</a></span>.</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsUnlockBlockData(<span class="kw">void</span>);</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_VV</span></p>
+
+<p class="apphdr">Примечания</p>
+<p>Вызов <span class="cpp">rdsUnlockBlockData</span> выключает блокировку данных, включенную вызовом
+<span class="cpp">rdsLockBlockData</span>. Функция работает следующим образом:</p>
+
+<ul>
+  <li>если данные не заблокированы ни одним из потоков или заблокированы не тем потоком, из которого вызвана
+  <span class="cpp">rdsUnlockBlockData</span> (то есть функция вызвана ошибочно, перед ней не было вызова
+  <span class="cpp">rdsLockBlockData</span>), функция немедленно возвращает управление вызвавшему потоку;</li>
+  <li>если данные заблокированы тем же самым потоком, из которого вызвана функция, и внутренний счетчик блокировок
+  больше единицы, значение счетчика уменьшается и управление возвращается вызвавшему потоку (блокировка
+  при этом не снимается);</li>
+  <li>если данные заблокированы тем же самым потоком, из которого вызвана функция, и внутренний счетчик
+  блокировок равен единице, блокировка снимается и счетчику блокировок присваивается нулевое
+  значение.</li>
+</ul>
+
+<p class="noindent">Используемый в RDS счетчик блокировок позволяет вкладывать вызовы
+<span class="cpp">rdsLockBlockData</span>/<span class="cpp">rdsUnlockBlockData</span> друг в друга:
+данные будут разблокированы только тогда, когда <span class="cpp">rdsUnlockBlockData</span> будет вызвана столько
+же раз, сколько раз была вызвана <span class="cpp">rdsLockBlockData</span>.</p>
+
+<p><span class="emph">Крайне важно</span> вызывать <span class="cpp">rdsUnlockBlockData</span> как можно
+быстрее после вызова <span class="cpp">rdsLockBlockData</span>, поскольку попытки других потоков
+заблокировать данные будет приводить к их остановке до снятия блокировки этим потоком, что вызовет
+задержки в работе RDS. Если необходимо провести над данными какую-либо сложную и длительную операцию в
+<a href="um_1_3.htm#ref3" title="Режим расчета">режиме расчета</a>, лучше всего будет заблокировать их, скопировать в
+какие-либо внутренние структуры, а затем разблокировать и провести необходимые операции уже над данными во
+внутренних структурах.</p>
+
+<p>Использование функций <span class="cpp">rdsLockBlockData</span> и <span class="cpp">rdsUnlockBlockData</span>
+рассматривается в <a href="pm_1_8.htm" title="&sect;1.8. Открытие окон в модели блока">&sect;1.8 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsLockBlockData.htm" title="А.5.3.3. rdsLockBlockData &ndash; включение блокировки данных">rdsLockBlockData</a></span>,
+<span class="cpp"><a href="rdsBlockDataSyncCall.htm" title="А.5.3.1. rdsBlockDataSyncCall &ndash; вызвать функцию с блокировкой данных">rdsBlockDataSyncCall</a></span>,
+<span class="cpp"><a href="rdsUnlockAndCall.htm" title="А.5.3.4. rdsUnlockAndCall &ndash; вызвать функцию, сняв блокировку данных">rdsUnlockAndCall</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsUnlockAndCall.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsAddToDynStr.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsUnlockBlockData">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,454 @@
+$BC55MODEL
+Автоматически генерируемая модель простого вычислителя функции
+$NOSHARE
+$VARS
+  signal name "_Start" in run default 1
+  signal name "_Ready" out default 0
+  short name "Aux_in" in hide default 0
+  short name "Aux_out" out hide default 0
+  char name "Func_in" in menu default ""
+  char name "Func_out" out menu default ""
+  double name "Calc_out" out menu default "?"
+//@L57_REM ------------ Сигнал для входных вещественных ------------
+  signal name "_allinval_dchg" default 1
+//@L57_REM --------------- Сигналы для входных матриц --------------
+//@L57CMD_FOREACH_BEGIN_0 IVAR
+  //@L57CMD_IF_BEGIN_1 /*RDSTYPE0*/ EQ "M"
+  signal name "_/*VAR0*/_mchg" default 1
+  //@L57CMD_IF_END_1
+//@L57CMD_FOREACH_END_0
+//@L57_REM ---------------------------------------------------------
+//@L57_REM ------------------ Обычные входы блока ------------------
+//@L57CMD_FOREACH_BEGIN_0 IVAR
+  //@L57CMD_SET start "matrix double"
+  //@L57CMD_SET end "[ ] ?"
+  //@L57CMD_IF_BEGIN_1 /*TYPE0*/ EQ "V"
+    //@L57CMD_SET start "double"
+    //@L57CMD_SET end "/*VAL0*/"
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*TYPE0*/ EQ "A"
+    //@L57CMD_SET start "matrix double oneindex"
+  //@L57CMD_IF_END_1
+  /*@start*/ name "/*VAR0*/" in menu run default "/*@end*/"
+//@L57CMD_FOREACH_END_0
+//@L57CMD_CLEAR end
+//@L57CMD_CLEAR start
+//@L57_REM ---------------------------------------------------------
+//@L57_REM ------------------ Служебные параметры ------------------
+//@L57CMD_FOREACH_BEGIN_0 SVAR
+  //@L57CMD_SET start "matrix double"
+  //@L57CMD_SET end "[ ] ?"
+  //@L57CMD_IF_BEGIN_1 /*TYPE0*/ EQ "V"
+    //@L57CMD_SET start "double"
+    //@L57CMD_SET end "/*VAL0*/"
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*TYPE0*/ EQ "A"
+    //@L57CMD_SET start "matrix double oneindex"
+  //@L57CMD_IF_END_1
+  /*@start*/ name "/*VAR0*/" default "/*@end*/"
+//@L57CMD_FOREACH_END_0
+//@L57CMD_CLEAR end
+//@L57CMD_CLEAR start
+//@L57_REM ---------------------------------------------------------
+
+$AUTO
+//@L57_REM ---------------- Вещественные входы блока ---------------
+//@L57CMD_FOREACH_BEGIN_0 IVAR
+  //@L57CMD_IF_BEGIN_1 /*RDSTYPE0*/ EQ "D"
+    "/*VAR0*/","_allinval_dchg"
+  //@L57CMD_IF_END_1
+//@L57CMD_FOREACH_END_0
+//@L57_REM ---------------------------------------------------------
+//@L57_REM --------------- Сигналы для входных матриц --------------
+//@L57CMD_FOREACH_BEGIN_0 IVAR
+  //@L57CMD_IF_BEGIN_1 /*RDSTYPE0*/ EQ "M"
+  "/*VAR0*/","_/*VAR0*/_mchg"
+  //@L57CMD_IF_END_1
+//@L57CMD_FOREACH_END_0
+//@L57_REM ---------------------------------------------------------
+$PARAM
+  int name "TR_params" default "0"
+  rdsbcppString name "TR_text" default "" notranslate
+$REGFUN
+  name "IPU.L57.UserFuncTransfer.IsFuncSource" id "L57_BlkFunc_IsFuncSource"
+  name "IPU.L57.UserFuncTransfer.AcceptFunction" id "L57_BlkFunc_AcceptFunc" param "L57_AcceptFunc_Param*"
+  name "IPU.L57.UserFuncTransfer.AcceptParameter" id "L57_BlkFunc_AcceptParam" param "L57_AcceptParam_Param*"
+  name "IPU.L57.UserFuncTransfer.IsParameterTransferredWithFunc" id "L57_BlkFunc_CheckTransParam" param "L57_CheckParamConn_Param*"
+  name "IPU.L57.UserFuncTransfer.CheckParamTransfer" id "L57_BlkFunc_CheckTransParam2" param "L57_CheckTranser_Param*"
+$LINKS
+  manual "$RDSINCLUDE$\RdsL57Mk2\L57Mk2SimpleCalc.cpp"
+  manual "$RDSINCLUDE$\RdsL57Mk2\L57Mk2Basic.cpp"
+  manual "$RDSINCLUDE$\RdsL57Mk2\L57Mk2Basic.h"
+  manual "$RDSINCLUDE$\RdsL57Mk2\L57Mk2Bits.cpp"
+$CUSTOMERR
+|В одном из описаний функций обнаружена ошибка: видимо, текст функции написан не в синтаксисе языка C. Пожалуйста, проверьте все описания в настройках блока или откройте редактор модели и изучите ошибки, выданные компилятором.
+$ENDDECL
+$GLOBAL
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Версия модели (в норме должна соответствовать L57_LATESTMODELVERSION)
+#define L57_MODELVERSION 10
+
+//@L57CMD_IF_BEGIN_1 /*@@HELPUI*/ NE ""
+// Файл и тема справки
+#define L57_HELPUIFILE /*@@HELPUI*/
+#define L57_HELPTOPIC /*@@HELPTOPIC*/
+//@L57CMD_IF_END_1
+
+// Заголовки функций для индикации
+//@L57_ALLFUNCTITLES "#define L57_TITLES " "" " \"
+
+#define L57MS_GLOBALS
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_GLOBALS
+
+//@L57_REM ------ Переменные для служебного класса
+//@L57CMD_SET double "double"
+//@L57CMD_SET matrix "L57_RdsDoubleMatrix"
+//@L57CMD_SET array "L57_RdsDoubleArray"
+//@L57CMD_SET func1arg "L57_OneArgFunc"
+//@L57CMD_SET func2arg "L57_TwoArgFunc"
+// Служебный класс для вычисления значения функции
+//@L57_FUNCCLASS 0 L57_Calc
+
+$MODEL
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_MODEL
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_MODEL
+
+$SETUP
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_SETUP
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_SETUP
+
+$CLASSDEF
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_CLASS
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_CLASS
+
+//@L57_REM --- Указатели на параметры передачи входов-параметров ---
+  // Объекты для передачи входов-параметров функции
+  L57_FuncTransfer _Transfer;
+//@L57CMD_FOREACH_BEGIN_0 IANDSVAR
+  L57_FuncTransferParameter */*VAR0*/_trans;
+//@L57CMD_FOREACH_END_0
+  // Сброс
+  void L57_Reset_Trans_Data(void)
+  {
+    //@L57CMD_FOREACH_BEGIN_0 IANDSVAR
+    /*VAR0*/_trans=NULL;
+    //@L57CMD_FOREACH_END_0
+  };
+  // Создание всех параметров передачи
+  void L57_Create_Trans_Data(void);
+//@L57_REM ---------------------------------------------------------
+
+//@L57_REM ------- Хранилища входов для проверки изменения --------
+  // Хранилища для проверки изменения переменных
+//@L57CMD_FOREACH_BEGIN_0 IANDSVAR
+  //@L57CMD_IF_BEGIN_1 /*RDSTYPE0*/ EQ "M"
+  L57_DblMatrTempStorage /*VAR0*/_old;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*RDSTYPE0*/ EQ "D"
+  double /*VAR0*/_old;
+  //@L57CMD_IF_END_1
+//@L57CMD_FOREACH_END_0
+  // Инициализация хранилищ значений
+  void L57_Init_Old_Data(void)
+  {
+  //@L57CMD_FOREACH_BEGIN_0 IANDSVAR FOR RDSTYPE D
+    /*VAR0*/_old=rdsbcppHugeDouble;
+  //@L57CMD_FOREACH_END_0
+  //@L57CMD_FOREACH_BEGIN_0 IANDSVAR FOR RDSTYPE M
+    /*VAR0*/_old.Clear();
+  //@L57CMD_FOREACH_END_0
+  };
+//@L57_REM ---------------------------------------------------------
+
+$CLASSEXT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_AFTERCLASS
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_AFTERCLASS
+
+// Экспорт текста функции для взаимодействия с другими блоками по связям
+//@L57_FUNCEXPORT 0 "char *rdsbcppBlockClass::_FuncExportText=" ";"
+
+// Занесение стационарных переменных в вычислитель функции
+void rdsbcppBlockClass::L57InputsToCalc(void)
+{
+//@L57CMD_FOREACH_BEGIN_0 IANDSVAR
+  //@L57CMD_IF_BEGIN_1 /*TYPE0*/ EQ "V"
+  _Calculator./*VAR0*/=/*VAR0*/;
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*TYPE0*/ NE "V"
+  _Calculator./*VAR0*/.Setup(/*VAR0*/);
+  //@L57CMD_IF_END_1
+//@L57CMD_FOREACH_END_0
+}
+//-----------------------------------------------------------------------
+
+// Создание всех параметров передачи
+void rdsbcppBlockClass::L57_Create_Trans_Data(void)
+{
+  //@L57CMD_COUNT IANDSVAR _cnt_1
+  // Стационарных входов: /*@_cnt_1*/
+  _Transfer.ClearParameters();
+  _Transfer.EnlargeParameters(/*@_cnt_1*/);
+  //@L57CMD_CLEAR _cnt_1
+
+//@L57CMD_FOREACH_BEGIN_0 IANDSVAR
+  //@L57CMD_IF_BEGIN_1 /*RDSTYPE0*/ EQ "M"
+  /*VAR0*/_trans=_Transfer.AddParameterRds("/*VAR0*/",L57_VARSUFFIX_NONE,TRUE,/*VAR0*/.Num(),&/*VAR0*/);
+  //@L57CMD_IF_END_1
+  //@L57CMD_IF_BEGIN_1 /*RDSTYPE0*/ EQ "D"
+  /*VAR0*/_trans=_Transfer.AddParameterRds("/*VAR0*/",L57_VARSUFFIX_NONE,FALSE,/*VAR0*/.Num(),&/*VAR0*/);
+  //@L57CMD_IF_END_1
+//@L57CMD_FOREACH_END_0
+
+}
+//-----------------------------------------------------------------------
+
+// Проверка изменения переменных и передача параметров
+void rdsbcppBlockClass::L57InputsChange(void)
+{ BOOL _changes=FALSE;
+
+  //@L57CMD_COUNT IVAR _cnt_1 FOR RDSTYPE D
+  // Стационарных вещественных входов: /*@_cnt_1*/
+  //@L57CMD_COUNT SERVIN _cnt_2
+  // Служебных вещественных входов: /*@_cnt_2*/
+  //@L57CMD_CALC _cnt_3 /*@_cnt_1*/ + /*@_cnt_2*/
+  // Итого вещественных: /*@_cnt_3*/
+
+  // Вещественные входы
+  if(_allinval_dchg!=0)
+    { _allinval_dchg=0;
+      _changes=FALSE;
+
+    //@L57CMD_FOREACH_BEGIN_0 IVAR FOR RDSTYPE D
+      if(/*VAR0*/_old!=/*VAR0*/)
+        { _changes=TRUE;
+          _Transfer.TransferParameter(rdsbcppBlockData->Block,/*VAR0*/_trans,_Transfer.DestBlocks,TRUE);
+        }
+    //@L57CMD_FOREACH_END_0
+
+    //@L57CMD_IF_BEGIN_9 /*@_cnt_3*/ NE 0
+      if(_changes)
+        { // Запоминание изменившихся
+          //@L57CMD_FOREACH_BEGIN_0 IVAR FOR RDSTYPE D
+          /*VAR0*/_old=/*VAR0*/;
+          //@L57CMD_FOREACH_END_0
+        }
+    //@L57CMD_IF_END_9
+    }
+
+  // Матричные входы (матрицы, массивы, функции)
+  //@L57CMD_FOREACH_BEGIN_0 IVAR FOR RDSTYPE M
+  if(/*VAR0*/_old.Check(_/*VAR0*/_mchg.GetPtr(),&/*VAR0*/,_changes,FALSE))
+    _Transfer.TransferParameter(rdsbcppBlockData->Block,/*VAR0*/_trans,_Transfer.DestBlocks,TRUE);
+  //@L57CMD_FOREACH_END_0
+
+  //@L57CMD_CLEAR _cnt_1
+  //@L57CMD_CLEAR _cnt_2
+  //@L57CMD_CLEAR _cnt_3
+}
+//-----------------------------------------------------------------------
+
+$INIT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_INIT
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_INIT
+
+
+$START
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_START
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_START
+
+$CALCMODE
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_CALCMODE
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_CALCMODE
+
+$LOADTEXT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_LOADPARAMS
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_LOADPARAMS
+$SAVETEXT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_SAVEPARAMS
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_SAVEPARAMS
+$OTHER
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_OTHER
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_OTHER
+$FUNC "IPU.L57.UserFuncTransfer.IsFuncSource"
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+Result=1;
+$FUNC "IPU.L57.UserFuncTransfer.AcceptFunction"
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_ACCEPTFUNC
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_ACCEPTFUNC
+
+$FUNC "IPU.L57.UserFuncTransfer.AcceptParameter"
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_ACCEPTPARAM
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_ACCEPTPARAM
+
+$FUNC "IPU.L57.UserFuncTransfer.IsParameterTransferredWithFunc"
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_CHECKTRANSFUNC
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_CHECKTRANSFUNC
+
+$FUNC "IPU.L57.UserFuncTransfer.CheckParamTransfer"
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_CHECKTRANSFUNC2
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_CHECKTRANSFUNC2
+
+
+$VARCHECK
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_VARCHECK
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_VARCHECK
+
+$RESET
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_RESET
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_RESET
+
+$DRAWADD
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_DRAWADDITIONAL
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_DRAWADDITIONAL
+
+$HINT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_HINT
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_HINT
+
+$POPUP
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем,
+ее текст генерируется автоматически */
+
+#define L57MS_POPUP
+#include <RdsL57Mk2/L57Mk2SimpleCalc.cpp>
+#undef L57MS_POPUP
+
+
+$HIDDEN
+{W
+ TВычисление функции
+ FN-F-T-E+C-I-
+ ?Blocks\L57.ui,L57Mk2SimpleCalc
+}
+{I
+ TВходы блока
+ C"NИмя","TТип","VЗначение"
+}
+$OPTIONS
+  tabs $GLOBAL
+  window pos 18 164 size 1214 837 hdiv 337 vdiv 356 fdiv 334 hidevar
+  svc 0 90 1 73 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 0
+  ignorewarnings 1
+  customerrmsg 1 showblock
+  autoreadonlyeditor 1
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

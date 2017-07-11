@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.13.3. Прямой вызов функции всех блоков подсистемы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_13">&sect;2.13. Вызов функций блоков</a></p>
+<div class="level"><p>&sect;2.13.3. Прямой вызов функции всех блоков подсистемы</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_13_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_4.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_13_3.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделью блока,
+иллюстрирующей прямой вызов функции у всех блоков подсистемы. В модель 
+<span class="cpp">EditControlFrame</span> (блок с прозрачным для щелчков мыши &laquo;окном&raquo;,
+см. <a href="pm_2_12_3.htm#ref3" title="Пример модели блока с прозрачной областью">&sect;2.12.3</a>) добавлена возможность одновременного &laquo;открытия&raquo;
+и &laquo;закрытия&raquo; всех таких блоков в подсистеме. Изменения относительно предыдущей версии модели
+выделены <span class="changes">цветом</span>).</p>
+
+<pre class="cpp">  <span class="rem">// Прямой вызов функции всех блоков подсистемы</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+<div class="changes">  <span class="rem">//=========================================</span>
+  <span class="rem">// Функция управления состоянием блока</span>
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Имя функции</span>
+  <span class="preproc">#define PROGGUIDEEDITCTRLFUNC_SET \</span>
+<span class="preproc">            "ProgrammersGuide.EditCtrlFrame.Set"</span>
+  <span class="rem">// Структура параметров функции</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize; <span class="rem">// Размер этой структуры для проверки</span>
+    <span class="kw">int</span> Command;    <span class="rem">// Команда блоку (0, 1 или 2)</span>
+  } TProgGuideEditCtrlSetParams;
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Идентификатор функции PROGGUIDEEDITCTRLFUNC_SET</span>
+  <span class="kw">int</span> EditCtrlFuncSet=<span class="const">0</span>;</div>
+  <span class="rem">//============================================================================</span>
+  <span class="rem">// Блок с "окном"</span>
+  <span class="rem">//============================================================================</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> EditControlFrame(<span class="kw">int</span> CallMode,
+            <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+            <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { 
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x_ext  (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define x_int  (*((double *)(pStart+10)))</span>
+  <span class="preproc">#define out    (*((double *)(pStart+18)))</span>
+  <span class="preproc">#define bypass (*((char *)(pStart+26)))</span>
+    <span class="kw">const</span> <span class="kw">int</span> fr=<span class="const">20</span>; <span class="rem">// Толщина рамки</span>
+    <span class="rem">// Вспомогательные переменные</span>
+    <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse;
+    <a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw;
+    <span class="kw">int</span> frz,x1,y1,x2,y2,xi1,yi1,xi2,yi2;
+
+<div class="changes">    <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a> func; <span class="rem">// Описание вызванной функции</span>
+    <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a> menu;     <span class="rem">// Описание выбранного пункта меню</span>
+    TProgGuideEditCtrlSetParams callparams; <span class="rem">// Параметры функции</span></div>
+    <span class="kw">switch</span>(CallMode)
+      { 
+<div class="changes">        <span class="rem">// Инициализация блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="kw">if</span>(!EditCtrlFuncSet)
+            EditCtrlFuncSet=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(PROGGUIDEEDITCTRLFUNC_SET);
+          <span class="kw">break</span>;</div>
+        <span class="rem">// Проверка типов статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDDDL}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Реакция на нажатие кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a>:
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam;
+          <span class="rem">// Толщина рамки с учетом масштаба</span>
+          frz=fr*mouse-&gt;DoubleZoom;
+          <span class="rem">// В открытом состоянии при попадании курсора внутрь</span>
+          <span class="rem">// прозрачного окна на щелчок реагировать не нужно</span>
+          <span class="kw">if</span>(bypass==<span class="const">0</span> &amp;&amp;
+             mouse-&gt;x&gt;mouse-&gt;Left+frz &amp;&amp;
+             mouse-&gt;y&gt;mouse-&gt;Top+frz &amp;&amp;
+             mouse-&gt;x&lt;mouse-&gt;Left+mouse-&gt;Width-frz &amp;&amp;
+             mouse-&gt;y&lt;mouse-&gt;Top+mouse-&gt;Height-frz)
+            <span class="kw">return</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm#light_ref1" title="RDS_BFR_NOTPROCESSED">RDS_BFR_NOTPROCESSED</a>;
+          <span class="rem">// Если не левая кнопка - не обрабатываем щелчок</span>
+          <span class="rem">// и разрешаем вывести контекстное меню, если нужно</span>
+          <span class="kw">if</span>(mouse-&gt;Button!=<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a>)
+            <span class="kw">return</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm#light_ref2" title="RDS_BFR_SHOWMENU">RDS_BFR_SHOWMENU</a>;
+          <span class="rem">// Нажата левая кнопка мыши, причем курсор попал</span>
+          <span class="rem">// в рамку или блок в закрытом состоянии</span>
+          bypass=!bypass; <span class="rem">// Переключаем состояние</span>
+          Ready=<span class="const">1</span>;        <span class="rem">// Взводим сигнал готовности</span>
+          <span class="rem">// Здесь намеренно не поставлен оператор break: необходимо</span>
+          <span class="rem">// выполнить действия в следующем case (такт расчета)</span>
+
+        <span class="rem">// Один такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="rem">// В зависимости от состояния, подаем на выход один из входов</span>
+          out=bypass?x_ext:x_int;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Рисование внешнего вида блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a>:
+          draw=(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a>)ExtParam;
+          <span class="rem">// Координаты описывающего прямоугольника блока</span>
+          x1=draw-&gt;Left;
+          x2=draw-&gt;Left+draw-&gt;Width;
+          y1=draw-&gt;Top;
+          y2=draw-&gt;Top+draw-&gt;Height;
+          <span class="rem">// Толщина рамки с учетом масштаба</span>
+          frz=fr*draw-&gt;DoubleZoom;
+          <span class="rem">// Координаты окна внутри блока</span>
+          xi1=x1+frz;
+          xi2=x2-frz;
+          yi1=y1+frz;
+          yi2=y2-frz;
+          <span class="kw">if</span>(bypass)
+            { <span class="rem">// Закрытое состояние</span>
+              <span class="kw">int</span> w;
+              <span class="kw">char</span> *text;
+              <span class="rem">// Рисуем красный прямоугольник с черной рамкой</span>
+              <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,<span class="const">1</span>,<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+              <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,<span class="const">0xff</span>);
+              <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(x1,y1,x2,y2);
+              <span class="rem">// Устанавливаем шрифт выстой в окно внутри блока</span>
+              <a class="hidden" href="rdsXGSetFont.htm" title="А.5.18.22. rdsXGSetFont &ndash; установить шрифт">rdsXGSetFont</a>(<span class="const">0</span>,<span class="str">"Arial"</span>,yi2-yi1,<span class="const">0</span>,
+                           <a class="hidden" href="RDS_SERVFONTPARAMS.htm#light_ref5" title="DEFAULT_CHARSET">DEFAULT_CHARSET</a>,<span class="const">0</span>,FALSE,FALSE,FALSE,FALSE);
+              <span class="rem">// Преобразуем значение выхода в динамическую строку</span>
+              text=<a class="hidden" href="rdsDtoA.htm" title="А.5.4.5. rdsDtoA &ndash; преобразование вещественного числа в строку">rdsDtoA</a>(out,-<span class="const">1</span>,NULL);
+              <span class="rem">// Определяем ширину получившейся строки на экране</span>
+              <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(text,&amp;w,NULL);
+              <span class="rem">// Выводим значение выхода туда, где в открытом</span>
+              <span class="rem">// состоянии находится прозрачное окно</span>
+              <a class="hidden" href="rdsXGTextOut.htm" title="А.5.18.27. rdsXGTextOut &ndash; строка текста">rdsXGTextOut</a>(xi2-w,yi1,text);
+              <span class="rem">// Освобождаем динамическую строку</span>
+              <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(text);
+            }
+          <span class="kw">else</span>
+            { <span class="rem">// Открытое состояние</span>
+              <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,<span class="const">0xff00</span>);
+              <span class="rem">// Рисуем рамку вокруг прозрачного окна из четырех</span>
+              <span class="rem">// зеленых прямоугольников</span>
+              <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(x1,y1,x2,yi1);
+              <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(x1,yi2,x2,y2);
+              <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(x1,yi1,xi1,yi2);
+              <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(xi2,yi1,x2,yi2);
+              <span class="rem">// Обрамляем черными линиями</span>
+              <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,<span class="const">1</span>,<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+              <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref5" title="RDS_GFS_EMPTY">RDS_GFS_EMPTY</a>,<span class="const">0</span>);
+              <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(x1,y1,x2,y2);
+              <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(xi1,yi1,xi2,yi2);
+            }
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка возможности выбора блока мышью</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSESELECT.htm" title="А.2.7.3. RDS_BFM_MOUSESELECT &ndash; возможность выбора блока мышью">RDS_BFM_MOUSESELECT</a>:
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam;
+          frz=fr*mouse-&gt;DoubleZoom; <span class="rem">// Толщина рамки</span>
+          <span class="rem">// Проверка попадания в прозрачное окно</span>
+          <span class="kw">if</span>(bypass==<span class="const">0</span> &amp;&amp;
+             mouse-&gt;x&gt;mouse-&gt;Left+frz &amp;&amp;
+             mouse-&gt;y&gt;mouse-&gt;Top+frz &amp;&amp;
+             mouse-&gt;x&lt;mouse-&gt;Left+mouse-&gt;Width-frz &amp;&amp;
+             mouse-&gt;y&lt;mouse-&gt;Top+mouse-&gt;Height-frz)
+            <span class="kw">return</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm#light_ref1" title="RDS_BFR_NOTPROCESSED">RDS_BFR_NOTPROCESSED</a>;
+          <span class="rem">// В окно не попали - функция вернет RDS_BFR_DONE</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Открытие контекстного меню блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CONTEXTPOPUP.htm" title="А.2.6.2. RDS_BFM_CONTEXTPOPUP &ndash; вызов контекстного меню блока">RDS_BFM_CONTEXTPOPUP</a>:
+          <span class="rem">// Добавление временного пункта меню</span>
+          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(bypass?<span class="str">"Открыть"</span>:<span class="str">"Закрыть"</span>,<span class="const">0</span>,<span class="const">1</span>,<span class="const">2</span>);
+<div class="changes">          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(NULL,<a class="hidden" href="rdsChangeMenuItem.htm#light_ref4" title="RDS_MENU_DIVIDER">RDS_MENU_DIVIDER</a>,<span class="const">0</span>,<span class="const">0</span>);
+          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(<span class="str">"Открыть все"</span>,<span class="const">0</span>,<span class="const">2</span>,<span class="const">1</span>);
+          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(<span class="str">"Закрыть все"</span>,<span class="const">0</span>,<span class="const">2</span>,<span class="const">0</span>);
+          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(<span class="str">"Переключить все"</span>,<span class="const">0</span>,<span class="const">2</span>,<span class="const">2</span>);</div>
+        <span class="kw">break</span>;
+
+        <span class="rem">// Выбор пункта меню пользователем</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a>:
+        <span class="changes">  menu=(<a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a>)ExtParam; <span class="rem">// Данные пункта меню  </span></span>
+          <span class="kw">switch</span>(menu-&gt;Function)
+            { <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Открыть/закрыть</span>
+                bypass=!bypass;         <span class="rem">// Переключить режим</span>
+                out=bypass?x_ext:x_int; <span class="rem">// Подать на выход</span>
+                Ready=<span class="const">1</span>;                <span class="rem">// Взвести флаг готовности</span>
+        <span class="changes">        <span class="kw">break</span>;                                             </span>
+        <span class="changes">      <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Один из новых пунктов                     </span></span>
+        <span class="changes">        <span class="rem">// Заполняем структуру параметров функции          </span></span>
+        <span class="changes">        callparams.Command=menu-&gt;MenuData;                 </span>
+        <span class="changes">        callparams.servSize=<span class="kw">sizeof</span>(callparams);            </span>
+        <span class="changes">        <span class="rem">// Вызываем у всех блоков родительской подсистемы  </span></span>
+        <span class="changes">        <a class="hidden" href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a>(BlockData-&gt;Parent,     </span>
+        <span class="changes">                                    EditCtrlFuncSet,       </span>
+        <span class="changes">                                    &amp;callparams,           </span>
+        <span class="changes">                                    <span class="const">0</span>);                    </span>
+        <span class="changes">        <span class="kw">break</span>;                                             </span>
+        <span class="changes">    }                                                      </span>
+          <span class="kw">break</span>;
+
+<div class="changes">        <span class="rem">// Вызов функции блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a>:
+          <span class="rem">// Приведение ExtParam к правильному типу</span>
+          func=(<a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a>)ExtParam;
+          <span class="rem">// Проверяем, какая функция вызвана</span>
+          <span class="kw">if</span>(func-&gt;Function==EditCtrlFuncSet)
+            { <span class="rem">// Вызвана нужная нам функция</span>
+              TProgGuideEditCtrlSetParams *params;
+              <span class="rem">// Приводим указатель на параметры к нужному типу</span>
+              <span class="rem">// и проверяем размер переданной структуры</span>
+              params=(TProgGuideEditCtrlSetParams*)(func-&gt;Data);
+              <span class="kw">if</span>(params-&gt;servSize&lt;<span class="kw">sizeof</span>(TProgGuideEditCtrlSetParams))
+                <span class="kw">break</span>; <span class="rem">// Размер недостаточен</span>
+              <span class="rem">// В зависимости от Command меняем режим блока</span>
+              <span class="kw">switch</span>(params-&gt;Command)
+                { <span class="kw">case</span> <span class="const">0</span>: bypass=<span class="const">1</span>; <span class="kw">break</span>;       <span class="rem">// Закрыть</span>
+                  <span class="kw">case</span> <span class="const">1</span>: bypass=<span class="const">0</span>; <span class="kw">break</span>;       <span class="rem">// Открыть</span>
+                  <span class="kw">case</span> <span class="const">2</span>: bypass=!bypass; <span class="kw">break</span>; <span class="rem">// Переключить</span>
+                  <span class="kw">default</span>: <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;  <span class="rem">// Ошибка</span>
+                }
+              <span class="rem">// Взводим сигнал готовности и передаем нужный вход</span>
+              <span class="rem">// на выход</span>
+              Ready=<span class="const">1</span>;
+              out=bypass?x_ext:x_int;
+            }
+          <span class="kw">break</span>;</div>
+      }
+
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef bypass</span>
+  <span class="preproc">#undef out</span>
+  <span class="preproc">#undef x_int</span>
+  <span class="preproc">#undef x_ext</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_13_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_4.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

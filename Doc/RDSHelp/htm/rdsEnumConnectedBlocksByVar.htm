@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.6.13. rdsEnumConnectedBlocksByVar &ndash; перебрать все блоки, соединенные с заданной переменной</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_6">А.5.6. Операции с блоками и связями</a></p>
+<div class="level"><p>А.5.6.13. <span class="cpp">rdsEnumConnectedBlocksByVar</span> &ndash; перебрать все блоки, соединенные с заданной переменной</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsEnumConnectedBlocks.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsFindNextConnectedLine.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsEnumConnectedBlocksByVar">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.6. Операции с блоками и связями</h4>
+<h5>А.5.6.13. <span class="cpp">rdsEnumConnectedBlocksByVar</span> &ndash; перебрать все блоки, соединенные с заданной переменной</h5>
+
+
+<p><span id="ref1">Функция</span> <span class="cpp">rdsEnumConnectedBlocksByVar</span> вызывает пользовательскую функцию,
+указатель на которую передается в параметрах, для блоков, соединенных связями с заданным
+<a href="um_1_4.htm#ref20" title="Роли переменных в блоке">входом или выходом</a> заданного блока.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsEnumConnectedBlocksByVar(
+      <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,      <span class="rem">// Заданный блок</span>
+      <span class="kw">int</span> VarNum,             <span class="rem">// Номер входа или выхода</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags,            <span class="rem">// Флаги (RDS_BEN_*)</span>
+      <span id="light_ref1">RDS_BhPdPdpV</span> CallBack,  <span class="rem">// Функция пользователя</span>
+      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Data             <span class="rem">// Параметр функции пользователя</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_BhBhIDwCb1pV</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Block</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор блока, связи которого отслеживаются. Для соединенных с ним блоков будет вызвана пользователя
+  <span class="cpp">CallBack</span>.</dd>
+
+  <dt><span class="cpp">VarNum</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Номер
+  <a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статической переменной</a> блока, связи которой нужно отслеживать.
+  Нумерация переменных начинается с нуля.</dd>
+
+  <dt><span class="cpp">Flags</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</dt>
+  <dd>Набор битовых флагов, управляющих работой функции, объединенных битовым ИЛИ. На данный момент
+  в этом параметре может использоваться только один флаг (он используются и в функции
+  <span class="cpp"><a href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span>):<br />
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref2">RDS_BEN_TRACELINKS</span></span></td>
+          <td>Если этот флаг не установлен, функция <span class="cpp">CallBack</span> будет вызываться для всех блоков,
+          непосредственно соединенных связями с блоком <span class="cpp">Block</span>. Если флаг установлен, RDS
+          будет прослеживать связи до <a href="um_1_2.htm#light_ref9" title="Простой блок">простых блоков</a> и вызывать функцию
+          только для них (см. ниже).</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp">CallBack</span>&emsp;(<span class="cpp"><i>RDS_BhPdPdpV</i></span>)</dt>
+  <dd>Указатель на пользовательскую функцию, которую нужно вызвать для каждого блока, удовлетворяющего параметрам
+  функции. Пользовательская функция должна иметь следующий вид:<br />
+  <pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции</i>(
+      <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> pNearPoint,
+      <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> pFarPoint,
+      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> param)</pre>
+  В параметре <span class="cpp">pNearPoint</span> пользовательской функции передается указатель на структуру
+  <span class="cpp"><a href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">RDS_POINTDESCRIPTION</a></span>, описывающую точку связи, соединяющую связь с переменной
+  <span class="cpp">VarNum</span> блока <span class="cpp">Block</span>. В параметре <span class="cpp">pFarPoint</span>
+  передается указатель на структуру описания точки связи, соединяющей ее с найденным блоком на другом
+  конце этой связи (идентификатор этого блока содержится в структуре описания точки). Следует помнить, что
+  при взведенном флаге <span class="cpp">RDS_BEN_TRACELINKS</span> эти точки могут принадлежать разным связям.
+  В параметре <span class="cpp">param</span> передается параметр <span class="cpp">Data</span> функции
+  <span class="cpp">rdsEnumConnectedBlocks</span> (см. ниже) без какой-либо обработки. Функция пользователя должна
+  вернуть <span class="cpp">TRUE</span>, если перебор блоков необходимо продолжить, и <span class="cpp">FALSE</span>,
+  если его нужно немедленно остановить.</dd>
+
+  <dt><span class="cpp">Data</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></i></span>)</dt>
+  <dd>Параметр типа <span class="cpp">void*</span>, без изменений передаваемый в пользовательскую функцию
+  в параметре <span class="cpp">param</span> при каждом ее вызове.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Идентификатор блока (<span class="cpp"><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></span>), для которого функция пользователя вернула
+<span class="cpp">FALSE</span>. Если функция пользователя всегда возвращала <span class="cpp">TRUE</span>
+(перебраны все соединенные блоки), вместо идентификатора блока возвращается <span class="cpp">NULL</span>.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Функция <span class="cpp">rdsEnumConnectedBlocksByVar</span> представляет собой более специализированную
+версию функции <span class="cpp"><a href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span> &ndash; в отличие от последней, она
+отслеживает не все связи, соединенные с блоком <span class="cpp">Block</span>, а только связи,
+подходящие или отходящие от его переменной с номером <span class="cpp">VarNum</span>. В параметре функции
+указывается именно номер переменной, а не ее имя: имена переменных часто изменяются пользователями, а их
+номера обычно жестко фиксированы и их изменение чаще всего приводит к неработоспособности блока
+(см. описание события <span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> и
+<a href="pm_index.htm#light_htm:pm_2_5" title="&sect;2.5. Статические переменные блоков">&sect;2.5 руководства программиста</a>).</p>
+
+<p>В параметре <span class="cpp">Flags</span> в данный момент может передаваться только один битовый флаг
+&ndash; <span class="cpp">RDS_BEN_TRACELINKS</span>. Он управляет прослеживанием связей внутрь и
+наружу <a href="um_1_2.htm#light_ref10" title="Подсистема">подсистем</a>. Если он сброшен, функция <span class="cpp">CallBack</span>
+будет вызываться только у блоков, непосредственно соединенных с блоком
+<span class="cpp">Block</span> в его
+<a href="um_1_2.htm#ref13" title="Родительская подсистема">родительской подсистеме</a>, при этом вложенные подсистемы и
+<a href="um_1_2.htm#light_ref12" title="Внешний вход подсистемы">внешние входы</a> и
+<a href="um_1_2.htm#light_ref14" title="Внешний выход подсистемы">выходы</a> будут считаться конечными точками связи: RDS не будет
+отслеживать эту связь дальше внутрь вложенной подсистемы или наружу родительской. Если же флаг
+<span class="cpp">RDS_BEN_TRACELINKS</span> взведен, функция будет отслеживать каждую связь внутрь и
+наружу подсистем через внешние входы и выходы и вызывать функцию <span class="cpp">CallBack</span>
+только для простых блоков, находящихся в конце такой цепочки связей.</p>
+
+<p>Флаги <span class="cpp">RDS_BEN_INPUTS</span> и <span class="cpp">RDS_BEN_OUTPUTS</span>, использующиеся
+в функции <span class="cpp">rdsEnumConnectedBlocks</span> для указания перебора входов или выходов блока,
+в этой функции не имеют смысла, так как переменная с номером <span class="cpp">VarNum</span> уже
+является либо входом, либо выходом (если она внутренняя, к ней, очевидно, не подключено ни одной связи,
+и функция <span class="cpp">CallBack</span> не будет вызвана ни разу). Их наличие или отсутствие в параметре
+<span class="cpp">Flags</span> игнорируется.</p>
+
+<p>Функция перебирает соединенные с переменной <span class="cpp">VarNum</span> блоки в порядке, определяемом
+внутренней логикой RDS, программист никак не может изменить этот порядок.</p>
+
+<p>Параметр <span class="cpp">Data</span>, имеющий тип <span class="cpp"><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></span> (произвольный указатель),
+передается в вызываемую функцию пользователя без изменений. Это единственный способ передать ей какие-либо данные:
+например, можно передать указатель на какую-либо структуру, а внутри пользовательской функции привести его к
+нужному типу и обращаться к полям этой структуры.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsEnumBlocks.htm" title="А.5.6.11. rdsEnumBlocks &ndash; перебрать все блоки подсистемы">rdsEnumBlocks</a></span>,
+<span class="cpp"><a href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span>,
+<span class="cpp"><a href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a></span>,
+<span class="cpp"><a href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">RDS_POINTDESCRIPTION</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsEnumConnectedBlocks.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsFindNextConnectedLine.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsEnumConnectedBlocksByVar">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

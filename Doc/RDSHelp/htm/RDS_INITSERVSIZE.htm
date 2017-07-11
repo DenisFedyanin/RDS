@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.2.2. Макрос RDS_INITSERVSIZE &ndash; инициализация поля размера в стандартных структурах RDS</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_2">А.5.2. Управление работой RDS и функции общего назначения</a></p>
+<div class="level"><p>А.5.2.2. Макрос <span class="cpp">RDS_INITSERVSIZE</span> &ndash; инициализация поля размера в стандартных структурах RDS</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_GETFLAG.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_INTVERSION.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_INITSERVSIZE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.2. Управление работой RDS и функции общего назначения</h4>
+<h5>А.5.2.2. Макрос <span class="cpp">RDS_INITSERVSIZE</span> &ndash; инициализация поля размера в стандартных структурах RDS</h5>
+
+
+<p>Макрос <span class="cpp">RDS_INITSERVSIZE</span> присваивает полю <span class="cpp">servSize</span> переданной
+в его параметре структуры размер этой структуры в байтах.</p>
+
+<pre class="cpp">  RDS_INITSERVSIZE(
+    structvar  <span class="rem">// Переменная-структура</span>
+  )</pre>
+
+<p class="apphdr">Определение</p>
+<pre class="cpp">  <span class="preproc">#define RDS_INITSERVSIZE(structvar) \</span>
+<span class="preproc">            structvar.servSize=sizeof(structvar)</span></pre>
+
+<p class="apphdr">Параметр</p>
+
+<dl>
+  <dt><span class="cpp">structvar</span>&emsp;(<span class="cpp"><i>структура</i></span>)</dt>
+  <dd>Переменная, представляющая собой структуру одного из стандартных типов RDS, в которой есть поле
+  <span class="cpp">servSize</span>.</dd>
+</dl>
+
+<p class="apphdr">Примечания</p>
+<p>Присваивать полю <span class="cpp">servSize</span> размер содержащей его структуры необходимо перед вызовом
+большинства сервисных функций, работающих со стандартными структурами
+RDS
+(см. <a href="app_index.htm#light_htm:app_a_4" title="А.4. Структуры RDS">приложение А.4</a>).
+Сервисные функции, в которые передаются указатели на эти структуры, прежде всего сравнивают беззнаковое целое
+число (<span class="cpp"><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></span>), содержащееся в самом первом поле структуры, с ожидаемым размером структуры
+данного типа. Если это число окажется меньше ожидаемого размера, функция либо сообщит вызвавшей программе об
+ошибке, либо будет работать только с полями структуры, укладывающимися в переданный размер.</p>
+
+<p class="apphdr">Пример</p>
+<pre class="cpp">  <span class="rem">// Структура описания блока</span>
+  <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a> descr;
+  <span class="rem">// Присвоение размера структуры первому полю</span>
+  RDS_INITSERVSIZE(descr);
+  <span class="rem">// Получение описания блока</span>
+  <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(Block,&amp;descr);</pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_GETFLAG.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_INTVERSION.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_INITSERVSIZE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.12.4. Реакция блоков на клавиатуру</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_12">&sect;2.12. Реакция блоков на действия пользователя</a></p>
+<div class="level"><p>&sect;2.12.4. Реакция блоков на клавиатуру</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_12_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_12_4.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделью блока,
+увеличивающего и уменьшающего выход по щелчкам мыши и нажатию клавиш (клавиши настраиваются
+пользователем). Изменения относительно предыдущей версии этой модели из
+<a href="pm_2_12_1.htm#ref2" title="Пример блока, реагирующего на щелчки мыши">&sect;2.12.1</a> выделены <span class="changes">цветом</span>.</p>
+
+<pre class="cpp">  <span class="rem">// Реакция блока на клавиатуру</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+<div class="changes">  <span class="rem">//====== Класс личной области данных ======</span>
+  <span class="kw">class</span> TPlusMinusData
+  { <span class="kw">public</span>:
+      <span class="kw">int</span> KeyPlus;       <span class="rem">// Клавиша увеличения</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> ShiftsPlus;  <span class="rem">// и ее флаги</span>
+      <span class="kw">int</span> KeyMinus;      <span class="rem">// Клавиша уменьшения</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> ShiftsMinus; <span class="rem">// и ее флаги</span>
+
+      <span class="kw">int</span> Setup(<span class="kw">void</span>);   <span class="rem">// Функция настройки клавиш</span>
+      <span class="kw">void</span> SaveBin(<span class="kw">void</span>);<span class="rem">// Сохранение параметров</span>
+      <span class="kw">int</span> LoadBin(<span class="kw">void</span>); <span class="rem">// Загрузка параметров</span>
+
+      <span class="rem">// Конструктор класса</span>
+      TPlusMinusData(<span class="kw">void</span>)
+        { KeyPlus=ShiftsPlus=KeyMinus=ShiftsMinus=<span class="const">0</span>;};
+  };
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Функция задания клавиш</span>
+  <span class="kw">int</span> TPlusMinusData::Setup(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window; <span class="rem">// Идентификатор вспомогательного объекта</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;            <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="rem">// Создание окна</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Плюс/минус"</span>);
+    <span class="rem">// Добавление полей ввода</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">1</span>,<a class="hidden" href="app_a_fields.htm#light_ref10" title="RDS_FORMCTRL_HOTKEY">RDS_FORMCTRL_HOTKEY</a>,
+                   <span class="str">"Клавиша увеличения:"</span>,<span class="const">80</span>);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<a class="hidden" href="app_a_fields.htm#light_ref10" title="RDS_FORMCTRL_HOTKEY">RDS_FORMCTRL_HOTKEY</a>,
+                   <span class="str">"Клавиша уменьшения:"</span>,<span class="const">80</span>);
+    <span class="rem">// Занесение исходных значений кодов клавиш в поля ввода</span>
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,KeyPlus);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_HKSHIFTS.htm" title="А.5.28.16. Команда RDS_FORMVAL_HKSHIFTS &ndash; состояние Ctrl, Alt и Shift в поле ввода кода клавиши">RDS_FORMVAL_HKSHIFTS</a>,ShiftsPlus);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,KeyMinus);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_HKSHIFTS.htm" title="А.5.28.16. Команда RDS_FORMVAL_HKSHIFTS &ndash; состояние Ctrl, Alt и Shift в поле ввода кода клавиши">RDS_FORMVAL_HKSHIFTS</a>,ShiftsMinus);
+    <span class="rem">// Открытие окна</span>
+    ok=<a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Нажата кнопка OK - запись кодов клавиш в класс</span>
+        KeyPlus=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        ShiftsPlus=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_HKSHIFTS.htm" title="А.5.28.16. Команда RDS_FORMVAL_HKSHIFTS &ndash; состояние Ctrl, Alt и Shift в поле ввода кода клавиши">RDS_FORMVAL_HKSHIFTS</a>);
+        KeyMinus=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        ShiftsMinus=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_HKSHIFTS.htm" title="А.5.28.16. Команда RDS_FORMVAL_HKSHIFTS &ndash; состояние Ctrl, Alt и Shift в поле ввода кода клавиши">RDS_FORMVAL_HKSHIFTS</a>);
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="rem">// Возвращаемое значение</span>
+    <span class="kw">return</span> ok?<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Сохранение параметров</span>
+  <span class="kw">void</span> TPlusMinusData::SaveBin(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref12" title="Однобайтовая переменная">BYTE</a> tag; <span class="rem">// Переменная для байта тега</span>
+
+    tag=<span class="const">1</span>; <span class="rem">// Тег 1 - клавиша увеличения</span>
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;KeyPlus,<span class="kw">sizeof</span>(KeyPlus));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;ShiftsPlus,<span class="kw">sizeof</span>(ShiftsPlus));
+
+    tag=<span class="const">2</span>; <span class="rem">// Тег 2 - клавиша уменьшения</span>
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;KeyMinus,<span class="kw">sizeof</span>(KeyMinus));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;ShiftsMinus,<span class="kw">sizeof</span>(ShiftsMinus));
+
+    tag=<span class="const">0</span>; <span class="rem">// Тег 0 - конец данных</span>
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag));
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Загрузка параметров</span>
+  <span class="kw">int</span> TPlusMinusData::LoadBin(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref12" title="Однобайтовая переменная">BYTE</a> tag;
+
+    <span class="kw">for</span>(;;) <span class="rem">// Цикл до тех пор, пока данные не кончатся</span>
+      { <span class="rem">// Читаем байт тега</span>
+        <span class="kw">if</span>(!<a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag)))
+          <span class="kw">break</span>; <span class="rem">// Тег не считан - данные кончились</span>
+        <span class="rem">// Анализируем считанный тег</span>
+        <span class="kw">switch</span>(tag)
+          { <span class="kw">case</span> <span class="const">0</span>: <span class="rem">// Конец данных блока</span>
+              <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>; <span class="rem">// Загрузка успешно завершена</span>
+            <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Данные клавиши увеличения</span>
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;KeyPlus,<span class="kw">sizeof</span>(KeyPlus));
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;ShiftsPlus,<span class="kw">sizeof</span>(ShiftsPlus));
+              <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Данные клавиши уменьшения</span>
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;KeyMinus,<span class="kw">sizeof</span>(KeyMinus));
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;ShiftsMinus,<span class="kw">sizeof</span>(ShiftsMinus));
+              <span class="kw">break</span>;
+            <span class="kw">default</span>: <span class="rem">// Неопознанный тег</span>
+              <span class="kw">return</span> RDS_BFR_ERROR; <span class="rem">// Сообщаем RDS об ошибке</span>
+          }
+      }
+    <span class="rem">// Данные кончились до тега 0 - сообщаем об ошибке</span>
+    <span class="kw">return</span> RDS_BFR_ERROR;
+  }
+  <span class="rem">//=========================================</span></div>
+
+  <span class="rem">// Увеличение/уменьшение значения по щелчку и клавишам</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> PlusMinus(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define v      (*((int *)(pStart+2)))</span>
+    <span class="rem">// Вспомогательная — указатель на структуру события мыши</span>
+    <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse;
+<div class="changes">    <span class="rem">// Вспомогательная — указатель на структуру события клавиатуры</span>
+    <a class="hidden" href="RDS_BFM_KEYDOWN.htm#ref3" title="Указатель на RDS_KEYDATA">RDS_PKEYDATA</a> key;
+    <span class="rem">// Указатель на личную область данных блока,приведенный к</span>
+    <span class="rem">// правильному типу</span>
+    TPlusMinusData *data=(TPlusMinusData*)(BlockData-&gt;BlockData);</div>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSI}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Реакция на нажатие кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a>:
+          <span class="rem">// Приведение ExtParam к нужному типу</span>
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam;
+          <span class="kw">if</span>(mouse-&gt;Button==<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a>)
+            { <span class="rem">// Нажата левая кнопка</span>
+              <span class="rem">// Проверяем, есть ли у блока картинка (получаем</span>
+              <span class="rem">// описание блока)</span>
+              <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a> descr;
+              descr.servSize=<span class="kw">sizeof</span>(descr);
+              <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(BlockData-&gt;Block,&amp;descr);
+              <span class="kw">if</span>(descr.Flags &amp; <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#light_ref15" title="RDS_BDF_HASPICTURE">RDS_BDF_HASPICTURE</a>)
+                { <span class="rem">// Картинка есть – определяем идентификатор</span>
+                  <span class="rem">// элемента под курсором</span>
+                  <span class="kw">int</span> id=<a class="hidden" href="rdsGetMouseObjectId.htm" title="А.5.6.31. rdsGetMouseObjectId &ndash; элемент векторной картинки блока под курсором мыши">rdsGetMouseObjectId</a>(mouse);
+                  v+=id;
+                }
+              <span class="kw">else</span> <span class="kw">if</span>(mouse-&gt;y&lt;mouse-&gt;Top+mouse-&gt;Height/<span class="const">2</span>)
+                v++; <span class="rem">// В верхней половине блока - увеличиваем</span>
+              <span class="kw">else</span>
+                v--; <span class="rem">// В нижней половине блока — уменьшаем</span>
+              <span class="rem">// Взводим сигнал готовности</span>
+              Ready=<span class="const">1</span>;
+            }
+          <span class="kw">break</span>;
+
+<div class="changes">        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>: <span class="rem">// Инициализация</span>
+          BlockData-&gt;BlockData=<span class="kw">new</span> TPlusMinusData();
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>: <span class="rem">// Очистка данных</span>
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>: <span class="rem">// Настройка параметров</span>
+          <span class="kw">return</span> data-&gt;Setup();
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVEBIN.htm" title="А.2.5.6. RDS_BFM_SAVEBIN &ndash; запись данных блока в двоичном формате">RDS_BFM_SAVEBIN</a>:<span class="rem">// Сохранение параметров</span>
+          data-&gt;SaveBin();
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADBIN.htm" title="А.2.5.4. RDS_BFM_LOADBIN &ndash; загрузка данных блока в двоичном формате">RDS_BFM_LOADBIN</a>: <span class="rem">// Загрузка параметров</span>
+          <span class="kw">return</span> data-&gt;LoadBin();
+
+        <span class="rem">// Реакция на нажатие клавиши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_KEYDOWN.htm" title="А.2.6.5. RDS_BFM_KEYDOWN &ndash; нажатие клавиши">RDS_BFM_KEYDOWN</a>:
+          <span class="rem">// Приведение ExtParam к нужному типу</span>
+          key=(<a class="hidden" href="RDS_BFM_KEYDOWN.htm#ref3" title="Указатель на RDS_KEYDATA">RDS_PKEYDATA</a>)ExtParam;
+          <span class="rem">// Сравнение нажатой клавиши с клавишами уменьшения</span>
+          <span class="rem">// и увеличения</span>
+          <span class="kw">if</span>(key-&gt;KeyCode==data-&gt;KeyPlus &amp;&amp;
+             key-&gt;Shift==data-&gt;ShiftsPlus)
+            { v++; Ready=<span class="const">1</span>; }
+          <span class="kw">else</span> <span class="kw">if</span>(key-&gt;KeyCode==data-&gt;KeyMinus &amp;&amp;
+                  key-&gt;Shift==data-&gt;ShiftsMinus)
+            { v--; Ready=<span class="const">1</span>; }
+          <span class="kw">break</span>;</div>
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef v</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_12_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.3. Вызов функции блока загруженной схемы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3">Глава 3. Управление RDS из других приложений</a></p>
+<div class="level"><p>&sect;3.3. Вызов функции блока загруженной схемы</p>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_3_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_4.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_3_3_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 3. Управление RDS из других приложений</h2>
+<h3>&sect;3.3. Вызов функции блока загруженной схемы</h3>
+<p class="abstract">Рассматривается передача информации конкретному блоку загруженной схемы и получение от него ответа, 
+            а также способ поиска блока по символическому имени выполняемой им операции. В программу, созданную в 
+            <a href="pm_3_2.htm" title="&sect;3.2. Загрузка библиотеки и управление схемой">&sect;3.2</a>, добавляются функции вызова и поиска блоков.</p>
+
+
+<p>Управляющее приложение может вызвать модель любого блока загруженной схемы, если известно
+<a href="pm_1_4.htm#light_ref2" title="Полное имя блока">полное имя</a> этого блока, и передать ей целое число и строку. Модель
+блока при этом вызывается в режиме <span class="cpp"><span id="light_ref1"><a href="RDS_BFM_REMOTEMSG.htm" title="А.2.4.11. RDS_BFM_REMOTEMSG &ndash; вызов от внешнего приложения">RDS_BFM_REMOTEMSG</a></span></span>. Реагируя на этот вызов,
+модель, в свою очередь, тоже может передать вызвавшему приложению целое число и строку. Передача
+данных других типов в RdsCtrl.dll не предусмотрена, поэтому обычно весь обмен информацией между
+приложением и блоком производится с преобразованием данных в строки, при этом передаваемое блоку целое число
+обычно трактуется как номер функции или операции, которую должен выполнить блок, а передаваемая строка
+&ndash; как параметры этой операции. Результат операции обычно возвращается приложению в виде строки,
+а возвращаемое целое число указывает на успешность выполнения операции.</p>
+
+<p>Для передачи блоку числа и строки в библиотеке RdsCtrl.dll предусмотрена функция
+<span class="cpp"><span id="light_ref2"><a href="rdsctrlCallBlockFunctionEx.htm" title="Б.3.4.7. rdsctrlCallBlockFunctionEx &ndash; передача блоку числа и строки">rdsctrlCallBlockFunctionEx</a></span></span>:</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsctrlCallBlockFunctionEx.htm" title="Б.3.4.7. rdsctrlCallBlockFunctionEx &ndash; передача блоку числа и строки">rdsctrlCallBlockFunctionEx</a>(
+    <span class="kw">int</span> link,            <span class="rem">// Идентификатор связи с RDS</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> FullBlockName, <span class="rem">// Полное имя блока</span>
+    <span class="kw">int</span> MessageVal,      <span class="rem">// Передаваемое целое число</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> MessageStr,    <span class="rem">// Передаваемая строка</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ReturnStr);   <span class="rem">// Объект для возврата строки</span></pre>
+
+<p>В параметре <span class="cpp">link</span>, как обычно, передается идентификатор связи с конкретной копией
+RDS, в которую загружена схема, блок которой вызывается. В параметре
+<span class="cpp">FullBlockName</span> передается полное имя вызываемого блока, то есть строка, в
+которой через двоеточие перечисляются все
+<a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистемы</a> на пути от <a href="pm_1_2.htm#ref5" title="Корневая подсистема">корневой</a>
+подсистемы к блоку (например, &laquo;:Sys1:Sys10:Block1&raquo;). В параметрах
+<span class="cpp">MessageVal</span> и <span class="cpp">MessageStr</span> передаются целое число и строка,
+которые должен получить блок, соответственно. Строка, возвращаемая блоком, записывается зарегистрированной в
+библиотеке <a href="pm_3_1.htm#light_ref4" title="Возврат строк в RdsCtrl.dll">функцией возврата строки</a> в объект
+<span class="cpp">ReturnStr</span>, а возвращаемое блоком целое число будет результатом самой функции
+<span class="cpp"><a class="hidden" href="rdsctrlCallBlockFunctionEx.htm" title="Б.3.4.7. rdsctrlCallBlockFunctionEx &ndash; передача блоку числа и строки">rdsctrlCallBlockFunctionEx</a></span>. Если блока с указанным полным именем нет в
+схеме, функция вернет значение &minus;1.</p>
+
+<p>Примером блоков, откликающихся на вызов внешних приложений, могут служить стандартные поля
+ввода вещественных чисел из библиотеки блоков RDS. При передаче полю ввода числа 0 оно возвращает число 1
+и свое текущее значение, преобразованное в строку. При передаче числа 1 оно снова возвращает 1, преобразует
+полученную строку в вещественное число и устанавливает его в качестве своего текущего значения, при этом
+вызвавшей программе никаких строк не возвращается.</p>
+
+<p><span id="ref3">Добавим</span>
+в нашу программу из <a href="pm_3_2.htm" title="&sect;3.2. Загрузка библиотеки и управление схемой">&sect;3.2</a> возможность вызова функции блока.
+Для этого сначала нам необходимо написать функцию возврата строки
+<span class="cpp">ReturnString</span>, которую мы зарегистрировали, но оставили пустой. Для удобства работы со
+строками переменной длины введем вспомогательный класс
+<span class="cpp">TDynString</span> (можно обойтись и без него, но так текст программы получится более наглядным):</p>
+
+<pre class="cpp">  <span class="rem">// Вспомогательный класс для более удобного хранения</span>
+  <span class="rem">// строк произвольной длины</span>
+  <span class="kw">class</span> <span id="light_ref3">TDynString</span>
+  { <span class="kw">public</span>:
+      <span class="rem">// Указатель на динамическую строку</span>
+      <span class="kw">char</span> *c_str;
+      <span class="rem">// Освободить память</span>
+      <span class="kw">void</span> Free(<span class="kw">void</span>)
+        { <span class="kw">if</span>(c_str) <span class="kw">delete</span>[] c_str;
+          c_str=NULL; };
+      <span class="rem">// Записать строку в объект</span>
+      <span class="kw">void</span> Set(<span class="kw">char</span> *s)
+        { Free();	<span class="rem">// Освободить старую</span>
+          <span class="kw">if</span>(s!=NULL) <span class="rem">// Отвести память и скопировать новую</span>
+            { c_str=<span class="kw">new</span> <span class="kw">char</span>[strlen(s)+<span class="const">1</span>];
+              strcpy(c_str,s);
+            }
+        };
+      <span class="rem">// Строка пустая?</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> IsEmpty(<span class="kw">void</span>)
+        { <span class="kw">return</span> c_str==NULL || (*c_str)==<span class="const">0</span>;};
+      <span class="rem">// Конструктор и деструктор</span>
+      TDynString(<span class="kw">void</span>){c_str=NULL;};
+      ~TDynString(){Free();};
+  };
+  <span class="rem">//=========================================</span></pre>
+
+<p>Этот класс сам отводит память под строку нужной длины и хранит указатель на нее в поле
+<span class="cpp">c_str</span>. Функция класса <span class="cpp">Free</span> служит для освобождения памяти,
+занятой строкой (она вызывается, в том числе, и в деструкторе класса), функция
+<span class="cpp">IsEmpty</span> &ndash; для проверки строки на пустоту, а функция
+<span class="cpp">Set</span> &ndash; для присвоения строки объекту с автоматическим отведением необходимого объема
+памяти. Чтобы присвоить, например, переменной <span class="cpp">str</span> типа <span class="cpp">TDynString</span> строку
+&laquo;123&raquo;, нужно записать <span class="cpp">str.Set("123")</span>.</p>
+
+<p><span id="ref4">Функция</span>
+возврата строки <span class="cpp">ReturnString</span> будет присваивать строки объектам класса
+<span class="cpp">TDynString</span>:</p>
+
+<pre class="cpp">  <span class="rem">// Функция возврата строки</span>
+  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <span id="light_ref4">ReturnString</span>(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ptr,<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> str)
+  { <a class="hidden" href="#ref3" title="Вспомогательный класс для хранения строк">TDynString</a> *pDS=(<a class="hidden" href="#ref3" title="Вспомогательный класс для хранения строк">TDynString</a>*)ptr;
+    <span class="kw">if</span>(pDS) pDS-&gt;Set(str);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Переданный в функцию указатель на объект <span class="cpp">ptr</span> приводится к типу
+&laquo;указатель на <span class="cpp"><a class="hidden" href="#ref3" title="Вспомогательный класс для хранения строк">TDynString</a></span>&raquo; и записывается во вспомогательную
+переменную <span class="cpp">pDS</span>, после чего у этого объекта вызывается функция
+<span class="cpp">Set</span> с переданной строкой <span class="cpp">str</span>.</p>
+
+<p>В окне управляющей программы мы предусмотрели три поля ввода: для имени блока, для числа и для строки
+(см. <a href="pm_3_1.htm#pic1" title="Главное окно управляющего приложения">рис.&nbsp;121</a>), их мы и будем использовать при вызове блока.
+Вызывать блок мы будем кнопкой &laquo;<span class="menu">Вызвать</span>&raquo;, для этого нужно написать функцию
+<span class="cpp">CallBlockClick</span>, которая в нашей программе вызывается при нажатии этой кнопки:</p>
+
+<pre class="cpp">  <span class="rem">// Нажатие кнопки "Вызвать"</span>
+  <span class="kw">void</span> CallBlockClick(<span class="kw">void</span>)
+  { <span class="rem">// Массивы для имени блока и передаваемой строки</span>
+    <span class="kw">char</span> blockname[<span class="const">1000</span>],text[<span class="const">1000</span>];
+    <span class="rem">// Передаваемое и возвращаемое числа</span>
+    <span class="kw">int</span> value,retcode;
+    <span class="rem">// Объект для возвращаемой строки</span>
+    <a class="hidden" href="#ref3" title="Вспомогательный класс для хранения строк">TDynString</a> retstr;
+
+    <span class="kw">if</span>(RdsLink&lt;<span class="const">0</span>) <span class="rem">// Связь не создана</span>
+      <span class="kw">return</span>;
+
+    <span class="rem">// Получаем содержимое полей ввода окна</span>
+    GetDlgItemText(MainWin,IDC_BLKNAMEEDIT,
+        blockname,<span class="kw">sizeof</span>(blockname)-<span class="const">1</span>);
+    value=(<span class="kw">int</span>)GetDlgItemInt(MainWin,IDC_VALUEEDIT,NULL,TRUE);
+    GetDlgItemText(MainWin,IDC_STRINGEDIT,text,<span class="kw">sizeof</span>(text)-<span class="const">1</span>);
+    <span class="rem">// Теперь имя вызываемого блока записано в массив blockname,</span>
+    <span class="rem">// передаваемое число – в переменную value, передаваемая</span>
+    <span class="rem">// строка – в массив text</span>
+
+    <span class="rem">// Вызываем блок</span>
+    retcode=<a class="hidden" href="rdsctrlCallBlockFunctionEx.htm" title="Б.3.4.7. rdsctrlCallBlockFunctionEx &ndash; передача блоку числа и строки">rdsctrlCallBlockFunctionEx</a>(
+        RdsLink,   <span class="rem">// Связь с RDS</span>
+        blockname, <span class="rem">// Полное имя блока</span>
+        value,     <span class="rem">// Передаваемое целое число</span>
+        text,      <span class="rem">// Передаваемая строка</span>
+        &amp;retstr);  <span class="rem">// Указатель на объект для возврата строки</span>
+    <span class="kw">if</span>(retcode==-<span class="const">1</span>)
+      DisplayText(<span class="str">"Блок не найден"</span>);
+    <span class="kw">else</span> <span class="rem">// Выводим возвращенную строку в окне программы</span>
+      DisplayText(retstr.c_str);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции мы сначала считываем данные из полей ввода функциями Windows API
+<span class="cpp">GetDlgItemText</span> и <span class="cpp">GetDlgItemInt</span>: строка из поля
+с идентификатором <span class="cpp">IDC_BLKNAMEEDIT</span> помещается в массив
+<span class="cpp">blockname</span>, целое число из поля
+<span class="cpp">IDC_VALUEEDIT</span> &ndash; в переменную <span class="cpp">value</span>, строка из поля
+<span class="cpp">IDC_STRINGEDIT</span> &ndash; в массив <span class="cpp">text</span>. Дескриптор окна-владельца
+полей ввода, который нужно передать в эти функции, мы берем из глобальной переменной
+<span class="cpp">MainWin</span> &ndash; мы записали его туда при создании главного окна программы. Затем
+мы вызываем блок загруженной схемы с именем <span class="cpp">blockname</span>, передавая ему число
+<span class="cpp">value</span> и строку <span class="cpp">text</span>, при помощи функции
+<span class="cpp"><a class="hidden" href="rdsctrlCallBlockFunctionEx.htm" title="Б.3.4.7. rdsctrlCallBlockFunctionEx &ndash; передача блоку числа и строки">rdsctrlCallBlockFunctionEx</a></span>. В качестве указателя на объект для возврата строки
+мы передаем <span class="cpp">&amp;retstr</span> (<span class="cpp">retstr</span> &ndash; переменная типа
+<span class="cpp"><a class="hidden" href="#ref3" title="Вспомогательный класс для хранения строк">TDynString</a></span>, описанная в начале функции), а результат вызова функции записываем
+в целую переменную <span class="cpp">retcode</span>. Теперь в поле
+<span class="cpp">c_str</span> объекта <span class="cpp">retstr</span> должен содержаться указатель на динамически
+созданную копию возвращенной блоком строки (так работает созданный нами класс
+<span class="cpp"><a class="hidden" href="#ref3" title="Вспомогательный класс для хранения строк">TDynString</a></span>), а в переменной <span class="cpp">retcode</span> &ndash; возвращенное
+блоком число. Если <span class="cpp">retcode</span> не равно &minus;1, мы выводим возвращенную блоком строку
+в верхней части окна программы функцией <span class="cpp">DisplayText</span>.</p>
+
+<p>Теперь, если загрузить в управляемую нашей программой копию RDS какую-нибудь схему с полями ввода,
+можно будет устанавливать и считывать значения этих полей. Чтобы занести значение в поле ввода, нужно указать
+его имя в поле &laquo;<span class="menu">Имя блока</span>&raquo;, число 1 в поле &laquo;<span class="menu">Число</span>&raquo;, ввести устанавливаемое значение в
+поле &laquo;<span class="menu">Строка</span>&raquo;, после чего нажать на кнопку &laquo;<span class="menu">Вызвать</span>&raquo;
+(<a href="#pic1" title="Внешняя установка значения поля ввода (полю :Sys1:DEdit2 передается значение 25)">рис.&nbsp;123</a>).
+Поскольку имена полей ввода обычно не отображаются в окне подсистемы, а для вызова блока нужно знать его имя,
+имя конкретного поля ввода можно узнать в
+<a href="pm_1_4.htm#pic1" title="Параметры блока &ndash; общие">окне его параметров</a>
+или прочесть его в строке состояния, выделив это поле в
+<a href="pm_1_3.htm#ref1" title="Режим редактирования">режиме редактирования</a>.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/WinApplicationInputCall.png" width="697" height="272" alt="Внешняя установка значения поля ввода (полю :Sys1:DEdit2 передается значение 25)" />
+<p id="light_pic1">Рис.&nbsp;123. Внешняя установка значения поля ввода (полю &laquo;<span class="rdsvar">:Sys1:DEdit2</span>&raquo; передается значение 25)</p>
+</div></div>
+
+
+<p>Рассмотрим теперь модель блока, который может отвечать на вызовы внешних приложений. Пусть наш блок
+преобразует переданную ему строку в вещественное число, и вычисляет одну из четырех функций, в
+зависимости от полученного целого числа:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Полученное число</th>
+    <th>Полученная строка</th>
+    <th>Функция</th>
+  </tr>
+  <tr>
+    <td class="center">0</td>
+    <td rowspan="4" class="center">Вещественное число</td>
+    <td>Синус переданного угла в градусах</td>
+  </tr>
+  <tr>
+    <td class="center">1</td>
+    <td>Косинус переданного угла в градусах</td>
+  </tr>
+  <tr>
+    <td class="center">2</td>
+    <td><i>e</i> в степени переданного числа</td>
+  </tr>
+  <tr>
+    <td class="center">3</td>
+    <td>Квадрат переданного числа</td>
+  </tr>
+</table>
+</div></div>
+
+<p>Результат вычислений блок должен преобразовать в строку и вернуть вызвавшему приложению. Кроме того,
+если функция вычислена, блок должен передать приложению число 1, если не вычислена (неверный номер функции,
+или полученная строка не преобразуется в вещественное число) &ndash; 0. Хотя этот пример и не имеет большой
+практической ценности, он вполне подходит для иллюстрации механизма обработки вызовов внешних приложений
+моделью блока.</p>
+
+<p>Статические переменные в этом блоке использоваться не будут, поэтому его модель будет состоять
+только из реакции на вызов от внешнего приложения <span class="cpp"><a class="hidden" href="RDS_BFM_REMOTEMSG.htm" title="А.2.4.11. RDS_BFM_REMOTEMSG &ndash; вызов от внешнего приложения">RDS_BFM_REMOTEMSG</a></span>:</p>
+
+<pre class="cpp">  <span class="rem">// Реакция на вызов внешнего приложения</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> RemoteFunction(<span class="kw">int</span> CallMode,
+      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span id="light_ref5"><a class="hidden" href="RDS_BFM_REMOTEMSG.htm#ref1" title="Структура RDS_REMOTEMSGDATA">RDS_REMOTEMSGDATA</a></span> *msgdata;
+    <span class="kw">double</span> val;
+    <span class="kw">char</span> *str;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Вызов от управляющей программы</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_REMOTEMSG.htm" title="А.2.4.11. RDS_BFM_REMOTEMSG &ndash; вызов от внешнего приложения">RDS_BFM_REMOTEMSG</a>:
+          <span class="rem">// Приведение ExtParam к правильному типу</span>
+          msgdata=(<a class="hidden" href="RDS_BFM_REMOTEMSG.htm#ref1" title="Структура RDS_REMOTEMSGDATA">RDS_REMOTEMSGDATA</a>*)ExtParam;
+          <span class="rem">// Преобразование полученной строки в число</span>
+          <span id="light_ref6"><a class="hidden" href="rdsAtoD.htm" title="А.5.4.3. rdsAtoD &ndash; преобразование строки в вещественное число">rdsAtoD</a></span>(msgdata-&gt;String,&amp;val);
+          <span class="rem">// Вычисление функции</span>
+          <span class="kw">if</span>(val!=<a class="hidden" href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">DoubleErrorValue</a>)
+            <span class="kw">switch</span>(msgdata-&gt;Value)
+              { <span class="kw">case</span> <span class="const">0</span>: val=sin(M_PI*val/<span class="const">180.0</span>); <span class="kw">break</span>;
+                <span class="kw">case</span> <span class="const">1</span>: val=cos(M_PI*val/<span class="const">180.0</span>); <span class="kw">break</span>;
+                <span class="kw">case</span> <span class="const">2</span>: val=exp(val); <span class="kw">break</span>;
+                <span class="kw">case</span> <span class="const">3</span>: val=val*val; <span class="kw">break</span>;
+                <span class="kw">default</span>: val=<a class="hidden" href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">DoubleErrorValue</a>;
+              }
+          <span class="rem">// Преобразование результата в строку</span>
+          str=<span id="light_ref7"><a class="hidden" href="rdsDtoA.htm" title="А.5.4.5. rdsDtoA &ndash; преобразование вещественного числа в строку">rdsDtoA</a></span>(val,-<span class="const">1</span>,NULL);
+          <span class="rem">// Запоминание этой строки в качестве ответа</span>
+          <span id="light_ref8"><a class="hidden" href="rdsRemoteReply.htm" title="А.5.21.6. rdsRemoteReply &ndash; возврат строки управляющему приложению">rdsRemoteReply</a></span>(str);
+          <span class="rem">// Строка больше не нужна - освобождаем</span>
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(str);
+          <span class="rem">// Возвращаем 1, если функция выполнена</span>
+          <span class="kw">return</span> val!=<a class="hidden" href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">DoubleErrorValue</a>?<span class="const">1</span>:<span class="const">0</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Когда управляющее приложение вызывает какой-либо блок схемы, его модель вызывается с параметром
+<span class="cpp"><a class="hidden" href="RDS_BFM_REMOTEMSG.htm" title="А.2.4.11. RDS_BFM_REMOTEMSG &ndash; вызов от внешнего приложения">RDS_BFM_REMOTEMSG</a></span>, а в <span class="cpp">ExtParam</span> передается указатель на
+структуру <span class="cpp"><a href="RDS_BFM_REMOTEMSG.htm#ref1" title="Структура RDS_REMOTEMSGDATA">RDS_REMOTEMSGDATA</a></span>, содержащую полученные от внешнего приложения данные:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> String;         <span class="rem">// Полученная от приложения строка</span>
+    <span class="kw">int</span> Value;            <span class="rem">// Полученное от приложения число</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> ControllerName; <span class="rem">// Название управляющего приложения,</span>
+                          <span class="rem">// если оно его сообщило</span>
+  } <a class="hidden" href="RDS_BFM_REMOTEMSG.htm#ref1" title="Структура RDS_REMOTEMSGDATA">RDS_REMOTEMSGDATA</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_BFM_REMOTEMSG.htm#ref1" title="Структура RDS_REMOTEMSGDATA">RDS_REMOTEMSGDATA</a> *<a class="hidden" href="RDS_BFM_REMOTEMSG.htm#ref2" title="Указатель на RDS_REMOTEMSGDATA">RDS_PREMOTEMSGDATA</a>;</pre>
+
+<p>В этой структуре нас интересуют поля <span class="cpp">Value</span> и <span class="cpp">String</span>, содержащие
+полученные от внешнего приложения целое число и строку соответственно. В поле
+<span class="cpp">ControllerName</span> содержится строка названия управляющего приложения, если это
+приложение сообщило свое название вызовом функции <span class="cpp"><span id="light_ref9"><a href="rdsctrlSetControllerName.htm" title="Б.3.4.28. rdsctrlSetControllerName &ndash; установить имя управляющей программы">rdsctrlSetControllerName</a></span></span> из библиотеки
+RdsCtrl.dll. Название приложения может быть произвольной строкой, обычно оно используется в
+тех случаях, когда один и тот же блок схемы должен выполнять разные действия в зависимости от того, какое
+именно приложение им управляет. В этом примере мы не даем управляющему приложению названия и не используем
+это поле.</p>
+
+<p>Реагируя на вызов, модель блока приводит параметр <span class="cpp">ExtParam</span> к типу
+&laquo;указатель на <span class="cpp"><a class="hidden" href="RDS_BFM_REMOTEMSG.htm#ref1" title="Структура RDS_REMOTEMSGDATA">RDS_REMOTEMSGDATA</a></span>&raquo; и записывает этот указатель в
+переменную <span class="cpp">msgdata</span>, после чего преобразует полученную строку
+<span class="cpp">msgdata-&gt;String</span> в вещественное число <span class="cpp">val</span> сервисной функцией
+RDS <span class="cpp"><a href="rdsAtoD.htm" title="А.5.4.3. rdsAtoD &ndash; преобразование строки в вещественное число">rdsAtoD</a></span>. Далее, если <span class="cpp">val</span> не равно специальному значению
+<span class="cpp">DoubleErrorValue</span>, использующемуся как
+<a href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">индикатор ошибок математических функций</a>, модель вычисляет одну из
+четырех заложенных в нее функций в зависимости от принятого целого числа
+<span class="cpp">msgdata-&gt;Value</span>. Результат вычислений записывается в ту же самую переменную
+<span class="cpp">val</span>. После этого вычисленное значение преобразуется в динамически отводимую строку
+<span class="cpp">str</span> сервисной функцией <span class="cpp"><a href="rdsDtoA.htm" title="А.5.4.5. rdsDtoA &ndash; преобразование вещественного числа в строку">rdsDtoA</a></span>, и эта строка передается в функцию
+<span class="cpp"><a href="rdsRemoteReply.htm" title="А.5.21.6. rdsRemoteReply &ndash; возврат строки управляющему приложению">rdsRemoteReply</a></span>.</p>
+
+<p>Функция <span class="cpp"><a class="hidden" href="rdsRemoteReply.htm" title="А.5.21.6. rdsRemoteReply &ndash; возврат строки управляющему приложению">rdsRemoteReply</a></span> служит для возврата строки управляющему приложению.
+Она не передает эту строку немедленно, вместо этого она запоминает ее во внутреннем буфере RDS. Когда
+функция модели завершится, эта строка вместе с возвращенным функцией модели целым значением будет передана управляющей
+программе. Таким образом, в реакции на событие <span class="cpp"><a class="hidden" href="RDS_BFM_REMOTEMSG.htm" title="А.2.4.11. RDS_BFM_REMOTEMSG &ndash; вызов от внешнего приложения">RDS_BFM_REMOTEMSG</a></span> модель блока
+устанавливает передаваемую управляющей программе строку функцией <span class="cpp"><a class="hidden" href="rdsRemoteReply.htm" title="А.5.21.6. rdsRemoteReply &ndash; возврат строки управляющему приложению">rdsRemoteReply</a></span>,
+а передаваемое целое число возвращает оператором <span class="cpp">return</span>. Вызов
+<span class="cpp"><a class="hidden" href="rdsRemoteReply.htm" title="А.5.21.6. rdsRemoteReply &ndash; возврат строки управляющему приложению">rdsRemoteReply</a></span> в любых других реакциях модели игнорируется, его имеет смысл делать
+только в реакции на вызов управляющего приложения. Если в реакции <span class="cpp"><a class="hidden" href="RDS_BFM_REMOTEMSG.htm" title="А.2.4.11. RDS_BFM_REMOTEMSG &ndash; вызов от внешнего приложения">RDS_BFM_REMOTEMSG</a></span>
+эта функция будет вызвана несколько раз, внешняя программа получит только строку, переданную в самом последнем
+вызове. Если же <span class="cpp"><a class="hidden" href="rdsRemoteReply.htm" title="А.5.21.6. rdsRemoteReply &ndash; возврат строки управляющему приложению">rdsRemoteReply</a></span> не будет вызвана ни разу, внешняя программа
+получит пустую строку.</p>
+
+<p>После того, как строка <span class="cpp">str</span> передана в функцию <span class="cpp"><a class="hidden" href="rdsRemoteReply.htm" title="А.5.21.6. rdsRemoteReply &ndash; возврат строки управляющему приложению">rdsRemoteReply</a></span>
+и запомнена для возврата вызвавшему блок приложению, эта строка уничтожается функцией
+<span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span> (она была отведена динамически функцией <span class="cpp"><a class="hidden" href="rdsDtoA.htm" title="А.5.4.5. rdsDtoA &ndash; преобразование вещественного числа в строку">rdsDtoA</a></span>, поэтому
+ее обязательно нужно уничтожить вручную). Затем функция модели возвращает значение 1, если
+<span class="cpp">val</span> отличается от индикатора ошибки <a class="hidden" href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">DoubleErrorValue</a>,
+и 0 в противном случае &ndash; это значение будет передано вызвавшей программе в качестве возвращенного
+блоком целого числа.</p>
+
+<p>Теперь, если подключить эту модель к какому-либо блоку в схеме и загрузить эту схему в копию RDS,
+управляемую нашей программой, можно будет вызывать его по имени. Если ввести имя этого блока в поле ввода
+&laquo;<span class="menu">Имя блока</span>&raquo;, цифру 3 в поле ввода &laquo;<span class="menu">Число</span>&raquo;, число 12 в поле ввода
+&laquo;<span class="menu">Строка</span>&raquo;, и нажать кнопку &laquo;<span class="menu">Вызвать</span>&raquo;, в верхней части окна программы отобразится строка,
+возвращенная блоком &ndash; число 144, то есть квадрат двенадцати
+(<a href="#pic2" title="Вызов блока из внешнего приложения">рис.&nbsp;124</a>).</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/WinApplicationCustomCall.png" width="641" height="191" alt="Вызов блока из внешнего приложения" />
+<p id="light_pic2">Рис.&nbsp;124. Вызов блока из внешнего приложения</p>
+</div></div>
+
+
+<p><span id="ref10">Для</span>
+того, чтобы вызвать какой-либо блок схемы, управляющему приложению необходимо знать его полное имя.
+Это требует некоторой синхронизации между приложением и загружаемыми схемами (приложение должно помнить,
+в какой схеме какой блок за что отвечает), и при перемещении блоков из подсистемы в подсистему эта синхронизация
+может нарушиться, поскольку полное имя блока при этом меняется. Чтобы избежать путаницы с именами,
+<span id="light_ref10">можно
+дать каждой операции, выполняемой блоками по команде от внешнего приложения, какое-либо символическое имя</span>.
+Если блок сообщит RDS, что он выполняет операцию с конкретным именем, управляющее приложение сможет
+найти его по имени этой операции независимо от того, в какой подсистеме он находится и как называется. При
+этом обычно выполняется следующая последовательность действий:</p>
+
+<ul>
+  <li>Модель блока вызывает сервисную функцию <span class="cpp"><span id="light_ref11"><a href="rdsExecutesRemoteOpsSet.htm" title="А.5.21.1. rdsExecutesRemoteOpsSet &ndash; регистрация блока как исполнителя операции внешнего управления">rdsExecutesRemoteOpsSet</a></span></span>, передавая ей
+  строку с символическим именем выполняемой блоком операции и параметр <span class="cpp">TRUE</span>. RDS
+  запоминает этот факт, и будет помнить его до тех пор, пока блок не будет удален или пока модель не вызовет
+  <span class="cpp"><a class="hidden" href="rdsExecutesRemoteOpsSet.htm" title="А.5.21.1. rdsExecutesRemoteOpsSet &ndash; регистрация блока как исполнителя операции внешнего управления">rdsExecutesRemoteOpsSet</a></span> с тем же именем и параметром <span class="cpp">FALSE</span>.</li>
+
+  <li>Управляющая программа, загрузив схему, вызывает функцию <span class="cpp"><span id="light_ref12"><a href="rdsctrlFindOpSetProviders.htm" title="Б.3.4.16. rdsctrlFindOpSetProviders &ndash; поиск блоков, выполняющих операцию">rdsctrlFindOpSetProviders</a></span></span>
+  и передает ей символическое имя операции, получая в ответ список полных имен всех блоков, которые заявили о
+  выполнении операции с этим именем.</li>
+
+  <li>Выбрав из этого списка один или несколько блоков, управляющая программа вызывает их по именам.</li>
+</ul>
+
+<p>Следует помнить, что поиск блоков, поддерживающих операцию с каким-либо именем, занимает некоторое время,
+поэтому не следует вызывать функцию <span class="cpp"><a class="hidden" href="rdsctrlFindOpSetProviders.htm" title="Б.3.4.16. rdsctrlFindOpSetProviders &ndash; поиск блоков, выполняющих операцию">rdsctrlFindOpSetProviders</a></span> слишком часто.
+Лучше всего вызвать ее сразу после загрузки схемы или после переключения в
+<a href="pm_1_3.htm#ref2" title="Режим моделирования">режим моделирования</a>, в котором изменения схемы маловероятны. Запомнив
+имя блока, поддерживающего операцию, можно вызывать его до тех пор, пока очередной вызов не вернет ошибочное
+значение (например, число &minus;1, которое возвращается, когда блок не найден). При этом можно снова вызвать
+<span class="cpp"><a class="hidden" href="rdsctrlFindOpSetProviders.htm" title="Б.3.4.16. rdsctrlFindOpSetProviders &ndash; поиск блоков, выполняющих операцию">rdsctrlFindOpSetProviders</a></span> и запомнить новое имя блока, и т.д.</p>
+
+<p>Функция <span class="cpp"><a class="hidden" href="rdsctrlFindOpSetProviders.htm" title="Б.3.4.16. rdsctrlFindOpSetProviders &ndash; поиск блоков, выполняющих операцию">rdsctrlFindOpSetProviders</a></span> позволяет искать блоки, поддерживающие
+операцию, во всей схеме или в конкретных подсистемах. Функция принимает следующие параметры:</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsctrlFindOpSetProviders.htm" title="Б.3.4.16. rdsctrlFindOpSetProviders &ndash; поиск блоков, выполняющих операцию">rdsctrlFindOpSetProviders</a>(
+    <span class="kw">int</span> link,            <span class="rem">// Идентификатор связи с RDS</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> FullBlockName, <span class="rem">// Имя подсистемы, в которой искать</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> OpSetName,     <span class="rem">// Символическое имя операции</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags,         <span class="rem">// Флаги RDSCTRL_FOSP_*</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ReturnStr);   <span class="rem">// Объект для возврата имен блоков</span></pre>
+
+<p>В параметре <span class="cpp">link</span> передается идентификатор связи с RDS. Строка с
+символическим именем операции передается в параметре <span class="cpp">OpSetName</span>. В параметре
+<span class="cpp">FullBlockName</span> передается <a href="pm_1_4.htm#light_ref2" title="Полное имя блока">полное имя</a> подсистемы,
+начиная с которой нужно искать блоки. Если их нужно искать, начиная с корневой подсистемы,
+в этом параметре передается пустая строка. В параметре <span class="cpp">Flags</span> указываются битовые флаги,
+управляющие поиском блоков: если нужно искать блоки не только в подсистеме
+<span class="cpp">FullBlockName</span>, но и во всех вложенных в нее подсистемах, указывается флаг
+<span class="cpp"><span id="light_ref13"><a href="rdsctrlFindOpSetProviders.htm#light_ref1" title="RDSCTRL_FOSP_RECURSIVE">RDSCTRL_FOSP_RECURSIVE</a></span></span>. Если нужно проверить на поддержку искомой операции не
+только блоки подсистемы, но и модель самой подсистемы <span class="cpp">FullBlockName</span> при ее наличии,
+указывается флаг <span class="cpp"><span id="light_ref14"><a href="rdsctrlFindOpSetProviders.htm#light_ref2" title="RDSCTRL_FOSP_SELF">RDSCTRL_FOSP_SELF</a></span></span>. Наконец, в параметре
+<span class="cpp">ReturnStr</span> передается указатель на объект, в который зарегистрированная в библиотеке
+RdsCtrl.dll <a href="pm_3_1.htm#light_ref4" title="Возврат строк в RdsCtrl.dll">функция возврата строки</a> помещает список найденных
+блоков (имена в этом списке разделены кодом перевода строки &laquo;\n&raquo;). Сама функция возвращает
+число имен в списке &ndash; таким образом, если в схеме не найдено ни одного блока, выполняющего операцию с
+данным именем, функция вернет 0.</p>
+
+<p>Назовем вычисления, выполняемые созданным нами блоком,
+&laquo;ProgrammersGuide.MathFunc1&raquo;, и добавим в модель объявление о поддержке этой операции.
+Проще всего сделать это при инициализации блока, для этого в оператор
+<span class="cpp"></span> в модели нужно добавить новый <span class="cpp">case</span>:</p>
+
+<pre class="cpp">        <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <a class="hidden" href="rdsExecutesRemoteOpsSet.htm" title="А.5.21.1. rdsExecutesRemoteOpsSet &ndash; регистрация блока как исполнителя операции внешнего управления">rdsExecutesRemoteOpsSet</a>(<span class="str">"ProgrammersGuide.MathFunc1"</span>,TRUE);
+          <span class="kw">break</span>;</pre>
+
+<p>Теперь внешняя программа сможет найти этот блок по имени выполняемой операции.</p>
+
+<p>Поиск блока будем выполнять при нажатии на кнопку &laquo;<span class="menu">Найти</span>&raquo;
+(см. <a href="pm_3_1.htm#pic1" title="Главное окно управляющего приложения">рис.&nbsp;121</a>), при этом в поле ввода
+&laquo;<span class="menu">Строка</span>&raquo; будем вводить имя искомой операции. Для этого перепишем ранее созданную пустую функцию,
+вызываемую при нажатии на эту кнопку, следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Нажатие кнопки "Найти"</span>
+  <span class="kw">void</span> FindFuncClick(<span class="kw">void</span>)
+  { <span class="kw">char</span> funcname[<span class="const">1000</span>], <span class="rem">// Массив для имени операции</span>
+         *s;
+    <a class="hidden" href="#ref3" title="Вспомогательный класс для хранения строк">TDynString</a> list; <span class="rem">// Сюда запишется возвращаемый список имен</span>
+
+    <span class="kw">if</span>(RdsLink&lt;<span class="const">0</span>) <span class="rem">// Нет связи с RDS</span>
+      <span class="kw">return</span>;
+
+    <span class="rem">// Копируем строку из поля ввода "Строка" в массив funcname</span>
+    GetDlgItemText(MainWin,IDC_STRINGEDIT,funcname,
+            <span class="kw">sizeof</span>(funcname)-<span class="const">1</span>);
+
+    <span class="rem">// Ищем блоки, поддерживающие эту функцию</span>
+    <span class="kw">if</span>(!<a class="hidden" href="rdsctrlFindOpSetProviders.htm" title="Б.3.4.16. rdsctrlFindOpSetProviders &ndash; поиск блоков, выполняющих операцию">rdsctrlFindOpSetProviders</a>(
+            RdsLink,                <span class="rem">// Связь с RDS</span>
+            <span class="str">""</span>,                     <span class="rem">// Начиная с корневой подсистемы</span>
+            funcname,               <span class="rem">// Имя операции</span>
+            <a class="hidden" href="rdsctrlFindOpSetProviders.htm#light_ref1" title="RDSCTRL_FOSP_RECURSIVE">RDSCTRL_FOSP_RECURSIVE</a>, <span class="rem">// С поиском во вложенных</span>
+            &amp;list))                 <span class="rem">// Сюда запишется возвращаемый список</span>
+      { DisplayText(<span class="str">"Функция не поддерживается"</span>);
+        <span class="kw">return</span>;
+      }
+
+    <span class="rem">// В строке list может быть список имен блоков.</span>
+    <span class="rem">// Оставляем только первый его элемент</span>
+    <span class="kw">if</span>(list.c_str==NULL) <span class="rem">// Нет строки</span>
+      <span class="kw">return</span>;
+    <span class="rem">// Ищем первый разделитель (перевод строки)</span>
+    s=strchr(list.c_str,<span class="str">'\n'</span>);
+    <span class="rem">// Заменяем найденный разделитель на 0 (конец текста)</span>
+    <span class="kw">if</span>(s) *s=<span class="const">0</span>;
+
+    <span class="rem">// Заносим первое имя из списка в поле ввода имени блока</span>
+    SetDlgItemText(MainWin,IDC_BLKNAMEEDIT,list.c_str);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции мы читаем название операции из поля ввода
+&laquo;<span class="menu">Строка</span>&raquo; с идентификатором <span class="cpp">IDC_STRINGEDIT</span> и записываем его
+в массив <span class="cpp">funcname</span>. Затем мы вызываем функцию
+<span class="cpp"><a class="hidden" href="rdsctrlFindOpSetProviders.htm" title="Б.3.4.16. rdsctrlFindOpSetProviders &ndash; поиск блоков, выполняющих операцию">rdsctrlFindOpSetProviders</a></span>, которая должна найти во всей схеме (вместо
+имени подсистемы передана пустая строка и указан флаг <span class="cpp"><a class="hidden" href="rdsctrlFindOpSetProviders.htm#light_ref1" title="RDSCTRL_FOSP_RECURSIVE">RDSCTRL_FOSP_RECURSIVE</a></span>)
+блоки, выполняющие эту операцию, и записать список их имен в переменную
+<span class="cpp">list</span> типа <span class="cpp"><a class="hidden" href="#ref3" title="Вспомогательный класс для хранения строк">TDynString</a></span>. Нас интересует только один блок,
+а в списке может быть много имен, поэтому мы ищем в списке первый разделитель
+&laquo;\n&raquo; и заменяем его нулем, тем самым отсекая все остальные имена в списке. Теперь в
+<span class="cpp">list.c_str</span> находится указатель на имя первого блока из списка, его мы и копируем в
+поле ввода &laquo;<span class="menu">Имя блока</span>&raquo; функцией Windows API <span class="cpp">SetDlgItemText</span>.</p>
+
+<p>Если теперь ввести в поле &laquo;<span class="menu">Строка</span>&raquo; текст
+&laquo;ProgrammersGuide.MathFunc1&raquo; и нажать кнопку &laquo;<span class="menu">Найти</span>&raquo;, в поле ввода
+&laquo;<span class="menu">Имя блока</span>&raquo; должно появиться имя нашего блока
+(<a href="#pic3" title="Поиск блока, выполняющего операцию, имя которой указано в поле ввода Строка">рис.&nbsp;125</a>).
+После этого мы сможем вызывать этот блок, поскольку теперь мы знаем его имя.</p>
+
+<div class="pic"><div class="container" id="pic3">
+<img src="../img/WinApplicationCustomCall1.png" width="638" height="189" alt="Поиск блока, выполняющего операцию, имя которой указано в поле ввода Строка" />
+<p id="light_pic3">Рис.&nbsp;125. Поиск блока, выполняющего операцию, имя которой указано в поле ввода &laquo;<span class="menu">Строка</span>&raquo;</p>
+</div></div>
+
+
+<p>Есть еще один механизм взаимодействия управляющего приложения с блоками схемы, на котором мы не
+будем подробно останавливаться: приложение может передать в RDS произвольное количество строк с целыми
+идентификаторами при помощи функции <span class="cpp"><span id="light_ref15"><a href="rdsctrlSetString.htm" title="Б.3.4.31. rdsctrlSetString &ndash; установить глобальную строку">rdsctrlSetString</a></span></span>, а блоки в любой момент
+могут считать эти строки сервисной функцией <span class="cpp"><span id="light_ref16"><a href="rdsGetRemoteControllerString.htm" title="А.5.21.3. rdsGetRemoteControllerString &ndash; получить строку, установленную внешней программой">rdsGetRemoteControllerString</a></span></span>. Например, если
+наше приложение выполнит вызов &laquo;<span class="cpp"><a class="hidden" href="rdsctrlSetString.htm" title="Б.3.4.31. rdsctrlSetString &ndash; установить глобальную строку">rdsctrlSetString</a>(RdsLink,23,"abcd")</span>&raquo;,
+модель блока,
+вызвав функцию
+&laquo;<span class="cpp"><a class="hidden" href="rdsGetRemoteControllerString.htm" title="А.5.21.3. rdsGetRemoteControllerString &ndash; получить строку, установленную внешней программой">rdsGetRemoteControllerString</a>(23)</span>&raquo;, получит строку &laquo;abcd&raquo;.
+Этот механизм не предназначен для немедленной передачи информации блокам, поскольку модели блоков не
+вызываются при передаче новых строк. Обычно он используется для установки каких-либо глобальных параметров,
+влияющих на все блоки схемы. Функцию <span class="cpp"><a class="hidden" href="rdsctrlSetString.htm" title="Б.3.4.31. rdsctrlSetString &ndash; установить глобальную строку">rdsctrlSetString</a></span> можно вызывать независимо от
+того, работает ли сейчас процесс RDS. Как и многие другие параметры, переданные строки запоминаются
+во внутренних структурах библиотеки RdsCtrl.dll и передаются в RDS при запуске.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_3_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_4.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

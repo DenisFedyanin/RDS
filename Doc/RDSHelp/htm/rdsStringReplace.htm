@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.4.13. rdsStringReplace &ndash; замена фрагментов строки</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_4">А.5.4. Отведение памяти и преобразование строк</a></p>
+<div class="level"><p>А.5.4.13. <span class="cpp">rdsStringReplace</span> &ndash; замена фрагментов строки</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsProcessText.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsTransformFileName.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsStringReplace">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.4. Отведение памяти и преобразование строк</h4>
+<h5>А.5.4.13. <span class="cpp">rdsStringReplace</span> &ndash; замена фрагментов строки</h5>
+
+
+<p>Функция <span class="cpp">rdsStringReplace</span> ищет в переданной ей строке заданные фрагменты и
+формирует новую динамическую строку, в которой эти фрагменты заменены на другие.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsStringReplace(
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> String,     <span class="rem">// Исходная строка</span>
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> *Search,    <span class="rem">// Массив фрагментов для поиска</span>
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> *Replace,   <span class="rem">// Массив фрагментов для замены</span>
+      <span class="kw">int</span> Count,        <span class="rem">// Размер массива Search или -1</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags       <span class="rem">// Флаги RDS_SRF_*</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_SSpSpSIDw</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">String</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на исходную строку, в которой будет выполняться поиск фрагментов.</dd>
+
+  <dt><span class="cpp">Search</span>&emsp;(<span class="cpp"><i>LPSTR*</i></span>)</dt>
+  <dd>Указатель на первый элемент массива указателей на строки (<span class="cpp">char*</span>) фрагментов
+  для поиска. Массив либо должен завершаться элементом <span class="cpp">NULL</span>, либо число его элементов должно
+  быть указано в параметре <span class="cpp">Count</span>.</dd>
+
+  <dt><span class="cpp">Replace</span>&emsp;(<span class="cpp"><i>LPSTR*</i></span>)</dt>
+  <dd>Указатель на первый элемент массива указателей на строки (<span class="cpp">char*</span>) фрагментов,
+  которыми будут заменяться фрагменты из массива <span class="cpp">Search</span> с теми же индексами.
+  Значение <span class="cpp">NULL</span> в элементе этого массива указывает на необходимость заменить найденный
+  фрагмент на пустую строку (то есть просто удалить его из строки). Число элементов в массиве
+  <span class="cpp">Replace</span> не должно быть меньше числа элементов в массиве <span class="cpp">Search</span>.</dd>
+
+  <dt><span class="cpp">Count</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Число строк в массиве <span class="cpp">Search</span> или &minus;1, если массив <span class="cpp">Search</span>
+  завершается элементом со значением <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">Flags</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</dt>
+  <dd>Битовые флаги, влияющие на поиск и замену фрагментов:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref1">RDS_SRF_IGNORECASE</span></span></td>
+          <td>При поиске не учитывать регистр символов.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref2">RDS_SRF_STDPATHS</span></span></td>
+          <td>Заменить <a href="rdsGetFullFilePath.htm#ref1" title="Символические обозначения стандартных путей">символические обозначения стандартных путей</a>
+          на сами пути после того, как выполнен поиск фрагментов из массива <span class="cpp">Search</span>
+          и замена их на фрагменты из <span class="cpp">Replace</span>.</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Указатель на созданную в динамической памяти строку, в которой фрагменты из массива <span class="cpp">Search</span>
+заменены их на фрагменты из массива <span class="cpp">Replace</span>. В случае ошибки возвращается <span class="cpp">NULL</span>.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Динамическая строка, созданная функцией <span class="cpp">rdsStringReplace</span>, должна быть
+<span class="emph">обязательно</span> освобождена функцией <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p>Эта функция последовательно просматривает массив <span class="cpp">Search</span>, начиная с нулевого индекса,
+до обнаружения в нем значения <span class="cpp">NULL</span> или до индекса <span class="cpp">Count</span>, если
+<span class="cpp">Count>0</span>. Каждый элемент массива <span class="cpp">Search</span> ищется в строке
+<span class="cpp">String</span> и, если он найден, все его вхождения заменяются на элемент массива
+<span class="cpp">Replace</span> с тем же индексом. Если в параметре <span class="cpp">Flags</span> взведен флаг
+<span class="cpp">RDS_SRF_IGNORECASE</span>, поиск осуществляется без учета регистра символов, в противном случае
+&ndash; с его учетом. Если в параметре <span class="cpp">Flags</span> взведен флаг
+<span class="cpp">RDS_SRF_STDPATHS</span>, то, после того, как перебраны все элементы массива <span class="cpp">Search</span>,
+оставшиеся в строке <a href="rdsGetFullFilePath.htm#ref1" title="Символические обозначения стандартных путей">символические обозначения путей</a> (&laquo;$DLL$&raquo;,
+&laquo;<span class="rdsvar">$INI$</span>&raquo; и т.п.) заменяются на их значения, причем замена производится не только в начале строки,
+как в функции <span class="cpp"><a href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a></span>, но и в любом другом ее месте.</p>
+
+<p class="apphdr">Пример</p>
+<p>Выполнение программы</p>
+
+<pre class="cpp">  <span class="kw">char</span> *names[]={<span class="str">"_PI_VAL_"</span>,<span class="str">"$PI$"</span>,NULL};
+  <span class="kw">char</span> *values[]={<span class="str">"3.1415926"</span>,<span class="str">"Пи"</span>};
+  <span class="kw">char</span> *result=<a class="hidden" href="rdsStringReplace.htm" title="А.5.4.13. rdsStringReplace &ndash; замена фрагментов строки">rdsStringReplace</a>(<span class="str">"Значение $PI$ равно _PI_VAL_"</span>,
+                                names,values,-<span class="const">1</span>,<span class="const">0</span>);
+  <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(result,<span class="str">"Результат"</span>,MB_OK);
+  <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(result);</pre>
+
+<p class="noindent">приведет к выводу сообщения с текстом &laquo;Значение Пи равно 3.1415926&raquo;.</p>
+
+<p>Другой пример использования функции rdsStringReplace приведен
+в <a href="pm_4_4.htm" title="&sect;4.4. Компиляция моделей">&sect;4.4 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>,
+<span class="cpp"><a href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a></span>,
+<span class="cpp"><a href="rdsTransformFileName.htm" title="А.5.4.14. rdsTransformFileName &ndash; преобразование имени файла">rdsTransformFileName</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsProcessText.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsTransformFileName.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsStringReplace">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

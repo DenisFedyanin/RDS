@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.13.2. Прямой вызов функции одного блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_13">&sect;2.13. Вызов функций блоков</a></p>
+<div class="level"><p>&sect;2.13.2. Прямой вызов функции одного блока</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_13_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_3.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_13_2_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.13. Вызов функций блоков</h3>
+<h4>&sect;2.13.2. Прямой вызов функции одного блока</h4>
+<p class="abstract">Рассматривается вызов функции блока, идентификатор которого известен вызывающей модели.
+                Приводятся примеры использования функции &laquo;Common.ControlValueChanged&raquo;, которая используется
+                блоками пользовательского интерфейса из библиотеки &laquo;<span class="file">Common.dll</span>&raquo; для общения между собой.
+                В двухкоординатную рукоятку и блок увеличения/уменьшения, созданные ранее, добавляется поддержка этой
+                функции, что позволяет соединять их со стандартными полями ввода и синхронно изменять значения блоков
+                в режиме моделирования.</p>
+
+
+<p>Перейдем от абстрактных примеров прямого вызова функций блоков к более конкретным, и начнем с
+самого простого: будем вызывать функцию, которая уже придумана до нас, а также будем реагировать на
+ее вызов в нашем блоке.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/BlockFunc_PlusMinusRing.png" width="163" height="108" alt="Кольцевое соединение блока с полем ввода" />
+<p id="light_pic1">Рис.&nbsp;84. Кольцевое соединение<br />блока с полем ввода</p>
+</div></div>
+
+
+<p>В <a href="pm_2_12_1.htm#ref2" title="Пример блока, реагирующего на щелчки мыши">&sect;2.12.1</a> мы создали блок, уменьшающий и увеличивающий значение
+своего целого выхода при щелчках мыши и нажатиях клавиш. Этот блок вполне справляется со своей работой,
+однако, пользователь обычно хочет не только увеличивать и уменьшать какое-то значение, но и иметь возможность ввести
+его с клавиатуры. Самое очевидное решение этой проблемы &ndash; добавить в переменные блока целый вход,
+значение которого без изменений передается на выход, и соединить его со стандартным полем ввода. Выход
+нашего блока также необходимо соединить со входом поля ввода, замкнув их в кольцо
+(<a href="#pic1" title="Кольцевое соединение блока с полем ввода">рис.&nbsp;84</a>).
+При таком соединении ввод числа в поле ввода будет приводить к попаданию нового значения на вход нашего
+блока и, следовательно, к изменению его выхода, а изменения значения выхода нашего блока при щелчках мыши
+или нажатии клавиш будет приводить к изменению значения в поле ввода. Таким образом, значение в
+поле ввода и выход нашего блока будут изменяться синхронно.</p>
+
+<p>Однако, все это будет работать только в режиме
+<a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a>. Если пользователь захочет остановить расчет, изменить
+значение, а затем запустить расчет заново, щелчки на нашем блоке будут изменять значение его выхода, но это
+никак не будет отражаться на значении в поле ввода: в режиме
+<a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a> данные по связям не передаются. К счастью, в полях ввода
+предусмотрена специальная функция для связи с соседними органами управления &ndash; нужно только вызвать
+ее в соединенном поле ввода, а также добавить в наш блок реакцию на эту же функцию, чтобы поле
+ввода тоже могло вызывать ее.</p>
+
+<div class="picright"><div class="container" id="pic2">
+<img src="../img/BlockFunc_InputRing.png" width="214" height="86" alt="Кольцо из трех полей ввода" />
+<p id="light_pic2">Рис.&nbsp;85. Кольцо из трех полей ввода</p>
+</div></div>
+
+
+<p><span id="ref1">Модели</span>
+всех стандартных органов управления (рукояток, полей ввода и т.п.) из библиотеки
+&laquo;<span class="file">Common.dll</span>&raquo; поддерживают функцию
+&laquo;<span id="light_ref1">Common.ControlValueChanged</span>&raquo;, специально предназначенную
+для взаимодействия элементов интерфейса пользователя друг с другом. Если пользователь меняет значение
+в одном из таких интерфейсных блоков, модель этого блока принудительно передает данные выходов по связям,
+даже если RDS находится на в режиме расчета (для этого используется специальная сервисная функция
+<span class="cpp"><span id="light_ref2"><a href="rdsActivateOutputConnections.htm" title="А.5.6.1. rdsActivateOutputConnections &ndash; активация выходных связей блока">rdsActivateOutputConnections</a></span></span>), после чего вызывает во всех блоках, с которыми
+соединены выходы данного, функцию &laquo;Common.ControlValueChanged&raquo;. У этой функции нет параметров,
+блоки должны считать измененное пользователем значение со своих входов. Таким образом, если несколько полей ввода
+соединены связями в кольцо, когда выход каждого из них соединен со входом другого, как
+на <a href="#pic2" title="Кольцо из трех полей ввода">рис.&nbsp;85</a>, изменение пользователем значения в поле ввода
+A вызовет принудительную передачу этого значения по связи на вход соединенного с ним поля B, и вызов
+в нем функции &laquo;Common.ControlValueChanged&raquo;. Реагируя на вызов функции, поле ввода
+B должно изменить свое значение согласно своему входу, снова принудительно передать значение своего выхода по
+связям, и снова вызвать у соединенных блоков, то есть у поля ввода C, функцию
+&laquo;Common.ControlValueChanged&raquo;. Таким образом, введенное пользователем значение будет распространяться
+по цепочке соединенных полей ввода. Если эта цепочка замкнута в кольцо, как на рисунке, в конце концов значение
+вернется к полю ввода A, изменение значения в котором и привело к цепочке вызовов функции у соединенных с
+ним блоков. У этого поля тоже будет вызвана функция &laquo;Common.ControlValueChanged&raquo;, и здесь
+очень важно не допустить повторного вызова всей цепочки &ndash; если, реагируя на вызов функции,
+поле ввода A снова передаст значение полю ввода B, вызовы функции по кольцу будут продолжаться бесконечно, точнее,
+до тех пор, пока не переполнится стек и не произойдет аварийное завершение RDS. Для предотвращения этого проще
+всего ввести в каждый блок специальный флаг, который взводится перед вызовом
+&laquo;Common.ControlValueChanged&raquo; у соседних блоков и сбрасывается после этого вызова. Если,
+реагируя на вызов функции, модель блока обнаружит этот флаг взведенным, значит, этот блок уже участвовал в
+цепочке вызовов, и передавать вызов дальше не нужно. В этом случае ввод пользователем числа в поле ввода A
+приведет к следующей последовательности вызовов:</p>
+
+  <div class="tablecenter"><div class="tcont">
+  <table>
+    <tr>
+      <th>Действие</th>
+      <th>Флаг поля A</th>
+      <th>Флаг поля B</th>
+      <th>Флаг поля C</th>
+    </tr>
+    <tr>
+      <td>Исходное состояние блоков.</td>
+      <td class="center">&ndash;</td>
+      <td class="center">&ndash;</td>
+      <td class="center">&ndash;</td>
+    </tr>
+    <tr>
+      <td>Пользователь ввел число в поле A, модель поля A, реагируя на его действия, взвела
+      флаг и вызывает модель поля B.</td>
+      <td class="center">&checkmark;</td>
+      <td class="center">&ndash;</td>
+      <td class="center">&ndash;</td>
+    </tr>
+    <tr>
+      <td>Модель поля B приняла новое значение, взвела флаг и вызывает модель поля C.</td>
+      <td class="center">&checkmark;</td>
+      <td class="center">&checkmark;</td>
+      <td class="center">&ndash;</td>
+    </tr>
+    <tr>
+      <td>Модель поля C приняла новое значение, взвела флаг и вызывает модель поля A.</td>
+      <td class="center">&checkmark;</td>
+      <td class="center">&checkmark;</td>
+      <td class="center">&checkmark;</td>
+    </tr>
+    <tr>
+      <td>Модель поля A обнаружила, что флаг у ее блока взведен, и не стала реагировать на функцию.
+      Управление возвращается вызвавшей модели, то есть модели поля C.</td>
+      <td class="center">&checkmark;</td>
+      <td class="center">&checkmark;</td>
+      <td class="center">&checkmark;</td>
+    </tr>
+    <tr>
+      <td>Модель поля C сбрасывает свой флаг и завершает реакцию на функцию. Управление возвращается модели поля B.</td>
+      <td class="center">&checkmark;</td>
+      <td class="center">&checkmark;</td>
+      <td class="center">&ndash;</td>
+    </tr>
+    <tr>
+      <td>Модель поля B сбрасывает свой флаг и завершает реакцию на функцию. Управление возвращается модели поля A.</td>
+      <td class="center">&checkmark;</td>
+      <td class="center">&ndash;</td>
+      <td class="center">&ndash;</td>
+    </tr>
+    <tr>
+      <td>Модель поля A сбрасывает свой флаг и завершает реакцию на действия пользователя.</td>
+      <td class="center">&ndash;</td>
+      <td class="center">&ndash;</td>
+      <td class="center">&ndash;</td>
+    </tr>
+  </table>
+  </div></div>
+
+<p>Таким образом, использование флага блокировки реакции на функцию позволяет предотвратить бесконечную рекурсию
+функций моделей при соединении блоков в кольцо. В RDS нет встроенного механизма для поддержки таких
+флагов, программист должен реализовать его самостоятельно.</p>
+
+<p>Изменим модель и параметры нашего блока таким образом, чтобы его можно было подключать к полю ввода
+(или другому интерфейсному блоку) как на <a href="#pic1" title="Кольцевое соединение блока с полем ввода">рис.&nbsp;84</a>.
+Прежде всего в переменные блока необходимо добавить целый вход &laquo;<span class="rdsvar">input</span>&raquo;, на который будет
+подаваться значение с поля ввода. Для этого входа необходимо установить
+<a href="pm_1_5.htm#ref18" title="Флаг запуска у входа блока">флаг запуска</a> &ndash;
+при срабатывании связи, подключенной к нему, модель блока должна будет передать значение на выход.
+Новая структура переменных блока будет иметь следующий вид:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">v</td>
+<td class="center">int</td>
+<td class="center">4</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">6</td>
+<td class="vcenter">input</td>
+<td class="center">int</td>
+<td class="center">4</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Для работы с функцией &laquo;Common.ControlValueChanged&raquo; введем целую глобальную переменную
+<span class="cpp">ControlValueChangedId</span>, в нее при регистрации функции будет записываться присвоенный
+ей уникальный идентификатор. Функцию мы будем регистрировать при инициализации блока, причем только в
+том случае, если она еще не зарегистрирована, поэтому дадим этой глобальной переменной нулевое значение:</p>
+
+<pre class="cpp">  <span class="rem">// Глобальная переменная для уникального идентификатора функции</span>
+  <span class="rem">// "Common.ControlValueChanged"</span>
+  <span class="kw">int</span> ControlValueChangedId=<span class="const">0</span>;</pre>
+
+<p>Для того, чтобы реализовать задуманное, нам потребуется функция, принудительно передающая значение выхода
+блока по связям, после чего вызывающая &laquo;Common.ControlValueChanged&raquo; у всех соединенных блоков.
+Мы будем вызывать ее при изменении выхода блока из-за действий пользователя (щелчков мыши или нажатия клавиш),
+а также при реакции нашего блока на &laquo;Common.ControlValueChanged&raquo;, чтобы новое значение передавалось
+по цепочке от блока к блоку. Эту функцию мы не будем делать членом класса
+<a href="pm_1_4.htm#ref8" title="Личная область данных блока">личной области данных</a> нашего блока. Вместо этого сделаем ее глобальной
+&ndash; она может потребоваться нам и в других блоках.</p>
+
+<p>Для принудительной передачи выхода блока по связям мы будем использовать сервисную функцию RDS
+<span class="cpp"><a class="hidden" href="rdsActivateOutputConnections.htm" title="А.5.6.1. rdsActivateOutputConnections &ndash; активация выходных связей блока">rdsActivateOutputConnections</a></span>. Она принимает два параметра, первый из которых
+&ndash; идентификатор блока (<span class="cpp"><a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></span>), данные которого необходимо передать.
+Если вместо идентификатора блока указать <span class="cpp">NULL</span>, будут переданы данные того блока,
+модель которого в данный момент выполняется. Второй параметр функции &ndash; логическое значение, указывающее
+на способ передачи данных. Если во втором параметре передается <span class="cpp">TRUE</span>, при передаче,
+как и в режиме расчета, учитываются логические и сигнальные переменные, привязанные ко входам
+и выходам блока: </p>
+
+<ul>
+  <li>данные выходов не будут передаваться, если выход готовности блока (вторая сигнальная переменная,
+  &laquo;<span class="rdsvar"><a href="um_1_4.htm#ref27" title="Сигнал готовности блока">Ready</a></span>&raquo;) будет иметь нулевое значение;</li>
+
+  <li>если выход имеет <a href="pm_2_5_8.htm" title="&sect;2.5.8. Использование выходов с управляющими переменными">связанную логическую переменную</a>,
+  его значение будет передано по связи только при ненулевом значении этой переменной;</li>
+
+  <li>если для входа, к которому подсоединена связь, в структуре переменных установлен флаг
+  &laquo;<span class="menu"><a href="pm_1_5.htm#ref18" title="Флаг запуска у входа блока">пуск</a></span>&raquo;, первая сигнальная переменная
+  (&laquo;<span class="rdsvar"><a href="um_1_4.htm#ref25" title="Сигнал запуска блока">Start</a></span>&raquo;) принявшего данные блока автоматически получит значение 1;</li>
+
+  <li>если у входа, к которому присоединена сработавшая связь, есть
+  <a href="pm_2_5_7.htm" title="&sect;2.5.7. Использование входов со связанными сигналами">связанная сигнальная переменная</a>, она тоже
+  автоматически получит значение 1.</li>
+</ul>
+
+<p class="noindent">Если же передать во втором параметре функции
+<span class="cpp"><a class="hidden" href="rdsActivateOutputConnections.htm" title="А.5.6.1. rdsActivateOutputConnections &ndash; активация выходных связей блока">rdsActivateOutputConnections</a></span> значение <span class="cpp"></span>, связанные
+логические и сигнальные переменные будут проигнорированы (такая передача данных обычно используется для
+установки начальных значений при <a href="um_1_3.htm#ref9" title="Сброс расчета">сбросе расчета</a>). Нам нужна обычная
+передача данных, полностью повторяющая работу связей в режиме расчета, поэтому мы будем передавать значение
+<span class="cpp">TRUE</span>.</p>
+
+<p><span id="ref3">Для</span>
+того, чтобы после передачи данных по связям вызвать во всех получивших данные блоках
+&laquo;Common.ControlValueChanged&raquo;, мы
+<span id="light_ref3">будем использовать сервисную функцию RDS
+<span class="cpp"><span id="light_ref4"><a href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span></span></span>. Она позволяет вызвать для каждого блока,
+соединенного связями с заданным, специально написанную функцию обратного вызова, указатель
+на которую передается в <span class="cpp"><a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span> в одном из параметров.
+Наша задача &ndash; написать эту функцию обратного вызова таким образом, чтобы она вызывала в каждом блоке
+&laquo;Common.ControlValueChanged&raquo;.</p>
+
+<p>Функция обратного вызова, используемая в <span class="cpp"><a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span>,
+должна иметь следующий формат:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции</i>(
+    <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> nearpoint, <span class="rem">// Точка связи данного блока</span>
+    <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> farpoint,  <span class="rem">// Точка связи "соседа"</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ptr);                     <span class="rem">// Дополнительный параметр</span></pre>
+
+<p>В первых двух параметрах функции передаются указатели на структуры описания точки связи
+<span class="cpp"><span id="light_ref5"><a href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">RDS_POINTDESCRIPTION</a></span></span>, соединенной с заданным блоком (первый параметр) и
+с блоком на другом конце связи (второй параметр). Эти структуры содержат идентификатор блока,
+имя переменной, к которой подходит связь, идентификатор связи, которой принадлежит точка, и т.п.
+Фактически, функция обратного вызова вызывается не для каждого блока, а для каждой точки связи,
+которая соединяет эту связь с каким-либо входом или выходом блока. Например, если связь разветвляется и
+соединяется с двумя входами одного и того же блока, функция обратного вызова будет вызвана дважды:
+один раз для первого входа, другой раз &ndash; для второго. Нас будет интересовать только идентификатор блока
+из структуры, переданной во втором параметре функции &ndash; именно у этого блока, находящегося на другом
+конце связи от нашего, мы должны будем вызвать &laquo;Common.ControlValueChanged&raquo;. Имя переменной,
+к которой подходит связь, нас, в данном случае, не волнует.</p>
+
+<p>Третий параметр функции обратного вызова &ndash; указатель произвольного типа
+(<span class="cpp">void*</span>, или, в определениях Windows API, <span class="cpp"><a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></span>),
+передаваемый в одном из параметров <span class="cpp"><a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span>. Он никак не
+обрабатывается RDS и обычно используется для передачи в функцию обратного вызова каких-либо
+дополнительных параметров. Возвращаемое функцией обратного вызова логическое значение позволяет остановить
+перебор блоков-соседей, если это необходимо: возврат <span class="cpp">FALSE</span> прекращает перебор,
+возврат <span class="cpp">TRUE</span> продолжает его. Нем необходимо перебрать все соединенные блоки,
+поэтому в нашей функции обратного вызова мы будем всегда возвращать <span class="cpp">TRUE</span>.</p>
+
+<p>Функция <span class="cpp"><a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span> позволяет перебрать все блоки,
+соединенные с выходами заданного, с его входами, или и те, и другие:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,     <span class="rem">// Заданный блок или NULL</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags,           <span class="rem">// Флаги, управляющие перебором</span>
+    RDS_BhPdPdpV CallBack, <span class="rem">// Функция обратного вызова</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Data);          <span class="rem">// Дополнительный параметр</span></pre>
+
+<p>В первом параметре функции передается идентификатор блока, соседи которого перебираются, или
+<span class="cpp">NULL</span>, если необходимо перебрать соседей блока, модель которого выполняется в
+данный момент. Второй параметр содержит битовые флаги, которые указывают на типы перебираемых блоков:</p>
+
+<ul>
+  <li><span class="cpp"><span id="light_ref6"><a href="rdsEnumConnectedBlocks.htm#light_ref3" title="RDS_BEN_INPUTS">RDS_BEN_INPUTS</a></span></span> &ndash; если флаг взведен, будут перебираться блоки,
+  связи от которых идут ко входам заданного блока;</li>
+
+  <li><span class="cpp"><span id="light_ref7"><a href="rdsEnumConnectedBlocks.htm#light_ref4" title="RDS_BEN_OUTPUTS">RDS_BEN_OUTPUTS</a></span></span> &ndash; если флаг взведен, будут перебираться блоки,
+  связи к которым идут от выходов заданного блока;</li>
+
+  <li><span class="cpp"><span id="light_ref8"><a href="rdsEnumConnectedBlocks.htm#light_ref5" title="RDS_BEN_TRACELINKS">RDS_BEN_TRACELINKS</a></span></span> &ndash; если флаг взведен, функция обратного вызова
+  не будет вызываться для обнаруженных подсистем, блоков-входов и блоков-выходов. Вместо этого связи
+  будут прослеживаться внутрь и наружу подсистем до простых блоков.</li>
+</ul>
+
+<p class="noindent">В третьем параметре передается указатель на функцию обратного вызова уже описанного
+вида, а в четвертом &ndash; дополнительный параметр, который без изменений передается в третьем параметре функции
+обратного вызова. Возвращает <span class="cpp"><a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span> идентификатор блока,
+для которого функция обратного вызова вернула <span class="cpp">FALSE</span>, или
+<span class="cpp">NULL</span>, если перебраны все блоки и функция обратного вызова каждый раз возвращала
+<span class="cpp">TRUE</span>.</p>
+
+<p>Теперь мы можем написать функцию обратного вызова, которая будет уведомлять блоки, соединенные с нашим,
+о поступлении на их входы нового значения:</p>
+
+<pre class="cpp">  <span class="rem">// Функция обратного вызова для "Common.ControlValueChanged"</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> ControlValChanged_Callback(
+    <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> <span class="rem">/*src*/</span>,
+    <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> dest,
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> <span class="rem">/*data*/</span>)
+  { <span class="rem">// Вызов функции "Common.ControlValueChanged" у блока на другом конце связи</span>
+    <a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(dest-&gt;Block,ControlValueChangedId,NULL);
+    <span class="rem">// Возвращаем TRUE – не останавливаем перебор блоков</span>
+    <span class="kw">return</span> TRUE;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Из трех параметров функции обратного вызова нам нужен только второй (<span class="cpp">dest</span>) &ndash;
+указатель на структуру, описывающую точку связи, соединенную с соседним блоком. В параметре
+<span class="cpp">Block</span> этой структуры содержится идентификатор соединенного блока, который
+мы и используем в вызове <span class="cpp"><a href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a></span>. Во втором параметре
+<span class="cpp"><a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a></span> мы передаем идентификатор вызываемой функции, который
+должен находиться в глобальной переменной <span class="cpp">ControlValueChangedId</span> (предполагается,
+что функция уже зарегистрирована). В третьем параметре должен был бы быть указатель на параметры
+вызываемой функции, но &laquo;Common.ControlValueChanged&raquo; не имеет параметров, поэтому мы
+передаем вместо него <span class="cpp">NULL</span>.</p>
+
+<p>Теперь напишем функцию, которая будет принудительно передавать по связям данные всех выходов блока,
+модель которого выполняется в данный момент, и уведомлять об этом все соединенные блоки вызовом
+&laquo;Common.ControlValueChanged&raquo;. Мы сможем вызывать эту функцию из любого места модели нашего
+блока &ndash; не важно, из самой ли функции модели, или из какой-либо функции-члена класса его личной
+области данных (функции-члены вызываются из самой функции модели, и параллельно с ней не сможет выполняться
+никакая другая из-за блокировки данных). Дополнительно мы включим в эту функцию работу с флагом
+блокировки, принцип действия которого был описан выше. Функция будет иметь следующий вид:</p>
+
+<pre class="cpp">  <span class="rem">// Функция уведомления соседей об изменении значения</span>
+  <span class="kw">void</span> ControlValueChangedCall(<a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> *pCancelCall)
+  { <span class="rem">// В параметре pCancelCall передается указатель на флаг</span>
+    <span class="rem">// блокировки вызова функции</span>
+    <span class="kw">if</span>(*pCancelCall) <span class="rem">// Вызов заблокирован</span>
+      <span class="kw">return</span>;
+
+    <span class="rem">// Принудительно передаем данные выходов блока, модель которого</span>
+    <span class="rem">// сейчас выполняется, по связям</span>
+    <a class="hidden" href="rdsActivateOutputConnections.htm" title="А.5.6.1. rdsActivateOutputConnections &ndash; активация выходных связей блока">rdsActivateOutputConnections</a>(NULL,TRUE);
+
+    <span class="rem">// Взводим флаг блокировки перед вызовом функций</span>
+    *pCancelCall=TRUE;
+    <span class="rem">// Перебираем все простые блоки, соединенные с выходами текущего</span>
+    <span class="rem">// (для каждого будет вызвана ControlValChanged_Callback)</span>
+    <a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a>(NULL,
+                           <a class="hidden" href="rdsEnumConnectedBlocks.htm#light_ref4" title="RDS_BEN_OUTPUTS">RDS_BEN_OUTPUTS</a> | <a class="hidden" href="rdsEnumConnectedBlocks.htm#light_ref5" title="RDS_BEN_TRACELINKS">RDS_BEN_TRACELINKS</a>,
+                           ControlValChanged_Callback,
+                           NULL);
+    <span class="rem">// Сбрасываем флаг блокировки после вызова функций</span>
+    *pCancelCall=FALSE;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В параметре <span class="cpp">pCancelCall</span> в функцию передается указатель на флаг блокировки
+вызова, который должен быть выполнен в виде логического (<span class="cpp"><a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></span>) поля в классе
+личной области данных блока. Прежде всего функция проверяет, взведен ли этот флаг, то есть истинно
+ли значение логической переменной, на которую ссылается переданный указатель. Если это так, функция
+немедленно завершается &ndash; блок, для которого она вызвана, уже участвует в цепочке вызовов
+&laquo;Common.ControlValueChanged&raquo;, и продолжение работы функции приведет к бесконечной рекурсии. Если
+флаг сброшен, вызывается функция <span class="cpp"><a class="hidden" href="rdsActivateOutputConnections.htm" title="А.5.6.1. rdsActivateOutputConnections &ndash; активация выходных связей блока">rdsActivateOutputConnections</a></span>, которая передает
+данные выходов блока, из модели которого вызвана функция <span class="cpp">ControlValueChangedCall</span>
+(вместо идентификатора блока передано значение <span class="cpp">NULL</span>), по связям, с учетом
+логики их работы (второй параметр &ndash; <span class="cpp">TRUE</span>). Теперь нужно уведомить все соединенные
+блоки о поступлении на их входы новых значений, вызвав в них функцию
+&laquo;Common.ControlValueChanged&raquo;. Для этого флаг блокировки вызова взводится, чтобы данный
+блок, для которого вызвана <span class="cpp">ControlValueChangedCall</span>, не отреагировал на ее
+повторный вызов, и вызывается функция перебора соединенных блоков <span class="cpp"><a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span>.
+В первом параметре функции перебора передается <span class="cpp">NULL</span>, чтобы она работала с текущим
+блоком (то есть с тем блоком, для которого вызвана <span class="cpp">ControlValueChangedCall</span>). Нам
+нужно перебрать только блоки, соединенные с выходами данного, причем нам нужно прослеживать связи до
+простых блоков внутрь и наружу подсистем (соединенные поля ввода не обязательно находятся в одной
+и той же подсистеме), поэтому мы используем флаги <span class="cpp"><a class="hidden" href="rdsEnumConnectedBlocks.htm#light_ref4" title="RDS_BEN_OUTPUTS">RDS_BEN_OUTPUTS</a></span> и
+<span class="cpp"><a class="hidden" href="rdsEnumConnectedBlocks.htm#light_ref5" title="RDS_BEN_TRACELINKS">RDS_BEN_TRACELINKS</a></span>. Для каждого блока будет вызываться уже написанная
+нами функция <span class="cpp">ControlValChanged_Callback</span>, в которую мы не передаем никаких
+дополнительных параметров, поэтому последний параметр <span class="cpp"><a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span> &ndash;
+<span class="cpp">NULL</span>. После перебора всех соединенных блоков флаг блокировки вызовов
+снова сбрасывается, чтобы блок был готов к приему новых значений.</p>
+
+<p>В личную область данных блока необходимо добавить логический флаг
+для блокировки повторных вызовов, и в конструкторе класса присвоить ему значение
+<span class="cpp">FALSE</span>. Кроме того, включим в конструктор блока регистрацию функции
+&laquo;Common.ControlValueChanged&raquo; (внесенные изменения выделены <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">//====== Класс личной области данных ======</span>
+  <span class="kw">class</span> TPlusMinusData
+  { <span class="kw">public</span>:
+      <span class="kw">int</span> KeyPlus;       <span class="rem">// Клавиша увеличения</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> ShiftsPlus;  <span class="rem">// и ее флаги</span>
+      <span class="kw">int</span> KeyMinus;      <span class="rem">// Клавиша уменьшения</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> ShiftsMinus; <span class="rem">// и ее флаги</span>
+
+<div class="changes">      <span class="rem">// Флаг блокировки повторных вызовов</span>
+      <span class="rem">// функции "Common.ControlValueChanged"</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> NoCall;</div>
+      <span class="kw">int</span> Setup(<span class="kw">void</span>);    <span class="rem">// Функция настройки клавиш</span>
+      <span class="kw">void</span> SaveBin(<span class="kw">void</span>); <span class="rem">// Сохранение параметров</span>
+      <span class="kw">int</span> LoadBin(<span class="kw">void</span>);  <span class="rem">// Загрузка параметров</span>
+
+      <span class="rem">// Конструктор класса</span>
+      TPlusMinusData(<span class="kw">void</span>)
+        { KeyPlus=ShiftsPlus=KeyMinus=ShiftsMinus=<span class="const">0</span>;
+
+<div class="changes">          NoCall=FALSE; <span class="rem">// Исходно флаг блокировки сброшен</span>
+          <span class="kw">if</span>(ControlValueChangedId==<span class="const">0</span>) <span class="rem">// Регистрация функции</span>
+            ControlValueChangedId=
+              <a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(<span class="str">"Common.ControlValueChanged"</span>);</div>
+        };
+  };
+  <span class="rem">//=========================================</span></pre>
+
+<p>Теперь все готово для внесения <span class="changes">изменений</span> в функцию модели блока.
+С учетом того, что структура переменных блока изменилась (мы добавили новый вход), теперь функция
+будет выглядеть так:</p>
+
+<pre class="cpp">  <span class="rem">// Увеличение/уменьшение значения по щелчку и клавишам</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> PlusMinus(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define v      (*((int *)(pStart+2)))</span>
+<span class="changes">  <span class="preproc">#define input  (*((int *)(pStart+6)))  </span></span>
+    <span class="rem">// Вспомогательная — указатель на структуру события мыши</span>
+    <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse;
+    <span class="rem">// Вспомогательная — указатель на структуру события клавиатуры</span>
+    <a class="hidden" href="RDS_BFM_KEYDOWN.htm#ref3" title="Указатель на RDS_KEYDATA">RDS_PKEYDATA</a> key;
+    <span class="rem">// Указатель на личную область данных блока,приведенный к</span>
+    <span class="rem">// правильному типу</span>
+    TPlusMinusData *data=(TPlusMinusData*)(BlockData-&gt;BlockData);
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="changes"><span class="str">"{SSII}"</span></span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Реакция на нажатие кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a>:
+          <span class="rem">// Приведение ExtParam к нужному типу</span>
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam;
+          <span class="kw">if</span>(mouse-&gt;Button==<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a>)
+            { <span class="rem">// Нажата левая кнопка</span>
+              <span class="rem">// Проверяем, есть ли у блока картинка (получаем описание блока)</span>
+              <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a> descr;
+              descr.servSize=<span class="kw">sizeof</span>(descr);
+              <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(BlockData-&gt;Block,&amp;descr);
+              <span class="kw">if</span>(descr.Flags &amp; <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#light_ref15" title="RDS_BDF_HASPICTURE">RDS_BDF_HASPICTURE</a>)
+                { <span class="rem">// Картинка есть – определяем идентификатор</span>
+                  <span class="rem">// элемента под курсором</span>
+                  <span class="kw">int</span> id=<a class="hidden" href="rdsGetMouseObjectId.htm" title="А.5.6.31. rdsGetMouseObjectId &ndash; элемент векторной картинки блока под курсором мыши">rdsGetMouseObjectId</a>(mouse);
+                  v+=id;
+                }
+              <span class="kw">else</span> <span class="kw">if</span>(mouse-&gt;y&lt;mouse-&gt;Top+mouse-&gt;Height/<span class="const">2</span>)
+                v++; <span class="rem">// В верхней половине блока - увеличиваем</span>
+              <span class="kw">else</span>
+                v--; <span class="rem">// В нижней половине блока — уменьшаем</span>
+              <span class="rem">// Взводим сигнал готовности</span>
+              Ready=<span class="const">1</span>;
+<div class="changes">              <span class="rem">// Принудительно передаем в соседние блоки</span>
+              ControlValueChangedCall(&amp;(data-&gt;NoCall));</div>
+            }
+          <span class="kw">break</span>;
+
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>: <span class="rem">// Инициализация</span>
+          BlockData-&gt;BlockData=<span class="kw">new</span> TPlusMinusData();
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>: <span class="rem">// Очистка данных</span>
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>: <span class="rem">// Настройка параметров</span>
+          <span class="kw">return</span> data-&gt;Setup();
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVEBIN.htm" title="А.2.5.6. RDS_BFM_SAVEBIN &ndash; запись данных блока в двоичном формате">RDS_BFM_SAVEBIN</a>:<span class="rem">// Сохранение параметров</span>
+          data-&gt;SaveBin();
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADBIN.htm" title="А.2.5.4. RDS_BFM_LOADBIN &ndash; загрузка данных блока в двоичном формате">RDS_BFM_LOADBIN</a>: <span class="rem">// Загрузка параметров</span>
+          <span class="kw">return</span> data-&gt;LoadBin();
+
+        <span class="rem">// Реакция на нажатие клавиши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_KEYDOWN.htm" title="А.2.6.5. RDS_BFM_KEYDOWN &ndash; нажатие клавиши">RDS_BFM_KEYDOWN</a>:
+          <span class="rem">// Приведение ExtParam к нужному типу</span>
+          key=(<a class="hidden" href="RDS_BFM_KEYDOWN.htm#ref3" title="Указатель на RDS_KEYDATA">RDS_PKEYDATA</a>)ExtParam;
+          <span class="rem">// Сравнение нажатой клавиши с клавишами уменьшения</span>
+          <span class="rem">// и увеличения</span>
+          <span class="kw">if</span>(key-&gt;KeyCode==data-&gt;KeyPlus &amp;&amp;
+             key-&gt;Shift==data-&gt;ShiftsPlus)
+            { v++; Ready=<span class="const">1</span>; }
+          <span class="kw">else</span> <span class="kw">if</span>(key-&gt;KeyCode==data-&gt;KeyMinus &amp;&amp;
+                  key-&gt;Shift==data-&gt;ShiftsMinus)
+            { v--; Ready=<span class="const">1</span>; }
+
+<div class="changes">          <span class="rem">// Принудительно передаем в соседние блоки</span>
+          <span class="kw">if</span>(Ready)
+            ControlValueChangedCall(&amp;(data-&gt;NoCall));</div>
+          <span class="kw">break</span>;
+
+<div class="changes">        <span class="rem">// Такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">if</span>(v==input) <span class="rem">// Новое значение равно старому</span>
+            { Ready=<span class="const">0</span>; <span class="rem">// Не передаем по связям</span>
+              <span class="kw">break</span>;
+            }
+          v=input; <span class="rem">// Передаем значение входа на выход</span>
+          <span class="rem">// Принудительно передаем в соседние блоки</span>
+          ControlValueChangedCall(&amp;(data-&gt;NoCall));
+          <span class="kw">break</span>;</div>
+<div class="changes">        <span class="rem">// Реакция на вызов функции блока</span>
+        <span class="kw">case</span> <span id="light_ref9"><a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span>:
+          <span class="kw">if</span>(((<span id="light_ref10"><a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a></span>)ExtParam)-&gt;Function==
+                                     ControlValueChangedId)
+            { <span class="rem">// Вызвана "Common.ControlValueChanged"</span>
+              <span class="kw">if</span>(data-&gt;NoCall) <span class="rem">// Взведен флаг блокировки</span>
+                <span class="kw">break</span>;
+              <span class="kw">if</span>(v==input) <span class="rem">// Новое значение равно старому -</span>
+                <span class="kw">break</span>; <span class="rem">// передавать не нужно</span>
+              v=input; <span class="rem">// Передаем значение входа на выход</span>
+              Ready=<span class="const">1</span>; <span class="rem">// Взводим сигнал готовности</span>
+              <span class="rem">// Принудительно передаем в соседние блоки</span>
+              ControlValueChangedCall(&amp;(data-&gt;NoCall));
+            }
+          <span class="kw">break</span>;</div>
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+<span class="changes">  <span class="preproc">#undef input  </span></span>
+  <span class="preproc">#undef v</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Кроме макроопределения для дополнительной переменной и дополнительного символа &laquo;I&raquo; для нее в
+<a href="pm_1_5.htm#ref19" title="Строка типа переменных блока">строке типа</a> статических переменных, в функции модели изменены реакции на
+мышь и клавиатуру, а также добавлены две новые реакции: выполнение такта расчета
+<span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span> и реакция на вызов функции блока
+<span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span>.</p>
+
+<p>После изменения значения выхода блока при нажатии кнопки мыши или одной из заданных в настройках
+клавиш, мы теперь вызываем функцию <span class="cpp">ControlValueChangedCall</span>, передавая ей указатель
+на логический флаг блокировки вызова <span class="cpp">NoCall</span> из класса личной области данных.
+Следует обратить внимание на то, что этот вызов производится после присваивания переменной блока
+<span class="cpp">Ready</span> значения 1: внутри <span class="cpp">ControlValueChangedCall</span> мы
+принудительно передаем значения выхода блока на входы соединенных с ним с учетом логики работы связей,
+поэтому сигнал готовности блока на момент этой передачи должен быть взведен, иначе логика связей не даст
+им сработать.</p>
+
+<p>В реакции на такт расчета мы просто копируем значение, поступившее на вход блока
+<span class="cpp">input</span>, в его выход <span class="cpp">v</span>, если оно отличается от текущего
+значения выхода, и вызываем <span class="cpp">ControlValueChangedCall</span>, чтобы передать данные соседним
+блокам и вызвать у них <span class="cpp">Common.ControlValueChanged</span>.
+<span id="ref11">Может</span>
+возникнуть вопрос: в режиме расчета данные с выхода блока передаются по связям автоматически, так
+зачем нам предпринимать действия по принудительной передаче этих данных?
+Дело в том, что, в данном случае, нам лучше передать данные как можно быстрее, а не
+в конце текущего такта расчета. Представим себе, что, по какой-то причине, на выходе нашего блока и
+на выходе соединенного с ним поля ввода оказались разные значения, и у обоих блоков взведен сигнал готовности.
+В этом случае <span id="light_ref11">в схеме возникнут колебания</span>: в каждом такте расчета блоки
+будут обмениваться значениями и взводить сигнал готовности. Принудительная передача данных по связям
+ликвидирует эти колебания: на момент конца такта, когда происходит обычная передача, значения в блоках уже
+будут одинаковыми, а сигналы готовности &ndash; сброшенными (их сбрасывает
+<span class="cpp"><a class="hidden" href="rdsActivateOutputConnections.htm" title="А.5.6.1. rdsActivateOutputConnections &ndash; активация выходных связей блока">rdsActivateOutputConnections</a></span> после передачи).</p>
+
+<p>В реакции на вызов функции блока мы прежде всего проверяем, какая именно функция вызвана.
+Для этого мы сравниваем поле <span class="cpp">Function</span> структуры
+<span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span>, указатель на которую передан в <span class="cpp">ExtParam</span>,
+с глобальной переменной <span class="cpp">ControlValueChangedId</span>, в которой хранится целый
+идентификатор, присвоенный функции &laquo;Common.ControlValueChanged&raquo; при регистрации (мы
+регистрируем ее в конструкторе класса). Если они совпали, значит, вызвана именно
+&laquo;Common.ControlValueChanged&raquo;, и нам необходимо принять новое значение со входа и
+передать его дальше по цепочке соединенных блоков. Сначала проверяется, взведен ли флаг блокировки вызовов
+<span class="cpp">data-&gt;NoCall</span>: если это так, на вызов функции реагировать нельзя. Если
+флаг сброшен, мы сравниваем поступившее на вход значение с текущим значением выхода блока: если они совпадают,
+передавать значение дальше по цепочке не имеет смысла &ndash; оно не изменилось. В противном случае мы копируем
+значение входа в выход, взводим сигнал готовности и вызываем <span class="cpp">ControlValueChangedCall</span>
+для принудительной передачи данных дальше по цепочке.</p>
+
+<p>Теперь к нашему блоку можно подключить поле ввода, как
+на <a href="#pic1" title="Кольцевое соединение блока с полем ввода">рис.&nbsp;84</a>, или любой другой блок пользовательского
+интерфейса. Значения в обоих блоках теперь будут синхронно изменяться и в режиме расчета, и в режиме
+моделирования.</p>
+
+<p>Если у блока, позволяющего пользователю изменять какие-либо значения, есть несколько независимых выходов,
+и мы хотим добавить в него поддержку функции &laquo;Common.ControlValueChanged&raquo;, нужно уметь
+различать, какое именно из значений изменилось. В этом нам могут помочь
+<a href="pm_2_5_7.htm" title="&sect;2.5.7. Использование входов со связанными сигналами">связанные со входами блока сигналы</a>. Хотя это и не
+имеет прямого отношения к вызову функций блоков, для большей ясности рассмотрим такую ситуацию на примере.</p>
+
+<div class="picright"><div class="container" id="pic3">
+<img src="../img/BlockFunc_HandleRing.png" width="241" height="198" alt="Рукоятка с полями ввода" />
+<p id="light_pic3">Рис.&nbsp;86. Рукоятка с полями ввода</p>
+</div></div>
+
+
+<p>В <a href="pm_2_12_2.htm#ref2" title="Пример модели двухкоординатной рукоятки">&sect;2.12.2</a> мы создали блок, имитирующий рукоятку, позволяющую
+задавать две независимые координаты, и уже добавили в него несколько дополнительных возможностей. Тем
+не менее, у блока остался один, достаточно серьезный, недостаток: он не отображает точных значений координат,
+соответствующих текущему положению рукоятки. Можно подключить к блоку числовые индикаторы, как
+на <a href="pm_2_12_2.htm#pic1" title="Двухкоординатная рукоятка">рис.&nbsp;75</a>, но они будут показывать значения выходов
+блока только в режиме расчета. Если пользователь захочет остановить расчет, изменить значения координат,
+а затем запустить расчет заново, ему придется двигать рукоятку наугад. Кроме того, блок не позволяет
+вводить точные значения координат с клавиатуры. Напрашивается очевидное решение: добавить в блок
+рукоятки поддержку функции &laquo;Common.ControlValueChanged&raquo; и подключить к нему пару
+полей ввода &ndash; по одному полю на координату, как
+на <a href="#pic3" title="Рукоятка с полями ввода">рис.&nbsp;86</a>). На рисунке в блок добавлены два
+дополнительных входа: &laquo;<span class="rdsvar">x_in</span>&raquo; для связи с полем ввода &laquo;<span class="rdsvar">x</span>&raquo; и
+&laquo;<span class="rdsvar">y_in</span>&raquo; для связи с полем ввода &laquo;<span class="rdsvar">y</span>&raquo;.</p>
+
+<p>Когда мы будем добавлять в блок реакцию на вызов функции, очень важно отличать ее вызов из-за изменения
+&laquo;<span class="rdsvar">x_in</span>&raquo; от вызова из-за изменения &laquo;<span class="rdsvar">y_in</span>&raquo;. Если, реагируя на вызов,
+считывать обе переменные одновременно, поведение блока будет неправильным. Допустим, пользователь передвинул рукоятку
+из положения (0.1,0.3) в положение (0.5,0.7). Рассмотрим, что будет происходить в схеме, если мы не
+различаем изменения переменных в реакции на &laquo;Common.ControlValueChanged&raquo;, при подключении
+к блоку полей ввода, как на рисунке:</p>
+
+<ol>
+  <li>Значения выходов блока-рукоятки изменились: <span class="cpp">x</span>=0.5, <span class="cpp">y</span>=0.7.</li>
+
+  <li>Изменившиеся значения <span class="cpp">x</span> и <span class="cpp">y</span> передались на входы одноименных
+  полей ввода при помощи вызова <span class="cpp"><a class="hidden" href="rdsActivateOutputConnections.htm" title="А.5.6.1. rdsActivateOutputConnections &ndash; активация выходных связей блока">rdsActivateOutputConnections</a></span>.</li>
+
+  <li>Как и в предыдущем примере, мы начали перебирать соединенные с выходами рукоятки блоки при помощи функции
+  <span class="cpp"><a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span>, вызывая у каждого из них &laquo;Common.ControlValueChanged&raquo;.
+  Допустим, первым обнаруженным блоком оказалось поле ввода &laquo;<span class="rdsvar">x</span>&raquo;.</li>
+
+  <li>Поле ввода &laquo;x&raquo;, реагируя на вызов функции, считало значение 0.5 со своего входа,
+  скопировало его на свой выход, передало его по связи на вход рукоятки <span class="cpp">x_in</span>, и
+  вызвало у нее функцию &laquo;Common.ControlValueChanged&raquo;.</li>
+
+  <li>Рукоятка, реагируя на вызов функции, считала значения своих входов <span class="cpp">x_in</span> и
+  <span class="cpp">y_in</span>, и переписала их в выходы <span class="cpp">x</span> и <span class="cpp">y</span>.
+  Вход <span class="cpp">x_in</span> имеет правильное значение 0.5, полученное с поля ввода &laquo;<span class="rdsvar">x</span>&raquo;,
+  но вход <span class="cpp">y_in</span> до сих пор имеет старое значение 0.3, поскольку поле ввода
+  &laquo;<span class="rdsvar">y</span>&raquo; еще не вызывалось, и поэтому не успело передать поступившее на его вход значение
+  0.7 по связи в рукоятку.</li>
+</ol>
+
+<p class="noindent">Дальнейшие действия можно уже не рассматривать: значение выхода <span class="cpp">y</span>=0.7,
+заданное пользователем, может быть потеряно из-за того, что блок-рукоятка, реагируя на вызов функции, поступивший
+от поля ввода &laquo;<span class="rdsvar">x</span>&raquo;, считал не только значение <span class="cpp">x_in</span>, но и
+<span class="cpp">y_in</span>. Избежать возникновения подобных проблем можно связав входы
+<span class="cpp">x_in</span> и <span class="cpp">y_in</span> с внутренними переменными-сигналами (назовем их
+&laquo;<span class="rdsvar">x_in_ok</span>&raquo; и &laquo;<span class="rdsvar">y_in_ok</span>&raquo; соответственно). Поскольку при вызове
+<span class="cpp"><a class="hidden" href="rdsActivateOutputConnections.htm" title="А.5.6.1. rdsActivateOutputConnections &ndash; активация выходных связей блока">rdsActivateOutputConnections</a></span> мы не отключаем логику работы связей (второй
+параметр функции &ndash; <span class="cpp">TRUE</span>), эти сигналы автоматически взведутся при срабатывании
+связи, подключенной к соответствующему входу. Так мы сможем узнать, какая из переменных изменилась.</p>
+
+<p>Таким образом, блок-рукоятка теперь будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">x</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">y</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">18</td>
+<td class="vcenter">x_in</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход/сигнал<br />x_in_ok</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">26</td>
+<td class="vcenter">y_in</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход/сигнал<br />y_in_ok</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">34</td>
+<td class="vcenter">x_in_ok</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">35</td>
+<td class="vcenter">y_in_ok</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Как и в предыдущем примере, добавим в класс личной области данных блока флаг блокировки вызова,
+а в конструктор этого класса &ndash; регистрацию функции &laquo;Common.ControlValueChanged&raquo;
+(внесенные изменения выделены <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">//====== Класс личной области данных ======</span>
+  <span class="kw">class</span> TSimpleJoystick
+  { <span class="kw">private</span>:
+      <span class="rem">// Центр круга (рукоятки) до начала перетаскивания</span>
+      <span class="kw">int</span> OldHandleX,OldHandleY;
+      <span class="rem">// Координаты курсора на момент начала перетаскивания</span>
+      <span class="kw">int</span> OldMouseX,OldMouseY;
+      <span class="rem">// Флаги фиксации одной из координат</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> LockX,LockY;
+      <span class="rem">// Идентификаторы добавленных пунктов меню</span>
+      <a class="hidden" href="app_ids.htm#light_ref4" title="Идентификатор пункта меню">RDS_MENUITEM</a> MenuLockX,MenuLockY;
+    <span class="kw">public</span>:
+      <span class="rem">// Настроечные параметры блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> BorderColor;       <span class="rem">// Цвет рамки блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> FieldColor;        <span class="rem">// Цвет прямоугольника</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> HandleColor;       <span class="rem">// Цвет круга в покое</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> MovingHandleColor; <span class="rem">// Цвет круга при таскании</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> GrayedColor;       <span class="rem">// Цвет недоступной области</span>
+      <span class="kw">int</span> HandleSize;            <span class="rem">// Диаметр круга</span>
+
+<div class="changes">      <span class="rem">// Флаг блокировки повторных вызовов</span>
+      <span class="rem">// функции "Common.ControlValueChanged"</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> NoCall;</div>
+      <span class="rem">// Реакция на нажатие кнопки мыши</span>
+      <span class="kw">int</span> MouseDown(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,<span class="kw">double</span> x,<span class="kw">double</span> y,<a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> *pFlags);
+      <span class="rem">// Реакция на перемещение курсора мыши</span>
+      <span class="kw">void</span> MouseMove(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,<span class="kw">double</span> *px,<span class="kw">double</span> *py);
+      <span class="rem">// Рисование изображения блока</span>
+      <span class="kw">void</span> Draw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw,<span class="kw">double</span> x,<span class="kw">double</span> y,<a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> moving);
+      <span class="rem">// Реакция на выбор добавленного пункта меню</span>
+      <span class="kw">void</span> MenuFunction(<a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a> MenuData);
+<div class="changes">      <span class="rem">// Ограничение входных значений</span>
+      <span class="kw">void</span> LimitInputValues(<span class="kw">double</span> *px_in,<span class="kw">double</span> *py_in,<span class="kw">double</span> x,<span class="kw">double</span> y);</div>
+      <span class="rem">// Конструктор класса</span>
+      TSimpleJoystick(<span class="kw">void</span>)
+        { BorderColor=<span class="const">0</span>;          <span class="rem">// Черная рамка</span>
+          FieldColor=<span class="const">0xffffff</span>;    <span class="rem">// Белое поле</span>
+          HandleColor=<span class="const">0xff0000</span>;   <span class="rem">// Синий круг</span>
+          MovingHandleColor=<span class="const">0xff</span>; <span class="rem">// Красный при таскании</span>
+          GrayedColor=<span class="const">0x7f7f7f</span>;   <span class="rem">// Серый</span>
+          LockX=LockY=FALSE;      <span class="rem">// Фиксация выключена</span>
+          HandleSize=<span class="const">20</span>;          <span class="rem">// Диаметр круга</span>
+          <span class="rem">// Создание пунктов меню</span>
+          MenuLockX=<a class="hidden" href="rdsRegisterContextMenuItem.htm" title="А.5.17.6. rdsRegisterContextMenuItem &ndash; создать постоянный пункт контекстного меню блока">rdsRegisterContextMenuItem</a>(<span class="str">"Фиксировать X"</span>,<span class="const">1</span>,<span class="const">0</span>);
+          MenuLockY=<a class="hidden" href="rdsRegisterContextMenuItem.htm" title="А.5.17.6. rdsRegisterContextMenuItem &ndash; создать постоянный пункт контекстного меню блока">rdsRegisterContextMenuItem</a>(<span class="str">"Фиксировать Y"</span>,<span class="const">2</span>,<span class="const">0</span>);
+
+<div class="changes">          NoCall=FALSE; <span class="rem">// Исходно флаг блокировки сброшен</span>
+          <span class="kw">if</span>(ControlValueChangedId==<span class="const">0</span>)	<span class="rem">// Регистрация функции</span>
+            ControlValueChangedId=
+                 <a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(<span class="str">"Common.ControlValueChanged"</span>);</div>
+        };
+
+        <span class="rem">// Деструктор класса</span>
+        ~TSimpleJoystick()
+        { <span class="rem">// Уничтожение пунктов меню</span>
+          <a class="hidden" href="rdsUnregisterMenuItem.htm" title="А.5.17.10. rdsUnregisterMenuItem &ndash; удалить постоянный пункт меню">rdsUnregisterMenuItem</a>(MenuLockX);
+          <a class="hidden" href="rdsUnregisterMenuItem.htm" title="А.5.17.10. rdsUnregisterMenuItem &ndash; удалить постоянный пункт меню">rdsUnregisterMenuItem</a>(MenuLockY);
+        };
+  };
+  <span class="rem">//=========================================</span></pre>
+
+<p>Глобальную переменную <span class="cpp">ControlValueChangedId</span> для хранения идентификатора функции
+&laquo;Common.ControlValueChanged&raquo;, полученного при ее регистрации, мы уже ввели в предыдущем примере.
+Там же мы написали функцию <span class="cpp">ControlValueChangedCall</span>, которая вызывает
+&laquo;Common.ControlValueChanged&raquo; у всех блоков, соединенных с выходами данного. В этом примере
+она нам тоже понадобится.</p>
+
+<p>Мы также добавили в класс новую функцию <span class="cpp">LimitInputValues</span>, которую будем использовать
+для ограничения значений, поступивших на вход блока. Значение каждой из координат рукоятки должно лежать
+в диапазоне [&minus;1&hellip;1]. Кроме того, если одна из координат рукоятки зафиксирована, блок
+должен игнорировать значение, поступившее на соответствующий вход. Поскольку на входы блока могут поступить
+любые значения, функция <span class="cpp"></span> будет корректировать значения входов (указатели
+на них передаются в первом и втором ее параметрах) согласно указанным требованиям. В третьем
+и четвертом параметрах передаются текущие значения выходов блока: они понадобятся, если
+координата зафиксирована (в этом случае в соответствующий вход будет записано зафиксированное значение выхода).
+Функция будет иметь следующий вид:</p>
+
+<pre class="cpp">  <span class="rem">// Ограничение значений входов блока</span>
+  <span class="kw">void</span> TSimpleJoystick::LimitInputValues(<span class="kw">double</span> *px_in,<span class="kw">double</span> *py_in,
+                                         <span class="kw">double</span> x,<span class="kw">double</span> y)
+  { <span class="rem">// px_in, py_in - указатели на входы блока</span>
+    <span class="rem">// x, y - текущие значения выходов</span>
+    <span class="kw">if</span>(LockX) <span class="rem">// Координата x зафиксирована</span>
+      *px_in=x; <span class="rem">// Присваиваем входу x_in зафиксированное значение</span>
+    <span class="kw">else</span> <span class="rem">// Ограничиваем x_in диапазоном [-1...1]</span>
+      { <span class="kw">if</span>(*px_in&lt;-<span class="const">1.0</span>) *px_in=-<span class="const">1.0</span>;
+        <span class="kw">else</span> <span class="kw">if</span>(*px_in&gt;<span class="const">1.0</span>) *px_in=<span class="const">1.0</span>;
+      }
+    <span class="kw">if</span>(LockY) <span class="rem">// Координата y зафиксирована</span>
+      *py_in=y; <span class="rem">// Присваиваем входу y_in зафиксированное значение</span>
+    <span class="kw">else</span> <span class="rem">// Ограничиваем y_in диапазоном [-1...1]</span>
+      { <span class="kw">if</span>(*py_in&lt;-<span class="const">1.0</span>) *py_in=-<span class="const">1.0</span>;
+        <span class="kw">else</span> <span class="kw">if</span>(*py_in&gt;<span class="const">1.0</span>) *py_in=<span class="const">1.0</span>;
+      }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Теперь внесем <span class="changes">изменения</span> в функцию модели блока:</p>
+
+<pre class="cpp">  <span class="rem">// Двухкоординатная рукоятка</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> SimpleJoystick(<span class="kw">int</span> CallMode,
+            <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+            <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x       (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define y       (*((double *)(pStart+10)))</span>
+<span class="changes">  <span class="preproc">#define x_in    (*((double *)(pStart+18)))  </span></span>
+<span class="changes">  <span class="preproc">#define y_in    (*((double *)(pStart+26)))  </span></span>
+<span class="changes">  <span class="preproc">#define x_in_ok (*((char *)(pStart+34)))    </span></span>
+<span class="changes">  <span class="preproc">#define y_in_ok (*((char *)(pStart+35)))    </span></span>
+    <span class="rem">// Вспомогательная переменная - указатель на личную область,</span>
+    <span class="rem">// приведенный к правильному типу</span>
+    TSimpleJoystick *data=(TSimpleJoystick*)(BlockData-&gt;BlockData);
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// &hellip;</span>
+        <span class="rem">// Реакции </span><a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока"><span class="rem">RDS_BFM_INIT</span></a><span class="rem"> и </span><a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока"><span class="rem">RDS_BFM_CLEANUP</span></a><span class="rem"> - без изменений</span>
+        <span class="rem">// &hellip;</span>
+
+        <span class="rem">// Проверка допустимости типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="changes"><span class="str">"{SSDDDDSS}"</span></span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// &hellip; Реакции </span><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши"><span class="rem">RDS_BFM_MOUSEDOWN</span></a><span class="rem"> и </span><a class="hidden" href="RDS_BFM_MOUSEUP.htm" title="А.2.6.11. RDS_BFM_MOUSEUP &ndash; отпускание кнопки мыши"><span class="rem">RDS_BFM_MOUSEUP</span></a><span class="rem"> -</span>
+        <span class="rem">// без изменений &hellip;</span>
+
+        <span class="rem">// Перемещение курсора мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEMOVE.htm" title="А.2.6.10. RDS_BFM_MOUSEMOVE &ndash; перемещение курсора мыши">RDS_BFM_MOUSEMOVE</a>:
+          <span class="rem">// Проверка: включен ли захват мыши</span>
+          <span class="kw">if</span>(BlockData-&gt;Flags &amp; <a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>) <span class="rem">// Включен</span>
+            {<span class="changes"> <span class="rem">// Запоминаем старые значения                 </span></span>
+             <span class="changes">  <span class="kw">double</span> oldX=x,oldY=y;                        </span>
+              <span class="rem">// Вызываем функцию реакции</span>
+              data-&gt;MouseMove((<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam,&amp;x,&amp;y);
+              Ready=<span class="const">1</span>; <span class="rem">// Взводим сигнал готовности</span>
+             <span class="changes"> <span class="rem">// Если значения изменились, передаем соседям </span></span>
+             <span class="changes"> <span class="kw">if</span>(oldX!=x || oldY!=y)                        </span>
+             <span class="changes">   ControlValueChangedCall(&amp;(data-&gt;NoCall));   </span>
+            }
+          <span class="kw">break</span>;
+
+        <span class="rem">// &hellip; Реакции </span><a class="hidden" href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока"><span class="rem">RDS_BFM_DRAW</span></a><span class="rem">, </span><a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню"><span class="rem">RDS_BFM_MENUFUNCTION</span></a><span class="rem">,</span>
+        <span class="rem">// </span><a class="hidden" href="RDS_BFM_RESIZE.htm" title="А.2.7.6. RDS_BFM_RESIZE &ndash; размер блока изменен пользователем"><span class="rem">RDS_BFM_RESIZE</span></a><span class="rem">, </span><a class="hidden" href="RDS_BFM_RESIZING.htm" title="А.2.7.7. RDS_BFM_RESIZING &ndash; изменение размеров блока пользователем"><span class="rem">RDS_BFM_RESIZING</span></a><span class="rem"> - без изменений &hellip;</span>
+
+<div class="changes">        <span class="rem">// Один такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">if</span>(x_in_ok==<span class="const">0</span> &amp;&amp; y_in_ok==<span class="const">0</span>)
+            { <span class="rem">// Связанные сигналы не взведены</span>
+              Ready=<span class="const">0</span>; <span class="rem">// Сбрасываем сигнал готовности</span>
+              <span class="kw">break</span>;
+            }
+          <span class="kw">if</span>(x==x_in &amp;&amp; y==y_in)
+            { <span class="rem">// На входах те же значения, что и на выходах</span>
+              Ready=x_in_ok=y_in_ok=<span class="const">0</span>; <span class="rem">// Сбрасываем все сигналы</span>
+              <span class="kw">break</span>;
+            }
+          <span class="rem">// Ограничиваем входные значения</span>
+          data-&gt;LimitInputValues(&amp;x_in,&amp;y_in,x,y);
+          <span class="rem">// В зависимости от того, какой связанный сигнал взведен,</span>
+          <span class="rem">// копируем соответствующие входы в выходы</span>
+          <span class="kw">if</span>(x_in_ok) x=x_in;
+          <span class="kw">if</span>(y_in_ok) y=y_in;
+          x_in_ok=y_in_ok=<span class="const">0</span>; <span class="rem">// Сбрасываем связанные сигналы</span>
+          <span class="rem">// Передаем данные соединенным блокам</span>
+          ControlValueChangedCall(&amp;(data-&gt;NoCall));
+          <span class="kw">break</span>;</div>
+<div class="changes">        <span class="rem">// Реакция на вызов функции</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a>:
+          <span class="kw">if</span>(((<a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a>)ExtParam)-&gt;Function==
+            ControlValueChangedId)
+            { <span class="rem">// Вызвана "Common.ControlValueChanged"</span>
+              <span class="kw">if</span>(data-&gt;NoCall) <span class="rem">// Вызов заблокирован</span>
+                <span class="kw">break</span>;
+              <span class="rem">// Ограничиваем входные значения</span>
+              data-&gt;LimitInputValues(&amp;x_in,&amp;y_in,x,y);
+              <span class="rem">// Если связанные сигналы не взведены - не реагируем</span>
+              <span class="kw">if</span>(x_in_ok==<span class="const">0</span> &amp;&amp; y_in_ok==<span class="const">0</span>)
+                <span class="kw">break</span>;
+              <span class="rem">// Если значения входов те же, что и у выходов -</span>
+              <span class="rem">// не реагируем</span>
+              <span class="kw">if</span>(x_in==x &amp;&amp; y_in==y)
+                <span class="kw">break</span>;
+              <span class="rem">// Копируем входы в выходы согласно связанным сигналам</span>
+              <span class="kw">if</span>(x_in_ok) x=x_in;
+              <span class="kw">if</span>(y_in_ok) y=y_in;
+              x_in_ok=y_in_ok=<span class="const">0</span>; <span class="rem">// Сбрасываем связанные сигналы</span>
+              Ready=<span class="const">1</span>;           <span class="rem">// Взводим сигнал готовности</span>
+              <span class="rem">// Передаем данные соединенным блокам</span>
+              ControlValueChangedCall(&amp;(data-&gt;NoCall));
+            }
+          <span class="kw">break</span>;</div>
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+<span class="changes">  <span class="preproc">#undef y_in_ok  </span></span>
+<span class="changes">  <span class="preproc">#undef x_in_ok  </span></span>
+<span class="changes">  <span class="preproc">#undef y_in     </span></span>
+<span class="changes">  <span class="preproc">#undef x_in     </span></span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Поскольку в блоке появилось четыре новых переменных, соответствующим образом изменена строка
+типов в реакции <span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>. Изменения внесены также в реакцию на перемещение
+курсора мыши <span class="cpp"><a href="RDS_BFM_MOUSEMOVE.htm" title="А.2.6.10. RDS_BFM_MOUSEMOVE &ndash; перемещение курсора мыши">RDS_BFM_MOUSEMOVE</a></span>: теперь, если в результате действий пользователя выходы
+блока изменились (то есть пользователь перетащил круг рукоятки на новое место), вызывается функция
+<span class="cpp"></span>, которую мы написали в предыдущем примере. Она передаст новые значения по
+связям и вызовет у соединенных блоков функцию &laquo;Common.ControlValueChanged&raquo;. Это изменит
+значения в полях ввода, соединенных с рукояткой.</p>
+
+<p>В функцию модели добавлены две новых реакции: выполнение такта расчета <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>
+и реакция на вызов функции <span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span>. В такте расчета прежде всего проверяется,
+взведен ли хотя бы один из флагов <span class="cpp">x_in_ok</span> и <span class="cpp">y_in_ok</span>, связанных с
+входами блока <span class="cpp">x_in</span> и <span class="cpp">y_in</span> соответственно. Если
+оба флага сброшены, блоку не нужно ничего делать, и реакция завершается, предварительно сбросив значение флага
+готовности <span class="cpp">Ready</span>. В противном случае значения, поступившие на входы,
+сравниваются с текущими значениями выходов блока <span class="cpp">x</span> и <span class="cpp">y</span>. Если они
+совпадают, блок тоже может ничего не делать: нет смысла передавать по связям то же самое значение еще раз.
+В этом случае сбрасывается флаг готовности <span class="cpp">Ready</span> и оба связанных со входами сигнала,
+и реакция завершается. Если же значения на входах отличаются от значений на выходах, значит, нужно их обработать и
+передать на выходы. Поступившие на вход значения обрабатываются функцией <span class="cpp">LimitInputValues</span>,
+чтобы не допустить их выход за пределы диапазона [&minus;1&hellip;1] и нарушения фиксации одной
+из координат, если она включена. Затем значения входов, соответствующие взведенным связанным сигналам,
+копируются в выходы, и связанные сигналы сбрасываются (в RDS сигналы всегда нужно сбрасывать вручную,
+см. <a href="pm_2_5_2.htm" title="&sect;2.5.2. Особенности использования сигналов">&sect;2.5.2</a>). После этого, как и в предыдущем примере, вызывается функция
+<span class="cpp">ControlValueChangedCall</span> для того, чтобы принудительно передать данные соседним блокам,
+не дожидаясь окончания такта расчета. Это необходимо для устранения возможных
+<a href="#ref11" title="Возникновение колебаний в кольцах полей ввода">колебаний</a> в схеме, если вдруг у нашего блока и соединенного с
+ним поля ввода окажутся разные значения на выходах при одновременно взведенных сигналах готовности.</p>
+
+<p>В реакции на вызов функции блока <span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span> мы, прежде всего, проверяем,
+совпадает ли переданный при вызове идентификатор функции со значением глобальной переменной
+<span class="cpp">ControlValueChangedId</span>. Если это так, значит, вызвана функция
+&laquo;Common.ControlValueChanged&raquo;. Если при этом взведен флаг блокировки вызовов
+<span class="cpp">NoCall</span>, реакция завершается &ndash; этот блок уже участвует в цепочке вызовов
+функции, и реагировать на повторный вызов нельзя. Если же флаг сброшен, выполняются те же действия, что
+и в такте расчета, с единственным исключением: если в такте расчета флаг готовности блока взводится
+автоматически, то при вызове функции блока этого не происходит. Его необходимо взвести вручную
+(выходу <span class="cpp">Ready</span> присваивается значение 1), причем сделать это необходимо до
+вызова функции <span class="cpp">ControlValueChangedCall</span>, поскольку сервисная функция
+<span class="cpp"><a class="hidden" href="rdsActivateOutputConnections.htm" title="А.5.6.1. rdsActivateOutputConnections &ndash; активация выходных связей блока">rdsActivateOutputConnections</a></span>, вызываемая внутри нее, не
+будет работать при сброшенном сигнале готовности блока.</p>
+
+<p>Теперь, когда пользователь будет перемещать рукоятку, ее координаты будут отображаться в соединенных
+с ней полях ввода (см. <a href="#pic3" title="Рукоятка с полями ввода">рис.&nbsp;86</a>) как в режиме расчета,
+так и в режиме моделирования. В свою очередь, если пользователь будет менять значения в полях ввода,
+рукоятка будет перемещаться согласно введенным значениям.</p>
+
+<p>В обоих рассмотренных примерах мы использовали одну и ту же стандартную функцию
+&laquo;Common.ControlValueChanged&raquo; без параметров. В <a href="pm_2_13_3.htm" title="&sect;2.13.3. Прямой вызов функции всех блоков подсистемы">&sect;2.13.3</a>
+мы создадим собственную функцию с параметрами, и будем вызывать ее у всех блоков подсистемы.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_13_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_3.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

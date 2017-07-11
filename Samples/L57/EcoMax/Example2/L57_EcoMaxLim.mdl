@@ -1,0 +1,193 @@
+$BC55MODEL 0.0.0 2016.4.16.18.40.2 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$NOSHARE
+$VARS
+  signal name "Start" in run default 1
+  signal name "Ready" out default 0
+  matrix double oneindex name "X" in menu run default "[ ] ?"
+  signal name "x_chg" default 0
+  matrix double oneindex name "Y" out menu default "[ ] ?"
+  logical name "y_enabled" default 0
+  matrix double oneindex name "A" in menu run default "[ ] 0"
+  matrix matrix double oneindex name "F" in menu run default "[ ] [ ] 0"
+  signal name "func_chg" default 1
+  matrix matrix double oneindex name "FS" out menu default "[ ] [ ] 0"
+  double name "Crit_In" in menu run default "0"
+  signal name "crit_in_chg" default 0
+  signal name "Crit_In_Ready" in menu run default 0
+  double name "Crit_Out" out menu default "0"
+  signal name "Crit_Out_Ready" out menu default 0
+  logical name "crit_out_en" default 0
+$AUTO
+  "X","x_chg"
+  "Y","y_enabled"
+  "F","func_chg"
+  "Crit_In","crit_in_chg"
+  "Crit_Out","crit_out_en"
+$PARAM
+  int name "SetupFuncId" default "-1"
+$LINKS
+  manual "$RDSINCLUDE$\RdsL57\L57EcoMaxLimits.cpp"
+  manual "$RDSINCLUDE$\RdsL57\L57TextBasic.cpp"
+$CUSTOMERR
+|В одном из описаний функций обнаружена ошибка: видимо, текст функции написан не в синтаксисе языка C. Пожалуйста, проверьте все описания в настройках блока или откройте редактор модели и изучите ошибки, выданные компилятором.
+$ENDDECL
+$MODEL
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к 
+неработоспособности модели. */
+
+#define L57MS_MODEL
+#include <RdsL57/L57EcoMaxLimits.cpp>
+#undef L57MS_MODEL
+$GLOBAL
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Неосторожное внесение изменений в реакции, описания и переменные
+самой модели может привести к ее неработоспособности. 
+
+Допускается изменение макроса L57_BAK, описанного ниже.
+*/
+// Нужно ли создавать резервную копию файла модели при настройке (TRUE или FALSE)
+#define L57_BAK FALSE
+//-----------------------------------------------------------------------
+
+
+
+
+
+
+//-----------------------------------------------------------------------
+// Не редактируемая часть модели
+//-----------------------------------------------------------------------
+#define L57MS_GLOBALS
+#include <RdsL57/L57EcoMaxLimits.cpp>
+#undef L57MS_GLOBALS
+
+// Функция вычисления входного ограничения - служебная (без перехвата исключений)
+int _InFunc(const TL57TextEMLFuncArg &arguments)
+{ int ok=1;
+  #define X (arguments.X_Params)
+  #define A (arguments.A_Params)
+  #define F (arguments.Functions)
+
+  // ВНИМАНИЕ! Следующий комментарий - служебный, его нельзя изменять!
+  //L57_ECOMAXLIM_INPUT_BEGIN_MARKER ************************************
+  ok=fabs(X[1])<1.0; // |y|<1  
+  ; /* */
+  //L57_ECOMAXLIM_INPUT_END_MARKER **************************************
+  // ВНИМАНИЕ! Предыдущий комментарий - служебный, его нельзя изменять!
+  
+  return ok;
+
+  #undef F
+  #undef A
+  #undef X
+}
+//-----------------------------------------------------------------------
+
+// Функция вычисления выходного ограничения - служебная (без перехвата исключений)
+int _OutFunc(const TL57TextEMLFuncArg &arguments)
+{ int ok=1;
+  #define X (arguments.X_Params)
+  #define A (arguments.A_Params)
+  #define F (arguments.Functions)
+  #define Crit (arguments._Crit)
+
+  // ВНИМАНИЕ! Следующий комментарий - служебный, его нельзя изменять!
+  //L57_ECOMAXLIM_OUTPUT_BEGIN_MARKER ************************************
+  ok=1;
+  ; /* */
+  //L57_ECOMAXLIM_OUTPUT_END_MARKER **************************************
+  // ВНИМАНИЕ! Предыдущий комментарий - служебный, его нельзя изменять!
+  
+  return ok;
+
+  #undef Crit
+  #undef F
+  #undef A
+  #undef X
+}
+//-----------------------------------------------------------------------
+
+
+$SETUP
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к 
+неработоспособности модели. */
+
+#define L57MS_SETUP
+#include <RdsL57/L57EcoMaxLimits.cpp>
+#undef L57MS_SETUP
+$CLASSDEF
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к 
+неработоспособности модели. */
+
+#define L57MS_CLASS
+#include <RdsL57/L57EcoMaxLimits.cpp>
+#undef L57MS_CLASS
+
+
+$CALCMODE
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к 
+неработоспособности модели. */
+
+#define L57MS_CALCMODE
+#include <RdsL57/L57EcoMaxLimits.cpp>
+#undef L57MS_CALCMODE
+$START
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к
+неработоспособности модели. */
+
+#define L57MS_START
+#include <RdsL57/L57EcoMaxLimits.cpp>
+#undef L57MS_START
+
+$POPUP
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к
+неработоспособности модели. */
+
+#define L57MS_POPUP
+#include <RdsL57/L57EcoMaxLimits.cpp>
+#undef L57MS_POPUP
+
+$OTHER
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к
+неработоспособности модели. */
+
+#define L57MS_OTHER
+#include <RdsL57/L57EcoMaxLimits.cpp>
+#undef L57MS_OTHER
+
+$HIDDEN
+1ok=fabs(X[1])<1.0; \x2f\x2f |y|<1  
+2ok=1;
+$OPTIONS
+  tabs $GLOBAL
+  window pos 5 152 size 1244 835 hdiv 337 vdiv 357 fdiv 335 hidevar
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 0
+  indexcheck 1
+  ignorewarnings 1
+  customerrmsg 1
+  autoreadonlyeditor 1
+  genvartypemacros 0
+  matherr 1
+  catchall 1
+  dvstart 1
+  searchlinks auto deep

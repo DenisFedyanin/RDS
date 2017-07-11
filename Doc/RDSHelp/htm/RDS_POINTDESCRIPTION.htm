@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.4.14. RDS_POINTDESCRIPTION &ndash; описание точки связи или шины</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_4">А.4. Структуры RDS</a></p>
+<div class="level"><p>А.4.14. <span class="cpp">RDS_POINTDESCRIPTION</span> &ndash; описание точки связи или шины</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_PANDESCRIPTION.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_SERVFONTPARAMS.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_POINTDESCRIPTION">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.4. Структуры RDS</h3>
+<h4>А.4.14. <span class="cpp">RDS_POINTDESCRIPTION</span> &ndash; описание точки связи или шины</h4>
+
+
+<p><span id="ref1">Структура</span> <span id="ref2"><span class="cpp">RDS_POINTDESCRIPTION</span></span>
+используется для получения описания отдельной точки внутри
+<a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связи</a> или <a href="um_2_8.htm" title="&sect;2.8. Использование шин">шины</a>.
+Эта структура заполняется сервисной функцией <span class="cpp"><a href="rdsGetPointDescription.htm" title="А.5.6.36. rdsGetPointDescription &ndash; получить описание точки связи">rdsGetPointDescription</a></span> и некоторыми
+другими функциями. Примеры ее использования приведены в
+<a href="pm_2_7_4.htm" title="&sect;2.7.4. Хранение настроечных параметров в переменных блока">&sect;2.7.4</a>, <a href="pm_2_13_2.htm" title="&sect;2.13.2. Прямой вызов функции одного блока">&sect;2.13.2</a> и
+<a href="pm_2_13_4.htm" title="&sect;2.13.4. Пример использования функций блоков для поиска пути в графе">&sect;2.13.4 руководства программиста</a>.</p>
+
+<p>Структура используется только для получения описания точки, изменить параметры этой точки с ее
+помощью нельзя. Для изменения параметров существующих связей или шин и создания новых используется
+вспомогательный объект, создаваемый функцией <span class="cpp"><a href="rdsCECreateEditor.htm" title="А.5.23.1. rdsCECreateEditor &ndash; создать объект-редактор связи/шины">rdsCECreateEditor</a></span>.</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span> {
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;     <span class="rem">// Размер этой структуры в байтах</span>
+    <span class="kw">int</span> PointType;      <span class="rem">// Тип точки (RDS_PT*)</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Source;        <span class="rem">// TRUE - источник данных, FALSE - получатель</span>
+    <span class="kw">int</span> Status;         <span class="rem">// Состояние (RDS_PS*)</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> ObjectName;   <span class="rem">// Имя соединенного блока или шины</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> VarName;      <span class="rem">// Имя соединенной переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block;  <span class="rem">// Соединенный блок или NULL</span>
+    <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> Bus;    <span class="rem">// Соединенная шина или NULL</span>
+    <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> Owner;  <span class="rem">// Связь-владелец точки</span>
+    <span class="kw">int</span> x,y;            <span class="rem">// Координаты точки</span>
+    <span class="kw">int</span> PointNum;       <span class="rem">// Номер этой точки внутри связи/шины</span>
+  } <span id="light_ref1">RDS_POINTDESCRIPTION</span>;
+  <span class="kw">typedef</span> RDS_POINTDESCRIPTION *<span id="light_ref2">RDS_PPOINTDESCRIPTION</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">servSize</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</dt>
+  <dd>Размер этой структуры в байтах. Перед вызовом любой сервисной функции, работающей с этой структурой, полю
+  <span class="cpp">servSize</span> необходимо присвоить значение <span class="cpp">sizeof(RDS_POINTDESCRIPTION)</span>.</dd>
+
+  <dt><span class="cpp">PointType</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Тип точки. В этом поле может находиться одна из четырех констант:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref3">RDS_PTINTERNAL</span></span></td>
+          <td>Промежуточная точка связи или шины (излом или разветвление).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref4">RDS_PTBLOCK</span></span></td>
+          <td>Точка соединения связи с блоком.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref5">RDS_PTBUS</span></span></td>
+          <td>Точка соединения связи с шиной.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref6">RDS_PTBUSTOBLOCK</span></span></td>
+          <td>Точка соединения шины с <a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистемой</a>
+          или <a href="pm_1_2.htm#light_ref9" title="Ввод шины">шинным вводом</a>.</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp">Source</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если данная точка связи является источником данных (подключена к
+  выходу блока или шины), и <span class="cpp">FALSE</span>, если она получает данные (подключена ко входу блока
+  или шины). Используется только для точек соединения с блоками и шинами (в поле
+  <span class="cpp">PointType</span> &ndash; <span class="cpp">RDS_PTBLOCK</span> или
+  <span class="cpp">RDS_PTBUS</span>).</dd>
+
+  <dt><span class="cpp">Status</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Состояние точки (только для точек, не являющихся промежуточными). В этом поле может находиться одна
+  из следующих констант, указывающих на ошибки соединения:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref7">RDS_PSNORMAL</span></span></td>
+          <td>Нет ошибок соединения.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref8">RDS_PSBADVAR</span></span></td>
+          <td>Отсутствует либо указанный в параметрах точки блок, либо указанная переменная в блоке.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref9">RDS_PSBADTYPE</span></span></td>
+          <td>Вход блока, с которой соединена точка, имеет <a href="pm_1_5.htm#ref2" title="Типы переменных блока">тип</a>,
+          <a href="um_1_4.htm#ref23" title="Допустимые соединения типов переменных">несовместимый</a> с
+          типом выхода, к которому присоединена связь.</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp">ObjectName</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на строку (<span class="cpp">char*</span>) во внутренней памяти RDS, в которой
+  хранится имя соединенного с точкой блока (для точек соединения с блоками, типы
+  <span class="cpp">RDS_PTBLOCK</span> и <span class="cpp">RDS_PTBUSTOBLOCK</span>) или соединенной шины (для
+  точек соединения связей с шинами, тип <span class="cpp">RDS_PTBUS</span>). Для промежуточных точек в
+  этом поле записано значение <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">VarName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку (<span class="cpp">char*</span>) во внутренней памяти RDS, в которой хранится
+  имя соединенной с точкой переменной (для точек соединения связей с блоками, тип <span class="cpp">RDS_PTBLOCK</span>)
+  или канала шины (для точек соединения связей с шинами, тип <span class="cpp">RDS_PTBUS</span>). Для всех
+  остальных типов точек в этом поле записано значение <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">Block</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор соединенного с точкой блока для точек соединения с блоками (типы
+  <span class="cpp">RDS_PTBLOCK</span> и <span class="cpp">RDS_PTBUSTOBLOCK</span>). Для всех остальных типов
+  точек в этом поле записано значение <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">Bus</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор соединенной с точкой шины для точек соединения связей с шинами (тип <span class="cpp">RDS_PTBUS</span>).
+  Для всех остальных типов точек в этом поле записано значение <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">Owner</span>&emsp;(<span class="cpp"><i>RDS_CHANDLE</i></span>)</dt>
+  <dd>Идентификатор связи или шины, которой принадлежит данная точка.</dd>
+
+  <dt><span class="cpp">x</span>,&nbsp;<span class="cpp">y</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Горизонтальная (<span class="cpp">x</span>) и вертикальная (<span class="cpp">y</span>) координаты
+  точки. Для промежуточных точек и точек соединения связей с шинами (типы <span class="cpp">RDS_PTINTERNAL</span> и
+  <span class="cpp">RDS_PTBUS</span>) указываются абсолютные координаты на рабочем поле, то есть смещения относительно
+  его левого верхнего угла. Для точек соединения связей и шин с блоками (типы
+  <span class="cpp">RDS_PTBLOCK</span> и <span class="cpp">RDS_PTBUSTOBLOCK</span>) указываются относительные
+  координаты, то есть смещения относительно координат
+  <a href="um_2_9_1.htm#ref12" title="Точка привязки блока">точки привязки</a> соединенного блока. Все координаты указаны для масштаба 100%,
+  горизонтальная ось координат направлена вправо, вертикальная &ndash; вниз, начало координат
+  &ndash; левый верхний угол рабочего поля (для абсолютных координат) или точка привязки блока (для относительных).</dd>
+
+  <dt><span class="cpp">PointNum</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Порядковый номер данной точки в связи или шине. Обращение к точкам всегда идет по их номеру, общее
+  число точек можно получить через поле <span class="cpp">NumPoints</span> структуры
+  <span class="cpp"><a href="RDS_CONNDESCRIPTION.htm#ref1" title="Структура RDS_CONNDESCRIPTION">RDS_CONNDESCRIPTION</a></span>.</dd>
+
+</dl>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsGetPointDescription.htm" title="А.5.6.36. rdsGetPointDescription &ndash; получить описание точки связи">rdsGetPointDescription</a></span>,
+<span class="cpp"><a href="RDS_CONNDESCRIPTION.htm#ref1" title="Структура RDS_CONNDESCRIPTION">RDS_CONNDESCRIPTION</a></span>,
+<span class="cpp"><a href="rdsGetConnDescription.htm" title="А.5.6.23. rdsGetConnDescription &ndash; получить описание связи">rdsGetConnDescription</a></span>,
+<span class="cpp"><a href="rdsCECreateEditor.htm" title="А.5.23.1. rdsCECreateEditor &ndash; создать объект-редактор связи/шины">rdsCECreateEditor</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_PANDESCRIPTION.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_SERVFONTPARAMS.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_POINTDESCRIPTION">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

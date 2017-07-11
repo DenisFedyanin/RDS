@@ -1,0 +1,34 @@
+EXPBLKTXT
+version 1
+
+types
+ begin
+  struct type "complex_rfi38"  hide
+   begin
+    double name "r" default 1
+    double name "fi" default 0
+   end
+ end
+
+dllblock name "Block3"
+ begin
+  name hidden
+  options sizeable
+  vars
+   begin
+    signal name "Start" in menu run default 0
+    signal name "Ready" out menu default 0
+    struct type "complex_rfi38" name "z1" in menu hide default "{1, 0}"
+    struct type "complex_rfi38" name "z2" in menu hide default "{1, 0}"
+    struct type "complex_rfi38" name "z" out menu hide default "{1, 0}"
+    double name "re" out menu default 0
+    double name "im" out menu default 0
+    double name "fid" out menu default 0
+    double name "LA" out menu default 0
+   end
+  auto
+   begin
+   end
+  layout rect 45 30 fill 8454016 line 0 text "z1+z2" font "Arial" height 13 color 0
+  dll file "$DLL$\\z1_p_z2.dll" func "rdsbcppBlockEntryPoint" cycle
+ end

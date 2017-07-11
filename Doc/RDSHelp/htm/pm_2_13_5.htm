@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.13.5. Отложенный вызов функций блоков</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_13">&sect;2.13. Вызов функций блоков</a></p>
+<div class="level"><p>&sect;2.13.5. Отложенный вызов функций блоков</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_13_4.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_6.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_13_5_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.13. Вызов функций блоков</h3>
+<h4>&sect;2.13.5. Отложенный вызов функций блоков</h4>
+<p class="abstract">Рассматривается отложенный вызов функций блоков, позволяющий избежать переполнения стека при глубокой
+                рекурсии вызовов. В примере, рассмотренном в <a href="pm_2_13_4.htm" title="&sect;2.13.4. Пример использования функций блоков для поиска пути в графе">&sect;2.13.4</a>, прямые вызовы заменяются
+                на отложенные.</p>
+
+
+<p>Рассмотренный в <a href="pm_2_13_4.htm" title="&sect;2.13.4. Пример использования функций блоков для поиска пути в графе">&sect;2.13.4</a> пример имеет один существенный недостаток,
+из-за которого созданная модель не будет работать в графах с очень длинными маршрутами. Причина этого
+в способе, которым мы осуществляем разметку графа.</p>
+
+<p>Когда функция <span class="cpp"><a href="pm_2_13_4.htm#ref53" title="Функция поиска маршрута">GraphPath_FindPath</a></span> помечает начальный блок маршрута значением 0,
+функция модели этого блока вызывается в режиме <span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span> для реакции на
+&laquo;<a class="hidden" href="pm_2_13_4.htm#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark">ProgrammersGuide.GraphPath.Mark</a>&raquo;. Модель блока, реагируя на вызов,
+вызывает функцию <span class="cpp"><a href="pm_2_13_4.htm#ref75" title="Пометка узла графа и его соседей">GraphNode_OnMarkBlock</a></span>, которая, начав перебор соседних блоков,
+помечает первый из них, то есть вызывает его модель для реакции на ту же самую функцию
+&laquo;<a class="hidden" href="pm_2_13_4.htm#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark">ProgrammersGuide.GraphPath.Mark</a>&raquo;. Эта модель тоже начинает помечать соседние
+блоки, и опять вызывает модель одного из них. В результате, если в графе существует какой-либо маршрут,
+состоящий из <i>N</i> блоков, мы получим <i>N</i> вызовов функции модели блока, произведенных один из
+другого. Поскольку каждый вызов функции занимает в стеке определенное место, тем большее, чем больше у нее
+параметров и локальных переменных, при размерах графов в несколько тысяч блоков мы можем столкнуться с
+переполнением стека &ndash; его объем не безграничен. Таким образом, попытка найти кратчайший путь между
+блоками в очень большом графе приведет к аварийному завершению RDS, что будет для пользователя полной
+неожиданностью, ведь граф, который он нарисовал, умещается в оперативную память, и, следовательно,
+для его обработки должно хватить ресурсов.</p>
+
+<p>Чтобы избавиться от проблемы переполнения стека из-за большого количества рекурсивных вызовов,
+можно использовать механизм отложенного вызова функций блоков. При отложенном вызове функция блока не
+вызывается немедленно, вместо этого ее параметры копируются в специально отведенную область памяти,
+после чего управление немедленно возвращается вызвавшей функции. До тех пор, пока функция модели не
+завершится, все отложенные вызовы, сделанные из этой функции, будут ставиться в очередь. Сразу после завершения
+функции модели отложенные вызовы начнут выполняться один за другим, и, после выполнения каждого из них, память,
+отведенная под параметры функции, будет освобождаться.</p>
+
+<p>Может показаться, что отложенные вызовы не дают никакого выигрыша: раньше параметры функций при вызове
+помещались в стек, теперь память под них отводится отдельно, но они все равно продолжают занимать объем тем
+больший, чем больше функций вызвано. Однако, здесь есть принципиальная разница: при отложенных вызовах память
+под параметры отводится в динамической области, так называемой &laquo;куче&raquo; (heap), объем которой,
+как правило, существенно больше объема стека. Фактически, он ограничен только объемом оперативной памяти,
+доступной программе. В этой же памяти размещаются данные всех блоков, связей и вспомогательных объектов,
+созданных RDS, поэтому, если в эту память уместилась созданная пользователем схема, то, вероятнее всего,
+несколько десятков дополнительных байтов для каждого из ее блоков (а параметры функций редко занимают больше) не
+приведут к переполнению памяти. Кроме того, в стек помещаются не только параметры, используемые при вызове
+функции блока, но и все локальные переменные каждой из выполняемых функций. Избавившись от рекурсивных вызовов
+модели блока мы, тем самым, перестаем заполнять стек этими локальными переменными. Функции моделей при отложенных
+вызовах вызываются не друг из друга, а по очереди, поэтому размер стека не увеличивается, сколько бы моделей
+подряд мы не вызвали: следующая модель вызовется только после завершения предыдущей и освобождения занятой ей
+памяти в стеке.</p>
+
+<p>Для отложенного вызова функции блока используется сервисная функция
+<span class="cpp"><span id="light_ref1"><a href="rdsQueueCallBlockFunction.htm" title="А.5.13.10. rdsQueueCallBlockFunction &ndash; отложенный вызов функции блока">rdsQueueCallBlockFunction</a></span></span>:</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsQueueCallBlockFunction.htm" title="А.5.13.10. rdsQueueCallBlockFunction &ndash; отложенный вызов функции блока">rdsQueueCallBlockFunction</a>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,  <span class="rem">// Блок, у которого вызывается функция</span>
+    <span class="kw">int</span> FuncId,         <span class="rem">// Идентификатор вызываемой функции</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ParamBuf,    <span class="rem">// Указатель на область параметров</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> ParamBufSize, <span class="rem">// Размер области параметров</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags);       <span class="rem">// Флаги</span></pre>
+
+<p>В первых трех параметрах этой функции, как и у уже знакомой нам <span class="cpp"><a href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a></span>,
+передаются идентификатор вызываемого блока, идентификатор вызываемой в нем функции и указатель на начало области
+параметров этой функции (указатель произвольного типа, то есть <span class="cpp">void*</span>). Дальше начинаются
+различия: при прямом вызове функций RDS немедленно передает указатель на область параметров в модель
+вызванного блока и ждет, пока та не вернет управление, поэтому <span class="cpp"><a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a></span>
+не требуется знать размер этой области. При отложенном же вызове необходимо сделать копию области параметров
+функции, а для этого необходимо знать ее размер. По этой причине в четвертом параметре
+<span class="cpp"><a class="hidden" href="rdsQueueCallBlockFunction.htm" title="А.5.13.10. rdsQueueCallBlockFunction &ndash; отложенный вызов функции блока">rdsQueueCallBlockFunction</a></span> передается размер области, указатель на которую передан
+в третьем параметре. В пятом параметре указываются флаги, управляющие постановкой отложенного вызова функции
+в очередь: флаг <span class="cpp"><span id="light_ref2"><a href="rdsBroadcastFuncCallsDelayed.htm#light_ref5" title="RDS_BCALL_FIRST">RDS_BCALL_FIRST</a></span></span> поставит вызов в начало очереди, флаг
+<span class="cpp"><span id="light_ref3"><a href="rdsBroadcastFuncCallsDelayed.htm#light_ref6" title="RDS_BCALL_LAST">RDS_BCALL_LAST</a></span></span> &ndash; в конец. Один из этих флагов может быть скомбинирован
+побитовым ИЛИ с уже знакомым нам устаревшим флагом <span class="cpp"><span id="light_ref4"><a href="rdsBroadcastFuncCallsDelayed.htm#light_ref3" title="RDS_BCALL_CHECKSUPPORT">RDS_BCALL_CHECKSUPPORT</a></span></span>, что
+позволит перед вызовом функции проверить, поддерживает ли ее данный блок.</p>
+
+<p>При всех достоинствах отложенных вызовов функций блоков у них есть и недостатки, поэтому не во
+всех случаях они могут заменить прямые вызовы. Прежде всего, параметры, передаваемые при отложенном вызове,
+не должны содержать внутри себя указателей на какие-либо локальные объекты (строки, структуры, массивы и т.д.),
+созданные в вызывающей функции. При отложенном вызове вызвавшая функция модели завершится раньше, чем будет
+произведен вызов, и все ее локальные переменные будут уничтожены, поэтому указатели в скопированной области
+параметров будут ссылаться на уже освобожденную память. Допустим, например, что мы хотим включить в
+параметры какой-либо функции блока указатель на строку, и описываем структуру параметров этой функции следующим
+образом:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;   <span class="rem">// Сюда будет записан размер структуры</span>
+    <span class="kw">char</span> *String;     <span class="rem">// Указатель на строку</span>
+    <span class="kw">double</span> Val1,Val2; <span class="rem">// Какие-то другие параметры функции</span>
+  } TFunction3Params;</pre>
+
+<p>Будем считать, что эта функция уже зарегистрирована, и ее идентификатор находится в глобальной переменной
+<span class="cpp">Function3Id</span>. Теперь мы хотим произвести отложенный вызов этой функции
+у какого-то блока:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block=&hellip;      <span class="rem">// Здесь должен быть идентификатор</span>
+                           <span class="rem">// вызываемого блока</span>
+  TFunction3Params params; <span class="rem">// Структура параметров функции</span>
+  <span class="kw">char</span> buf[<span class="const">100</span>];           <span class="rem">// Вспомогательный массив</span>
+
+  params.servSize=<span class="kw">sizeof</span>(params); <span class="rem">// Присваиваем размер структуры</span>
+  params.Val1=<span class="const">10.0</span>;               <span class="rem">// Записываем параметры</span>
+  params.Val2=<span class="const">15.0</span>;
+  <span class="rem">// Формируем строку во вспомогательном массиве</span>
+  sprintf(buf,<span class="str">"Val1+Val2=%lf"</span>,params.Val1+params.Val2);
+  <span class="rem">// Записываем указатель на строку в структуру параметров</span>
+  params.String=buf;
+  <span class="rem">// Отложенный вызов функции</span>
+  <a class="hidden" href="rdsQueueCallBlockFunction.htm" title="А.5.13.10. rdsQueueCallBlockFunction &ndash; отложенный вызов функции блока">rdsQueueCallBlockFunction</a>(block,Function3Id,
+      &amp;params,<span class="kw">sizeof</span>(params),
+      <a class="hidden" href="rdsBroadcastFuncCallsDelayed.htm#light_ref6" title="RDS_BCALL_LAST">RDS_BCALL_LAST</a>);</pre>
+
+<p>При вызове <span class="cpp"><a class="hidden" href="rdsQueueCallBlockFunction.htm" title="А.5.13.10. rdsQueueCallBlockFunction &ndash; отложенный вызов функции блока">rdsQueueCallBlockFunction</a></span> RDS сделает копию структуры
+<span class="cpp">params</span> (то есть копию области памяти с начальным адресом
+<span class="cpp">&amp;params</span> и размером <span class="cpp">sizeof(params)</span>) и немедленно вернет
+управление. Поле <span class="cpp"></span> скопированной структуры при этом будет ссылаться на массив
+<span class="cpp"></span>, расположенный в стеке функции, фрагмент которой приведен выше. Как только эта
+функция завершится, массив <span class="cpp">buf</span> будет уничтожен вместе со всеми ее локальными
+переменными. Теперь поле <span class="cpp">String</span> скопированной структуры ссылается на уничтоженные
+данные &ndash; когда дело дойдет до вызова функции блока, это не приведет ни к чему хорошему.</p>
+
+<p>Может возникнуть соблазн обойти эту проблему следующим образом: отводить строку динамически при
+помощи сервисной функции <span class="cpp"><a href="rdsAllocate.htm" title="А.5.4.2. rdsAllocate &ndash; динамическое отведение области памяти">rdsAllocate</a></span>, чтобы она не уничтожилась при завершении
+создавшей ее функции, а обязанность освобождения памяти, занятой строкой, переложить на
+вызываемую модель блока. То есть <span class="changes">изменить</span> приведенный выше текст следующим образом:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block=&hellip;      <span class="rem">// Здесь должен быть идентификатор</span>
+                           <span class="rem">// вызываемого блока</span>
+  TFunction3Params params; <span class="rem">// Структура параметров функции</span>
+<span class="changes">  <span class="kw">char</span> *buf;            <span class="rem">// Вспомогательный массив     </span></span>
+<span class="changes">  buf=<a class="hidden" href="rdsAllocate.htm" title="А.5.4.2. rdsAllocate &ndash; динамическое отведение области памяти">rdsAllocate</a>(<span class="const">100</span>); <span class="rem">// Отводим память под массив  </span></span>
+  params.servSize=<span class="kw">sizeof</span>(params); <span class="rem">// Присваиваем размер структуры</span>
+  params.Val1=<span class="const">10.0</span>;	              <span class="rem">// Записываем параметры</span>
+  params.Val2=<span class="const">15.0</span>;
+  <span class="rem">// Формируем строку во вспомогательном массиве</span>
+  sprintf(buf,<span class="str">"Val1+Val2=%lf"</span>,params.Val1+params.Val2);
+  <span class="rem">// Записываем указатель на строку в структуру параметров</span>
+  params.String=buf;
+  <span class="rem">// Отложенный вызов функции</span>
+  <a class="hidden" href="rdsQueueCallBlockFunction.htm" title="А.5.13.10. rdsQueueCallBlockFunction &ndash; отложенный вызов функции блока">rdsQueueCallBlockFunction</a>(block,Function3Id,
+      &amp;params,<span class="kw">sizeof</span>(params),
+      <a class="hidden" href="rdsBroadcastFuncCallsDelayed.htm#light_ref6" title="RDS_BCALL_LAST">RDS_BCALL_LAST</a>);</pre>
+
+<p>Однако, решив проблему с преждевременным уничтожением строки, мы создадим новую: если
+окажется, что вызванная модель блока не поддерживает эту функцию, она не освободит память,
+отведенную под строку, что приведет к утечке памяти. Поэтому лучше всего взять за правило:
+при отложенном вызове функций &ndash; никаких указателей на локальные или динамически создаваемые
+объекты в параметрах.</p>
+
+<p>Разумеется, в приведенном примере ничто не мешает включить в структуру параметров функции
+не указатель на строку, а массив символов фиксированного размера:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;   <span class="rem">// Сюда будет записан размер структуры</span>
+  <span class="changes">  <span class="kw">char</span> String[<span class="const">100</span>]; <span class="rem">// Строка (массив символов)  </span></span>
+    <span class="kw">double</span> Val1,Val2; <span class="rem">// Какие-то другие параметры функции</span>
+  } TFunction3Params;</pre>
+
+<p>В этом случае структура параметров не содержит указателей на внешние объекты, и никаких
+проблем при отложенном вызове функции с такими параметрами не будет.</p>
+
+<p>Второй крупный недостаток отложенных вызовов &ndash; невозможность получения значения, возвращенного
+вызванной функцией. <span class="cpp"><a class="hidden" href="rdsQueueCallBlockFunction.htm" title="А.5.13.10. rdsQueueCallBlockFunction &ndash; отложенный вызов функции блока">rdsQueueCallBlockFunction</a></span> только готовит данные для
+отложенного вызова, а сам вызов будет произведен позднее, когда вызвавшая функция уже завершится.
+Если вызывающая модель хочет получить от вызываемой какой-то ответ, для этого нужно предпринимать
+специальные действия. Например, вызванная функция модели может считать из поля
+<span class="cpp">Caller</span> структуры <span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span> идентификатор вызвавшего ее
+блока, и вызвать у него в ответ какую-либо специально разработанную для этого функцию, передав в
+ее параметрах результат выполнения отложенного вызова. Это несколько усложняет создание моделей блоков,
+поскольку вызов функции и получение ее результата оказываются разнесены во времени.</p>
+
+<p>Как и прямым вызовом, отложенным можно вызывать не только функцию конкретного блока, но
+и функции всех блоков какой-либо подсистемы. Для этого служит сервисная функция
+<span class="cpp"><span id="light_ref5"><a href="rdsBroadcastFuncCallsDelayed.htm" title="А.5.13.4. rdsBroadcastFuncCallsDelayed &ndash; отложенный вызов функции всех блоков подсистемы">rdsBroadcastFuncCallsDelayed</a></span></span>:</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsBroadcastFuncCallsDelayed.htm" title="А.5.13.4. rdsBroadcastFuncCallsDelayed &ndash; отложенный вызов функции всех блоков подсистемы">rdsBroadcastFuncCallsDelayed</a>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> System, <span class="rem">// Подсистема, блоки которогй вызываются</span>
+    <span class="kw">int</span> FuncId,         <span class="rem">// Идентификатор вызываемой функции</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ParamBuf,    <span class="rem">// Указатель на область параметров</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> ParamBufSize, <span class="rem">// Размер области параметров</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags);       <span class="rem">// Флаги</span></pre>
+
+<p>Ее параметры аналогичны параметрам функции <span class="cpp"><a class="hidden" href="rdsQueueCallBlockFunction.htm" title="А.5.13.10. rdsQueueCallBlockFunction &ndash; отложенный вызов функции блока">rdsQueueCallBlockFunction</a></span>, за исключением
+того, что в первом параметре передается не идентификатор вызываемого блока, а идентификатор подсистемы,
+блоки которой вызываются. В флагах этой функции можно указывать не только
+<span class="cpp"><a class="hidden" href="rdsBroadcastFuncCallsDelayed.htm#light_ref3" title="RDS_BCALL_CHECKSUPPORT">RDS_BCALL_CHECKSUPPORT</a></span>, <span class="cpp"><a class="hidden" href="rdsBroadcastFuncCallsDelayed.htm#light_ref5" title="RDS_BCALL_FIRST">RDS_BCALL_FIRST</a></span> и
+<span class="cpp"><a class="hidden" href="rdsBroadcastFuncCallsDelayed.htm#light_ref6" title="RDS_BCALL_LAST">RDS_BCALL_LAST</a></span>, но и уже знакомые нам по
+<span class="cpp"><a href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a></span> <span class="cpp"><a href="rdsBroadcastFuncCallsDelayed.htm#light_ref4" title="RDS_BCALL_SUBSYSTEMS">RDS_BCALL_SUBSYSTEMS</a></span> и
+<span class="cpp"><a href="rdsBroadcastFuncCallsDelayed.htm#light_ref2" title="RDS_BCALL_ALLOWSTOP">RDS_BCALL_ALLOWSTOP</a></span>.</p>
+
+<p>Вернемся к нашему <a href="pm_2_13_4.htm" title="&sect;2.13.4. Пример использования функций блоков для поиска пути в графе">примеру</a>, в котором мы
+ищем кратчайший путь между двумя узлами графа. Чтобы перевести функции
+&laquo;<a class="hidden" href="pm_2_13_4.htm#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark">ProgrammersGuide.GraphPath.Mark</a>&raquo; и
+&laquo;<a class="hidden" href="pm_2_13_4.htm#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace">ProgrammersGuide.GraphPath.BackTrace</a>&raquo;
+на отложенный вызов, достаточно <span class="changes">изменить</span> всего две из написанных нами вспомогательных функций
+&ndash; <span class="cpp"><a href="pm_2_13_4.htm#ref53" title="Функция поиска маршрута">GraphPath_FindPath</a></span> и <span class="cpp"><a href="pm_2_13_4.htm#ref78" title="Функция обратного вызова для пометки узла графа">GraphPath_MarkBlock_Callback</a></span>.
+<span id="ref6">Начнем</span>
+с первой из них:</p>
+
+<pre class="cpp">  <span class="rem">// Поиск маршрута в графе в заданной подсистеме</span>
+  <span class="kw">void</span> <span id="light_ref6">GraphPath_FindPath</span>(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> System)
+  { <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> StartBlock,EndBlock;
+    <a class="hidden" href="pm_2_13_4.htm#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a> markparams;
+
+    <span class="rem">// Считаем, что маркировка всего графа сброшена</span>
+
+    <span class="rem">// Ищем начальную и конечную точку маршрута</span>
+    <span class="kw">if</span>(!<a class="hidden" href="pm_2_13_4.htm#ref51" title="Функция поиска начального и конечного блока">GraphPath_GetTerminalBlocks</a>(System,&amp;StartBlock,&amp;EndBlock))
+      <span class="kw">return</span>; <span class="rem">// Начало или конец не найдены</span>
+    <span class="rem">// Начало маршрута – StartBlock, конец - EndBlock</span>
+
+    <span class="rem">// Маркируем граф от начала маршрута</span>
+    markparams.servSize=<span class="kw">sizeof</span>(markparams);
+    markparams.Mark=<span class="const">0</span>.<span class="const">0</span>; <span class="rem">// Начало маркируется значением 0</span>
+    markparams.Previous=NULL;<span class="rem">// Это значение не пришло от какого-то</span>
+                             <span class="rem">// соседнего блока</span>
+    <span class="rem">// Вызываем функцию маркировки для начального блока</span>
+  <span class="changes">  <span class="rem">// </span><a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока"><span class="rem">rdsCallBlockFunction</span></a><span class="rem">(StartBlock,</span><a class="hidden" href="pm_2_13_4.htm#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark"><span class="rem">GraphFuncMark</span></a><span class="rem">,&amp;markparams);  </span></span>
+  <span class="changes">  <a class="hidden" href="rdsQueueCallBlockFunction.htm" title="А.5.13.10. rdsQueueCallBlockFunction &ndash; отложенный вызов функции блока">rdsQueueCallBlockFunction</a>(StartBlock,<a class="hidden" href="pm_2_13_4.htm#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a>,             </span>
+  <span class="changes">      &amp;markparams,<span class="kw">sizeof</span>(markparams),<a class="hidden" href="rdsBroadcastFuncCallsDelayed.htm#light_ref5" title="RDS_BCALL_FIRST">RDS_BCALL_FIRST</a>);            </span>
+    <span class="rem">// Теперь отслеживаем кратчайший путь в обратном направлении</span>
+    <span class="rem">// (от конечного блока)</span>
+  <span class="changes">  <span class="rem">// </span><a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока"><span class="rem">rdsCallBlockFunction</span></a><span class="rem">(EndBlock,</span><a class="hidden" href="pm_2_13_4.htm#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace"><span class="rem">GraphFuncBackTrace</span></a><span class="rem">,NULL);      </span></span>
+  <span class="changes">  <a class="hidden" href="rdsQueueCallBlockFunction.htm" title="А.5.13.10. rdsQueueCallBlockFunction &ndash; отложенный вызов функции блока">rdsQueueCallBlockFunction</a>(EndBlock,<a class="hidden" href="pm_2_13_4.htm#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a>,          </span>
+  <span class="changes">      NULL,<span class="const">0</span>,<a class="hidden" href="rdsBroadcastFuncCallsDelayed.htm#light_ref6" title="RDS_BCALL_LAST">RDS_BCALL_LAST</a>);                                     </span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции мы в двух местах заменили <span class="cpp"><a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a></span> на
+<span class="cpp"><a class="hidden" href="rdsQueueCallBlockFunction.htm" title="А.5.13.10. rdsQueueCallBlockFunction &ndash; отложенный вызов функции блока">rdsQueueCallBlockFunction</a></span>, но флаги вызова мы при этом используем разные.
+Нам нужно сначала разметить весь граф, и только потом вызвать у блока конца маршрута функцию
+&laquo;<a class="hidden" href="pm_2_13_4.htm#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace">ProgrammersGuide.GraphPath.BackTrace</a>&raquo; для выделения найденного пути.
+Раньше это получалось само собой: первый вызов <span class="cpp"><a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a></span> для функции
+&laquo;<a class="hidden" href="pm_2_13_4.htm#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark">ProgrammersGuide.GraphPath.Mark</a>&raquo; (идентификатор функции находится в переменной
+<span class="cpp"><a class="hidden" href="pm_2_13_4.htm#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a></span>) не возвращал управления до тех пор, пока весь граф не
+оказывался размеченным, и только потом вызывалась функция выделения пути (идентификатор &ndash; в
+<span class="cpp"><a class="hidden" href="pm_2_13_4.htm#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a></span>). Теперь функция
+<span class="cpp"><a class="hidden" href="rdsQueueCallBlockFunction.htm" title="А.5.13.10. rdsQueueCallBlockFunction &ndash; отложенный вызов функции блока">rdsQueueCallBlockFunction</a></span> возвращает управление сразу, поэтому нам нужно
+принять меры, чтобы функция выделения пути
+&laquo;<a class="hidden" href="pm_2_13_4.htm#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace">ProgrammersGuide.GraphPath.BackTrace</a>&raquo; вызвалась только после
+того, как прекратятся все отложенные вызовы функции разметки
+&laquo;<a class="hidden" href="pm_2_13_4.htm#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark">ProgrammersGuide.GraphPath.Mark</a>&raquo;. Для этого достаточно
+все время ставить функцию разметки в начало очереди, используя флаг
+<span class="cpp"><a class="hidden" href="rdsBroadcastFuncCallsDelayed.htm#light_ref5" title="RDS_BCALL_FIRST">RDS_BCALL_FIRST</a></span>, а функцию выделения &ndash; в конец, с флагом
+<span class="cpp"><a class="hidden" href="rdsBroadcastFuncCallsDelayed.htm#light_ref6" title="RDS_BCALL_LAST">RDS_BCALL_LAST</a></span>. Таким образом, пока в очереди будет находиться хотя
+бы один отложенный вызов функции разметки, до вызова функции выделения дело не дойдет.</p>
+
+<p><span id="ref7">В</span>
+функции <span class="cpp"><a href="pm_2_13_4.htm#ref78" title="Функция обратного вызова для пометки узла графа">GraphPath_MarkBlock_Callback</a></span> нам тоже нужно
+<span class="changes">заменить</span> прямой вызов функции разметки на отложенный:</p>
+
+<pre class="cpp">  <span class="rem">// Функция обратного вызова для </span><a class="hidden" href="pm_2_13_4.htm#ref75" title="Пометка узла графа и его соседей"><span class="rem">GraphNode_OnMarkBlock</span></a>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <span id="light_ref7">GraphPath_MarkBlock_Callback</span>(
+      <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> src,
+      <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> dest,LPVOID data)
+  { <a class="hidden" href="pm_2_13_4.htm#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a> *src_params=
+      (<a class="hidden" href="pm_2_13_4.htm#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a>*)data;
+    <a class="hidden" href="pm_2_13_4.htm#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a> dest_params;
+    <span class="kw">double</span> ArcLen;
+
+    <span class="rem">// &hellip;</span>
+    <span class="rem">// начало функции – без изменений</span>
+    <span class="rem">// &hellip;</span>
+
+    <span class="rem">// Помечаем найденный соседний блок суммой маркировки данного</span>
+    <span class="rem">//  блока (src_params-&gt;Mark) и длины дуги к найденному (ArcLen)</span>
+    dest_params.servSize=<span class="kw">sizeof</span>(dest_params);
+    dest_params.Mark=src_params-&gt;Mark+ArcLen;
+    dest_params.Previous=src-&gt;Block; <span class="rem">// Блок, от которого</span>
+                                        <span class="rem">// пришла метка</span>
+  <span class="changes">  <span class="rem">// </span><a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока"><span class="rem">rdsCallBlockFunction</span></a><span class="rem">(dest-&gt;Block,</span><a class="hidden" href="pm_2_13_4.htm#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark"><span class="rem">GraphFuncMark</span></a><span class="rem">,&amp;dest_params);  </span></span>
+  <span class="changes">  <a class="hidden" href="rdsQueueCallBlockFunction.htm" title="А.5.13.10. rdsQueueCallBlockFunction &ndash; отложенный вызов функции блока">rdsQueueCallBlockFunction</a>(dest-&gt;Block,<a class="hidden" href="pm_2_13_4.htm#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a>,                  </span>
+  <span class="changes">      &amp;dest_params,<span class="kw">sizeof</span>(dest_params),<a class="hidden" href="rdsBroadcastFuncCallsDelayed.htm#light_ref5" title="RDS_BCALL_FIRST">RDS_BCALL_FIRST</a>);               </span>
+    <span class="kw">return</span> TRUE;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Здесь мы тоже постоянно ставим вызов функции
+&laquo;<a class="hidden" href="pm_2_13_4.htm#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark">ProgrammersGuide.GraphPath.Mark</a>&raquo; в начало очереди. Вызов
+этой функции у какого-либо узла графа добавляет в начало очереди такие же вызовы для его соседей,
+при их выполнении в начало очереди добавляются вызовы уже для их соседей и т.д., а единственный вызов
+функции выделения, сделанный в
+<span class="cpp"><a class="hidden" href="#ref6" title="Функция поиска маршрута - новый вариант">GraphPath_FindPath</a></span>, будет оставаться в конце этой очереди.</p>
+
+<p><span id="ref8">Вызов</span>
+функции &laquo;<a class="hidden" href="pm_2_13_4.htm#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace">ProgrammersGuide.GraphPath.BackTrace</a>&raquo; в
+конце функции <span class="cpp"><a class="hidden" href="pm_2_13_4.htm#ref79" title="Функция выделения кратчайшего маршрута">GraphNode_OnBackTracePath</a></span> тоже нужно сделать отложенным:</p>
+
+<pre class="cpp">  <span class="rem">// Проследить и выделить маршрут от данного блока в</span>
+  <span class="rem">// обратном направлении</span>
+  <span class="kw">void</span> <span id="light_ref8">GraphNode_OnBackTracePath</span>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData)
+  { <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> PrevBlock;
+    <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> PrevConn,c;
+
+    <span class="rem">// &hellip;</span>
+    <span class="rem">// начало функции – без изменений</span>
+    <span class="rem">// &hellip;</span>
+
+    <span class="kw">if</span>(PrevBlock)
+      { <span class="rem">// Визуально выделяем связь</span>
+        <a class="hidden" href="pm_2_13_4.htm#ref24" title="Функция визуального выделения связи">MarkConnection</a>(PrevConn);
+        <span class="rem">// Вызываем функцию обратного прослеживания маршрута</span>
+        <span class="rem">// от найденного блока</span>
+      <span class="changes">  <span class="rem">// </span><a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока"><span class="rem">rdsCallBlockFunction</span></a><span class="rem">(PrevBlock,</span><a class="hidden" href="pm_2_13_4.htm#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace"><span class="rem">GraphFuncBackTrace</span></a><span class="rem">,NULL);  </span></span>
+      <span class="changes">  <a class="hidden" href="rdsQueueCallBlockFunction.htm" title="А.5.13.10. rdsQueueCallBlockFunction &ndash; отложенный вызов функции блока">rdsQueueCallBlockFunction</a>(PrevBlock,<a class="hidden" href="pm_2_13_4.htm#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a>,      </span>
+      <span class="changes">    NULL,<span class="const">0</span>,<a class="hidden" href="rdsBroadcastFuncCallsDelayed.htm#light_ref6" title="RDS_BCALL_LAST">RDS_BCALL_LAST</a>);                                    </span>
+     }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Для оставшихся функций блоков, используемых в этом примере, перевод на отложенные вызовы не нужен:
+они не вызываются рекурсивно и не могут привести к переполнению стека.</p>
+
+<p>Теперь наша модель сможет искать пути даже в очень больших и сильно разветвленных графах. Функции,
+которые мы перевели на отложенные вызовы, не возвращали никаких значений и их параметры не содержали
+указателей (функция
+&laquo;<a class="hidden" href="pm_2_13_4.htm#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace">ProgrammersGuide.GraphPath.BackTrace</a>&raquo; вообще не имеет параметров),
+поэтому изменения, которые нам пришлось внести, оказались довольно небольшими.</p>
+
+<p>Следует помнить, что основное назначение отложенных вызовов &ndash; борьба с переполнением стека из-за
+глубокой рекурсии. Во всех остальных случаях использование прямых вызовов более целесообразно.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_13_4.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_6.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

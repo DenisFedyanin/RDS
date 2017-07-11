@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.30.1. rdsPBARCreate &ndash; создать объект для вывода индикатора выполнения</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_30">А.5.30. Вспомогательный объект для вывода индикатора выполнения</a></p>
+<div class="level"><p>А.5.30.1. <span class="cpp">rdsPBARCreate</span> &ndash; создать объект для вывода индикатора выполнения</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsBEUStore.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_PBAR_ADDTOPOS.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsPBARCreate">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4>А.5.30. Вспомогательный объект для вывода индикатора выполнения</h4>
+<p class="abstract">Описываются функции и команды вспомогательного объекта RDS, предназначенного для вывода на экран индикатора хода выполнения какой-либо длительной операции (progress bar).</p>
+<h5>А.5.30.1. <span class="cpp">rdsPBARCreate</span> &ndash; создать объект для вывода индикатора выполнения</h5>
+
+
+<p>Функция <span class="cpp">rdsPBARCreate</span> создает
+<a href="app_a_objects.htm" title="А.5.22.1. Использование вспомогательных объектов RDS">вспомогательный объект</a> RDS,
+позволяющий показывать пользователю горизонтальный индикатор (progress bar), обычно символизирующий
+ход выполнения какой-либо операции.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsPBARCreate(
+      <span class="kw">int</span> Max,         <span class="rem">// Максимум значения</span>
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Caption    <span class="rem">// Заголовок индикатора</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_HoIS</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Max</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Максимальное значение индикатора (его позиция изменяется от нуля до этого значения).</dd>
+
+  <dt><span class="cpp">Caption</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на строку с заголовком индикатора или <span class="cpp">NULL</span>,
+  если заголовка нет или он будет задан позже.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Уникальный идентификатор созданного объекта (<span class="cpp"><a href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a></span>).</p>
+
+<p class="apphdr">Примечания</p>
+
+<img class="right" src="../img/app_progressbar.png" width="289" height="65" alt="Индикатор" />
+
+<p>Эта функция создает вспомогательный объект, который будет отображать в отдельном окне
+горизонтальный, увеличивающийся вправо индикатор. Размеры индикатора и его окна фиксированы и определяются
+RDS. Значение позиции индикатора может изменяться от нуля до параметра <span class="cpp">Max</span>,
+при этом нулевому значению соответствует пустой (не заполненный) индикатор, а значению
+<span class="cpp">Max</span> &ndash; индикатор, заполненный из конца в конец. Обычно в параметре
+<span class="cpp">Max</span> передают число элементарных шагов какой-либо длительной операции, а в его позиции
+в процессе выполнения этой операции отражают число уже выполненных шагов. Если одновременно показывается несколько
+индикаторов, их окна автоматически выстраиваются друг рядом с другом.</p>
+
+<p>Сразу после создания объекта индикатор не отображается, его нужно вывести на экран командой
+<span class="cpp"><a href="RDS_PBAR_SHOW.htm" title="А.5.30.8. Команда RDS_PBAR_SHOW &ndash; показать индикатор">RDS_PBAR_SHOW</a></span>. Скрыть индикатор с экрана, не уничтожая объект, можно командой
+<span class="cpp"><a href="RDS_PBAR_HIDE.htm" title="А.5.30.3. Команда RDS_PBAR_HIDE &ndash; убрать индикатор с экрана">RDS_PBAR_HIDE</a></span>. Созданный вспомогательный объект будет существовать до тех пор,
+пока схема не будет выгружена из памяти, или пока он не будет удален вызовом функции
+<span class="cpp"><a href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span> (при удалении объекта индикатор автоматически исчезнет с экрана).</p>
+
+<p>Чаще всего работа с объектом для отображения индикатора выполнения строится по следующему сценарию:</p>
+
+<ul>
+  <li>перед выполнением длительной операции объект создается вызовом <span class="cpp">rdsPBARCreate</span>,
+  в этот момент задается максимум и заголовок индикатора;</li>
+
+  <li>индикатор выводится на экран командой <span class="cpp">RDS_PBAR_SHOW</span>;</li>
+
+  <li>в процессе выполнения операции командами <span class="cpp"><a href="RDS_PBAR_POSITION.htm" title="А.5.30.5. Команда RDS_PBAR_POSITION &ndash; текущая позиция индикатора">RDS_PBAR_POSITION</a></span> или
+  <span class="cpp"><a href="RDS_PBAR_ADDTOPOS.htm" title="А.5.30.2. Команда RDS_PBAR_ADDTOPOS &ndash; добавить число к текущей позиции индикатора">RDS_PBAR_ADDTOPOS</a></span> позиция индикатора изменяется, отображая ход выполнения этой
+  операции (к моменту ее окончания индикатор должен быть полностью заполнен);</li>
+
+  <li>объект удаляется вызовом <span class="cpp">rdsDeleteObject</span>, при этом индикатор исчезает с экрана.</li>
+</ul>
+
+<p>Если нужно последовательно выполнить несколько операций, вместо удаления объекта в конце очередной из
+них можно сбросить индикатор в исходное, не заполненное состояние командой <span class="cpp"><a href="RDS_PBAR_RESET.htm" title="А.5.30.6. Команда RDS_PBAR_RESET &ndash; сбросить индикатор">RDS_PBAR_RESET</a></span>,
+изменить его максимум и заголовок командами <span class="cpp"><a href="RDS_PBAR_MAX.htm" title="А.5.30.4. Команда RDS_PBAR_MAX &ndash; максимальное значение индикатора">RDS_PBAR_MAX</a></span> и
+<span class="cpp"><a href="RDS_PBAR_SETCAPTION.htm" title="А.5.30.7. Команда RDS_PBAR_SETCAPTION &ndash; установить заголовок индикатора">RDS_PBAR_SETCAPTION</a></span>, после чего начать следующую операцию, увеличивая позицию индикатора
+согласно ходу ее выполнения.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><a href="app_a_objects.htm" title="А.5.22.1. Использование вспомогательных объектов RDS">Вспомогательные объекты</a>,
+<span class="cpp"><a href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>,
+<span class="cpp"><a href="RDS_PBAR_SHOW.htm" title="А.5.30.8. Команда RDS_PBAR_SHOW &ndash; показать индикатор">RDS_PBAR_SHOW</a></span>,
+<span class="cpp"><a href="RDS_PBAR_POSITION.htm" title="А.5.30.5. Команда RDS_PBAR_POSITION &ndash; текущая позиция индикатора">RDS_PBAR_POSITION</a></span>,
+<span class="cpp"><a href="RDS_PBAR_ADDTOPOS.htm" title="А.5.30.2. Команда RDS_PBAR_ADDTOPOS &ndash; добавить число к текущей позиции индикатора">RDS_PBAR_ADDTOPOS</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsBEUStore.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_PBAR_ADDTOPOS.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsPBARCreate">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

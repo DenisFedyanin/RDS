@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.5.4. Работа со строками</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_5">&sect;2.5. Статические переменные блоков</a></p>
+<div class="level"><p>&sect;2.5.4. Работа со строками</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_5_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_5_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_5_4_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.5. Статические переменные блоков</h3>
+<h4>&sect;2.5.4. Работа со строками</h4>
+<p class="abstract">Описываются особенности работы с переменными-строками произвольной длины и сервисные функции для их создания, уничтожения и сложения. Приводится пример блока, преобразующего поступившее на вход целое число в строку.</p>
+
+
+<p>Для строк, как и для <a href="pm_2_5_3.htm" title="&sect;2.5.3. Доступ к матрицам и массивам">матриц</a>, в дереве переменных хранится
+только указатель на динамически отводимую область памяти
+(<a href="#pic1" title="Размещение в памяти данных строки">рис.&nbsp;23</a>).</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/StringInMemory.png" width="662" height="224" alt="Размещение в памяти данных строки" />
+<p id="light_pic1">Рис.&nbsp;23. Размещение в памяти данных строки</p>
+</div></div>
+
+
+<p>Для того, чтобы можно было использовать стандартные функции обработки строк, символы строки завершаются
+нулевым байтом. Таким образом, размер области памяти строки должен быть на единицу больше длины этой строки.
+Например, для размещения строки &laquo;ABCD&raquo; необходимо отвести область памяти размером в 5 байтов,
+в которой последовательно будут записаны коды символов &laquo;A&raquo;, &laquo;B&raquo;,
+&laquo;C&raquo;, &laquo;D&raquo; и 0. Для пустой строки память не отводится, при этом указатель на
+строку в дереве переменных блока принимает значение <span class="cpp">NULL</span>.</p>
+
+<p><span id="light_ref1">Модель блока может самостоятельно отводить память для строк</span>
+при помощи сервисной функций
+<span class="cpp"><span id="light_ref2"><a href="rdsAllocate.htm" title="А.5.4.2. rdsAllocate &ndash; динамическое отведение области памяти">rdsAllocate</a></span></span> и освобождать ее при помощи
+<span class="cpp"><span id="light_ref3"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span></span>. <span class="emph">Не следует</span>
+пользоваться для этого стандартными библиотечными функциями
+<span class="cpp">malloc</span> и <span class="cpp">free</span> или операторами C++
+<span class="cpp">new</span> и <span class="cpp">delete</span>. Функции отведения и освобождения памяти рассчитаны
+на совместную работу: память, отведенная функцией <span class="cpp">malloc</span>, должна быть освобождена функцией
+<span class="cpp">free</span>; память, отведенная функцией <span class="cpp">rdsAllocate</span>, должна быть
+освобождена функцией <span class="cpp">rdsFree</span>. Если модель блока отведет память под строку при помощи
+<span class="cpp">malloc</span>, при удалении блока или перед загрузкой другой схемы RDS попытается удалить
+эту память функцией <span class="cpp">rdsFree</span> вместо <span class="cpp">free</span>, что приведет к возникновению ошибки.</p>
+
+<p>Для отведения памяти под строку можно также использовать любые сервисные функции RDS, формирующие
+динамические строки, поскольку все эти функции базируются на
+<span class="cpp">rdsAllocate</span>. Например, для объединения двух строк можно вызвать функцию
+<span class="cpp"><a href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span> и записать возвращенный ей указатель в дерево переменных блока.</p>
+
+<p>В качестве примера рассмотрим блок, формирующий выходную строку <span class="cpp">str</span>, добавляя к строке
+<span class="cpp">prefix</span> текстовое представление целого числа <span class="cpp">val</span> (например,
+если подать на вход <span class="cpp">val</span> число 10 и на вход <span class="cpp">prefix</span> строку
+&laquo;v=&raquo;, блок должен сформировать на выходе <span class="cpp">str</span> строку
+&laquo;v=10&raquo;). Блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">prefix</td>
+<td class="center">Строка</td>
+<td class="center">4</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">v=</td>
+</tr>
+<tr><td class="center">6</td>
+<td class="vcenter">val</td>
+<td class="center">int</td>
+<td class="center">4</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">str</td>
+<td class="center">Строка</td>
+<td class="center">4</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center"></td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Функция модели этого блока будет выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestIntStr(<span class="kw">int</span> CallMode,
+                           <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                           <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define prefix  (*((char **)(pStart+2)))</span>
+  <span class="preproc">#define val     (*((int *)(pStart+6)))</span>
+  <span class="preproc">#define str     (*((char **)(pStart+10)))</span>
+
+    <span class="kw">char</span> buf[<span class="const">40</span>];  <span class="rem">// Буфер, в котором формируется строка</span>
+    <span class="kw">int</span> l1,l2;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSAIA}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="rem">// Преобразование числа val в строку buf</span>
+          itoa(val,buf,<span class="const">10</span>);
+          <span class="rem">// Определение длин строк prefix и buf</span>
+          l1=prefix==NULL?<span class="const">0</span>:strlen(prefix);
+          l2=strlen(buf);
+          <span class="rem">// Освобождение прежнего значения str</span>
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(str);
+          <span class="rem">// Отведение памяти под новую строку</span>
+          str=(<span class="kw">char</span>*)<a class="hidden" href="rdsAllocate.htm" title="А.5.4.2. rdsAllocate &ndash; динамическое отведение области памяти">rdsAllocate</a>(l1+l2+<span class="const">1</span>);
+          <span class="rem">// Занесение строки в отведенную память</span>
+          <span class="kw">if</span>(prefix!=NULL) <span class="rem">// Строка prefix не пуста</span>
+            { strcpy(str,prefix); <span class="rem">// Копировать prefix</span>
+              strcat(str,buf);    <span class="rem">// Дописать buf</span>
+            }
+          <span class="kw">else</span> <span class="rem">// Строка prefix пуста</span>
+            strcpy(str,buf);    <span class="rem">// Копировать buf</span>
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef str</span>
+  <span class="preproc">#undef val</span>
+  <span class="preproc">#undef prefix</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p><span id="ref4">Поскольку</span>
+в этом примере используется стандартная библиотечная функция <span class="cpp">itoa</span>, для успешной
+компиляции необходимо включить в исходный текст стандартный файл заголовка
+<span id="light_ref4">&laquo;<span class="file">stdlib.h</span>&raquo;</span>
+(файл &laquo;<span class="file">string.h</span>&raquo;, необходимый для стандартных функций
+<span class="cpp">strlen</span>, <span class="cpp">strcpy</span> и <span class="cpp">strcat</span>, уже должен
+быть включен из-за присутствия в тексте модели функции <span class="cpp">strcmp</span>, которая используется для
+сравнения строк при проверке типов переменных).</p>
+
+<p>Вызов функции с параметром <span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> уже неоднократно описывался. В этом примере
+реализована точно такая же проверка типа переменных, как и в остальных. В данном случае строка, с которой
+сравнивается переданная в функцию строка типа, состоит из двух букв
+&laquo;S&raquo; для <a href="pm_1_5.htm#ref4" title="Обязательные сигналы простого блока">обязательных сигналов</a>
+<span class="cpp">Start</span> и <span class="cpp">Ready</span>, буквы
+&laquo;A&raquo; для строки <span class="cpp">prefix</span>, буквы &laquo;I&raquo; для целой переменной
+<span class="cpp">val</span> и  еще одной &laquo;A&raquo; для строки <span class="cpp">str</span>.</p>
+
+<p>При вызове модели с параметром <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span> в локальном массиве
+<span class="cpp">buf</span> стандартной функцией <span class="cpp">itoa</span> формируется текстовое
+представление значения переменной <span class="cpp">val</span> (параметр 10 указывает на использование десятичной
+системы счисления). Размер массива <span class="cpp">buf</span> выбран равным 40 поскольку тридцати девяти
+символов заведомо хватит для текстового представления тридцатидвухбитного целого числа типа
+<span class="cpp">int</span>. Далее определяются длины строк <span class="cpp">prefix</span> и <span class="cpp">buf</span>
+и заносятся во вспомогательные переменные <span class="cpp">l1</span> и <span class="cpp">l2</span> соответственно.
+Макрос <span class="cpp">prefix</span> представляет собой ссылку на одноименный вход блока, то есть указатель
+на данные входной строки. Для пустой строки этот указатель будет равен <span class="cpp">NULL</span>, поэтому
+длина <span class="cpp">l2</span> вычисляется при помощи условного оператора: если
+<span class="cpp">prefix</span> равен <span class="cpp">NULL</span>, <span class="cpp">l2</span> присваивается
+значение 0 и вызов функции <span class="cpp">strlen</span> не производится.</p>
+
+<p>Далее необходимо объединить строки <span class="cpp">prefix</span> и <span class="cpp">buf</span> и присвоить
+получившуюся строку выходу блока <span class="cpp">str</span>. Сначала вызовом
+<span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(str)</span> освобождается память, занятая прежним значением строки (функцию
+<span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span> можно безопасно вызывать для нулевых указателей, поэтому если прежнее значение
+выхода было пустой строкой, и <span class="cpp">str</span> равнялась <span class="cpp">NULL</span>, ошибок не
+будет). Затем при помощи функции <span class="cpp"><a class="hidden" href="rdsAllocate.htm" title="А.5.4.2. rdsAllocate &ndash; динамическое отведение области памяти">rdsAllocate</a></span> отводится память для новой строки.
+В функцию передается размер отводимой области, который должен быть на единицу большим суммарной длины
+обеих объединяемых строк &ndash; один лишний байт требуется для нуля, завершающего строку. Функция возвращает
+указатель на отведенную область, который, после приведения к типу <span class="cpp">char*</span>, записывается
+в переменную <span class="cpp">str</span>. После того, как память отведена, в ней формируется
+объединение строк. Если строка <span class="cpp">prefix</span> не пустая, она копируется в
+<span class="cpp">str</span> при помощи функции <span class="cpp">strcpy</span>, после чего функцией
+<span class="cpp">strcat</span> к ней в конец дописывается строка <span class="cpp">buf</span>. Если же
+строка <span class="cpp">prefix</span> пуста, в <span class="cpp">str</span> копируется только строка
+<span class="cpp">buf</span>.</p>
+
+<p>Этот пример можно упростить, использовав сервисную функцию RDS
+<span class="cpp"><a href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span>, которая самостоятельно отводит память, необходимую для размещения
+объединяемых строк. С использованием этой функции реакция модели на выполнение такта расчета будет
+выглядеть так:</p>
+
+<pre class="cpp">      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+        <span class="rem">// Преобразование числа в строку</span>
+        itoa(val,buf,<span class="const">10</span>);
+        <span class="rem">// Освобождение прежнего значения str</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(str);
+        <span class="rem">// Формирование выходной строки</span>
+        str=<a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a>(prefix,buf,TRUE);
+        <span class="kw">break</span>;</pre>
+
+<p>Сначала, как и в предыдущем варианте модели, целое число <span class="cpp">val</span> преобразуется в строку
+во вспомогательном массиве <span class="cpp">buf</span> и освобождается старое значение
+<span class="cpp">str</span>. Все остальные действия по отведению памяти, проверке строки
+<span class="cpp">prefix</span> на пустоту и объединению строк выполняет функция
+<span class="cpp"><a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span>. Ей передаются указатели на объединяемые строки (любой
+из них может равняться <span class="cpp">NULL</span>) и значение <span class="cpp">TRUE</span>, указывающее на
+то, что если в результате объединения строк получается пустая строка, функция должна вернуть значение
+<span class="cpp">NULL</span>, не отводя память. Возвращаемый функцией указатель записывается в переменную
+<span class="cpp">str</span>. Вспомогательные переменные <span class="cpp">l1</span> и
+<span class="cpp">l2</span> в этом варианте модели не используются.</p>
+
+<p>Как и при работе с матрицами, при работе со строками желательно вызывать модель блока только
+при срабатывании входных связей &ndash; это позволит увеличить быстродействие, избежав лишних вызовов модели,
+когда входные данные не изменяются. Для описанного блока следует включить
+<a href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">запуск по сигналу</a>, после чего в
+<a href="pm_1_5.htm#pic2" title="Редактор переменных">окне редактирования переменных</a>
+задать для переменной <span class="cpp">Start</span> начальное значение 1 и установить флаг
+&laquo;<span class="menu">пуск</span>&raquo; для входов <span class="cpp">prefix</span> и <span class="cpp">val</span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_5_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_5_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

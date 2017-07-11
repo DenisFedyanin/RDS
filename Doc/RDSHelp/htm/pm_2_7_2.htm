@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.7.2. Использование объектов-окон RDS</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_7">&sect;2.7. Настройка параметров блока</a></p>
+<div class="level"><p>&sect;2.7.2. Использование объектов-окон RDS</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_7_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_3.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_7_2_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.7. Настройка параметров блока</h3>
+<h4>&sect;2.7.2. Использование объектов-окон RDS</h4>
+<p class="abstract">Рассматривается использование вспомогательных объектов RDS, облегчающих создание и открытие
+                модальных окно с полями ввода, описаны сервисные функции для работы с этими объектами. С их помощью
+                в один из ранее описывавшихся блоков добавлен простой пользовательский интерфейс. Во другом примере рассматривается
+                блок-генератор, выдающий на выход синусоиду, косинусоиду или прямоугольные импульсы по выбору пользователя,
+                при этом некоторые поля в его окне настройки, формируемом при помощи вспомогательного объекта RDS,
+                разрешаются или запрещаются в зависимости от значений других полей.</p>
+
+
+<p>Простейшие диалоговые окна могут также открываться с помощью одного из
+<span class="emph">вспомогательных объектов</span> RDS. Вообще, вспомогательных объектов в
+RDS <a href="app_a_objects.htm" title="А.5.22.1. Использование вспомогательных объектов RDS">довольно много</a>, они позволяют упростить
+выполнение различных сложных операций (разбор текста, программное задание переменных блока и т.п.). В
+данном случае мы воспользуемся объектом, создаваемым сервисной функцией
+<span class="cpp"><span id="light_ref1"><a href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a></span></span>. При помощи этой и нескольких других сервисных функций можно
+создать модальное окно и добавить в него поля ввода для редактирования различных параметров. Подробно
+эти функции будут описаны ниже, здесь же будет приведен простой пример их использования.
+<span id="ref2">Добавим</span>
+в модель <span class="cpp">Test1</span>, приведенную в качестве
+<a href="pm_2_4.htm#light_ref4" title="Личная область данных &ndash; пример">примера</a>
+реакции на события <span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span> и <span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span>, <span id="light_ref2">возможность
+редактирования параметров</span>, хранящихся в
+<a href="pm_1_4.htm#ref8" title="Личная область данных блока">личной области данных</a>. Класс личной области данных
+<span class="cpp">TTest1Data</span> и модель блока должны быть изменены следующим образом
+(изменения выделены <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">//====== Класс личной области данных ======</span>
+  <span class="kw">class</span> TTest1Data
+  { <span class="kw">public</span>:
+      <span class="kw">int</span> IParam;      <span class="rem">// Целый параметр</span>
+      <span class="kw">double</span> DParam;   <span class="rem">// Вещественный параметр</span>
+      <span class="changes"><span class="kw">int</span> Setup(<span class="kw">void</span>); <span class="rem">// Функция настройки параметров </span></span>
+      TTest1Data(<span class="kw">void</span>) <span class="rem">// Конструктор класса</span>
+        { IParam=<span class="const">0</span>; DParam=<span class="const">0</span>.<span class="const">0</span>;
+          <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(<span class="str">"Область создана"</span>,<span class="str">"TTest1Data"</span>,MB_OK);
+        };
+      ~TTest1Data()	<span class="rem">// Деструктор класса</span>
+        { <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(<span class="str">"Область удалена"</span>,<span class="str">"TTest1Data"</span>,MB_OK);};
+  };
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//============= Модель блока ==============</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> Test1(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { TTest1Data *data;
+    <span class="kw">switch</span>(CallMode)
+      { <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:    <span class="rem">// Инициализация</span>
+          BlockData-&gt;BlockData=<span class="kw">new</span> TTest1Data();
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>: <span class="rem">// Очистка</span>
+          data=(TTest1Data*)(BlockData-&gt;BlockData);
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+        <span class="changes"><span class="kw">case</span> <span id="light_ref3"><a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>:   <span class="rem">// Функция настройки </span></span>
+        <span class="changes">  data=(TTest1Data*)(BlockData-&gt;BlockData);</span>
+        <span class="changes">  <span class="kw">return</span> data-&gt;Setup();</span>
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этом примере часть программы, открывающая модальное окно, является функцией-членом класса
+<span class="cpp">TTest1Data</span>. С тем же успехом она могла быть оформлена как обычная функция или
+вставлена непосредственно внутрь функции модели блока.</p>
+
+<p>В класс личной области добавлена новая функция-член <span class="cpp">int Setup(void)</span>, которая вызывается
+при реакции на событие <span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span> и возвращает
+<span class="cpp"><a href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a></span> или <span class="cpp"><a href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a></span> в зависимости от действий
+пользователя. Тело функции выглядит следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Функция настройки параметров</span>
+  <span class="kw">int</span> TTest1Data::Setup(<span class="kw">void</span>)
+  { <span id="light_ref4"><a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a></span> window; <span class="rem">// Идентификатор вспомогательного объекта</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;            <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="rem">// Создание окна</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Ввод параметров"</span>);
+    <span class="rem">// Добавление полей ввода</span>
+    <span id="light_ref5"><a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a></span>(window,<span class="const">0</span>,<span class="const">1</span>,<span id="light_ref6"><a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a></span>,
+                   <span class="str">"Целый параметр:"</span>,<span class="const">80</span>);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,
+                   <span class="str">"Вещественный параметр:"</span>,<span class="const">80</span>);
+    <span class="rem">// Занесение исходных значений в поля ввода</span>
+    <span id="light_ref7"><a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a></span>(window,<span class="const">1</span>,<span id="light_ref8"><a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a></span>,IParam);
+    <span id="light_ref9"><a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a></span>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,DParam);
+    <span class="rem">// Открытие окна</span>
+    ok=<a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Нажата кнопка OK - запись параметров обратно в блок</span>
+        IParam=<span id="light_ref10"><a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a></span>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        DParam=<span id="light_ref11"><a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a></span>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <span id="light_ref12"><a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>(window);
+    <span class="rem">// Возвращаемое значение</span>
+    <span class="kw">return</span> ok?<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Сначала при помощи сервисной функции <span class="cpp"><a href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a></span> в памяти создается вспомогательный
+объект-окно. Первый параметр <span class="cpp">FALSE</span> указывает на то, что у окна нет вкладок,
+два значения &minus;1 заставляют RDS автоматически вычислить необходимую ширину и высоту окна. Последний
+параметр определяет текст в заголовке создаваемого окна, в данном случае &ndash;
+&laquo;Ввод параметров&raquo;. Затем, при помощи функции <span class="cpp"><a href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a></span>, в созданное
+окно добавляются два поля ввода. Эта функция принимает следующие параметры:</p>
+
+<pre class="cpp">  <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a>	Win, <span class="rem">// Объект окна</span>
+    <span class="kw">int</span> TabId,       <span class="rem">// Идентификатор вкладки</span>
+    <span class="kw">int</span> CtrlId,      <span class="rem">// Идентификатор поля ввода</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Type,      <span class="rem">// Тип поля ввода</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Caption,   <span class="rem">// Заголовок поля ввода</span>
+    <span class="kw">int</span> Width);      <span class="rem">// Ширина поля ввода</span></pre>
+
+<p>В первом параметре передается идентификатор вспомогательного объекта, созданного функцией
+<span class="cpp"><a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a></span>. Поскольку в созданном окне нет вкладок, вместо идентификатора
+вкладки передается 0. В качестве идентификатора поля передаются 1 для первого параметра и 2 для
+второго (это могут быть любые целые числа). Тип поля в обоих случаях равен
+<span class="cpp"><a href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a></span> (простое поле ввода). Текст, передаваемый в функцию, отображается
+слева от поля ввода, а ширина задает ширину поля в точках экрана (для обоих параметров задается ширина в
+80 точек).</p>
+
+<p>После создания полей ввода в них заносятся исходные значения параметров при помощи функций
+<span class="cpp"><a href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a></span> и <span class="cpp"><a href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a></span>. В эти функции передаются:
+идентификатор объекта окна; идентификатор поля, присвоенный ему при вызове <span class="cpp"><a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a></span>
+(1 для первого поля, 2 для второго); константа <span class="cpp"><a href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a></span>, указывающая, что
+устанавливается значение поля; и, наконец, собственно исходное значение параметра.</p>
+
+<p>После того, как поля ввода созданы и их исходные значения установлены, окно открывается функцией
+<span class="cpp"><a href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span>. Эта функция вернет <span class="cpp">TRUE</span>, если пользователь нажмет
+в окне кнопку &laquo;<span class="menu">OK</span>&raquo;, и <span class="cpp">FALSE</span>, если он нажмет кнопку
+&laquo;<span class="menu">Отмена</span>&raquo; или просто закроет окно. При нажатии &laquo;<span class="menu">OK</span>&raquo; параметрам блока присваиваются
+новые значения, полученные из полей ввода функциями <span class="cpp"><a href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a></span> и
+<span class="cpp"><a href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a></span> (их параметры аналогичны параметрам функций
+<span class="cpp"><a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a></span> и <span class="cpp"><a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a></span>). Затем
+вспомогательный объект уничтожается функцией <span class="cpp"><a href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span> и возвращается значение,
+соответствующее нажатой пользователем кнопке (<span class="cpp"><a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a></span> для кнопки
+&laquo;<span class="menu">ОК</span>&raquo; и <span class="cpp"><a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a></span> для кнопки &laquo;<span class="menu">Отмена</span>&raquo;).
+Следует отметить, что, хотя при изменении значений и нажатии
+&laquo;<span class="menu">OK</span>&raquo; функция возвращает константу <span class="cpp"><a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a></span> и
+RDS будет считать схему измененной и предупреждать пользователя при выходе, значения параметров
+<span class="cpp">IParam</span> и <span class="cpp">DParam</span> будут потеряны, даже если пользователь сохранит
+схему. Эти параметры находятся в личной области данных блока, и за их сохранение и загрузку должна
+отвечать функция модели. Модель в этом примере не реагирует на события загрузки и сохранения, соответствующие
+реакции рассмотрены в <a href="pm_index.htm#light_htm:pm_2_8" title="&sect;2.8. Сохранение и загрузка параметров блока">&sect;2.8</a>.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/ModalWin_Test1Data.png" width="307" height="139" alt="Модальное окно для настройки параметров блока, созданное вспомогательным объектом RDS" />
+<p id="light_pic1">Рис.&nbsp;47. Модальное окно для настройки<br />параметров блока, созданное<br />вспомогательным объектом RDS</p>
+</div></div>
+
+
+<p>Для того, чтобы пользователь мог вызвать функцию настройки блока, в окне параметров блока с этой моделью
+необходимо установить флаг &laquo;<span class="menu">блок имеет функцию настройки</span>&raquo; на
+<a href="um_2_9_1.htm#pic10" title="Вкладка DLL окна параметров блока">вкладке &laquo;<span class="menu">DLL</span>&raquo;</a>. Теперь можно проверить работу
+функции настройки: при выборе соответствующего пункта в контекстном меню блока должно открыться окно с
+двумя полями ввода (<a href="#pic1" title="Модальное окно для настройки параметров блока, созданное вспомогательным объектом RDS">рис.&nbsp;47</a>).</p>
+
+<p><span class="emph">Замечание для компилятора DigitalMars.</span>
+Из-за некоторых особенностей этого компилятора (по крайней мере, версии 846) вместо функции
+<span class="cpp"><a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a></span> следует использовать функцию
+<span class="cpp"><a href="rdsGetObjectDoubleP.htm" title="А.5.22.7. rdsGetObjectDoubleP &ndash; получить вещественное число">rdsGetObjectDoubleP</a></span>. Чтобы скомпилировать приведенный выше пример при помощи
+DigitalMars, нужно будет заменить строку &laquo;<span class="cpp">DParam=rdsGetObjectDouble(window,2,RDS_FORMVAL_VALUE);</span>&raquo;
+на &laquo;<span class="cpp">rdsGetObjectDoubleP(window,2,RDS_FORMVAL_VALUE,&DParam);</span>&raquo;. Функция
+<span class="cpp"><a class="hidden" href="rdsGetObjectDoubleP.htm" title="А.5.22.7. rdsGetObjectDoubleP &ndash; получить вещественное число">rdsGetObjectDoubleP</a></span> отличается от <span class="cpp"><a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a></span>
+только тем, что возвращает считанное из поля ввода значение через указатель, переданный в функцию.</p>
+
+<p>Функция открытия модального окна <span class="cpp"><a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span> возвращает управление
+модели блока только после того, как пользователь закроет окно. Достаточно часто возникает необходимость реагировать
+на действия пользователя до закрытия окна, например, разрешать или запрещать ввод данных в какие-либо
+поля в зависимости от значения других полей. Для этого в функцию <span class="cpp"><a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span>
+можно передать дополнительный параметр &ndash; указатель на функцию, которая будет вызываться каждый раз
+при изменении значений в полях ввода. В этой функции можно разрешать или запрещать отдельные поля ввода окна,
+изменять их значения и т.п (в предыдущем примере этот параметр имел значение <span class="cpp">NULL</span>,
+и никакая дополнительная функция не вызывалась).</p>
+
+<p><span id="light_ref13">Рассмотрим блок</span>,
+<span id="ref14">выдающий</span>
+на вещественный выход &laquo;<span class="rdsvar">y</span>&raquo; синусоиду, косинусоиду или прямоугольные импульсы по
+выбору пользователя. Значение времени блок будет получать через динамическую переменную
+&laquo;<span class="rdsvar"><span id="light_ref14">DynTime</span></span>&raquo; типа <span class="cpp">double</span>, которая
+создается и изменяется
+<a href="pm_2_6_1.htm#ref10" title="Блок управления динамическим расчетом (планировщик)">планировщиком динамического расчета</a>
+(см. также пример в <a href="pm_2_6_2.htm#light_ref1" title="Пример подписки на стандартную переменную DynTime">&sect;2.6.2</a>). В функции настройки блока пользователь
+сможет выбрать тип функции, ее период и, при формировании прямоугольных импульсов, длительность импульса.
+Для синусоиды и косинусоиды не требуется задание длительности импульса, поэтому, при выборе этих типов
+функции поле ввода длительности должно быть запрещено.</p>
+
+<p>Блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">y</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>У этого блока нет входов, участвующих в формировании значения &laquo;<span class="rdsvar">y</span>&raquo;, поэтому в его
+модели не будет реакции на <a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">такт расчета</a> &ndash;
+единственная переменная, изменение которой должно приводить к вычислению нового значения выхода, это
+&laquo;<span class="rdsvar">DynTime</span>&raquo;. Все действия по вычислению &laquo;<span class="rdsvar">y</span>&raquo; будут производиться в реакции
+на изменение этой динамической переменной, поэтому, чтобы блок зря не тратил процессорное время,
+в его параметрах следует <a href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">отключить</a> флаг &laquo;<span class="menu">запуск каждый такт</span>&raquo;.</p>
+
+<p>Модель блока вместе с личной областью данных и функцией обратного вызова для запрещения поля
+ввода будет выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">//====== Класс личной области данных ======</span>
+  <span class="kw">class</span> TTestGenData
+  { <span class="kw">public</span>:
+      <span class="kw">int</span> Type;             <span class="rem">// Тип (0-sin,1-cos,2-прямоугольные)</span>
+      <span class="kw">double</span> Period;        <span class="rem">// Период</span>
+      <span class="kw">double</span> Impulse;       <span class="rem">// Длительность импульса</span>
+
+      <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> Time; <span class="rem">// Связь с динамической</span>
+                            <span class="rem">// переменной времени</span>
+
+      <span class="kw">int</span> Setup(<span class="kw">void</span>);      <span class="rem">// Функция настройки</span>
+      TTestGenData(<span class="kw">void</span>)    <span class="rem">// Конструктор класса</span>
+        { Type=<span class="const">0</span>; Period=<span class="const">1.0</span>; Impulse=<span class="const">0</span>.<span class="const">5</span>;
+          <span class="rem">// Подписка на динамическую переменную времени</span>
+          Time=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(<a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,
+                                        <span class="str">"DynTime"</span>,
+                                        <span class="str">"D"</span>,
+                                        TRUE);
+        };
+      ~TTestGenData(<span class="kw">void</span>)   <span class="rem">// Деструктор класса</span>
+        { <span class="rem">// Прекращение подписки</span>
+          <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(Time);
+        };
+  };
+
+  <span class="rem">//==== Прототип функции обратного вызова окна настроек ====</span>
+  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestGenDataCheckFunc(<a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a>);
+
+  <span class="rem">//====== Функция редактирования параметров ======</span>
+  <span class="kw">int</span> TTestGenData::Setup(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window; <span class="rem">// Идентификатор вспомогательного объекта</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;            <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="rem">// Создание окна</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Простой генератор"</span>);
+    <span class="rem">// Добавление полей ввода</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">1</span>,<span id="light_ref15"><a class="hidden" href="app_a_fields.htm#light_ref5" title="RDS_FORMCTRL_COMBOLIST">RDS_FORMCTRL_COMBOLIST</a></span>,
+                   <span class="str">"Вид:"</span>,<span class="const">210</span>);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,
+                   <span class="str">"Период:"</span>,<span class="const">80</span>);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">3</span>,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,
+                   <span class="str">"Длительность:"</span>,<span class="const">80</span>);
+    <span class="rem">// Установка списка вариантов</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<span id="light_ref16"><a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a></span>,
+                    <span class="str">"Синус\nКосинус\nПрямоугольные импульсы"</span>);
+    <span class="rem">// Занесение исходных значений в поля ввода</span>
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Type);
+    <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Period);
+    <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Impulse);
+    <span class="rem">// Открытие окна с указанием функции обратного вызова</span>
+    ok=<a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a>(window,TestGenDataCheckFunc);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Нажата кнопка OK - запись параметров обратно в блок</span>
+        Type=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        Period=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        Impulse=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(window,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="rem">// Возвращаемое значение</span>
+    <span class="kw">return</span> ok?<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+
+  <span class="rem">//====== Функция обратного вызова для окна настроек ======</span>
+  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestGenDataCheckFunc(<a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> win)
+  { <span class="rem">// Считать номер пункта выпадающего списка</span>
+    <span class="kw">int</span> type=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(win,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+    <span class="rem">// Разрешить ввод длительности, если выбран пункт 2</span>
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(win,<span class="const">3</span>,<span id="light_ref17"><a class="hidden" href="RDS_FORMVAL_ENABLED.htm" title="А.5.28.15. Команда RDS_FORMVAL_ENABLED &ndash; разрешение и запрещение всего поля ввода">RDS_FORMVAL_ENABLED</a></span>,type==<span class="const">2</span>);
+  }
+
+  <span class="rem">//============= Модель блока ==============</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestGen(<span class="kw">int</span> CallMode,
+                        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define y      (*((double *)(pStart+2)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на личную область</span>
+    <span class="rem">// данных блока, приведенный к правильному типу</span>
+    TTestGenData *data;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          BlockData-&gt;BlockData=<span class="kw">new</span> TTestGenData();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          data=(TTestGenData*)(BlockData-&gt;BlockData);
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Функция настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          data=(TTestGenData*)(BlockData-&gt;BlockData);
+          <span class="kw">return</span> data-&gt;Setup();
+
+        <span class="rem">// Изменение динамической переменной или запуск расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a>:
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a>:
+          data=(TTestGenData*)(BlockData-&gt;BlockData);
+          <span class="kw">if</span>(data-&gt;Period==<span class="const">0</span>.<span class="const">0</span>) <span class="rem">// Нельзя вычислить частоту</span>
+            <span class="kw">return</span> <span class="const">0</span>;
+          <span class="rem">// Проверка наличия переменной “DynTime"</span>
+          <span class="kw">if</span>(data-&gt;Time!=NULL &amp;&amp; data-&gt;Time-&gt;Data!=NULL)
+            { <span class="rem">// Динамическая переменная найдена – чтение значения</span>
+              <span class="kw">double</span> t=*((<span class="kw">double</span>*)data-&gt;Time-&gt;Data);
+              <span class="kw">switch</span>(data-&gt;Type)
+                { <span class="kw">case</span> <span class="const">0</span>: <span class="rem">// Синус</span>
+                    y=sin(<span class="const">2</span>*M_PI*t/data-&gt;Period);
+                    <span class="kw">break</span>;
+                  <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Косинус</span>
+                    y=cos(<span class="const">2</span>*M_PI*t/data-&gt;Period);
+                    <span class="kw">break</span>;
+                  <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Прямоугольные импульсы</span>
+                    t=fmod(t,data-&gt;Period);
+                    y=(t&gt;data-&gt;Impulse)?-<span class="const">1.0</span>:<span class="const">1.0</span>;
+                    <span class="kw">break</span>;
+                }
+              <span class="rem">// Взвести Ready для передачи выхода по связям</span>
+              Ready=<span class="const">1</span>;
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Как и в предыдущем примере, личная область данных блока оформлена в виде класса. В нем
+размещаются три параметра блока: тип формируемой функции <span class="cpp">Type</span>, период функции
+<span class="cpp">Period</span> и длительность прямоугольного импульса <span class="cpp">Impulse</span>.
+Также в личной области данных находится указатель на
+<a href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">структуру подписки</a>
+<span class="cpp">Time</span> для
+доступа к динамической переменной &laquo;<span class="rdsvar"></span>&raquo;. Подписка на переменную производится в
+конструкторе класса личной области данных, прекращение подписки &ndash; в деструкторе. Функция-член класса
+<span class="cpp">Setup</span> отвечает за работу с окном настройки.</p>
+
+<p>За описанием класса личной области данных следует прототип функции обратного вызова
+<span class="cpp">TestGenDataCheckFunc</span>, отвечающей за запрет и разрешение поля ввода длительности импульса.
+Указатель на нее будет передаваться в функцию <span class="cpp"><a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span> при открытии
+модального окна. Тело этой функции будет описано позже. Можно было бы разместить его прямо здесь и
+обойтись без описания прототипа, но для связности изложения лучше сначала рассмотреть функцию, открывающую окно
+настройки, а затем &ndash; используемую в ней функцию запрета и разрешения поля ввода.</p>
+
+<div class="picright"><div class="container" id="pic2">
+<img src="../img/ModalWin_GenSetup.png" width="290" height="171" alt="Окно настройки параметров генератора (поле длительности импульса запрещено)" />
+<p id="light_pic2">Рис.&nbsp;48. Окно настройки параметров<br />генератора (поле длительности<br />импульса запрещено)</p>
+</div></div>
+
+
+<p>Функция-член класса <span class="cpp">TTestGenData::Setup</span> отвечает за редактирование параметров блока.
+Она похожа на аналогичную функцию из прошлого примера. Сначала при помощи функции <span class="cpp"><a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a></span>
+создается вспомогательный объект-окно. Затем, при помощи функции <span class="cpp"><a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a></span>,
+в него добавляются три поля ввода: выпадающий список
+(<span class="cpp"><a href="app_a_fields.htm#light_ref5" title="RDS_FORMCTRL_COMBOLIST">RDS_FORMCTRL_COMBOLIST</a></span>) для выбора типа формируемой функции и два простых поля ввода
+(<span class="cpp"><a href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a></span>) для периода и длительности импульса
+(<a href="#pic2" title="Окно настройки параметров генератора (поле длительности импульса запрещено)">рис.&nbsp;48</a>).
+На этапе создания полей ввода никак не указывается, что возможность задания длительности импульса будет
+зависеть от выбранного в выпадающем списке типа функции &ndash; этим будет заниматься функция обратного вызова
+<span class="cpp">TestGenDataCheckFunc</span>. Далее при помощи функции
+<span class="cpp"><a href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a></span> с параметром <span class="cpp"><a href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a></span> в поле ввода
+для выпадающего списка (поле номер 1) передается строка, содержащая список возможных вариантов выбора,
+разделенных символом перевода строки &laquo;\n&raquo;. Значение этого поля ввода равно номеру
+выбранного из списка варианта начиная с нуля. Таким образом, варианту &laquo;синус&raquo; будет
+соответствовать значение 0, &laquo;косинус&raquo; &ndash; 1,
+&laquo;прямоугольные импульсы&raquo; &ndash; 2.</p>
+
+<p>Затем в каждое из трех полей ввода записываются текущие значения параметров блока (в поле с выпадающим
+списком записывается целый номер варианта), после чего окно открывается при помощи функции
+<span class="cpp"><a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span>. Вторым параметром в эту функцию передается указатель на
+функцию обратного вызова. Если пользователь закроет окно кнопкой &laquo;<span class="menu">OK</span>&raquo;,
+<span class="cpp"><a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span> вернет значение <span class="cpp">TRUE</span>, и значения
+полей ввода будут считаны при помощи функций <span class="cpp"><a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a></span> и
+<span class="cpp"><a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a></span> и записаны в соответствующие параметры блока.
+Затем объект окна будет уничтожен вызовом <span class="cpp"><a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>, и функция вернет
+константу <span class="cpp"><a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a></span> (если пользователь нажал &laquo;<span class="menu">OK</span>&raquo;) или
+<span class="cpp"><a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a></span> (если пользователь закрыл окно другим способом).</p>
+
+<p>За функцией <span class="cpp">TTestGenData::Setup</span> следует тело функции обратного вызова
+<span class="cpp">TestGenDataCheckFunc</span>, прототип которой был описан ранее. Эта функция должна иметь тип
+&laquo;<span class="cpp">void <a href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a></span>&raquo; и принимать единственный параметр &ndash; идентификатор объекта окна
+типа <span class="cpp"><a href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a></span>. В самой функции производится всего два действия. Сначала при помощи функции
+<span class="cpp"><a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a></span> считывается значение поля ввода с идентификатором 1, то
+есть номер варианта, выбранного в выпадающем списке. Этот номер присваивается вспомогательной переменной
+<span class="cpp">type</span>. Затем в поле ввода номер 3 (длительность импульса) передается флаг разрешения
+редактирования (вызов <span class="cpp"><a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a></span> с параметром
+<span class="cpp"><a href="RDS_FORMVAL_ENABLED.htm" title="А.5.28.15. Команда RDS_FORMVAL_ENABLED &ndash; разрешение и запрещение всего поля ввода">RDS_FORMVAL_ENABLED</a></span>), истинный при <span class="cpp">type==2</span> (вариант
+&laquo;прямоугольные импульсы&raquo;). В результате ввод данных в поле с идентификатором 3 будет
+разрешен только в том случае, если в выпадающем списке будет выбран последний вариант. Функция
+<span class="cpp">TestGenDataCheckFunc</span> будет вызываться при любом изменении данных в полях ввода,
+в том числе и при выборе нового варианта из списка, в результате чего разрешенность поля ввода длительности
+импульса будет всегда соответствовать типу формируемой периодической функции. Например,
+на <a href="#pic2" title="Окно настройки параметров генератора (поле длительности импульса запрещено)">рис.&nbsp;48</a> выбрано формирование синусоиды, и
+поле длительности запрещено.</p>
+
+<p>В самой функции модели блока <span class="cpp">TestGen</span> нет ничего необычного, все используемые в
+ней реакции на события уже рассматривались ранее. При вызове модели в режиме
+<span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span> создается объект класса С и указатель на него записывается в
+<span class="cpp">BlockData-&gt;BlockData</span>. В режиме
+<span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span> созданный объект удаляется. В режиме
+<span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> проверяется допустимость структуры статических переменных блока
+(должно быть два
+<a href="pm_1_5.htm#ref4" title="Обязательные сигналы простого блока">обязательных сигнала</a>
+и вещественная переменная двойной точности, то есть строка типа должна равняться
+&laquo;{SSD}&raquo;). При вызове модели в режиме <span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span> вызывается функция-член
+<span class="cpp">Setup</span> класса личной области данных блока (указатель на объект класса предварительно
+присваивается вспомогательной переменной <span class="cpp">data</span>). Наконец, при запуске расчета
+(<span class="cpp"><a href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a></span>) и при изменении единственной используемой в блоке динамической переменной
+(<span class="cpp"><a href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a></span>) вычисляется значение выхода блока в зависимости от
+текущего значения времени, полученного из &laquo;<span class="rdsvar">DynTime</span>&raquo;, и типа формируемой функции,
+хранящегося в поле <span class="cpp">Type</span> класса личной области данных блока. Для значений
+<span class="cpp">Type</span> 0 или 1 вычисляется соответственно синус или косинус произведения времени
+на частоту, вычисленную по заданному пользователем периоду <span class="cpp">Period</span> (чтобы синус
+или косинус имел период <i>T</i>, частота должна быть 2&pi;/<i>T</i>). Для значения 2, соответствующего
+формированию прямоугольных импульсов, вычисляется остаток от деления времени на период и выходу блока
+присваивается значение 1, если этот остаток меньше длительности импульса, и &minus;1 в противном случае.
+Если бы значение <span class="cpp">y</span> вычислялось в такте моделирования, больше ничего не требовалось бы
+&ndash; при запуске модели в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>
+<a href="um_1_4.htm#ref27" title="Сигнал готовности блока">сигнал <span class="cpp">Ready</span></a>
+автоматически взводится, что приводит к передаче выходов блока по связям в конце такта. В этой
+модели выход вычисляется при запуске расчета и при изменении динамического времени, поэтому функция модели должна
+самостоятельно присвоить сигналу <span class="cpp">Ready</span> значение 1. При этом значение выхода блока
+будет передано по связям в конце ближайшего такта расчета, хотя его модель и не будет вызвана в этом такте.</p>
+
+<p>В рассмотренных ранее моделях, использующих динамические переменные, для вычисления начального значения
+выхода сигналу <span class="cpp">Start</span> давалось единичное значение по умолчанию, что приводило
+к обязательному запуску модели блока в первом такте расчета. Модель этого блока не вызывается в такте расчета,
+поэтому вычисление начального <span class="cpp">y</span> производится в реакции на запуск расчета
+(<span class="cpp"><a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a></span>) &ndash; при этом просто выполняются те же самые действия,
+что и при изменении динамической переменной.</p>
+
+<p>Чтобы проверить работу блока с этой моделью, следует установить для него флаг
+&laquo;<span class="menu">блок имеет функцию настройки</span>&raquo; на
+<a href="um_2_9_1.htm#pic10" title="Вкладка DLL окна параметров блока">вкладке &laquo;<span class="menu">DLL</span>&raquo;</a> окна параметров, поместить в
+схему блок-планировщик динамического расчета, который создаст переменную
+&laquo;<span class="rdsvar">DynTime</span>&raquo; и будет управлять ей, и подключить к выходу блока стандартный график из библиотеки
+RDS, также получающий значение времени из переменной &laquo;<span class="rdsvar">DynTime</span>&raquo;
+(<a href="#pic3" title="Проверка работы генератора (выбрано формирование синусоиды)">рис.&nbsp;49</a>).
+При запуске расчета график должен отобразить функцию, тип которой выбран в настройках блока. В окне настроек
+блока поле ввода длительности импульса должно быть активно, только если в выпадающем списке выбран вариант
+&laquo;прямоугольные импульсы&raquo;.</p>
+
+<div class="pic"><div class="container" id="pic3">
+<img src="../img/ModalWin_Gen.png" width="585" height="209" alt="Проверка работы генератора (выбрано формирование синусоиды)" />
+<p id="light_pic3">Рис.&nbsp;49. Проверка работы генератора (выбрано формирование синусоиды)</p>
+</div></div>
+
+
+<p>Эта модель имеет тот же дефект, что и предыдущий пример &ndash; при сохранении схемы параметры
+<span class="cpp">Type</span>, <span class="cpp">Period</span> и <span class="cpp">Impulse</span> не сохраняются,
+хотя RDS и предупреждает пользователя о наличии изменений в схеме.
+<a href="pm_2_8_3.htm#light_ref1" title="Пример сохранения параметров блока в текстовом формате">Позже</a> мы исправим этот недостаток, добавив
+в модель соответствующие реакции.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_7_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_7_3.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_7_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

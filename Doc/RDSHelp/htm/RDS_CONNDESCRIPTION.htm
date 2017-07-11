@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.4.5. RDS_CONNDESCRIPTION &ndash; описание связи или шины</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_4">А.4. Структуры RDS</a></p>
+<div class="level"><p>А.4.5. <span class="cpp">RDS_CONNDESCRIPTION</span> &ndash; описание связи или шины</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_CONNAPPEARANCE.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_DYNVARLINK.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_CONNDESCRIPTION">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.4. Структуры RDS</h3>
+<h4>А.4.5. <span class="cpp">RDS_CONNDESCRIPTION</span> &ndash; описание связи или шины</h4>
+
+
+<p>Структура <span class="cpp">RDS_CONNDESCRIPTION</span>
+используется для получения описания
+<a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связи</a>
+или <a href="um_2_8.htm" title="&sect;2.8. Использование шин">шины</a>
+&ndash; ее идентификатора, числа точек и линий, составляющих геометрию связи и т.п. Описания
+внешнего вида, толщины линий и других параметров внешнего вида связи или шины в этой структуре не
+содержится, для них используется структура
+<span class="cpp"><a href="RDS_CONNAPPEARANCE.htm#ref1" title="Структура RDS_CONNAPPEARANCE">RDS_CONNAPPEARANCE</a></span>. Для анализа соединяемых связью переменных или получения
+списка каналов шины нужно, как правило, сначала заполнить эту структуру вызовом функции
+<span class="cpp"><a href="rdsGetConnDescription.htm" title="А.5.6.23. rdsGetConnDescription &ndash; получить описание связи">rdsGetConnDescription</a></span>, а потом уже, зная число точек, линий и каналов,
+перебирать их по одному при помощи других функций.</p>
+
+<p><span id="ref1">Эта</span> <span id="ref2">структура</span>
+используется только для получения описания связей и шин, изменить их параметры с ее помощью нельзя.
+Для изменения параметров существующих связей или шин и создания новых используется вспомогательный
+объект, создаваемый функцией <span class="cpp"><a href="rdsCECreateEditor.htm" title="А.5.23.1. rdsCECreateEditor &ndash; создать объект-редактор связи/шины">rdsCECreateEditor</a></span>.</p>
+
+<pre class="cpp">  <span id="ref3"><span class="kw">typedef</span></span> <span class="kw">struct</span> {
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;     <span class="rem">// Размер этой структуры в байтах</span>
+    <span id="light_ref3"><a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></span> Conn;   <span class="rem">// Идентификатор связи</span>
+    <span class="kw">int</span> ConnType;       <span class="rem">// Тип связи</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Parent; <span class="rem">// Идентификатор родительской подсистемы</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> ParentName;   <span class="rem">// Имя родительской подсистемы</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Active;        <span class="rem">// Состояние связи (включена/отключена)</span>
+    <span class="kw">int</span> LayerId;        <span class="rem">// Идентификатор слоя</span>
+    <span class="kw">int</span> NumPoints;      <span class="rem">// Число точек в связи</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> BusName;      <span class="rem">// Имя (только для шины)</span>
+    <span class="kw">int</span> NumChannels;    <span class="rem">// Число каналов (только для шины)</span>
+    <span class="kw">int</span> NumLines;       <span class="rem">// Число линий</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> ExtId;        <span class="rem">// Внешний уникальный идентификатор</span>
+  } <span id="light_ref1">RDS_CONNDESCRIPTION</span>;
+  <span class="kw">typedef</span> RDS_CONNDESCRIPTION *<span id="light_ref2">RDS_PCONNDESCRIPTION</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">servSize</span>&emsp;(<span class="cpp"><i>DWORD</i></span>)</dt>
+  <dd>Размер этой структуры в байтах. Перед вызовом любой сервисной функции, работающей с этой
+  структурой, полю <span class="cpp">servSize</span> необходимо присвоить значение
+  <span class="cpp">sizeof(RDS_CONNDESCRIPTION)</span>.</dd>
+
+  <dt><span class="cpp">Conn</span>&emsp;(<span class="cpp"><i>RDS_CHANDLE</i></span>)</dt>
+  <dd>Уникальный идентификатор данной связи или шины. Для
+  идентификаторов связей и шин в RDS введен специальный тип
+  <span class="cpp"><a href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></span>, такие идентификаторы используются в сервисных функциях
+  для указания связи или шины, с которыми нужно произвести то или иное действие.</dd>
+
+  <dt><span class="cpp">ConnType</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+    <dd><span id="light_ref4">Тип объекта: связь или шина.</span> В RDS шины являются подвидом связей,
+    поэтому большинство сервисных функция у шин и связей общие. В этом поле содержится одна из
+    следующих констант:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref5">RDS_TUNKNOWN</span></span></td>
+          <td>Неизвестный тип (при вызове функции, заполняющей эту структуру, возникла ошибка).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref6">RDS_CTCONNECTION</span></span></td>
+          <td>Связь.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref7">RDS_CTBUS</span></span></td>
+          <td>Шина.</td>
+        </tr>
+      </table>
+    </div></div>
+    </dd>
+
+  <dt><span class="cpp">Parent</span>&emsp;(<span class="cpp"><i>RDS_BHANDLE</i></span>)</dt>
+  <dd>Идентификатор (<span class="cpp"><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></span>) родительской подсистемы, то есть подсистемы,
+  непосредственно внутри которой находится данная связь или шина.</dd>
+
+  <dt><span class="cpp">ParentName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку с именем родительской подсистемы. Строка находится во внутренней памяти
+  RDS, ее нельзя изменять.</dd>
+
+  <dt><span class="cpp">Active</span>&emsp;(<span class="cpp"><i>BOOL</i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если связь включена, и <span class="cpp">FALSE</span>, если выключена.
+  <a href="um_2_7_2.htm#ref5" title="Отключение связи">Включение/выключение связей</a> обычно производится пользователем с
+  клавиатуры или через контекстное меню.</dd>
+
+  <dt><span class="cpp">LayerId</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Идентификатор <a href="um_1_2.htm#ref23" title="слои в подсистеме">слоя</a> подсистемы, на котором находится данная связь или
+  шина. Для ее перемещения на другой слой можно использовать функцию <span class="cpp"><a href="rdsSetConnLayer.htm" title="А.5.6.52. rdsSetConnLayer &ndash; задать слой связи">rdsSetConnLayer</a></span>.</dd>
+
+  <dt><span class="cpp">NumPoints</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Общее число узловых точек в геометрическом изображении связи или шины. В это число входят и
+  точки соединения с блоками, и промежуточные точки (точки излома), и точки разветвления. Получить
+  описание конкретной точки с заданным номером (ее координаты, тип и т.п.) можно при помощи функции
+  <span class="cpp"><a href="rdsGetPointDescription.htm" title="А.5.6.36. rdsGetPointDescription &ndash; получить описание точки связи">rdsGetPointDescription</a></span>.</dd>
+
+  <dt><span class="cpp">BusName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку с именем шины (только для шин, для связей не используется). Строка
+  находится во внутренней памяти RDS, ее нельзя изменять.</dd>
+
+  <dt><span class="cpp">NumChannels</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Общее число каналов передачи данных в шине (для связей не используется).</dd>
+
+  <dt><span class="cpp">NumLines</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Общее число линий (прямых и
+  <a href="um_2_7_2.htm#ref11" title="Кривая Безье в линии связи">кривых Безье</a>), соединяющих пары узловых точек в геометрическом
+  изображении связи или шины. Получить описание линии с заданным номером (ее тип, координаты
+  касательных кривой и т.п.) можно при помощи функции <span class="cpp"><a href="rdsGetLineDescription.htm" title="А.5.6.30. rdsGetLineDescription &ndash; получить описание отрезка связи">rdsGetLineDescription</a></span>.</dd>
+
+  <dt><span class="cpp">ExtId</span>&emsp;(<span class="cpp"><i>DWORD</i></span>)</dt>
+  <dd>Уникальный в пределах схемы целый идентификатор данной связи или шины, не изменяющийся при
+  сохранении и последующей загрузке этой схемы. Такие идентификаторы используются при управлении RDS
+  из другого приложения (см. <a href="pm_3_5.htm" title="&sect;3.5. Вмешательство в загрузку и сохранение схемы">&sect;3.5 руководства программиста</a>).</dd>
+</dl>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования структуры <span class="cpp">RDS_CONNDESCRIPTION</span> приведен в
+<a href="pm_2_13_4.htm" title="&sect;2.13.4. Пример использования функций блоков для поиска пути в графе">&sect;2.13.4 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsGetConnDescription.htm" title="А.5.6.23. rdsGetConnDescription &ndash; получить описание связи">rdsGetConnDescription</a></span>,
+<span class="cpp"><a href="rdsGetFirstConn.htm" title="А.5.6.27. rdsGetFirstConn &ndash; первая связь в подсистеме">rdsGetFirstConn</a></span>,
+<span class="cpp"><a href="rdsGetNextConn.htm" title="А.5.6.33. rdsGetNextConn &ndash; следующая связь в подсистеме">rdsGetNextConn</a></span>,
+<span class="cpp"><a href="RDS_CONNAPPEARANCE.htm#ref1" title="Структура RDS_CONNAPPEARANCE">RDS_CONNAPPEARANCE</a></span>,
+<span class="cpp"><a href="rdsSetConnLayer.htm" title="А.5.6.52. rdsSetConnLayer &ndash; задать слой связи">rdsSetConnLayer</a></span>,
+<span class="cpp"><a href="rdsGetPointDescription.htm" title="А.5.6.36. rdsGetPointDescription &ndash; получить описание точки связи">rdsGetPointDescription</a></span>,
+<span class="cpp"><a href="rdsGetLineDescription.htm" title="А.5.6.30. rdsGetLineDescription &ndash; получить описание отрезка связи">rdsGetLineDescription</a></span>,
+<span class="cpp"><a href="rdsCECreateEditor.htm" title="А.5.23.1. rdsCECreateEditor &ndash; создать объект-редактор связи/шины">rdsCECreateEditor</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_CONNAPPEARANCE.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_DYNVARLINK.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_CONNDESCRIPTION">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.13.4. Пример использования функций блоков для поиска пути в графе</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_13">&sect;2.13. Вызов функций блоков</a></p>
+<div class="level"><p>&sect;2.13.4. Пример использования функций блоков для поиска пути в графе</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_13_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_13_4_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.13. Вызов функций блоков</h3>
+<h4>&sect;2.13.4. Пример использования функций блоков для поиска пути в графе</h4>
+<p class="abstract">Рассматривается пример использования функций блоков для поиска в ориентированном графе,
+                состоящем из блоков и соединяющих их связей, кратчайшего пути между двумя узлами. Используется вызов функций с
+                параметрами и без них, вызов функции конкретного блока и всех блоков подсистемы.</p>
+
+
+<p>До сих пор мы добавляли поддержку функций в уже созданные модели для расширения их функциональности.
+Теперь займемся созданием модели блока, который будет взаимодействовать с другими исключительно через вызов
+их функций. Мы будем решать задачу поиска кратчайшего пути в ориентированном графе: блоки будут узлами этого
+графа, а <a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связи</a>
+&ndash; его дугами.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/PM_GraphArc.png" width="359" height="239" alt="Длина дуги графа в рассматриваемом примере" />
+<p id="light_pic1">Рис.&nbsp;87. Длина дуги графа<br />в рассматриваемом примере</p>
+</div></div>
+
+
+<p>Длиной дуги графа будем считать общую длину связи, к которой, поскольку блок в RDS &ndash; не точечный объект,
+добавлены расстояния между геометрическими центрами блоков и точками присоединения связи к этим блокам
+(<a href="#pic1" title="Длина дуги графа в рассматриваемом примере">рис.&nbsp;87</a>). Если блоки 1 и 2 соединены связью общей длины
+<i>L</i><sub>С</sub>, расстояние между геометрическим центром изображения первого блока и точкой присоединения
+этой связи к нему &ndash; <i>L</i><sub>1</sub>, и расстояние между центром второго блока и точкой
+присоединения связи &ndash; <i>L</i><sub>2</sub>, то длиной дуги, соединяющей узлы графа, представленные блоками
+1 и 2, мы будем считать сумму этих трех величин, то есть <i>L</i><sub>С</sub>+<i>L</i><sub>1</sub>+<i>L</i><sub>2</sub>.
+Конечно, можно было бы пренебречь расстояниями <i>L</i><sub>1</sub> и
+<i>L</i><sub>2</sub>, сделав размеры блоков достаточный маленькими (существенно меньшими расстояний между ними),
+но, для большей универсальности примера, мы все-таки будем их учитывать. Вычисление длины дуги мы вынесем
+в отдельную функцию, чтобы ее, при необходимости, можно было изменить.</p>
+
+<p>Движение по дуге графа будем считать возможным только в направлении стрелки связи. Если связь соединяет выход
+одного блока со входом другого, можно двигаться только от выхода ко входу: на
+<a href="#pic1" title="Длина дуги графа в рассматриваемом примере">рис.&nbsp;87</a> возможен переход только из первого блока во второй,
+но не из второго в первый. Если связь соединяет между собой два входа блока, у нее будут изображаться стрелки на
+обоих концах. В этом случае будем считать, что движение по дуге возможно в обоих направлениях. В
+<a href="pm_1_3.htm#ref3" title="Режим расчета">режиме расчета</a> такая связь была бы абсолютно бессмысленной: она не
+присоединена к выходу блока, значение которого она могла бы передать на соединенные входы. Однако, в этом
+примере мы используем связи только как способ нарисовать дуги графа, и никакие данные по ним передаваться не будут,
+поэтому в нашем графе будут присутствовать как связи, соединяющие выход со входом, так и связи, соединяющие два входа.
+Разумеется, связь, изображающая дугу графа, не должна быть разветвленной: дуга может соединять только два
+узла графа.</p>
+
+<p>Сформулируем задачу, которую мы собираемся решать. В какой-либо
+<a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистеме</a> (не важно &ndash; в
+<a href="pm_1_2.htm#ref5" title="Корневая подсистема">корневой</a> подсистеме схемы, или в одной из вложенных) собран граф,
+узлы которого представлены блоками, а дуги &ndash; связями между ними. Если пользователь укажет один из
+блоков как начало маршрута, а другой &ndash; как конец, на схеме должен отобразиться кратчайший маршрут между
+начальным и конечным блоками с учетом направления дуг графа. При этом все блоки и связи, входящие в этот
+маршрут, должны быть визуально выделены. Пользователь также должен иметь возможность сбросить выделенный маршрут
+и вернуть граф в исходное состояние.</p>
+
+<p>Для решения этой задачи достаточно написать одну модель: модель блока-узла графа. Все действия по поиску
+маршрута, его визуальному выделению и взаимодействию с пользователем будут решать блоки-узлы,
+вызывая друг у друга различные функции. Разобьем задачу на несколько подзадач, и перечислим их
+в порядке возрастания сложности:</p>
+
+<ol>
+  <li>Необходимо дать пользователю возможность указывать блок начала маршрута, блок конца маршрута, а
+  также сбрасывать выделенный маршрут. Будем использовать для этого контекстное меню блока.</li>
+
+  <li>Блоки, принадлежащие и не принадлежащие маршруту, должны выглядеть по-разному. Начальный и конечный
+  блоки маршрута тоже должны иметь специальные отметки. Мы решим эту задачу двумя способами: во-первых, мы
+  сделаем в модели <a href="pm_2_10_1.htm" title="&sect;2.10.1. Рисование изображения блока в окне подсистемы">программное рисование</a>, которое будет все это
+  учитывать, и, во-вторых, мы введем в блок статические логические переменные, которые будут отражать
+  принадлежность блока к маршруту, его началу и концу. Если пользователю по какой-то причине не понравится
+  программное рисование, он сможет <a href="um_2_10_1.htm" title="&sect;2.10.1. Общие сведения о редакторе картинки">задать блокам векторную картинку</a>,
+  связав ее элементы с этими переменными.</li>
+
+  <li>Необходимо изменять внешний вид связи, изображающей дугу графа на выделенном маршруте. При изменении
+  или сбросе маршрута необходимо восстанавливать ее прежний вид. Для этого мы воспользуемся специальным
+  механизмом RDS, позволяющим временно менять параметры внешнего вида связи.</li>
+
+  <li><span id="ref1">Необходимо</span>
+  уметь вычислять длину дуги между двумя блоками. При этом надо учитывать, что связь в
+  RDS может представлять собой набор последовательно соединенных отрезков прямых и
+  <span id="light_ref1">кривых Безье</span>. Для вычисления общей длины связи мы
+  напишем специальную функцию.</li>
+
+  <li>Наконец, самое важное: если в схеме заданы и начальный, и конечный блок, необходимо найти кратчайший маршрут
+  между ними. Мы будем использовать для этого алгоритм, похожий на алгоритм Дейкстры, но несколько упрощенный
+  для большей наглядности примера. Упростив алгоритм, мы, вероятно, увеличим время, необходимое на поиск
+  маршрута, но в данном примере это не особенно важно. Способ поиска маршрута, который мы будем использовать,
+  описан ниже.</li>
+</ol>
+
+<p class="noindent"><span id="light_ref2">Для поиска маршрута каждый блок-узел будем помечать вещественным числом</span> &ndash; кратчайшим расстоянием до точки начала маршрута
+(для этой метки мы предусмотрим в блоке специальную переменную). Следует также предусмотреть возможность
+&laquo;бесконечного расстояния&raquo;, то есть отсутствия в узле такой метки &ndash; например, если добраться
+до данного узла от начала маршрута невозможно. После того, как такие метки расставлены, легко отследить
+кратчайший маршрут между начальным и конечным блоком, если начать с конечного: среди блоков, от которых
+к нему идут дуги, нужно найти блок с наименьшей меткой (то есть блок, расстояние до которого от начала маршрута будет
+наименьшим), затем найти блок с наименьшей меткой среди соединенных с найденным и т.д., до тех пор, пока
+мы не доберемся до блока начала маршрута. Цепочка найденных блоков и будет кратчайшим маршрутом от начального
+блока к конечному, поскольку каждый раз среди соседей очередного блока цепочки мы выбирали ближайший
+к начальному. Осталось только разобраться, как правильно расставить метки в графе.</p>
+
+<p>Введем для этого специальную операцию: &laquo;пометить блок числом <i>M</i>&raquo; (когда дело
+дойдет до программирования, мы реализуем ее как функцию блока). В зависимости от наличия и
+значения уже имеющейся в блоке метки <i>K</i>, будут выполняться следующие действия:</p>
+
+<ul>
+  <li>В блоке нет метки. В этом случае блоку присваивается метка <i>M</i>, все блоки, в которые можно попасть
+  из данного за один переход по связи, помечаются числом (<i>M</i> + <i>длина дуги к блоку-соседу</i>),
+  то есть данная операция выполняется уже для них, но с числом, увеличившимся на расстояние до нового
+  помечаемого блока.</li>
+
+  <li>В блоке есть метка <i>K</i>, <i>K</i>&le;<i>M</i> (метка, уже имеющаяся в блоке, меньше
+  или равна той, которой мы пытаемся его пометить). Это значит, что этот блок раньше уже помечался, причем
+  тогда расстояние до начального блока было меньше. Такая ситуация возможна при наличии нескольких параллельных путей
+  разной длины между начальным блоком и данным, причем данный блок уже получил метку по более короткому пути.
+  В этом случае метка блока не изменяется, никаких дополнительных пометок блоков не производится.</li>
+
+  <li>В блоке есть метка <i>K</i>, <i>K</i>&gt;<i>M</i> (метка, уже имеющаяся в блоке, больше той,
+  которой мы пытаемся его пометить). Это значит, что мы только что нашли более короткий путь от начального
+  блока к данному. В этом случае метка блока заменяется на <i>M</i> и все блоки, в которые можно попасть
+  из данного за один переход по связи, помечаются числом (<i>M</i> + <i>длина дуги к блоку-соседу</i>).</li>
+</ul>
+
+<p class="noindent">Можно заметить, что в первом и третьем случае выполняются одни и те же
+действия (фактически, отсутствие метки в блоке можно считать наличием метки со значением
+&laquo;бесконечность&raquo;, то есть бесконечным расстоянием до начального блока маршрута). Поэтому
+случай отсутствия метки в блоке и случай наличия в блоке метки, большей, чем новое значение, можно
+обрабатывать одинаково.</p>
+
+<p>Видно, что если сбросить все метки в графе, а затем пометить начальный блок маршрута числом 0,
+это вызовет цепную реакцию: соседи начального блока будут помечены длинами дуг к нему, что приведет к тому,
+что их соседи тоже будут помечены и т.д. Это будет продолжаться до тех пор, пока все блоки графа,
+достижимые из начального, не будут помечены. При этом помечены они будут именно кратчайшим расстоянием до
+начального, поскольку при обнаружении в блоке метки, большей чем та, которую мы пытаемся ему присвоить,
+мы заменяем ее на меньшую и помечаем его соседей заново. В результате мы получим желаемую разметку графа,
+по которой сможем отследить кратчайший маршрут от начального блока к конечному.</p>
+
+<div class="picright"><div class="container" id="pic2">
+<img src="../img/PM_BezierCoords.png" width="294" height="219" alt="Координаты кривой Безье" />
+<p id="light_pic2">Рис.&nbsp;88. Координаты кривой Безье</p>
+</div></div>
+
+
+<p>Теперь можно приступить к написанию вспомогательных функций, которые потребуются нам для создания модели.
+Прежде всего, поскольку связь между блоками может содержать не только отрезки прямых, длина которых
+вычисляется очевидным образом, но и отрезки кривых Безье, нам потребуется функция, вычисляющая длину кривой Безье
+по координатам четырех задающих ее точек
+(<a href="#pic2" title="Координаты кривой Безье">рис.&nbsp;88</a>). К сожалению, аналитической формулы для
+длины кривой Безье не существует, поэтому мы будем вычислять ее приближенно, при помощи численного интегрирования.
+Для тех, кого интересует математика, стоящая за вычислением длины кривой Безье, приведем несколько формул,
+все остальные могут пропустить следующие несколько абзацев.</p>
+
+<p>Кривая Безье параметрически задается следующими формулами:</p>
+
+<p class="center"><img class="formula" src="../img/Form_bezier_1.png" width="465" height="90" alt="x(t)=ax*t^3+bx*t^2+cx*t+x1, y(t)=ay*t^3+by*t^2+cy*t+y1" /></p>
+
+<p class="noindent">где <i>t</i> &ndash; параметр кривой.</p>
+
+<p>Коэффициенты <i>a</i>, <i>b</i> и <i>c</i> вычисляются по координатам точек
+<a href="#pic2" title="Координаты кривой Безье">рис.&nbsp;88</a> следующим образом:</p>
+
+<p class="center"><img class="formula" src="../img/Form_bezier_2.png" width="337" height="236" alt="ax=2(x1-x2)+3(dx1-dx2), bx=3(x2-x1+dx2-2*dx1), c_x=3*dx_1, ay=2(y1-y2)+3(dy1-dy2), by=3(y2-y1+dy2-2*dy_1), cy=3*dy1" /></p>
+
+<p>Длина любой плоской кривой, заданной функциями <i>x(t)</i> и <i>y(t)</i> в диапазоне
+0&le;<i>t</i>&le;1 вычисляется так:</p>
+
+<p class="center"><img class="formula" src="../img/Form_bezier_3.png" width="273" height="84" alt="L=Int{0...1}{sqrt( (dx/dt)^2 + (dy/dt)^2 )dt}" /></p>
+
+<p>Для кривой Безье:</p>
+
+<p class="center"><img class="formula" src="../img/Form_bezier_4.png" width="964" height="158" alt="dx/dt=3*ax*t^2+2*bx*t+cx, dy/dt=3*ay*t^2+2*by*t+cy, L=Int{0...1}{sqrt{(3*ax*t^2+2*bx*t+cx)^2+(3*ay*t^2+2*by*t+cy)^2}dt}" /></p>
+
+<p><span id="ref3">Этот</span>
+интеграл нам и предстоит вычислить, и вычислять его мы будем методом Гаусса. Реализуя этот алгоритм,
+получим функцию для вычисления длины кривой Безье с заданной точностью:</p>
+
+<pre class="cpp">  <span class="rem">// Вычисление длины кривой Безье численным интегрированием</span>
+  <span class="rem">// (метод Гаусса)</span>
+  <span class="kw">double</span> <span id="light_ref3">BezierLengthGauss</span>(<span class="kw">double</span> x1,<span class="kw">double</span> y1,<span class="kw">double</span> dx1,<span class="kw">double</span> dy1,
+                           <span class="kw">double</span> x2,<span class="kw">double</span> y2,<span class="kw">double</span> dx2,<span class="kw">double</span> dy2,
+                           <span class="kw">double</span> delta)
+  { <span class="kw">double</span> ax,bx,cx,ay,by,cy;
+    <span class="kw">double</span> a,b,c,d,e,q,n,k,T,l,h,I,w;
+    <span class="kw">int</span> m;
+    <span class="kw">double</span> x[<span class="const">3</span>],s[<span class="const">3</span>];
+
+    <span class="rem">// Вычисление коэффициентов параметрического вида</span>
+    ax=<span class="const">2</span>*(x1-x2)+<span class="const">3</span>*(dx1-dx2);
+    bx=<span class="const">3</span>*(x2-x1+dx2-<span class="const">2</span>*dx1);
+    cx=<span class="const">3</span>*dx1;
+    ay=<span class="const">2</span>*(y1-y2)+<span class="const">3</span>*(dy1-dy2);
+    by=<span class="const">3</span>*(y2-y1+dy2-<span class="const">2</span>*dy1);
+    cy=<span class="const">3</span>*dy1;
+
+    <span class="rem">// Интегрирование</span>
+    b=<span class="const">1.0</span>;
+    n=delta*<span class="const">60.0</span>; m=<span class="const">1</span>; k=<span class="const">0</span>.<span class="const">0</span>;
+    <span class="kw">do</span>
+      { m*=<span class="const">2</span>; a=<span class="const">0</span>.<span class="const">0</span>; T=sqrt(<span class="const">0</span>.<span class="const">6</span>); I=<span class="const">0</span>.<span class="const">0</span>;
+        h=(b-a)/m;
+        <span class="kw">for</span>(<span class="kw">int</span> j=<span class="const">1</span>;j&lt;=m;j++)
+          { w=a+h;
+            c=(w+a)/<span class="const">2</span>; d=(w-a)/<span class="const">2</span>; e=d*<span class="const">5.0</span>/<span class="const">9.0</span>;
+            l=d*<span class="const">8.0</span>/<span class="const">9.0</span>; d*=T;
+            x[<span class="const">0</span>]=c-d; x[<span class="const">1</span>]=c; x[<span class="const">2</span>]=c+d;
+            s[<span class="const">0</span>]=e;   s[<span class="const">1</span>]=l; s[<span class="const">2</span>]=e;
+            <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;<span class="const">3</span>;i++)
+              { <span class="rem">// Вычисление подынтегральной функции (3 раза)</span>
+                <span class="kw">double</span> vx=<span class="const">3</span>*ax*x[i]*x[i]+<span class="const">2</span>*bx*x[i]+cx,
+                       vy=<span class="const">3</span>*ay*x[i]*x[i]+<span class="const">2</span>*by*x[i]+cy;
+                <span class="kw">double</span> f=sqrt(vx*vx+vy*vy);
+                I+=s[i]*f;
+              }
+            a=w;
+          }
+        l=k; k=I;
+      }
+    <span class="kw">while</span>(fabs(I-l)&gt;n);
+    <span class="kw">return</span> I;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Для вычисления длины дуги графа нам также потребуется функция, вычисляющая расстояние между
+геометрическим центром блока и точкой присоединения связи к нему
+(<i>L</i><sub>1</sub> и <i>L</i><sub>2</sub> на <a href="#pic1" title="Длина дуги графа в рассматриваемом примере">рис.&nbsp;87</a>). Эта
+функция будет принимать один параметр: указатель на структуру описания точки связи
+<span class="cpp"><span id="light_ref4"><a href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">RDS_POINTDESCRIPTION</a></span></span>. Мы уже
+<a href="pm_2_7_4.htm#ref1" title="Хранение параметров в значениях переменных по умолчанию">встречались</a> с этой структурой, когда
+проверяли существование связи, соединенной с конкретной переменной блока,
+она используется во всех сервисных функциях, работающих со связями и их точками.
+В структуре находятся все данные, которые необходимы нам для вычисления расстояния: идентификатор блока,
+к которому присоединена связь (поле <span class="cpp">Block</span>) и координаты самой точки (поля
+<span class="cpp"></span> и <span class="cpp">y</span>).
+<span id="ref5">Следует</span>
+помнить, что координаты точки присоединения связи
+к блоку всегда даются относительно <span id="light_ref5">точки привязки</span>
+изображения этого блока (для программно рисуемых блоков и
+блоков без векторной картинки &ndash; относительно верхнего левого угла, для блоков с картинкой
+&ndash; относительно начала координат векторного изображения), и это нужно учитывать при вычислении
+расстояния от этой точки до центра блока.
+<span id="ref6">Функция</span>,
+вычисляющая это расстояние, будет выглядеть так:</p>
+
+<pre class="cpp">  <span class="rem">// Определение расстояния между точкой связи и геометрическим</span>
+  <span class="rem">// центром блока по структуре </span><a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION"><span class="rem">RDS_POINTDESCRIPTION</span></a>
+  <span class="kw">double</span> <span id="light_ref6">DistanceFromBlockCenterToPoint</span>(<a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> point)
+  { <span id="light_ref7"><a class="hidden" href="RDS_BLOCKDIMENSIONS.htm#ref1" title="Структура RDS_BLOCKDIMENSIONS">RDS_BLOCKDIMENSIONS</a></span> dim; <span class="rem">// Структура описания размеров блока</span>
+    <span class="kw">double</span> dx,dy,xc,yc,xp,yp;
+
+    <span class="kw">if</span>(point==NULL)	<span class="rem">// Указатель не передан - ошибка</span>
+      <span class="kw">return</span> -<span class="const">1.0</span>;
+    <span class="rem">// Проверка – точка ли соединения с блоком передана?</span>
+    <span class="kw">if</span>(point-&gt;PointType!=<span id="light_ref8"><a class="hidden" href="RDS_POINTDESCRIPTION.htm#light_ref4" title="RDS_PTBLOCK">RDS_PTBLOCK</a></span>)
+      <span class="kw">return</span> -<span class="const">1.0</span>;
+
+    <span class="rem">// Определение размеров блока point-&gt;Block</span>
+    dim.servSize=<span class="kw">sizeof</span>(dim);	<span class="rem">// Размер структуры</span>
+    <span class="kw">if</span>(!<span id="light_ref9"><a class="hidden" href="rdsGetBlockDimensionsEx.htm" title="А.5.6.18. rdsGetBlockDimensionsEx &ndash; получить размеры и положение блока">rdsGetBlockDimensionsEx</a></span>(point-&gt;Block,&amp;dim,<span id="light_ref10"><a class="hidden" href="rdsGetBlockDimensionsEx.htm#light_ref2" title="RDS_GBD_NONE">RDS_GBD_NONE</a></span>))
+      <span class="kw">return</span> -<span class="const">1.0</span>; <span class="rem">// Не удалось получить размеры блока</span>
+
+    <span class="rem">// Геометрический центр изображения блока</span>
+    xc=dim.Left+dim.Width/<span class="const">2.0</span>;
+    yc=dim.Top+dim.Height/<span class="const">2.0</span>;
+    <span class="rem">// Абсолютные координаты точки связи</span>
+    xp=dim.BlockX+point-&gt;x;
+    yp=dim.BlockY+point-&gt;y;
+    <span class="rem">// Вычисление расстояния между этими точками</span>
+    dx=xp-xc; dy=yp-yc;
+    <span class="kw">return</span> sqrt(dx*dx+dy*dy);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Прежде всего, в этой функции проверяется правильность переданного параметра: указатель на структуру
+описания точки связи не должен быть равен <span class="cpp">NULL</span>, и точка связи, описываемая структурой,
+должна быть именно точкой соединения связи с блоком (поле <span class="cpp">PointType</span> должно иметь значение
+<span class="cpp"><a href="RDS_POINTDESCRIPTION.htm#light_ref4" title="RDS_PTBLOCK">RDS_PTBLOCK</a></span>). Если одно из этих условий не выполнено, функция возвращает отрицательное
+значение, сигнализирующее об ошибке.</p>
+
+<p>Далее структура <span class="cpp">dim</span> типа <span class="cpp"><a href="RDS_BLOCKDIMENSIONS.htm#ref1" title="Структура RDS_BLOCKDIMENSIONS">RDS_BLOCKDIMENSIONS</a></span>
+заполняется данными о размерах и положении изображения блока, с которым соединена точка связи. Для
+этого вызывается сервисная функция RDS <span class="cpp"><a href="rdsGetBlockDimensionsEx.htm" title="А.5.6.18. rdsGetBlockDimensionsEx &ndash; получить размеры и положение блока">rdsGetBlockDimensionsEx</a></span>, в которую передается
+идентификатор интересующего нас блока <span class="cpp">point-&gt;Block</span>, указатель на заполняемую
+структуру <span class="cpp">&amp;dim</span> и константа
+<span class="cpp"><a href="rdsGetBlockDimensionsEx.htm#light_ref2" title="RDS_GBD_NONE">RDS_GBD_NONE</a></span>, указывающая, что при определении размеров и положения блока не
+нужно учитывать ни масштаб подсистемы, ни возможную связь этих параметров с переменными блока. Таким образом,
+в структуру <span class="cpp">dim</span> будут записаны размеры блока в режиме редактирования в масштабе 100%.</p>
+
+<p>Структура <span class="cpp"><a class="hidden" href="RDS_BLOCKDIMENSIONS.htm#ref1" title="Структура RDS_BLOCKDIMENSIONS">RDS_BLOCKDIMENSIONS</a></span> описана в
+&laquo;<span class="file">RdsDef.h</span>&raquo; следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;    <span class="rem">// Размер этой структуры</span>
+    <span class="kw">int</span> BlockX,BlockY; <span class="rem">// Точка привязки блока</span>
+    <span class="kw">int</span> Left,Top;      <span class="rem">// Верхний левый угол блока</span>
+    <span class="kw">int</span> Width,Height;  <span class="rem">// Ширина и высота блока</span>
+  } <a class="hidden" href="RDS_BLOCKDIMENSIONS.htm#ref1" title="Структура RDS_BLOCKDIMENSIONS">RDS_BLOCKDIMENSIONS</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_BLOCKDIMENSIONS.htm#ref1" title="Структура RDS_BLOCKDIMENSIONS">RDS_BLOCKDIMENSIONS</a> *<a class="hidden" href="RDS_BLOCKDIMENSIONS.htm#ref2" title="Указатель на RDS_BLOCKDIMENSIONS">RDS_PBLOCKDIMENSIONS</a>;</pre>
+
+<p>Перед вызовом функции в поле <span class="cpp">servSize</span> (первое поле структуры, как и
+в большинстве структур, используемых сервисными функциями RDS) необходимо занести размер этой структуры для
+проверки правильности переданных параметров. После заполнения этой структуры функцией
+<span class="cpp"><a class="hidden" href="rdsGetBlockDimensionsEx.htm" title="А.5.6.18. rdsGetBlockDimensionsEx &ndash; получить размеры и положение блока">rdsGetBlockDimensionsEx</a></span> мы вычисляем координаты центра изображения блока
+(<span class="cpp">xc</span>,<span class="cpp">yc</span>) и абсолютные координаты точки связи
+(<span class="cpp">xp</span>,<span class="cpp">yp</span>). Центр блока &ndash; это верхний левый угол
+изображения, смещенный на половину его ширины и высоты, а абсолютные координаты точки связи вычисляются добавлением
+к точке привязки блока (<span class="cpp">dim.BlockX</span>,<span class="cpp">dim.BlockY</span>)
+относительных координат точки связи
+(<span class="cpp">point-<i>point->x</i>x</span>,<span class="cpp">point-&gt;y</span>). Далее вычисляется расстояние
+между этими точками, и функция возвращает полученное значение.</p>
+
+<p>Теперь, когда мы можем вычислять длину кривой Безье и расстояние от центра блока до точки связи,
+мы можем написать функцию, которая будет вычислять длину дуги графа, представленную какой-либо
+связью между блоками. Эта функция будет одновременно решать две задачи: во-первых, она будет вычислять длину
+дуги, и, во-вторых, она будет проверять, соединяет ли эта связь ровно два блока. Если связь оборвана,
+она будет соединена только с одним блоком. Если связь разветвлена, она будет соединять три и
+более блоков. В обоих случаях, такая связь не может быть дугой графа, и наша функция вместо длины дуги
+будет возвращать отрицательное значение, сигнализирующее об ошибке. Связь в RDS состоит из одного или
+нескольких участков, каждый из которых может быть либо отрезком прямой, либо кривой Безье. Если связь
+не разветвлена, для вычисления длины дуги графа нам необходимо сложить длины всех участков связи и добавить
+к ним расстояния от центра блока до точки связи для обоих соединенных блоков.
+<span id="ref11">Функция</span>
+будет выглядеть следующим  образом:</p>
+
+<pre class="cpp">  <span class="rem">// Проверка связи (должно быть два блока на концах) и вычисление</span>
+  <span class="rem">// длины дуги графа, соответствующей этой связи</span>
+  <span class="kw">double</span> <span id="light_ref11">CalcArcLength</span>(<span id="light_ref12"><a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></span> Conn)
+  { <span id="light_ref13"><a class="hidden" href="RDS_CONNDESCRIPTION.htm#ref1" title="Структура RDS_CONNDESCRIPTION">RDS_CONNDESCRIPTION</a></span> ConnDescr;   <span class="rem">// Структура описания связи</span>
+    <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">RDS_POINTDESCRIPTION</a> PointDescr; <span class="rem">// Структура описания точки</span>
+    <span id="light_ref14"><a class="hidden" href="RDS_LINEDESCRIPTION.htm#ref1" title="Структура RDS_LINEDESCRIPTION">RDS_LINEDESCRIPTION</a></span> LineDescr;   <span class="rem">// Структура описания линии</span>
+    <span class="kw">int</span> BlockCnt;
+    <span class="kw">double</span> len=<span class="const">0</span>.<span class="const">0</span>; <span class="rem">// Общая длина дуги</span>
+    <span class="kw">double</span> x1,y1,x2,y2;
+
+    <span class="rem">// Заполнение служебных полей размеров структур</span>
+    ConnDescr.servSize=<span class="kw">sizeof</span>(ConnDescr);
+    PointDescr.servSize=<span class="kw">sizeof</span>(PointDescr);
+    LineDescr.servSize=<span class="kw">sizeof</span>(LineDescr);
+
+    <span class="rem">// Получаем описание связи – нам нужно число точек и линий в ней</span>
+    <span class="kw">if</span>(!<span id="light_ref15"><a class="hidden" href="rdsGetConnDescription.htm" title="А.5.6.23. rdsGetConnDescription &ndash; получить описание связи">rdsGetConnDescription</a></span>(Conn,&amp;ConnDescr))
+      <span class="kw">return</span> -<span class="const">1.0</span>;
+
+    <span class="kw">if</span>(ConnDescr.ConnType!=<span id="light_ref16"><a class="hidden" href="RDS_CONNDESCRIPTION.htm#light_ref6" title="RDS_CTCONNECTION">RDS_CTCONNECTION</a></span>)
+      <span class="kw">return</span> -<span class="const">1.0</span>; <span class="rem">// Это не связь, а шина – шины нам не годятся</span>
+
+    <span class="rem">// Проверяем число блоков на концах связи (должно быть ровно 2)</span>
+    BlockCnt=<span class="const">0</span>;
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;ConnDescr.NumPoints;i++)
+      { <span class="rem">// Получаем описание точки связи i</span>
+        <span id="light_ref17"><a class="hidden" href="rdsGetPointDescription.htm" title="А.5.6.36. rdsGetPointDescription &ndash; получить описание точки связи">rdsGetPointDescription</a></span>(Conn,i,&amp;PointDescr);
+        <span class="rem">// Проверяем тип точки</span>
+        <span class="kw">switch</span>(PointDescr.PointType)
+          { <span class="kw">case</span> <span id="light_ref18"><a class="hidden" href="RDS_POINTDESCRIPTION.htm#light_ref5" title="RDS_PTBUS">RDS_PTBUS</a></span>: <span class="rem">// Соединение с шиной – связь не годится</span>
+              <span class="kw">return</span> -<span class="const">1.0</span>;
+            <span class="kw">case</span> <a class="hidden" href="RDS_POINTDESCRIPTION.htm#light_ref4" title="RDS_PTBLOCK">RDS_PTBLOCK</a>: <span class="rem">// Соединение с блоком</span>
+              BlockCnt++;
+              <span class="kw">if</span>(BlockCnt&gt;<span class="const">2</span>) <span class="rem">// Связь разветвлена</span>
+                <span class="kw">return</span> -<span class="const">1.0</span>;
+              <span class="rem">// Найдена точка соединения с блоком. Добавляем к len</span>
+              <span class="rem">// расстояние между точкой и центром блока</span>
+              len+=<a class="hidden" href="#ref6" title="Функция вычисления расстояния от точки связи до центра блока">DistanceFromBlockCenterToPoint</a>(&amp;PointDescr);
+              <span class="kw">break</span>;
+          } <span class="rem">// switch(PointDescr.PointType)</span>
+      } <span class="rem">// for(int i=0;...)</span>
+    <span class="kw">if</span>(BlockCnt!=<span class="const">2</span>) <span class="rem">// Связь соединяет менее двух блоков</span>
+     <span class="kw">return</span> -<span class="const">1.0</span>;
+
+    <span class="rem">// Связь соединена ровно с двумя блоками – суммируем длину всех</span>
+    <span class="rem">// ее линий</span>
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;ConnDescr.NumLines;i++)
+      { <span class="rem">// Получаем описание линии связи i</span>
+        <span id="light_ref19"><a class="hidden" href="rdsGetLineDescription.htm" title="А.5.6.30. rdsGetLineDescription &ndash; получить описание отрезка связи">rdsGetLineDescription</a></span>(Conn,i,&amp;LineDescr,NULL,NULL);
+        <span class="rem">// Переводим целые координаты концов линии в double</span>
+        <span class="rem">// для большей точности вычисления</span>
+        x1=LineDescr.x1; y1=LineDescr.y1;
+        x2=LineDescr.x2; y2=LineDescr.y2;
+        <span class="rem">// В зависимости от типа линии, вычисляем ее длину и</span>
+        <span class="rem">// добавляем к len</span>
+        <span class="kw">switch</span>(LineDescr.LineType)
+          { <span class="kw">case</span> <span id="light_ref20"><a class="hidden" href="RDS_LINEDESCRIPTION.htm#light_ref4" title="RDS_LNLINE">RDS_LNLINE</a></span>: <span class="rem">// Отрезок прямой</span>
+              len+=sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
+              <span class="kw">break</span>;
+            <span class="kw">case</span> <span id="light_ref21"><a class="hidden" href="RDS_LINEDESCRIPTION.htm#light_ref5" title="RDS_LNBEZIER">RDS_LNBEZIER</a></span>: <span class="rem">// Кривая Безье</span>
+              len+=<a class="hidden" href="#ref3" title="Функция вычисления длины кривой Безье">BezierLengthGauss</a>(x1,y1,
+                     LineDescr.dx1,LineDescr.dy1,
+                     x2,y2,
+                     LineDescr.dx2,LineDescr.dy2,
+                     <span class="const">2</span>);
+              <span class="kw">break</span>;
+          } <span class="rem">// switch(LineDescr.LineType)</span>
+      } <span class="rem">// for(int i=0;...)</span>
+    <span class="kw">return</span> len;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции мы перебираем все точки связи, идентификатор которой передан в параметре
+<span class="cpp">Conn</span>, чтобы найти среди них точки соединения с блоками и подсчитать их.
+Кроме того, мы перебираем все отрезки линий связи и суммируем их длину. Для того, чтобы организовать циклы по
+всем точкам и всем линиям, нам нужно узнать общее число точек и линий в этой связи. Для этого мы
+вызываем сервисную функцию <span class="cpp"><a href="rdsGetConnDescription.htm" title="А.5.6.23. rdsGetConnDescription &ndash; получить описание связи">rdsGetConnDescription</a></span>, которая заполняет структуру описания связи
+<span class="cpp"></span> типа <span class="cpp"><a href="RDS_CONNDESCRIPTION.htm#ref1" title="Структура RDS_CONNDESCRIPTION">RDS_CONNDESCRIPTION</a></span>. В этой структуре много полей,
+но нас будет интересовать поле типа связи <span class="cpp">ConnType</span>, число точек в ней
+<span class="cpp">NumPoints</span> и число отрезков <span class="cpp">NumLines</span>. Поле
+<span class="cpp">ConnType</span> нам нужно только для того, чтобы проверить, не передан ли случайно
+в нашу функцию идентификатор <a href="um_2_8.htm" title="&sect;2.8. Использование шин">шины</a>
+вместо идентификатора связи (в RDS шина является разновидностью связи). Шина, очевидно,
+не может изображать дугу графа, поэтому если тип связи не равен <span class="cpp"><a href="RDS_CONNDESCRIPTION.htm#light_ref6" title="RDS_CTCONNECTION">RDS_CTCONNECTION</a></span>,
+функция возвращает отрицательное значение, сигнализирующее об ошибке.</p>
+
+<p>Далее мы в цикле перебираем все точки исследуемой связи, подсчитывая в процессе перебора количество
+соединяемых связью блоков. Внутри цикла мы заполняем структуру <span class="cpp">PointDescr</span> описанием
+очередной (<span class="cpp">i</span>-й) точки связи <span class="cpp">Conn</span> при помощи функции
+<span class="cpp"><a href="rdsGetPointDescription.htm" title="А.5.6.36. rdsGetPointDescription &ndash; получить описание точки связи">rdsGetPointDescription</a></span>, после чего при помощи оператора
+<span class="cpp">switch(PointDescr.PointType)</span> анализируем тип этой точки. Если это точка
+соединения связи с шиной (поле <span class="cpp">PointDescr.PointType</span> имеет значение
+<span class="cpp"><a href="RDS_POINTDESCRIPTION.htm#light_ref5" title="RDS_PTBUS">RDS_PTBUS</a></span>), функция немедленно возвращает отрицательное значение: связь,
+соединенная с шиной, не может изображать дугу графа. Если это точка соединения с блоком (тип точки &ndash;
+<span class="cpp"><a class="hidden" href="RDS_POINTDESCRIPTION.htm#light_ref4" title="RDS_PTBLOCK">RDS_PTBLOCK</a></span>), мы увеличиваем на единицу предварительно обнуленную целую переменную
+<span class="cpp">BlockCnt</span>, в которой подсчитывается число соединенных блоков. Если значение этой переменной
+превысило 2, значит, связь соединяет три или более блоков, и она не может быть дугой графа &ndash;
+дальнейший перебор точек не имеет смысла, и функция немедленно возвращает отрицательное значение. В противном
+случае значение расстояния от данной точки связи до центра соединенного с ней блока добавляется к переменной
+<span class="cpp">len</span>, для этого вызывается ранее написанная функция
+<span class="cpp"><a href="#ref6" title="Функция вычисления расстояния от точки связи до центра блока">DistanceFromBlockCenterToPoint</a></span>,
+в которую передается указатель на заполненную структуру описания точки.</p>
+
+<p>Промежуточные точки связи, имеющие тип <span class="cpp"><span id="light_ref22"><a href="RDS_POINTDESCRIPTION.htm#light_ref3" title="RDS_PTINTERNAL">RDS_PTINTERNAL</a></span></span>, нас не интересуют,
+поэтому в операторе <span class="cpp">switch</span> для этого типа нет соответствующего
+<span class="cpp">case</span> &ndash; при обнаружении таких точек мы их просто пропускаем.</p>
+
+<p>После перебора всех точек связи в переменной <span class="cpp">BlockCnt</span> будет находиться число блоков,
+с которыми соединена данная связь, а в переменной <span class="cpp">len</span> &ndash; сумма расстояний от
+центра блока до точки связи для всех соединенных блоков
+(<i>L</i><sub>1</sub>+<i>L</i><sub>2</sub> на <a href="#pic1" title="Длина дуги графа в рассматриваемом примере">рис.&nbsp;87</a>).
+Случай <span class="cpp">BlockCnt&gt;2</span> мы уже обработали внутри цикла, но связь может оказаться
+оборванной, то есть соединенной только с одним блоком, или не соединенной ни с одним. В этом случае она тоже
+не может служить дугой графа, поэтому, если <span class="cpp">BlockCnt</span> не равно двум, функция
+возвращает отрицательное значение.</p>
+
+<p>Теперь, когда мы убедились, что связь соединяет ровно два блока, можно добавить к <span class="cpp">len</span>
+сумму длин всех ее отрезков, что даст нам длину дуги графа. Для этого мы в цикле перебираем все линии связи.
+Внутри цикла мы заполняем структуру <span class="cpp">LineDescr</span> типа
+<span class="cpp"><a href="RDS_LINEDESCRIPTION.htm#ref1" title="Структура RDS_LINEDESCRIPTION">RDS_LINEDESCRIPTION</a></span> описанием <span class="cpp">i</span>-й линии связи <span class="cpp">Conn</span>
+при помощи сервисной функции <span class="cpp"><a href="rdsGetLineDescription.htm" title="А.5.6.30. rdsGetLineDescription &ndash; получить описание отрезка связи">rdsGetLineDescription</a></span>. В двух последних параметрах
+этой функции можно было бы передать указатели на структуры описания точек связи, которые эта линия соединяет,
+чтобы <span class="cpp"><a class="hidden" href="rdsGetLineDescription.htm" title="А.5.6.30. rdsGetLineDescription &ndash; получить описание отрезка связи">rdsGetLineDescription</a></span> их тоже заполнила, но нам эти описания не требуются,
+поэтому вместо обоих указателей передается значение <span class="cpp">NULL</span>. Нам нужно только описание
+самой линии, чтобы вычислить ее длину и добавить к переменной <span class="cpp">len</span>. Структура
+<span class="cpp"><a class="hidden" href="RDS_LINEDESCRIPTION.htm#ref1" title="Структура RDS_LINEDESCRIPTION">RDS_LINEDESCRIPTION</a></span> описана в &laquo;<span class="file">RdsDef.h</span>&raquo; следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;     <span class="rem">// Размер этой структуры</span>
+    <span class="kw">int</span> LineType;       <span class="rem">// Тип линии (RDS_LN*)</span>
+    <span class="kw">int</span> nPoint1,nPoint2;<span class="rem">// Номера соединенных ей точек</span>
+    <span class="kw">int</span> x1,y1;          <span class="rem">// Абсолютные координаты точки nPoint1</span>
+    <span class="kw">int</span> x2,y2;          <span class="rem">// Абсолютные координаты точки nPoint2</span>
+    <span class="kw">int</span> dx1,dy1;        <span class="rem">// Смещения управляющей точки 1 для кривой Безье</span>
+    <span class="kw">int</span> dx2,dy2;        <span class="rem">// Смещения управляющей точки 2 для кривой Безье</span>
+    <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> Owner;  <span class="rem">// Связь-владелец линии</span>
+  } <a class="hidden" href="RDS_LINEDESCRIPTION.htm#ref1" title="Структура RDS_LINEDESCRIPTION">RDS_LINEDESCRIPTION</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_LINEDESCRIPTION.htm#ref1" title="Структура RDS_LINEDESCRIPTION">RDS_LINEDESCRIPTION</a> *<a class="hidden" href="RDS_LINEDESCRIPTION.htm#ref2" title="Указатель на RDS_LINEDESCRIPTION">RDS_PLINEDESCRIPTION</a>;</pre>
+
+<p>Нас в этой структуре интересует поле <span class="cpp">LineType</span>, определяющее тип отрезка
+(<span class="cpp"><a href="RDS_LINEDESCRIPTION.htm#light_ref4" title="RDS_LNLINE">RDS_LNLINE</a></span> &ndash; отрезок прямой, <span class="cpp"><a href="RDS_LINEDESCRIPTION.htm#light_ref5" title="RDS_LNBEZIER">RDS_LNBEZIER</a></span> &ndash; кривая Безье),
+координаты его конечных точек (<span class="cpp">x1</span>,<span class="cpp">y1</span>) и
+(<span class="cpp">x2</span>,<span class="cpp">y2</span>), а также, в случае кривой Безье, смещения
+управляющих точек (<span class="cpp">dx1</span>,<span class="cpp">dy1</span>) и
+(<span class="cpp">dx2</span>,<span class="cpp">dy2</span>). В зависимости от типа линии мы добавляем
+к переменной <span class="cpp">len</span> либо длину отрезка прямой, либо длину кривой Безье, для
+вычисления которой мы вызываем ранее написанную функцию <span class="cpp"><a href="#ref3" title="Функция вычисления длины кривой Безье">BezierLengthGauss</a></span>,
+задав точность вычисления (последний параметр функции) в две точки экрана.</p>
+
+<p>После завершения цикла по всем линиям связи в переменной <span class="cpp">len</span>
+окажется длина дуги графа, которую функция и возвращает.</p>
+
+<p>Кроме вычисления длины дуги нам нужно иметь возможность визуально выделять связи, показывая пользователю
+найденный кратчайший путь между узлами графа. Мы будем выделять связь, увеличивая ее толщину. В RDS
+есть сервисная функция <span class="cpp"><span id="light_ref23"><a href="rdsSetConnAppearance.htm" title="А.5.6.51. rdsSetConnAppearance &ndash; задать внешний вид связи">rdsSetConnAppearance</a></span></span>, позволяющая изменить параметры
+внешнего вида любой связи, но для наших целей более удобен механизм создания одного или нескольких альтернативных
+наборов параметров внешнего вида связи, позволяющий оперативно переключаться между ними. У этого механизма
+есть два преимущества, которые будут нам особенно полезны. Во-первых, он запоминает исходный внешний вид
+связи и позволяет вернуться к нему одной командой &ndash; это будет необходимо нам при снятии визуального
+выделения связи. Если бы мы пользовались функцией <span class="cpp"><a class="hidden" href="rdsSetConnAppearance.htm" title="А.5.6.51. rdsSetConnAppearance &ndash; задать внешний вид связи">rdsSetConnAppearance</a></span>,
+нам бы пришлось где-нибудь запоминать исходную толщину каждой связи перед ее выделением, а затем,
+при снятии выделения, восстанавливать запомненное значение. Во-вторых, при сохранении схемы
+альтернативные наборы параметров связи не запоминаются, поэтому нам можно не опасаться того, что
+пользователь сохранит схему в тот момент, когда в графе будет выделен маршрут, и измененные толщины линий
+связей запомнятся как исходные.</p>
+
+<p><span id="ref24">Сначала</span>
+напишем функцию, которая будет выделять связь, идентификатор которой передан в ее параметре:</p>
+
+<pre class="cpp">  <span class="rem">// Визуально выделить связь</span>
+  <span class="kw">void</span> <span id="light_ref24">MarkConnection</span>(<a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> Conn)
+  { <span class="rem">// Определяем число альтернативных внешних видов</span>
+    <span class="kw">int</span> StylesCount=<span id="light_ref25"><a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a></span>(Conn,<span id="light_ref26"><a class="hidden" href="rdsAltConnAppearanceOp.htm#light_ref4" title="RDS_CAOCOUNT">RDS_CAOCOUNT</a></span>,<span class="const">0</span>,NULL);
+
+    <span class="kw">if</span>(StylesCount&lt;<span class="const">1</span>)
+      { <span class="rem">// Для связи еще не определено ни одного внешнего вида</span>
+        <span class="rem">// Создаем внешний вид 0 и делаем его толще текущего</span>
+        <span id="light_ref27"><a class="hidden" href="RDS_CONNAPPEARANCE.htm#ref1" title="Структура RDS_CONNAPPEARANCE">RDS_CONNAPPEARANCE</a></span> style; <span class="rem">// Структура описания стиля связи</span>
+        <span class="rem">// Получаем описание текущего внешнего вида связи</span>
+        style.servSize=<span class="kw">sizeof</span>(style);
+        <span id="light_ref28"><a class="hidden" href="rdsGetConnAppearance.htm" title="А.5.6.22. rdsGetConnAppearance &ndash; получить внешний вид связи">rdsGetConnAppearance</a></span>(Conn,&amp;style);
+        <span class="rem">// Увеличиваем толщину и размер стрелки</span>
+        style.LineWidth*=<span class="const">3</span>;
+        style.ArrowLength*=<span class="const">2</span>;
+        style.ArrowWidth*=<span class="const">3</span>;
+        <span class="rem">// Запоминаем эти параметры как альтернативный вид 0</span>
+        <a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a>(Conn,<span id="light_ref29"><a class="hidden" href="rdsAltConnAppearanceOp.htm#light_ref9" title="RDS_CAOSET">RDS_CAOSET</a></span>,<span class="const">0</span>,&amp;style);
+      }
+    <span class="rem">// Устанавливаем альтернативный вид 0</span>
+    <a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a>(Conn,<span id="light_ref30"><a class="hidden" href="rdsAltConnAppearanceOp.htm#light_ref10" title="RDS_CAOSETCURRENT">RDS_CAOSETCURRENT</a></span>,<span class="const">0</span>,NULL);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Все управление альтернативными параметрами внешнего вида связи производится при помощи функции
+<span class="cpp"><a href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a></span>. Функция принимает четыре параметра: идентификатор связи,
+одна из констант <span class="cpp">RDS_CAO*</span>, обозначающая выполняемую операцию, номер набора параметров,
+а также указатель на структуру описания внешнего вида связи типа <span class="cpp"><a href="RDS_CONNAPPEARANCE.htm#ref1" title="Структура RDS_CONNAPPEARANCE">RDS_CONNAPPEARANCE</a></span>
+(два последних параметра не используются в некоторых операциях). Обычно используется шесть основных операций:</p>
+
+<ul>
+  <li><span class="cpp"><a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a>(Conn,<a href="rdsAltConnAppearanceOp.htm#light_ref9" title="RDS_CAOSET">RDS_CAOSET</a>,n,&amp;style)</span>
+  &ndash; установить параметры из структуры <span class="cpp">style</span> в качестве альтернативного внешнего вида
+  номер <span class="cpp">n</span> для связи <span class="cpp">Conn</span>;</li>
+
+  <li><span class="cpp"><a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a>(Conn,<a href="rdsAltConnAppearanceOp.htm#light_ref4" title="RDS_CAOCOUNT">RDS_CAOCOUNT</a>,0,NULL)</span>
+  &ndash; вернуть число альтернативных внешних видов, созданных для связи <span class="cpp">Conn</span>;</li>
+
+  <li><span class="cpp"><a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a>(Conn,<span id="light_ref31"><a href="rdsAltConnAppearanceOp.htm#light_ref6" title="RDS_CAOGET">RDS_CAOGET</a></span>,n,&amp;style)</span>
+  &ndash; считать параметры альтернативного вида номер <span class="cpp">n</span> связи <span class="cpp">Conn</span>
+  в структуру <span class="cpp">style</span>;</li>
+
+  <li><span class="cpp"><a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a>(Conn,<a href="rdsAltConnAppearanceOp.htm#light_ref10" title="RDS_CAOSETCURRENT">RDS_CAOSETCURRENT</a>,n,NULL)</span>
+  &ndash; активировать альтернативный внешний вид номер <span class="cpp">n</span> в связи
+  <span class="cpp">Conn</span> (связь будет выглядеть согласно параметрам, запомненным для этого внешнего вида);</li>
+
+  <li><span class="cpp"><a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a>(Conn,<span id="light_ref32"><a href="rdsAltConnAppearanceOp.htm#light_ref5" title="RDS_CAODELETE">RDS_CAODELETE</a></span>,n,NULL)</span>
+  &ndash; удалить альтернативный внешний вид номер <span class="cpp">n</span> в связи
+  <span class="cpp"></span> (все наборы с номерами, большими <span class="cpp">n</span>, сдвинутся вниз на 1);</li>
+
+  <li><span class="cpp"><a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a>(Conn,<span id="light_ref33"><a href="rdsAltConnAppearanceOp.htm#light_ref8" title="RDS_CAORESTORE">RDS_CAORESTORE</a></span>,0,NULL)</span>
+  &ndash; восстановить исходный внешний вид связи <span class="cpp">Conn</span>.</li>
+</ul>
+
+<p>В функции <span class="cpp"><a class="hidden" href="#ref24" title="Функция визуального выделения связи">MarkConnection</a></span>
+мы, прежде всего, определяем число уже существующих
+в связи <span class="cpp">Conn</span> альтернативных наборов параметров внешнего вида и записываем его в
+переменную <span class="cpp">StylesCount</span>. Если это значение больше или равно 1, значит,
+мы уже создали для этой связи альтернативный внешний вид, нужно только активировать его. В противном случае
+параметры текущего, то есть заданного пользователем при создании связи, внешнего вида считываются функцией
+<span class="cpp"><a href="rdsGetConnAppearance.htm" title="А.5.6.22. rdsGetConnAppearance &ndash; получить внешний вид связи">rdsGetConnAppearance</a></span> в структуру <span class="cpp">style</span> типа
+<span class="cpp"><a class="hidden" href="RDS_CONNAPPEARANCE.htm#ref1" title="Структура RDS_CONNAPPEARANCE">RDS_CONNAPPEARANCE</a></span>. Эта структура описана в
+&laquo;<span class="file">RdsDef.h</span>&raquo; следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;     <span class="rem">// Размер этой структуры</span>
+    <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> LineColor; <span class="rem">// Цвет линии</span>
+    <span class="kw">int</span> LineWidth;      <span class="rem">// Толщна линии</span>
+    <span class="kw">int</span> LineStyle;      <span class="rem">// Стиль линии (константа WinAPI)</span>
+    <span class="kw">int</span> ArrowLength;    <span class="rem">// Длина стрелки (0...255)</span>
+    <span class="kw">int</span> ArrowWidth;     <span class="rem">// Ширина выступа стрелки (0...255)</span>
+    <span class="kw">int</span> DotSize;        <span class="rem">// Размер точки в месте ветвления</span>
+  } <a class="hidden" href="RDS_CONNAPPEARANCE.htm#ref1" title="Структура RDS_CONNAPPEARANCE">RDS_CONNAPPEARANCE</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_CONNAPPEARANCE.htm#ref1" title="Структура RDS_CONNAPPEARANCE">RDS_CONNAPPEARANCE</a> *<a class="hidden" href="RDS_CONNAPPEARANCE.htm#ref2" title="Указатель на RDS_CONNAPPEARANCE">RDS_PCONNAPPEARANCE</a>;</pre>
+
+<p>Для визуального выделения связи мы увеличиваем толщину линии и ширину стрелки в 3 раза, а длину стрелки
+&ndash; в 2 раза. Затем, при помощи вызова <span class="cpp"><a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a></span> с константой
+<span class="cpp"><a class="hidden" href="rdsAltConnAppearanceOp.htm#light_ref9" title="RDS_CAOSET">RDS_CAOSET</a></span>, мы создаем в связи альтернативный внешний вид номер
+0 с параметрами из структуры <span class="cpp">style</span>.</p>
+
+<p>В самом конце функции вызовом <span class="cpp"><a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a></span> с константой
+<span class="cpp"><a class="hidden" href="rdsAltConnAppearanceOp.htm#light_ref10" title="RDS_CAOSETCURRENT">RDS_CAOSETCURRENT</a></span> в связи <span class="cpp">Conn</span> включается альтернативный внешний
+вид номер 0, созданный при самом первом вызове функции <span class="cpp"></span> для данной связи.</p>
+
+<p>><span id="ref34">Для</span>
+снятия визуального выделения связи достаточно восстановить ее исходный внешний вид, который она
+имела до включения альтернативного. Для лучшей читаемости примера мы оформим это действие в виде
+отдельной функции:</p>
+
+<pre class="cpp">  <span class="rem">// Снять выделение связи</span>
+  <span class="kw">void</span> <span id="light_ref34">UnmarkConnection</span>(<a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> Conn)
+  { <span class="rem">// Восстанавливаем исходный внешний вид связи</span>
+    <a class="hidden" href="rdsAltConnAppearanceOp.htm" title="А.5.6.2. rdsAltConnAppearanceOp &ndash; операции с альтернативным внешним видом связи или шины">rdsAltConnAppearanceOp</a>(Conn,<a class="hidden" href="rdsAltConnAppearanceOp.htm#light_ref8" title="RDS_CAORESTORE">RDS_CAORESTORE</a>,<span class="const">0</span>,NULL);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Теперь, когда вспомогательные функции написаны, можно приступать к проектированию функций блоков,
+с помощью которых узлы графа будут обмениваться друг с другом информацией. Мы уже решили, что в каждом
+блоке-узле может быть флаг начала или конца маршрута (по одному флагу каждого типа на весь граф),
+вещественное число-метка, показывающая кратчайшее расстояние от данного узла до начала маршрута, а
+также признак наличия этой метки, поскольку путь к некоторым узлам графа может и не существовать.
+Прежде всего нам потребуется функция, с помощью которой можно было бы сбросить флаг начала, флаг
+конца или вещественную метку блока, чтобы пользователь мог сбрасывать маршрут в графе.
+<span id="ref35">Назовем</span>
+<span id="ref36">эту</span> функцию
+&laquo;ProgrammersGuide.GraphPath.Reset&raquo; и введем для нее следующие описания:</p>
+
+<pre class="cpp">  <span class="rem">// Функция сброса параметров в узле графа</span>
+  <span class="preproc">#define PROGGUIDEGRAPHPATHFUNC_RESET \</span>
+<span class="preproc">            </span><span id="light_ref36"><span class="preproc">"ProgrammersGuide.GraphPath.Reset"</span></span>
+  <span class="rem">// Структура парметров функции</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;  <span class="rem">// Размер этой структуры</span>
+    BOOL ResetMark;  <span class="rem">// TRUE – сбросить метку узла</span>
+    BOOL ResetBegin; <span class="rem">// TRUE – сбросить флаг начала маршрута</span>
+    BOOL ResetEnd;   <span class="rem">// TRUE – сбросить флаг конца маршрута</span>
+  } <span id="light_ref35">TProgGuideFuncResetParams</span>;</pre>
+
+<p>Параметром этой функции будет структура <span class="cpp">TProgGuideFuncResetParams</span>, содержащая,
+помимо поля размера для проверки правильности передачи параметров, три логических поля, которые указывают,
+какие именно параметры блока нужно сбросить.</p>
+
+<p><span id="ref37">Нам</span>
+<span id="ref38">нужно</span>
+уметь не только сбрасывать параметры узла, но и считывать их. Создадим для этого функцию
+&laquo;ProgrammersGuide.GraphPath.GetParams&raquo; со следующими описаниями:</p>
+
+<pre class="cpp">  <span class="rem">// Функция получения параметров узла графа</span>
+  <span class="preproc">#define PROGGUIDEGRAPHPATHFUNC_GETPARAMS \</span>
+<span class="preproc">            </span><span id="light_ref38"><span class="preproc">"ProgrammersGuide.GraphPath.GetParams"</span></span>
+  <span class="rem">// Среагировавший на функцию блок должен вернуть значение 1</span>
+  <span class="rem">// Структура парметров функции</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize; <span class="rem">// Размер этой структуры</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Marked;    <span class="rem">// В узле есть метка</span>
+    <span class="kw">double</span> Mark;    <span class="rem">// Значение метки</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Begin;     <span class="rem">// Этот узел – начало маршрута</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> End;       <span class="rem">// Этот узел – конец маршрута</span>
+  } <span id="light_ref37">TProgGuideFuncGetParams</span>;</pre>
+
+<p>Структура параметров этой функции содержит поля, в которые реагирующий на вызов блок запишет свои параметры.
+Кроме того, эту же функцию мы будем использовать для того, чтобы выяснить, является ли данный блок узлом графа.
+Для этого потребуем, чтобы среагировавший на функцию блок-узел графа возвращал значение 1. Функции моделей
+блоков, в которых не предусмотрена реакция на эту функцию, вернут стандартное значение
+<span class="cpp"><a href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a></span>, то есть 0 &ndash; так мы сможем отличить узлы графа от посторонних
+блоков. При этом будем считать допустимым и вызов этой функции без параметров, то есть с указателем
+на параметры, равным <span class="cpp">NULL</span> &ndash; если параметры узла графа нам не нужны,
+а нужно просто выяснить, является ли блок узлом графа, будем вызывать функцию без параметров и
+анализировать возвращенное значение.</p>
+
+<p><span id="ref39">Для</span>
+<span id="ref40">того</span>,
+чтобы можно было легко найти идентификаторы блоков, являющихся началом и концом маршрута,
+введем специальную функцию поиска начала и конца &laquo;ProgrammersGuide.GraphPath.Find&raquo;:</p>
+
+<pre class="cpp">  <span class="rem">// Функция поиска начала и конца маршрута</span>
+  <span class="rem">// (вызывается у всех блоков подсистемы)</span>
+  <span class="preproc">#define PROGGUIDEGRAPHPATHFUNC_FIND \</span>
+<span class="preproc">            </span><span id="light_ref40"><span class="preproc">"ProgrammersGuide.GraphPath.Find"</span></span>
+  <span class="rem">// Структура параметров функции</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;         <span class="rem">// Размер этой структуры</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> BeginBlock; <span class="rem">// Найденный идентификатор начала</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> EndBlock;   <span class="rem">// Найденный идентификатор конца</span>
+  } <span id="light_ref39">TProgGuideFuncFindParams</span>;</pre>
+
+<p>Работать эта функция будет следующим образом. Чтобы найти идентификаторы крайних блоков маршрута,
+необходимо, как обычно, присвоить полю <span class="cpp">servSize</span> структуры
+<span class="cpp"><a class="hidden" href="#ref39" title="Структура TProgGuideFuncFindParams">TProgGuideFuncFindParams</a></span> размер этой структуры, а в поля
+<span class="cpp">BeginBlock</span> и <span class="cpp">EndBlock</span> записать значение <span class="cpp">NULL</span>.
+После этого следует вызвать данную функцию для всех блоков подсистемы, в которой собран граф, при
+помощи <span class="cpp"><span id="light_ref41"><a href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a></span></span>. Реагируя на вызов этой функции,
+блок-узел графа должен записать свой идентификатор в поле <span class="cpp">BeginBlock</span>, если он
+является началом маршрута, и в поле <span class="cpp">EndBlock</span>, если он является концом.
+Таким образом, после завершения <span class="cpp"><a class="hidden" href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a></span> в поле
+<span class="cpp">BeginBlock</span> окажется идентификатор начала маршрута, а в поле
+<span class="cpp">EndBlock</span> &ndash; идентификатор конца. Если начало или конец маршрута в
+графе не заданы, соответствующее поле останется равным <span class="cpp">NULL</span>.</p>
+
+<p>Конечно, можно было бы найти начало и конец маршрута и без этой функции &ndash; например, можно просто
+перебрать все блоки подсистемы, вызывая у каждого
+&laquo;<a class="hidden" href="#ref38" title="Функция блока ProgrammersGuide.GraphPath.GetParams">ProgrammersGuide.GraphPath.GetParams</a>&raquo; и запоминая идентификаторы блоков, вернувших
+<span class="cpp">TRUE</span> в полях <span class="cpp">Begin</span> и <span class="cpp">End</span> структуры
+<span class="cpp"><a class="hidden" href="#ref37" title="Структура TProgGuideFuncGetParams">TProgGuideFuncGetParams</a></span>. Однако, такой способ был бы более громоздким,
+чем использование специальной функции.</p>
+
+<p><span id="ref42">Для</span>
+<a href="#light_ref2" title="Разметка графа для поиска пути">пометки узла графа</a>
+<span id="ref43">вещественным</span>
+числом нам тоже потребуется функция:</p>
+
+<pre class="cpp">  <span class="rem">// Пометить узел графа указанным вещественным числом и вызвать</span>
+  <span class="rem">// эту же функцию у его соседей</span>
+  <span class="preproc">#define PROGGUIDEGRAPHPATHFUNC_MARK \</span>
+<span class="preproc">            </span><span id="light_ref43"><span class="preproc">"ProgrammersGuide.GraphPath.Mark"</span></span>
+  <span class="rem">// Структура параметров функции</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;       <span class="rem">// Размер этой структуры</span>
+    <span class="kw">double</span> Mark;          <span class="rem">// Устанавливаемое значение метки</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Previous; <span class="rem">// Блок, от которого пришла метка</span>
+  } <span id="light_ref42">TProgGuideFuncMarkParams</span>;</pre>
+
+<p>Блок, у которого вызвана эта функция, должен, согласно алгоритму разметки, либо принять новое значение
+метки <span class="cpp">Mark</span> и пометить всех своих соседей суммой значения метки и длины дуги к соседу,
+вызвав у каждого из них эту же функцию, либо оставить старое значение метки и не предпринимать никаких дополнительных
+действий. В поле <span class="cpp">Previous</span> структуры параметров передается идентификатор соседнего блока,
+пометка которого привела к вызову этой функции у данного блока. Этот идентификатор нужен только для того,
+чтобы исключить этот блок из перебираемых соседей для ускорения работы функции. Если его не передавать,
+алгоритм разметки все равно будет работать, поскольку у предыдущего по разметке блока значение метки заведомо
+меньше, чем у данного, и он в любом случае не будет помечен новым, большим значением.</p>
+
+<p><span id="ref44">Наконец</span>,
+после разметки графа нам потребуется функция, которая выделит кратчайший маршрут
+между началом и концом. Поскольку она будет отслеживать маршрут от конечного блока к начальному, назовем ее
+&laquo;ProgrammersGuide.GraphPath.BackTrace&raquo;:</p>
+
+<pre class="cpp">  <span class="rem">// Выделить маршрут от данного блока к началу</span>
+  <span class="preproc">#define PROGGUIDEGRAPHPATHFUNC_BACKTRACE \</span>
+<span class="preproc">            </span><span id="light_ref44"><span class="preproc">"ProgrammersGuide.GraphPath.BackTrace"</span></span></pre>
+
+<p>Параметров у этой функции не будет. Работать она будет так: при ее вызове у какого-либо блока этот блок
+должен изменить свой внешний вид и, если он не является началом маршрута, найти среди соседей, из
+которых можно в него попасть, блок с наименьшей меткой, выделить связь, ведущую к этому соседу, и вызвать у
+него эту же самую функцию. Таким образом, вызов этой функции у конечного блока при размеченном графе приведет к
+выделению всего маршрута.</p>
+
+<p>Если бы мы собирались распространять DLL с моделью блока-узла графа, все описания функций, приведенные
+выше, имело бы смысл выделить в отдельный заголовочный файл и распространять его вместе с библиотекой. Это
+дало бы возможность другим разработчикам разобраться в созданных нами функциях и использовать их для
+взаимодействия с нашей моделью. Но, поскольку модель создается только как пример использования функций блоков,
+можно разместить эти описания и в основном файле исходного текста.</p>
+
+<p>Для каждой из созданных функций нам потребуется глобальная целая переменная, в
+которой будет храниться идентификатор, данный этой функции при регистрации:</p>
+
+<pre class="cpp">  <span class="kw">int</span> <span id="light_ref45">GraphFuncFind</span>=<span class="const">0</span>,     <span class="rem">// </span><a class="hidden" href="#ref40" title="Функция блока ProgrammersGuide.GraphPath.Find"><span class="rem">ProgrammersGuide.GraphPath.Find</span></a>
+      <span id="light_ref46">GraphFuncGetParams</span>=<span class="const">0</span>,<span class="rem">// </span><a class="hidden" href="#ref38" title="Функция блока ProgrammersGuide.GraphPath.GetParams"><span class="rem">ProgrammersGuide.GraphPath.GetParams</span></a>
+      <span id="light_ref47">GraphFuncReset</span>=<span class="const">0</span>,    <span class="rem">// </span><a class="hidden" href="#ref36" title="Функция блока ProgrammersGuide.GraphPath.Reset"><span class="rem">ProgrammersGuide.GraphPath.Reset</span></a>
+      <span id="light_ref48">GraphFuncMark</span>=<span class="const">0</span>,     <span class="rem">// </span><a class="hidden" href="#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark"><span class="rem">ProgrammersGuide.GraphPath.Mark</span></a>
+      <span id="light_ref49">GraphFuncBackTrace</span>=<span class="const">0</span>;<span class="rem">// </span><a class="hidden" href="#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace"><span class="rem">ProgrammersGuide.GraphPath.BackTrace</span></a></pre>
+
+<p>Регистрировать функции мы будем в момент инициализации модели блока.</p>
+
+<p><span id="ref50">Чтобы</span>
+несколько улучшить читаемость нашей программы, напишем для созданных функций блоков функции-оболочки.
+Начнем с функции для сброса в заданной подсистеме различных параметров маршрута:</p>
+
+<pre class="cpp">  <span class="rem">// Сбросить у узлов графа в заданной подсистеме заданные маркеры</span>
+  <span class="kw">void</span> <span id="light_ref50">GraphPath_Reset</span>(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Sys, <span class="rem">// Подсистема</span>
+                       <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> mark,  <span class="rem">// Сбросить метки узлов</span>
+                       <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> begin, <span class="rem">// Сбросить начало маршрута</span>
+                       <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> end)   <span class="rem">// Сбросить конец маршрута</span>
+  { <span class="rem">// Структура параметров функции </span><a class="hidden" href="#ref36" title="Функция блока ProgrammersGuide.GraphPath.Reset"><span class="rem">ProgrammersGuide.GraphPath.Reset</span></a>
+    <a class="hidden" href="#ref35" title="Структура TProgGuideFuncResetParams">TProgGuideFuncResetParams</a> params;
+    <span class="rem">// Заполняем поле размера структуры парааметров</span>
+    params.servSize=<span class="kw">sizeof</span>(params);
+    <span class="rem">// Заполняем поля структуры параметров</span>
+    params.ResetMark=mark;
+    params.ResetBegin=begin;
+    params.ResetEnd=end;
+    <span class="rem">// Вызываем </span><a class="hidden" href="#ref36" title="Функция блока ProgrammersGuide.GraphPath.Reset"><span class="rem">ProgrammersGuide.GraphPath.Reset</span></a><span class="rem"> у всех</span>
+    <span class="rem">// блоков подсистемы Sys</span>
+    <a class="hidden" href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a>(Sys,<a class="hidden" href="#light_ref47" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">GraphFuncReset</a>,&amp;params,<span class="const">0</span>);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Эта функция принимает четыре параметра: идентификатор подсистемы, в которой находится граф,
+параметры которого сбрасываются, и три логических значения, указывающих, какие именно параметры графа
+сбрасываются. Внутри функции заполняется структура <span class="cpp"><a class="hidden" href="#ref35" title="Структура TProgGuideFuncResetParams">TProgGuideFuncResetParams</a></span> и
+для всех блоков указанной подсистемы вызывается функция
+&laquo;<a class="hidden" href="#ref36" title="Функция блока ProgrammersGuide.GraphPath.Reset">ProgrammersGuide.GraphPath.Reset</a>&raquo;, идентификатор которой находится в переменной
+<span class="cpp"><a class="hidden" href="#light_ref47" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">GraphFuncReset</a></span> (мы считаем, что функция уже зарегистрирована).</p>
+
+<p><span id="ref51">Напишем</span>
+такую же функцию-оболочку для поиска блоков начала и конца маршрута:</p>
+
+<pre class="cpp">  <span class="rem">// Найти блоки начала и конца маршрута в заданной подсистеме</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <span id="light_ref51">GraphPath_GetTerminalBlocks</span>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Sys,     <span class="rem">// Подсистема с графом</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> *pBegin, <span class="rem">// Возвращаемый идентификатор начала</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> *pEnd)   <span class="rem">// Возвращаемый идентификатор конца</span>
+  { <a class="hidden" href="#ref39" title="Структура TProgGuideFuncFindParams">TProgGuideFuncFindParams</a> params;
+    <span class="rem">// Заполняем поле размера структуры паараметров</span>
+    params.servSize=<span class="kw">sizeof</span>(params);
+    <span class="rem">// Обнуляем поля идентификаторов начала и конца</span>
+    params.BeginBlock=params.EndBlock=NULL;
+    <span class="rem">// Вызываем </span><a class="hidden" href="#ref40" title="Функция блока ProgrammersGuide.GraphPath.Find"><span class="rem">ProgrammersGuide.GraphPath.Find</span></a><span class="rem"> у всех блоков в</span>
+    <span class="rem">// подсистеме Sys, разрешая блокам остановить вызовы</span>
+    <a class="hidden" href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a>(Sys,<a class="hidden" href="#light_ref45" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Find">GraphFuncFind</a>,&amp;params,
+        <span id="light_ref52"><a class="hidden" href="rdsBroadcastFuncCallsDelayed.htm#light_ref2" title="RDS_BCALL_ALLOWSTOP">RDS_BCALL_ALLOWSTOP</a></span>);
+    <span class="rem">// Копируем найденные идентификаторы в переданные указатели</span>
+    <span class="kw">if</span>(pBegin) *pBegin=params.BeginBlock;
+    <span class="kw">if</span>(pEnd) *pEnd=params.EndBlock;
+    <span class="rem">// Возвращаем TRUE, если установлены и начало, и конец</span>
+    <span class="kw">return</span> params.BeginBlock!=NULL &amp;&amp; params.EndBlock!=NULL;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В эту функцию передается три параметра &ndash; идентификатор подсистемы с графом <span class="cpp">Sys</span> и
+два указателя <span class="cpp">pBegin</span> и <span class="cpp">pEnd</span>, по которым возвращаются найденные
+начало и конец маршрута соответственно. Внутри функции обнуляются поля
+<span class="cpp">BeginBlock</span> и <span class="cpp">EndBlock</span> структуры
+<span class="cpp"><a class="hidden" href="#ref39" title="Структура TProgGuideFuncFindParams">TProgGuideFuncFindParams</a></span>, после чего она используется как параметр при вызове функции
+&laquo;<a class="hidden" href="#ref40" title="Функция блока ProgrammersGuide.GraphPath.Find">ProgrammersGuide.GraphPath.Find</a>&raquo; у всех блоков подсистемы <span class="cpp">Sys</span>.
+В сервисную функцию <span class="cpp"><a class="hidden" href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a></span> передается флаг
+<span class="cpp"><a href="rdsBroadcastFuncCallsDelayed.htm#light_ref2" title="RDS_BCALL_ALLOWSTOP">RDS_BCALL_ALLOWSTOP</a></span>, что позволяет любому из вызываемых блоков досрочно прекратить вызовы.
+Этим можно воспользоваться для ускорения работы функции: если какой-либо блок обнаружит, что и поле
+<span class="cpp">BeginBlock</span>, и поле <span class="cpp">EndBlock</span> структуры параметров функции уже
+содержат идентификаторы, можно прекратить перебор блоков, поскольку и начало, и конец маршрута уже найдены. После
+завершения работы <span class="cpp"><a class="hidden" href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a></span> найденные идентификаторы передаются в
+вызвавшую функцию через указатели <span class="cpp">pBegin</span> и <span class="cpp">pEnd</span>, и функция возвращает
+<span class="cpp">TRUE</span>, если в графе заданы и начало, и конец маршрута.</p>
+
+<p><span id="ref53">Третья</span>
+функция будет вызывать сразу две функции блоков: функцию разметки графа
+&laquo;<a class="hidden" href="#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark">ProgrammersGuide.GraphPath.Mark</a>&raquo; и, после нее, функцию отслеживания маршрута по разметке
+&laquo;<a class="hidden" href="#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace">ProgrammersGuide.GraphPath.BackTrace</a>&raquo;. Мы будем использовать ее для поиска маршрута в графе,
+если на нем уже отмечены начало и конец, а маркировка графа сброшена:</p>
+
+<pre class="cpp">  <span class="rem">// Поиск маршрута в графе в заданной подсистеме</span>
+  <span class="kw">void</span> <span id="light_ref53">GraphPath_FindPath</span>(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> System)
+  { <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> StartBlock,EndBlock;
+    <a class="hidden" href="#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a> markparams;
+
+    <span class="rem">// Считаем, что маркировка всего графа сброшена</span>
+
+    <span class="rem">// Ищем начальную и конечную точку маршрута</span>
+    <span class="kw">if</span>(!<a class="hidden" href="#ref51" title="Функция поиска начального и конечного блока">GraphPath_GetTerminalBlocks</a>(System,&amp;StartBlock,&amp;EndBlock))
+      <span class="kw">return</span>; <span class="rem">// Начало или конец не найдены</span>
+    <span class="rem">// Начало маршрута – StartBlock, конец - EndBlock</span>
+
+    <span class="rem">// Маркируем граф от начала маршрута</span>
+    markparams.servSize=<span class="kw">sizeof</span>(markparams);
+    markparams.Mark=<span class="const">0</span>.<span class="const">0</span>; <span class="rem">// Начало маркируется значением 0</span>
+    markparams.Previous=NULL; <span class="rem">// Это значение не пришло от какого-то</span>
+                              <span class="rem">// соседнего блока</span>
+    <span class="rem">// Вызываем функцию маркировки для начального блока</span>
+    <span id="light_ref54"><a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a></span>(StartBlock,<a class="hidden" href="#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a>,&amp;markparams);
+
+    <span class="rem">// Теперь отслеживаем кратчайший путь в обратном направлении</span>
+    <span class="rem">// (от конечного блока)</span>
+    <a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(EndBlock,<a class="hidden" href="#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a>,NULL);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Сначала мы, используя уже написанную функцию <span class="cpp"><a class="hidden" href="#ref51" title="Функция поиска начального и конечного блока">GraphPath_GetTerminalBlocks</a></span>, ищем в
+графе внутри подсистемы <span class="cpp">System</span> начало и конец маршрута &ndash;
+их идентификаторы записываются в переменные <span class="cpp">StartBlock</span> и
+<span class="cpp">EndBlock</span> соответственно. Если
+<span class="cpp"><a class="hidden" href="#ref51" title="Функция поиска начального и конечного блока">GraphPath_GetTerminalBlocks</a></span> вернет <span class="cpp">FALSE</span>, значит, в
+графе не отмечены начало или конец маршрута, и поиск невозможен &ndash; функция немедленно завершается. В
+противном случае мы подготавливаем структуру <span class="cpp">markparams</span> типа
+<span class="cpp"><a class="hidden" href="#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a></span> для пометки начального блока маршрута числом 0:
+для этого мы записываем 0 в поле <span class="cpp"></span> и <span class="cpp"></span> в поле
+<span class="cpp"></span>. Поле <span class="cpp">Prevoius</span> в процессе разметки графа мы используем
+для того, чтобы, для ускорения работы, при пометке соседей очередного узла не помечать тот узел,
+из которого мы попали в данный (его метка заведомо меньше метки данного, и, согласно
+<a href="#light_ref2" title="Разметка графа для поиска пути">алгоритму разметки</a>, он все равно не будет помечен). При пометке
+самого первого, начального, узла у нас нет блока, из которого мы попадаем в него, поэтому вместо
+идентификатора блока мы используем значение <span class="cpp">NULL</span>.</p>
+
+<p>Далее сервисной функцией <span class="cpp"><a href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a></span> мы вызываем у блока
+<span class="cpp">StartBlock</span> функцию пометки
+&laquo;<a class="hidden" href="#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark">ProgrammersGuide.GraphPath.Mark</a>&raquo; (ее идентификатор должен быть записан в глобальную переменную
+<span class="cpp"><a class="hidden" href="#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a></span>), передавая в качестве параметров функции указатель на структуру
+<span class="cpp">markparams</span>. Это приведет к тому, что начальный блок маршрута будет помечен числом
+0 и пометит своих соседей расстояниями до них. Они, в свою очередь, пометят своих соседей, те &ndash;
+своих, и т.д., пока все узлы графа не будут помечены расстояниями до начала маршрута.</p>
+
+<p>Когда <span class="cpp"><a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a></span> завершится, весь граф окажется размеченным. Теперь
+мы вызываем функцию &laquo;<a class="hidden" href="#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace">ProgrammersGuide.GraphPath.BackTrace</a>&raquo; (ее идентификатор находится в
+<span class="cpp"><a class="hidden" href="#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a></span>) у блока конца маршрута <span class="cpp">EndBlock</span>: он
+должен перейти в выделенное состояние, выделить связь, ведущую к нему от блока с наименьшей меткой и вызвать у
+него ту же функцию. Тот, в свою очередь, тоже перейдет в выделенное состояние, найдет среди блоков,
+соединенных с ним, блок с наименьшей меткой, выделит связь, ведущую от него к себе и вызовет эту функцию
+у него, и т.д. Таким образом, весь маршрут от начала до конца окажется выделенным.</p>
+
+<p>Остальные созданные нами функции блоков требуют доступа к переменным конкретного блока,
+поэтому мы пока не можем написать для них функции-оболочки.</p>
+
+<p>Теперь пришло время подумать о переменных, которые необходимы блоку-узлу графа для работы.
+Нам потребуются две логических переменных для хранения флагов начала и конца маршрута (назовем их
+&laquo;<span class="rdsvar">sBegin</span>&raquo; и &laquo;<span class="rdsvar">sEnd</span>&raquo; соответственно), логическая переменная, указывающая
+на принадлежность блока к найденному маршруту (назовем ее &laquo;<span class="rdsvar">sInPath</span>&raquo;), вещественная переменная для
+хранения метки узла графа (&laquo;<span class="rdsvar">sPathMark</span>&raquo;), и еще одна логическая переменная, указывающая на наличие
+этой метки (&laquo;<span class="rdsvar">sMarked</span>&raquo;). Эти переменные будут управлять состоянием блока следующим образом:</p>
+
+<ul>
+  <li><span class="cpp">sBegin==1</span> &ndash; данный узел графа является началом маршрута;</li>
+  <li><span class="cpp">sEnd==1</span> &ndash; данный узел графа является концом маршрута;</li>
+  <li><span class="cpp">sInPath==1</span> &ndash; данный узел графа принадлежит к найденному маршруту
+  и должен визуально выделяться;</li>
+  <li><span class="cpp">sMarked==0</span> &ndash; у данного узла графа нет метки (расстояние до
+  начала маршрута еще не найдено);</li>
+  <li><span class="cpp">sMarked==1</span> &ndash; узел графа помечен вещественным числом <span class="cpp">sPathMark</span>.</li>
+</ul>
+
+<p class="noindent">Таким образом, блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">sBegin</td>
+<td class="center">Логический</td>
+<td class="center">1</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">3</td>
+<td class="vcenter">sEnd</td>
+<td class="center">Логический</td>
+<td class="center">1</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">4</td>
+<td class="vcenter">sInPath</td>
+<td class="center">Логический</td>
+<td class="center">1</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">5</td>
+<td class="vcenter">sMarked</td>
+<td class="center">Логический</td>
+<td class="center">1</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">6</td>
+<td class="vcenter">sPathMark</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Блок-узел графа не работает в <a href="pm_1_3.htm#ref3" title="Режим расчета">режиме расчета</a> и
+не передает никаких данных по связям, поэтому все переменные, кроме двух
+<a href="pm_1_5.htm#ref4" title="Обязательные сигналы простого блока">обязательных сигналов</a>
+&laquo;<span class="rdsvar">Start</span>&raquo; и &laquo;<span class="rdsvar">Ready</span>&raquo;, описаны как внутренние. Блоку все равно нужен
+по крайней мере один вход и один выход, чтобы можно было соединять такие блоки связями, символизирующими дуги
+графа &ndash; для этой цели мы будем использовать &laquo;<span class="rdsvar">Start</span>&raquo; и &laquo;<span class="rdsvar">Ready</span>&raquo;.</p>
+
+<p>Может возникнуть вопрос: почему все имена переменных мы начинаем с буквы &laquo;s&raquo;? Почему бы не
+назвать переменную для флага начала маршрута просто &laquo;<span class="rdsvar">Begin</span>&raquo;, а не
+&laquo;<span class="rdsvar">sBegin</span>&raquo;? Дело в том, что в структуре
+<span class="cpp"><a class="hidden" href="#ref37" title="Структура TProgGuideFuncGetParams">TProgGuideFuncGetParams</a></span>, описанной нами, есть поля
+<span class="cpp">Begin</span>, <span class="cpp">End</span> и <span class="cpp">Marked</span>. Если мы хотим
+использовать для доступа к переменным блока макросы с теми же названиями, эти названия не должны совпадать
+с именами других переменных и полей структур и классов, которые используются в тех же функциях (эта проблема уже
+упоминалась в <a href="pm_2_12_1.htm#ref7" title="Возможные конфликты макросов переменных с прочими переменными">&sect;2.12.1</a>). Например, если бы мы назвали переменную блока
+&laquo;<span class="rdsvar">Begin</span>&raquo;, а не &laquo;<span class="rdsvar">sBegin</span>&raquo;, макрос для нее выглядел бы так:</p>
+
+<pre class="cpp">  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="rem">// &hellip;</span>
+  <span class="preproc">#define Begin (*((char *)(pStart+2)))</span></pre>
+
+<p>В результате, встретив в тексте программы конструкцию вида</p>
+
+<pre class="cpp">  <a class="hidden" href="#ref37" title="Структура TProgGuideFuncGetParams">TProgGuideFuncGetParams</a> data;
+  data.Begin=TRUE;</pre>
+
+<p class="noindent">препроцессор посчитал бы слово <span class="cpp">Begin</span> именем макроса и развернул бы его:</p>
+
+<pre class="cpp">  <a class="hidden" href="#ref37" title="Структура TProgGuideFuncGetParams">TProgGuideFuncGetParams</a> data;
+  data.(*((<span class="kw">char</span> *)(((<span class="kw">char</span> *)(BlockData-&gt;VarData))+<span class="const">2</span>)))=TRUE;</pre>
+
+<p>Чтобы исключить такую возможность, мы, на всякий случай, сделали так, чтобы имена всех переменных
+блока не совпадали с полями используемых нами структур.</p>
+
+<p>Мы не будем записывать всю логику работы блока внутри одной-единственной функции модели &ndash; это сделало
+бы ее слишком громоздкой. Часть операций мы вынесем в другие функции, что несколько улучшит читаемость текста
+программы. Поскольку в этих функциях нам потребуется доступ к переменным блока, в каждую из них мы
+будем передавать указатель на структуру данных блока
+<span class="cpp"><span class="cpp"><a href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a></span> BlockData</span> &ndash; он
+<a href="pm_2_5_1.htm#light_ref11" title="Употребление макросов для переменных блока">используется в макросах переменных</a>, и без него они не будут
+работать. Все эти функции, как и сама функция модели, будут находиться после макроопределений для переменных
+блока:</p>
+
+<pre class="cpp">  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart    ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start     (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready     (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define sBegin    (*((char *)(pStart+2)))</span>
+  <span class="preproc">#define sEnd      (*((char *)(pStart+3)))</span>
+  <span class="preproc">#define sInPath   (*((char *)(pStart+4)))</span>
+  <span class="preproc">#define sMarked   (*((char *)(pStart+5)))</span>
+  <span class="preproc">#define sPathMark (*((double *)(pStart+6)))</span></pre>
+
+<p>Теперь запишем прототипы функций, которые мы будем вызывать из функции модели (сами
+функции мы напишем позже):</p>
+
+<pre class="cpp">  <span class="rem">// Сделать этот блок началом маршрута</span>
+  <span class="kw">void</span> <a class="hidden" href="#ref72" title="Сделать блок началом маршрута">GraphNode_SetBlockAsBegin</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData);
+  <span class="rem">// Сделать этот блок концом маршрута</span>
+  <span class="kw">void</span> <a class="hidden" href="#ref73" title="Сделать блок концом маршрута">GraphNode_SetBlockAsEnd</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData);
+  <span class="rem">// Реакция блока на функцию </span><a class="hidden" href="#ref36" title="Функция блока ProgrammersGuide.GraphPath.Reset"><span class="rem">ProgrammersGuide.GraphPath.Reset</span></a>
+  <span class="kw">void</span> <a class="hidden" href="#ref70" title="Функция сброса выделения узла">GraphNode_OnReset</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                         <a class="hidden" href="#ref35" title="Структура TProgGuideFuncResetParams">TProgGuideFuncResetParams</a> *reset);
+  <span class="rem">// Реакция блока на функцию </span><a class="hidden" href="#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark"><span class="rem">ProgrammersGuide.GraphPath.Mark</span></a>
+  <span class="kw">void</span> <a class="hidden" href="#ref75" title="Пометка узла графа и его соседей">GraphNode_OnMarkBlock</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                             <a class="hidden" href="#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a> *params);
+  <span class="rem">// Реакция блока на функцию </span><a class="hidden" href="#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace"><span class="rem">ProgrammersGuide.GraphPath.BackTrace</span></a>
+  <span class="kw">void</span> <a class="hidden" href="#ref79" title="Функция выделения кратчайшего маршрута">GraphNode_OnBackTracePath</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData);
+  <span class="rem">// Программное рисование внешнего вида блока</span>
+  <span class="kw">void</span> <a class="hidden" href="#ref68" title="Функция рисования узла графа">GraphNode_Draw</a>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw);</pre>
+
+<p>Мы вынесли в отдельные функции установку флагов начала и конца маршрута, программное рисование внешнего
+вида блока и реакцию на три из пяти созданных нами функций блока (реакция на две оставшихся будет
+достаточно простой, и мы запишем ее непосредственно в функции модели).</p>
+
+<p>Функция модели блока будет иметь следующий вид:</p>
+
+<pre class="cpp">  <span class="rem">// Модель блока-узла графа</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> GraphNode(<span class="kw">int</span> CallMode,
+            <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+            <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Вспомогательная - указатель на данные функции блока</span>
+    <span id="light_ref55"><a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a></span> func;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <span id="light_ref56"><a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span>:
+          <span class="rem">// Регистрация функций</span>
+          <span class="kw">if</span>(<a class="hidden" href="#light_ref46" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.GetParams">GraphFuncGetParams</a>==<span class="const">0</span>)
+            <a class="hidden" href="#light_ref46" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.GetParams">GraphFuncGetParams</a>=<span id="light_ref57"><a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a></span>(
+              PROGGUIDEGRAPHPATHFUNC_GETPARAMS);
+          <span class="kw">if</span>(<a class="hidden" href="#light_ref47" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">GraphFuncReset</a>==<span class="const">0</span>)
+            <a class="hidden" href="#light_ref47" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">GraphFuncReset</a>=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(
+              PROGGUIDEGRAPHPATHFUNC_RESET);
+          <span class="kw">if</span>(<a class="hidden" href="#light_ref45" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Find">GraphFuncFind</a>==<span class="const">0</span>)
+            <a class="hidden" href="#light_ref45" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Find">GraphFuncFind</a>=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(
+              PROGGUIDEGRAPHPATHFUNC_FIND);
+          <span class="kw">if</span>(<a class="hidden" href="#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a>==<span class="const">0</span>)
+            <a class="hidden" href="#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a>=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(
+              PROGGUIDEGRAPHPATHFUNC_MARK);
+          <span class="kw">if</span>(<a class="hidden" href="#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a>==<span class="const">0</span>)
+            <a class="hidden" href="#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a>=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(
+              PROGGUIDEGRAPHPATHFUNC_BACKTRACE);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <span id="light_ref58"><a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>:
+          <span class="kw">return</span> strncmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSLLLLD"</span>,<span class="const">8</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Вызов контекстного меню блока</span>
+        <span class="kw">case</span> <span id="light_ref59"><a class="hidden" href="RDS_BFM_CONTEXTPOPUP.htm" title="А.2.6.2. RDS_BFM_CONTEXTPOPUP &ndash; вызов контекстного меню блока">RDS_BFM_CONTEXTPOPUP</a></span>:
+          <span id="light_ref60"><a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a></span>(<span class="str">"Начало маршрута"</span>,
+            sBegin?<span id="light_ref61"><a class="hidden" href="rdsChangeMenuItem.htm#light_ref2" title="RDS_MENU_DISABLED">RDS_MENU_DISABLED</a></span>:<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>);
+          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(<span class="str">"Конец маршрута"</span>,
+            sEnd?<a class="hidden" href="rdsChangeMenuItem.htm#light_ref2" title="RDS_MENU_DISABLED">RDS_MENU_DISABLED</a>:<span class="const">0</span>,<span class="const">1</span>,<span class="const">0</span>);
+          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(<span class="str">"Сбросить все"</span>,<span class="const">0</span>,<span class="const">2</span>,<span class="const">0</span>);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Быбор пункта меню</span>
+        <span class="kw">case</span> <span id="light_ref62"><a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a></span>:
+          <span class="kw">switch</span>(((<span id="light_ref63"><a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a></span>)ExtParam)-&gt;Function)
+            { <span class="kw">case</span> <span class="const">0</span>: <span class="rem">// Начало маршрута</span>
+                <a class="hidden" href="#ref72" title="Сделать блок началом маршрута">GraphNode_SetBlockAsBegin</a>(BlockData);
+                <span id="light_ref64"><a class="hidden" href="rdsRefreshBlockWindows.htm" title="А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна">rdsRefreshBlockWindows</a></span>(BlockData-&gt;Parent,FALSE);
+                <span class="kw">break</span>;
+              <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Конец маршрута</span>
+                <a class="hidden" href="#ref73" title="Сделать блок концом маршрута">GraphNode_SetBlockAsEnd</a>(BlockData);
+                <a class="hidden" href="rdsRefreshBlockWindows.htm" title="А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна">rdsRefreshBlockWindows</a>(BlockData-&gt;Parent,FALSE);
+                <span class="kw">break</span>;
+              <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Сбросить все</span>
+                <a class="hidden" href="#ref50" title="Функция сброса маркеров в узле графа">GraphPath_Reset</a>(BlockData-&gt;Parent,TRUE,TRUE,TRUE);
+                <a class="hidden" href="rdsRefreshBlockWindows.htm" title="А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна">rdsRefreshBlockWindows</a>(BlockData-&gt;Parent,FALSE);
+                <span class="kw">break</span>;
+            }
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов функции блока</span>
+        <span class="kw">case</span> <span id="light_ref65"><a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span>:
+          func=(<a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a>)ExtParam;
+          <span class="kw">if</span>(func-&gt;Function==<a class="hidden" href="#light_ref47" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">GraphFuncReset</a>) <span class="rem">// Сброс параметров</span>
+            GraphNode_OnReset(BlockData,
+                (<a class="hidden" href="#ref35" title="Структура TProgGuideFuncResetParams">TProgGuideFuncResetParams</a>*)(func-&gt;Data));
+          <span class="kw">else</span> <span class="kw">if</span>(func-&gt;Function==<a class="hidden" href="#light_ref46" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.GetParams">GraphFuncGetParams</a>)
+            { <span class="rem">// Получение параметров узла</span>
+              <a class="hidden" href="#ref37" title="Структура TProgGuideFuncGetParams">TProgGuideFuncGetParams</a> *get=
+                  (<a class="hidden" href="#ref37" title="Структура TProgGuideFuncGetParams">TProgGuideFuncGetParams</a>*)(func-&gt;Data);
+              <span class="kw">if</span>(get!=NULL &amp;&amp;
+                 get-&gt;servSize&gt;=<span class="kw">sizeof</span>(<a class="hidden" href="#ref37" title="Структура TProgGuideFuncGetParams">TProgGuideFuncGetParams</a>))
+                { <span class="rem">// Допустимый размер структуры параметров</span>
+                  get-&gt;Marked=(sMarked!=<span class="const">0</span>);
+                  get-&gt;Mark=sPathMark;
+                  get-&gt;Begin=(sBegin!=<span class="const">0</span>);
+                  get-&gt;End=(sEnd!=<span class="const">0</span>);
+                }
+              <span class="kw">return</span> <span class="const">1</span>; <span class="rem">// Блок является узлом графа</span>
+            }
+          <span class="kw">else</span> <span class="kw">if</span>(func-&gt;Function==<a class="hidden" href="#light_ref45" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Find">GraphFuncFind</a>)
+            { <span class="rem">// Поиск начала и конца маршрута</span>
+              <a class="hidden" href="#ref39" title="Структура TProgGuideFuncFindParams">TProgGuideFuncFindParams</a> *find=
+                  (<a class="hidden" href="#ref39" title="Структура TProgGuideFuncFindParams">TProgGuideFuncFindParams</a>*)(func-&gt;Data);
+              <span class="kw">if</span>(find==NULL) <span class="kw">break</span>; <span class="rem">// Нет параметров</span>
+              <span class="kw">if</span>(find-&gt;servSize&lt;<span class="kw">sizeof</span>(<a class="hidden" href="#ref39" title="Структура TProgGuideFuncFindParams">TProgGuideFuncFindParams</a>))
+                <span class="kw">break</span>; <span class="rem">// Недопустимый размер структуры параметров</span>
+              <span class="kw">if</span>(sBegin) <span class="rem">// Этот блок – начало маршрута</span>
+                find-&gt;BeginBlock=BlockData-&gt;Block;
+              <span class="kw">if</span>(sEnd) <span class="rem">// Этот блок – конец маршрута</span>
+                find-&gt;EndBlock=BlockData-&gt;Block;
+              <span class="kw">if</span>(find-&gt;BeginBlock!=NULL &amp;&amp; find-&gt;EndBlock!=NULL)
+                func-&gt;Stop=TRUE; <span class="rem">// Оба конца маршрута найдены</span>
+            }
+          <span class="kw">else</span> <span class="kw">if</span>(func-&gt;Function==<a class="hidden" href="#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a>) <span class="rem">// Пометить граф</span>
+            <a class="hidden" href="#ref75" title="Пометка узла графа и его соседей">GraphNode_OnMarkBlock</a>(BlockData,
+                (<a class="hidden" href="#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a>*)(func-&gt;Data));
+          <span class="kw">else</span> <span class="kw">if</span>(func-&gt;Function==<a class="hidden" href="#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a>)
+            <a class="hidden" href="#ref79" title="Функция выделения кратчайшего маршрута">GraphNode_OnBackTracePath</a>(BlockData); <span class="rem">// Выделить маршрут</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Рисование</span>
+        <span class="kw">case</span> <span id="light_ref66"><a class="hidden" href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a></span>:
+          <a class="hidden" href="#ref68" title="Функция рисования узла графа">GraphNode_Draw</a>(BlockData,(<span id="light_ref67"><a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a></span>)ExtParam);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Наш блок не имеет <a href="pm_1_4.htm#ref8" title="Личная область данных блока">личной области данных</a>,
+поэтому единственное, что мы должны сделать при вызова нашей модели в режиме
+<span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span> &ndash; это зарегистрировать пять функций блока, которые мы
+собираемся использовать. Как и в предыдущих примерах, функции регистрируются только при
+инициализации модели самого первого блока &ndash; для этого глобальные переменные, в которых
+хранятся идентификаторы зарегистрированных функций, проверяются на нулевое значение.</p>
+
+<p>Реакция модели на вызов <span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> несколько отличается от аналогичных
+реакций в других примерах: здесь мы анализируем не всю переданную в функцию модели строку типов переменных,
+а только восемь первых ее символов. Таким образом мы позволяем добавлять в конец списка переменных блока
+любое количество новых переменных любых типов &ndash; нас интересуют только первые семь. Хотя мы и договорились
+использовать для рисования дуг графа связи, соединенные со входами <span class="cpp">Start</span> и
+<span class="cpp">Ready</span>, пользователю, привыкшему к использованию этих переменных для управления
+расчетом, это может показаться нелогичным. При желании, он может добавить в блок дополнительные вход и выход,
+к которым будут подключаться связи, изображающие дуги графа.</p>
+
+<p>В момент открытия контекстного меню блока (при вызове модели в режиме
+<span class="cpp"><a href="RDS_BFM_CONTEXTPOPUP.htm" title="А.2.6.2. RDS_BFM_CONTEXTPOPUP &ndash; вызов контекстного меню блока">RDS_BFM_CONTEXTPOPUP</a></span>) мы добавляем в меню три временных пункта:
+&laquo;<span class="menu">Начало маршрута</span>&raquo; (идентификатор пункта 0), &laquo;<span class="menu">Конец маршрута</span>&raquo; (идентификатор 1) и
+&laquo;<span class="menu">Сбросить все</span>&raquo; (идентификатор 2). Первые два пункта будут помечать блок, для которого вызвано меню,
+как начало и конец маршрута соответственно, при этом у блока, который уже помечен как начало или конец,
+соответствующий пункт меню будет запрещенным. Третий пункт меню сбрасывает маршрут во всем графе и приводит
+граф в исходное состояние.</p>
+
+<p>При выборе пользователем одного из добавленных пунктов меню (режим
+<span class="cpp"><a href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a></span>) мы вызываем функцию
+<span class="cpp">GraphNode_SetBlockAsBegin</span> (для пункта
+&laquo;<span class="menu">Начало маршрута</span>&raquo;), <span class="cpp">GraphNode_SetBlockAsEnd</span> (для пункта
+&laquo;<span class="menu">Конец маршрута</span>&raquo;) или <span class="cpp"><a class="hidden" href="#ref50" title="Функция сброса маркеров в узле графа">GraphPath_Reset</a></span> (для
+&laquo;<span class="menu">Сбросить все</span>&raquo;). Функцию <span class="cpp"><a class="hidden" href="#ref50" title="Функция сброса маркеров в узле графа">GraphPath_Reset</a></span> мы уже написали ранее &ndash;
+в нее передается идентификатор родительской подсистемы данного блока
+<span class="cpp">BlockData-&gt;Parent</span> и три значения
+<span class="cpp">TRUE</span>, указывающие, что в графе внутри этой подсистемы необходимо сбросить и флаги
+начала маршрута, и флаги его конца, и все метки узлов. Функции <span class="cpp">GraphNode_SetBlockAsBegin</span>
+и <span class="cpp">GraphNode_SetBlockAsEnd</span>, которые должны делать данный блок началом или концом маршрута, мы
+напишем позже (пока мы написали только их прототипы). После вызова любой из этих трех функций мы
+перерисовываем окно родительской подсистемы блока сервисной функцией
+<span class="cpp"><a href="rdsRefreshBlockWindows.htm" title="А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна">rdsRefreshBlockWindows</a></span>, чтобы отразить изменения, которые, возможно,
+произошли в состоянии блоков и внешнем виде связей из-за изменения или сброса маршрута. Параметр
+<span class="cpp">FALSE</span>, переданный в функцию, запрещает обновлять окна подсистем, вложенных в
+<span class="cpp">BlockData-&gt;Parent</span>: изменения в маршруте графа никак не могут отразиться на других
+подсистемах, и перерисовывать их не нужно.</p>
+
+<p>В реакции на вызов функции блока (<span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span>) мы, прежде всего, выясняем,
+какая именно функция вызвана, сравнивая переданный идентификатор с глобальными переменными, в которые мы
+записали идентификаторы зарегистрированных функций. Для функций
+&laquo;<a class="hidden" href="#ref36" title="Функция блока ProgrammersGuide.GraphPath.Reset">ProgrammersGuide.GraphPath.Reset</a>&raquo; (идентификатор хранится в глобальной переменной
+<span class="cpp"><a class="hidden" href="#light_ref47" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">GraphFuncReset</a></span>), &laquo;<a class="hidden" href="#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark">ProgrammersGuide.GraphPath.Mark</a>&raquo; (идентификатор в
+<span class="cpp"><a class="hidden" href="#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a></span>) и &laquo;<a class="hidden" href="#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace">ProgrammersGuide.GraphPath.BackTrace</a>&raquo; (идентификатор в
+<span class="cpp"><a class="hidden" href="#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a></span>) мы вызываем одну из внешних функций, для которых пока написаны только
+прототипы. На две оставшиеся функции мы реагируем прямо внутри модели.</p>
+
+<p>Если идентификатор совпал с переменной <span class="cpp"><a class="hidden" href="#light_ref46" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.GetParams">GraphFuncGetParams</a></span> (вызвана функция
+&laquo;<a class="hidden" href="#ref38" title="Функция блока ProgrammersGuide.GraphPath.GetParams">ProgrammersGuide.GraphPath.GetParams</a>&raquo; для получения параметров узла графа), мы приводим
+переданный указатель на параметры функции к типу <span class="cpp"><a class="hidden" href="#ref37" title="Структура TProgGuideFuncGetParams">TProgGuideFuncGetParams</a>*</span>
+и записываем его во вспомогательную переменную <span class="cpp">get</span>. Мы решили, что эту функцию можно вызывать
+и без параметров, в этом случае значение <span class="cpp">get</span> окажется равным
+<span class="cpp">NULL</span>. Если <span class="cpp">get</span> &ndash; не
+<span class="cpp">NULL</span>, и поле <span class="cpp">servSize</span> структуры, на которую указывает
+<span class="cpp">get</span>, больше или равно размеру типа
+<span class="cpp"><a class="hidden" href="#ref37" title="Структура TProgGuideFuncGetParams">TProgGuideFuncGetParams</a></span>, значит, функция вызвана с параметрами, и эти
+параметры переданы правильно: нужно записать в поля структуры, на которую указывает
+<span class="cpp">get</span>, значения переменных состояния блока. Затем функция возвращает значение 1,
+указывающее на то, что данный блок является узлом графа.</p>
+
+<p>Если идентификатор совпал с переменной <span class="cpp"><a class="hidden" href="#light_ref45" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Find">GraphFuncFind</a></span>, значит, вызвана функция
+&laquo;<a class="hidden" href="#ref40" title="Функция блока ProgrammersGuide.GraphPath.Find">ProgrammersGuide.GraphPath.Find</a>&raquo;. В этом случае мы приводим переданный указатель на параметры
+функции к типу <span class="cpp"><a class="hidden" href="#ref39" title="Структура TProgGuideFuncFindParams">TProgGuideFuncFindParams</a>*</span> и записываем его в переменную
+<span class="cpp">find</span>. Если поле <span class="cpp">servSize</span> переданной в параметрах структуры
+меньше размера типа <span class="cpp"><a class="hidden" href="#ref39" title="Структура TProgGuideFuncFindParams">TProgGuideFuncFindParams</a></span>, значит, функция вызвана с неправильными
+параметрами, и ее работа немедленно завершается оператором <span class="cpp">break</span>.
+В противном случае, если данный блок является началом маршрута, мы записываем его идентификатор в поле
+<span class="cpp">BeginBlock</span> переданной структуры, если он является концом &ndash; в поле
+<span class="cpp">EndBlock</span> (мы договорились, что перед вызовом этой функции для всех блоков графа эти
+поля должны быть обнулены). Затем, если оба поля имеют ненулевые значения (то есть если в структуре уже
+отметились и блок начала маршрута, и блок его конца), полю <span class="cpp">Stop</span> структуры описания
+вызванной функции (<span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span>) присваивается значение <span class="cpp">TRUE</span>.
+Это остановит перебор блоков подсистемы, если функция
+&laquo;<a class="hidden" href="#ref40" title="Функция блока ProgrammersGuide.GraphPath.Find">ProgrammersGuide.GraphPath.Find</a>&raquo; была вызвана через сервисную функцию
+<span class="cpp"><a class="hidden" href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a></span> (в уже написанной нами функции
+<span class="cpp"><a class="hidden" href="#ref51" title="Функция поиска начального и конечного блока">GraphPath_GetTerminalBlocks</a></span> мы делаем именно так).</p>
+
+<p>Наконец, при вызове модели в режиме <span class="cpp"><a href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a></span> для программного рисования внешнего вида
+блока мы вызываем внешнюю функцию <span class="cpp">GraphNode_Draw</span>, которую нам предстоит написать.
+Ей мы сейчас и займемся.</p>
+
+<p><span id="ref68">Будем</span>
+изображать блоки выделенного маршрута зелеными прямоугольниками, а все остальные &ndash; белыми.
+На блоке начала и конца маршрута будем выводить буквы
+&laquo;Н&raquo; и &laquo;К&raquo; соответственно. Никаких настроек для программного рисования мы
+предусматривать не будем: при необходимости, пользователь сможет подключить к блоку векторную картинку
+любого удобного ему вида. Функция <span class="cpp">GraphNode_Draw</span> будет выглядеть так:</p>
+
+<pre class="cpp">  <span class="rem">// Рисование узла графа</span>
+  <span class="kw">void</span> <span id="light_ref68">GraphNode_Draw</span>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw)
+  { <span class="kw">static</span> <span class="kw">char</span> beg[]=<span class="str">"Н"</span>,end[]=<span class="str">"К"</span>; <span class="rem">// Метки начала и конца</span>
+    <span class="kw">int</span> w,h;
+
+    <span class="rem">// Рисуем прямоугольник, цвет которого зависит от переменной</span>
+    <span class="rem">// блока sInPath</span>
+    <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,<span class="const">1</span>,<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+    <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,sInPath?<span class="const">0xff00</span>:<span class="const">0xffffff</span>);
+    <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(draw-&gt;Left,draw-&gt;Top,
+      draw-&gt;Left+draw-&gt;Width,draw-&gt;Top+draw-&gt;Height);
+
+    <span class="kw">if</span>(sBegin==<span class="const">0</span> &amp;&amp; sEnd==<span class="const">0</span>) <span class="rem">// Нет флагов начала и конца маршрута</span>
+      <span class="kw">return</span>;
+    <span class="rem">// Устанавливаем шрифт высотой в весь блок</span>
+    <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref5" title="RDS_GFS_EMPTY">RDS_GFS_EMPTY</a>,<span class="const">0</span>);
+    <a class="hidden" href="rdsXGSetFont.htm" title="А.5.18.22. rdsXGSetFont &ndash; установить шрифт">rdsXGSetFont</a>(<span class="const">0</span>,<span class="str">"Arial Cyr"</span>,
+      draw-&gt;Height,<span class="const">0</span>,<span id="light_ref69"><a class="hidden" href="RDS_SERVFONTPARAMS.htm#light_ref6" title="RUSSIAN_CHARSET">RUSSIAN_CHARSET</a></span>,<span class="const">0</span>,FALSE,FALSE,FALSE,FALSE);
+
+    <span class="kw">if</span>(sBegin) <span class="rem">// Рисуем метку начала</span>
+      { <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(beg,&amp;w,&amp;h);
+        <a class="hidden" href="rdsXGTextOut.htm" title="А.5.18.27. rdsXGTextOut &ndash; строка текста">rdsXGTextOut</a>(draw-&gt;Left+(draw-&gt;Width-w)/<span class="const">2</span>,
+                     draw-&gt;Top+(draw-&gt;Height-h)/<span class="const">2</span>,
+                     beg);
+      }
+    <span class="kw">if</span>(sEnd) <span class="rem">// Рисуем метку конца</span>
+      { <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(end,&amp;w,&amp;h);
+        <a class="hidden" href="rdsXGTextOut.htm" title="А.5.18.27. rdsXGTextOut &ndash; строка текста">rdsXGTextOut</a>(draw-&gt;Left+(draw-&gt;Width-w)/<span class="const">2</span>,
+                     draw-&gt;Top+(draw-&gt;Height-h)/<span class="const">2</span>,
+                     end);
+      }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции мы используем переменные блока, поэтому в нее передается указатель на
+структуру данных блока <span class="cpp"><a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData</span>, используемый в
+макросах для переменных. Кроме того, как и в другие функции рисования, которые мы писали в
+предыдущих примерах, в нее передается указатель на структуру типа <span class="cpp"><a href="RDS_BFM_DRAW.htm#ref1" title="Структура RDS_DRAWDATA">RDS_DRAWDATA</a></span>, в
+которой находятся параметры, необходимые для рисования изображения блока. Внутри функции мы сначала
+рисуем прямоугольник размером в весь блок. Цвет этого прямоугольника выбирается согласно значению логической
+переменной блока <span class="cpp">sInPath</span>: при ее истинном, то есть ненулевом, значении (узел
+графа находится на выделенном маршруте) прямоугольник будет зеленым, при ложном &ndash; белым. Затем,
+если обе переменных <span class="cpp">sBegin</span> и <span class="cpp">sEnd</span> равны нулю, то есть в
+блоке нет ни флага начала, ни флага конца маршрута, функция рисования завершается. Если же одна из этих переменных
+не равна нулю, устанавливается шрифт &laquo;Arial&raquo; с русским набором символов высотой в весь
+прямоугольник блока (<span class="cpp">draw-&gt;Height</span>) и выводится соответствующая буква &ndash;
+&laquo;Н&raquo; или &laquo;К&raquo;. Технически в блоке могут быть установлены оба флага, тогда
+обе буквы выведутся одна поверх другой, но при поиске маршрута такая ситуация вряд ли встретится (зачем
+искать маршрут от какого-то узла графа к нему же?) и мы не будем предпринимать по этому поводу каких-либо
+действий.</p>
+
+<p><span id="ref70">Теперь</span> напишем функцию
+<span class="cpp">GraphNode_OnReset</span>, которая обеспечивает реакцию нашего блока
+на вызов функции &laquo;<a class="hidden" href="#ref36" title="Функция блока ProgrammersGuide.GraphPath.Reset">ProgrammersGuide.GraphPath.Reset</a>&raquo;:</p>
+
+<pre class="cpp">  <span class="rem">// Реакция блока на функцию </span><a class="hidden" href="#ref36" title="Функция блока ProgrammersGuide.GraphPath.Reset"><span class="rem">ProgrammersGuide.GraphPath.Reset</span></a>
+  <span class="kw">void</span> <span id="light_ref70">GraphNode_OnReset</span>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="#ref35" title="Структура TProgGuideFuncResetParams">TProgGuideFuncResetParams</a> *reset)
+  { <span class="kw">if</span>(reset==NULL) <span class="kw">return</span>; <span class="rem">// Нет параметров функции</span>
+    <span class="kw">if</span>(reset-&gt;servSize&lt;<span class="kw">sizeof</span>(<a class="hidden" href="#ref35" title="Структура TProgGuideFuncResetParams">TProgGuideFuncResetParams</a>))
+      <span class="kw">return</span>; <span class="rem">// Размер переданной структуры меньше ожидаемого</span>
+
+    <span class="kw">if</span>(reset-&gt;ResetMark)
+      { <span class="rem">// Сбрасываем выделение всех присоединенных к блоку связей</span>
+        <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> c=NULL;
+        <span class="kw">for</span>(;;) <span class="rem">// Перебираем все связи, подключенные к блоку</span>
+          { c=<span id="light_ref71"><a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a></span>(BlockData-&gt;Block,c,TRUE,TRUE,NULL);
+            <span class="kw">if</span>(c==NULL) <span class="kw">break</span>; <span class="rem">// Все связи перебраны</span>
+            <span class="rem">// Снимаем выделение связи c</span>
+            <a class="hidden" href="#ref34" title="Функция снятия визуального выделения связи">UnmarkConnection</a>(c);
+          }
+        <span class="rem">// Сбрасываем флаги наличия метки и принадлежности</span>
+        <span class="rem">// к выделенному маршруту</span>
+        sMarked=sInPath=<span class="const">0</span>;
+      }
+
+    <span class="kw">if</span>(reset-&gt;ResetBegin) <span class="rem">// Сбрасываем флаг начала маршрута</span>
+      sBegin=<span class="const">0</span>;
+    <span class="kw">if</span>(reset-&gt;ResetEnd) <span class="rem">// Сбрасываем флаг конца маршрута</span>
+      sEnd=<span class="const">0</span>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В эту функцию передается указатель на структуру данных блока <span class="cpp">BlockData</span> (для
+обеспечения работы макросов переменных) и указатель на структуру параметров функции
+&laquo;<a class="hidden" href="#ref36" title="Функция блока ProgrammersGuide.GraphPath.Reset">ProgrammersGuide.GraphPath.Reset</a>&raquo;. В этой структуре указано, какие именно переменные блока
+нужно сбросить.</p>
+
+<p>Прежде всего, мы, как обычно, проверяем правильность переданных параметров, сравнивая поле
+<span class="cpp">servSize</span> переданной структуры <span class="cpp">reset</span> с размером типа
+<span class="cpp"><a class="hidden" href="#ref35" title="Структура TProgGuideFuncResetParams">TProgGuideFuncResetParams</a></span>. Если значение поля окажется меньше размера
+типа, параметры переданы неправильно, и функция завершается. В противном случае анализируются логические
+поля переданной структуры.</p>
+
+<p>Если поле <span class="cpp">ResetMark</span> истинно, нужно сбросить метку узла графа и
+отменить выделение маршрута. Чтобы отменить выделение нужно, кроме изменения переменных данного блока,
+снять выделение со связей, подключенных к этому блоку, если они изображают дуги, попавшие на маршрут.
+Мы не будем разбираться, какие связи находятся на маршруте, а какие &ndash; нет, мы просто снимем
+выделение со всех связей, соединенных с этим блоком. Для этого переберем их все функцией
+<span class="cpp"><a href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a></span> (мы уже встречались с ней в
+<a href="pm_2_7_4.htm#ref1" title="Хранение параметров в значениях переменных по умолчанию">&sect;2.7.4</a>) и для каждой вызовем уже написанную нами
+функцию <span class="cpp"><a href="#ref34" title="Функция снятия визуального выделения связи">UnmarkConnection</a></span>. Переменным блока <span class="cpp">sMarked</span> (флаг
+наличия метки) и <span class="cpp">sInPath</span> (флаг принадлежности к маршруту) мы
+присваиваем значение 0.</p>
+
+<p>Если в переданной структуре истинно поле <span class="cpp">ResetBegin</span>, нужно сбросить у блока
+флаг начала маршрута: переменной <span class="cpp">sBegin</span> присваивается значение 0. Если истинно поле
+<span class="cpp">ResetEnd</span>, то сбрасывается флаг конца: обнуляется переменная <span class="cpp">sEnd</span>.</p>
+
+<p><span id="ref72">Функция</span>
+<span class="cpp">GraphNode_SetBlockAsBegin</span> делает данный блок началом маршрута:</p>
+
+<pre class="cpp">  <span class="rem">// Сделать данный блок началом маршрута</span>
+  <span class="kw">void</span> <span id="light_ref72">GraphNode_SetBlockAsBegin</span>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData)
+  { <span class="kw">if</span>(sBegin) <span class="rem">// Блок уже является началом маршрута</span>
+      <span class="kw">return</span>;
+    <span class="rem">// Сбрасываем старый флаг начала маршрута и разметку всего графа</span>
+    <a class="hidden" href="#ref50" title="Функция сброса маркеров в узле графа">GraphPath_Reset</a>(BlockData-&gt;Parent,TRUE,TRUE,FALSE);
+    <span class="rem">// Устанавливаем флаг начала маршрута у данного блока</span>
+    sBegin=<span class="const">1</span>;
+    <span class="rem">// Ищем маршрут в графе</span>
+    <a class="hidden" href="#ref53" title="Функция поиска маршрута">GraphPath_FindPath</a>(BlockData-&gt;Parent);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Прежде всего мы, на всякий случай, проверяем, не является ли уже данный блок (то есть блок,
+к которому относится переданный в функцию указатель на структуру данных <span class="cpp">BlockData</span>) началом
+маршрута. Если это так, никаких действий предпринимать не нужно &ndash; функция немедленно завершается.
+Если данный блок началом маршрута не является, мы вызываем для родительской подсистемы данного блока
+ранее написанную нами функцию <span class="cpp"><a href="#ref50" title="Функция сброса маркеров в узле графа">GraphPath_Reset</a></span>, которая сбросит во всем графе
+разметку и старый флаг начала маршрута. Флаг конца маршрута в графе не сбрасывается, об этом говорит
+переданное в четвертом параметре функции значение <span class="cpp">FALSE</span>. Затем мы устанавливаем флаг
+начала маршрута у данного блока, присвоив его переменной <span class="cpp">sBegin</span> значение 1
+(это обязательно делать после вызова функции <span class="cpp"><a class="hidden" href="#ref50" title="Функция сброса маркеров в узле графа">GraphPath_Reset</a></span> &ndash; если сделать
+это до ее вызова, она, работая со всеми узлами графа, сбросит только что установленный нами флаг и
+в данном блоке тоже). После этого мы пытаемся найти в графе маршрут от начала к концу, вызывая
+<span class="cpp"><a href="#ref53" title="Функция поиска маршрута">GraphPath_FindPath</a></span>. Мы не проверяем, установлен ли флаг конца маршрута: если
+он не установлен, <span class="cpp"><a class="hidden" href="#ref53" title="Функция поиска маршрута">GraphPath_FindPath</a></span> просто завершится, не выполнив
+никаких действий.</p>
+
+<p><span id="ref73">Функция</span>,
+делающая данный блок концом маршрута, устроена аналогично:</p>
+
+<pre class="cpp">  <span class="rem">// Сделать данный блок концом маршрута</span>
+  <span class="kw">void</span> <span id="light_ref73">GraphNode_SetBlockAsEnd</span>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData)
+  { <span class="kw">if</span>(sEnd) <span class="rem">// Блок уже является концом маршрута</span>
+      <span class="kw">return</span>;
+    <span class="rem">// Сбрасываем старый флаг конца маршрута и разметку всего графа</span>
+    <a class="hidden" href="#ref50" title="Функция сброса маркеров в узле графа">GraphPath_Reset</a>(BlockData-&gt;Parent,TRUE,FALSE,TRUE);
+    <span class="rem">// Устанавливаем флаг конца маршрута у данного блока</span>
+    sEnd=<span class="const">1</span>;
+    <span class="rem">// Ищем маршрут в графе</span>
+    <a class="hidden" href="#ref53" title="Функция поиска маршрута">GraphPath_FindPath</a>(BlockData-&gt;Parent);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Точно так же, мы сначала сбрасываем разметку графа и старый флаг конца, устанавливаем новый флаг конца
+в данном блоке, а затем пытаемся отыскать в графе кратчайший путь от начала маршрута к его концу.</p>
+
+<p>Осталось написать две самых важных функции, которые, собственно, и реализуют описанный
+выше <a href="#light_ref2" title="Разметка графа для поиска пути">алгоритм разметки</a> графа и прослеживание в
+нем кратчайшего маршрута. Начнем с функции
+<span class="cpp"></span>, реализующей реакцию блока на вызов
+&laquo;<a class="hidden" href="#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark">ProgrammersGuide.GraphPath.Mark</a>&raquo;: она должна пометить данный блок указанным в
+параметрах числом, если оно меньше текущей метки блока, а также пометить все соседние узлы графа суммой
+метки данного блока и расстояния до соседнего узла. Для перебора соседей блока мы будем использовать
+сервисную функцию RDS <span class="cpp"><span id="light_ref74"><a href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span></span> (она уже встречалась нам
+в <a href="pm_2_13_2.htm" title="&sect;2.13.2. Прямой вызов функции одного блока">&sect;2.13.2</a>), поэтому сначала напишем прототип функции, которая
+будет вызываться для каждого обнаруженного соседа (саму функцию мы напишем позже):</p>
+
+<pre class="cpp">  <span class="rem">// Прототип функции обратного вызова для перечисления соседей блока</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="#ref78" title="Функция обратного вызова для пометки узла графа">GraphPath_MarkBlock_Callback</a>(
+    <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> src,
+    <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> dest,
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> data);</pre>
+
+<p><span id="ref75">Теперь</span>
+напишем функцию <span class="cpp">GraphNode_OnMarkBlock</span> (она будет достаточно простой,
+основная работа будет выполняться в функции обратного вызова):</p>
+
+<pre class="cpp">  <span class="rem">// Пометить данный блок и его соседей</span>
+  <span class="kw">void</span> <span id="light_ref75">GraphNode_OnMarkBlock</span>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a> *params)
+  { <span class="kw">if</span>(params==NULL) <span class="kw">return</span>; <span class="rem">// Нет параметров функции</span>
+    <span class="kw">if</span>(params-&gt;servSize&lt;<span class="kw">sizeof</span>(<a class="hidden" href="#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a>))
+      <span class="kw">return</span>; <span class="rem">// Размер переданной структуры меньше ожидаемого</span>
+
+    <span class="kw">if</span>(sMarked!=<span class="const">0</span> &amp;&amp; sPathMark&lt;=params-&gt;Mark)
+      <span class="kw">return</span>; <span class="rem">// Блок уже помечен меньшим или таким же числом</span>
+
+    <span class="rem">// Блок не помечен вообще или помечен большим числом -</span>
+    <span class="rem">// помечаем его и его соседей новыми числами</span>
+    sMarked=<span class="const">1</span>; <span class="rem">// У блока есть метка</span>
+    sPathMark=params-&gt;Mark; <span class="rem">// Новая метка блока</span>
+
+    <span class="kw">if</span>(sEnd) <span class="rem">// Это – конец маршрута, дальше помечать незачем</span>
+      <span class="kw">return</span>;
+
+    <span class="rem">// Помечаем всех соседей блока, кроме params-&gt;Previous,</span>
+    <span class="rem">// суммой метки этого блока и длины дуги к соседу</span>
+    <a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a>(BlockData-&gt;Block,
+      <span id="light_ref76"><a class="hidden" href="rdsEnumConnectedBlocks.htm#light_ref3" title="RDS_BEN_INPUTS">RDS_BEN_INPUTS</a></span>|<span id="light_ref77"><a class="hidden" href="rdsEnumConnectedBlocks.htm#light_ref4" title="RDS_BEN_OUTPUTS">RDS_BEN_OUTPUTS</a></span>,
+      <a class="hidden" href="#ref78" title="Функция обратного вызова для пометки узла графа">GraphPath_MarkBlock_Callback</a>,params);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Сначала мы, как обычно, проверяем размер переданной структуры параметров. Если он нам подходит,
+мы сравниваем число, которым предлагается пометить этот блок, с уже имеющейся в нем меткой. Если
+новая метка больше старой, ничего помечать заново не нужно. Если же новая метка меньше, блок
+помечается новым, меньшим, значением: оно переносится в переменную блока <span class="cpp">sPathMark</span>
+(при этом взводится флаг наличия метки <span class="cpp">sMarked</span>). Если данный блок является концом
+маршрута, помечать его соседей не требуется &ndash; достигнув конца, нам не нужно идти дальше.
+В противном случае при помощи вызова <span class="cpp"><a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span> для каждого
+из блоков, соединенных с данным, вызывается функция обратного вызова
+<span class="cpp"><a class="hidden" href="#ref78" title="Функция обратного вызова для пометки узла графа">GraphPath_MarkBlock_Callback</a></span>, в которую будут передан указатель <span class="cpp">params</span>,
+а также описания двух крайних точек связи, соединяющей эти два блока
+(см. <a href="pm_2_13_2.htm#ref3" title="Пример использования функции rdsEnumConnectedBlocks">&sect;2.13.2</a>). Эта функция должна проверить допустимость
+направления связи (мы можем переходить от блока к блоку только по стрелкам), вычислить длину дуги и
+попытаться пометить соседний блок новым числом.
+<span id="ref78">Напишем</span> эту функцию:</p>
+
+<pre class="cpp">  <span class="rem">// Функция обратного вызова для </span><a class="hidden" href="#ref75" title="Пометка узла графа и его соседей"><span class="rem">GraphNode_OnMarkBlock</span></a>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <span id="light_ref78">GraphPath_MarkBlock_Callback</span>(
+      <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> src,
+      <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref2" title="Указатель на RDS_POINTDESCRIPTION">RDS_PPOINTDESCRIPTION</a> dest,<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> data)
+  { <a class="hidden" href="#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a> *src_params=
+      (<a class="hidden" href="#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a>*)data;
+    <a class="hidden" href="#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a> dest_params;
+    <span class="kw">double</span> ArcLen;
+
+    <span class="rem">// Функция вызвана для пары блоков: src-&gt;Block – данный блок,</span>
+    <span class="rem">// dest-&gt;Block – его сосед. Их соединяет связь dest-&gt;Owner (или</span>
+    <span class="rem">// src-&gt;Owner – поля Owner у структур src и dest равны, поскольку</span>
+    <span class="rem">// обе точки принадлежат одной и той же связи)</span>
+
+    <span class="rem">// Сравниваем найденного соседа с блоком,</span>
+    <span class="rem">// который не нужно помечать</span>
+    <span class="kw">if</span>(src_params-&gt;Previous==dest-&gt;Block)
+      <span class="kw">return</span> TRUE;
+
+    <span class="rem">// Связь должна подходить ко входу блока dest-&gt;Block</span>
+    <span class="rem">// (движение в графе возможно только по стрелкам)</span>
+    <span class="kw">if</span>(dest-&gt;Source) <span class="rem">// Точка dest соединена с выходом блока</span>
+      <span class="kw">return</span> TRUE;
+
+    <span class="rem">// Является ли найденный сосед узлом графа?</span>
+    <span class="kw">if</span>(!<a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(dest-&gt;Block,<a class="hidden" href="#light_ref46" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.GetParams">GraphFuncGetParams</a>,NULL))
+      <span class="kw">return</span> TRUE; <span class="rem">// Не является</span>
+
+    <span class="rem">// Вычисляем длину дуги между блоками</span>
+    ArcLen=<a class="hidden" href="#ref11" title="Функция проверки допустимости и вычисления длины связи">CalcArcLength</a>(dest-&gt;Owner);
+    <span class="kw">if</span>(ArcLen&lt;<span class="const">0</span>.<span class="const">0</span>) <span class="rem">// Связь разветвленная или оборванная</span>
+      <span class="kw">return</span> TRUE; <span class="rem">// Такая связь не может быть дугой</span>
+
+    <span class="rem">// Помечаем найденный соседний блок суммой маркировки данного</span>
+    <span class="rem">// блока (src_params-&gt;Mark) и длины дуги к найденному (ArcLen)</span>
+    dest_params.servSize=<span class="kw">sizeof</span>(dest_params);
+    dest_params.Mark=src_params-&gt;Mark+ArcLen;
+    dest_params.Previous=src-&gt;Block; <span class="rem">// Блок, от которого пришла метка</span>
+    <a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(dest-&gt;Block,<a class="hidden" href="#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a>,&amp;dest_params);
+    <span class="kw">return</span> TRUE;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В параметре <span class="cpp">data</span> в эту функцию передается последний параметр функции
+<span class="cpp"><a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span>. В функции
+<span class="cpp"><a href="#ref75" title="Пометка узла графа и его соседей">GraphNode_OnMarkBlock</a></span> мы подставили туда <span class="cpp">params</span> &ndash;
+указатель на структуру параметров функции &laquo;<a class="hidden" href="#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark">ProgrammersGuide.GraphPath.Mark</a>&raquo;, имеющую тип
+<span class="cpp"><a href="#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a></span>. Поэтому в данной функции мы, прежде всего,
+приводим параметр <span class="cpp">data</span>, имеющий тип <span class="cpp">void*</span>, обратно к типу
+&laquo;указатель на <a class="hidden" href="#ref42" title="Структура TProgGuideFuncMarkParams">TProgGuideFuncMarkParams</a>&raquo; и записываем
+его во вспомогательную переменную <span class="cpp">src_params</span>. Теперь мы имеем доступ
+к метке блока, соседей которого мы помечаем (<span class="cpp">src_params-&gt;Mark</span>) и к
+идентификатору блока, от которого пришла эта метка, и который помечать бессмысленно
+(<span class="cpp">src_params-&gt;Previous</span>). Мы можем сравнить идентификатор найденного соседа
+(<span class="cpp">dest-&gt;Block</span>) с этим идентификатором и завершить функцию, если они совпали &ndash;
+этого соседа помечать не нужно. Завершая функцию обратного вызова мы всегда будем возвращать
+<span class="cpp">TRUE</span>, поскольку возврат <span class="cpp">FALSE</span> прервал бы работу
+<span class="cpp"><a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span>, а нам этого не нужно.</p>
+
+<p>Далее мы вызываем в найденном блоке-соседе функцию блока
+&laquo;<a class="hidden" href="#ref38" title="Функция блока ProgrammersGuide.GraphPath.GetParams">ProgrammersGuide.GraphPath.GetParams</a>&raquo;, которая должна вернуть единицу, если этот блок
+является узлом графа. Если она вернет ноль, мы не будем работать с этим блоком, поскольку в
+поиске маршрута участвуют только блоки-узлы графа.</p>
+
+<p>Теперь, когда мы знаем, что найденный сосед <span class="cpp">dest-&gt;Block</span> является узлом графа,
+который нужно попробовать пометить, мы можем вычислить длину дуги, ведущей к нему. Для этого вызывается
+написанная ранее функция <span class="cpp"><a href="#ref11" title="Функция проверки допустимости и вычисления длины связи">CalcArcLength</a></span>, в которую передается идентификатор связи
+<span class="cpp">dest-&gt;Owner</span>, изображающей эту дугу, и возвращенное ей значение записывается
+в переменную <span class="cpp">ArcLen</span>. Функция <span class="cpp"><a class="hidden" href="#ref11" title="Функция проверки допустимости и вычисления длины связи">CalcArcLength</a></span> не только
+вычислит длину дуги, но и проверит связь на разветвленность и обрыв &ndash; мы работаем только со связями,
+соединяющими два блока. Если значение <span class="cpp">ArcLen</span> отрицательно, связь не прошла эту
+проверку, и мы завершаем работу функции.</p>
+
+<p>Далее нам нужно вызвать у найденного соседа функцию блока &laquo;<a class="hidden" href="#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark">ProgrammersGuide.GraphPath.Mark</a>&raquo;,
+передав в ее параметрах новое значение метки, полученное сложением метки данного блока и длины дуги
+к соседу. Мы не можем использовать для этого структуру, указатель на которую находится в
+<span class="cpp">src_params</span>: там хранятся параметры, с которыми был вызван данный блок, и они нам
+будут нужны при обработке следующего соседа &ndash; мы не имеем права их изменять. Поэтому при вызове
+функции блока мы будем использовать другую структуру &ndash; <span class="cpp">dest_params</span>.
+Ее поля нам сейчас предстоит заполнить.</p>
+
+<p>В поле <span class="cpp">servSize</span> мы, как обычно, записываем размер самой структуры для проверки
+правильности передачи параметров. В поле <span class="cpp">Mark</span> мы записываем новое значение метки
+соседа: сумму <span class="cpp">src_params-&gt;Mark</span> и длины дуги <span class="cpp">ArcLen</span>. В
+поле <span class="cpp">Previous</span> мы записываем идентификатор данного блока <span class="cpp">src-&gt;Block</span>:
+когда вызванный нами сосед начнет помечать своих соседей, данный блок будет из этого процесса исключен.
+Теперь мы вызываем у найденного соседа функцию &laquo;<a class="hidden" href="#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark">ProgrammersGuide.GraphPath.Mark</a>&raquo; (ее
+идентификатор хранится в глобальной переменной <span class="cpp"><a class="hidden" href="#light_ref48" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Mark">GraphFuncMark</a></span>), передав ей в
+качестве параметров указатель на структуру <span class="cpp">dest_params</span>. Сосед, реагируя на
+этот вызов, вызовет функцию <span class="cpp"><a class="hidden" href="#ref75" title="Пометка узла графа и его соседей">GraphNode_OnMarkBlock</a></span>, которая начнет перебирать уже
+его соседей, вызывая для каждого <span class="cpp"><a class="hidden" href="#ref78" title="Функция обратного вызова для пометки узла графа">GraphPath_MarkBlock_Callback</a></span>, и т.д.,
+пока весь граф не будет размечен.</p>
+
+<p>Последняя функция, которую мы должны написать &ndash; это
+<span class="cpp">GraphNode_OnBackTracePath</span>, реакция на вызов функции блока
+&laquo;<a class="hidden" href="#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace">ProgrammersGuide.GraphPath.BackTrace</a>&raquo;. Эта функция должна пометить данный блок
+как принадлежащий к выделенному маршруту, найти среди соседей блок с наименьшей меткой, выделить связь,
+идущую от него, и тоже вызвать для него &laquo;<a class="hidden" href="#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace">ProgrammersGuide.GraphPath.BackTrace</a>&raquo;. Так,
+начав с конца маршрута, блок за блоком, будет помечен весь маршрут.</p>
+
+<p>Как и в <span class="cpp"><a class="hidden" href="#ref75" title="Пометка узла графа и его соседей">GraphNode_OnMarkBlock</a></span>, в этой функции нужно будет перебирать всех
+соседей блока, чтобы найти среди них блок с наименьшей меткой. Можно, как и там, сделать это с
+помощью сервисной функции <span class="cpp"><a class="hidden" href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span>, но, для разнообразия,
+воспользуемся уже знакомой нам функцией <span class="cpp"><a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a></span>.
+<span id="ref79">Текст</span> программы получится
+более громоздким, зато не потребуется писать функцию обратного вызова.</p>
+
+<pre class="cpp">  <span class="rem">// Проследить и выделить маршрут от данного блока в</span>
+  <span class="rem">// обратном направлении</span>
+  <span class="kw">void</span> <span id="light_ref79">GraphNode_OnBackTracePath</span>(<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData)
+  { <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> PrevBlock;
+    <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> PrevConn,c;
+    <span class="kw">double</span> minMark;
+    <a class="hidden" href="RDS_CONNDESCRIPTION.htm#ref1" title="Структура RDS_CONNDESCRIPTION">RDS_CONNDESCRIPTION</a> conndescr;
+    <a class="hidden" href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">RDS_POINTDESCRIPTION</a> pointdescr;
+    TProgGuideFuncGetParams params;
+
+    <span class="kw">if</span>(!sMarked) <span class="rem">// У блока нет метки</span>
+      <span class="kw">return</span>;
+
+    sInPath=<span class="const">1</span>; <span class="rem">// Помечаем данный блок как принадлежащий маршруту</span>
+
+    <span class="kw">if</span>(sBegin) <span class="rem">// Это начало маршрута – мы выделили его весь</span>
+      <span class="kw">return</span>;
+
+    <span class="rem">// Заполняем служебные поля размера у всех структур,</span>
+    <span class="rem">// которые нам потребуются</span>
+    conndescr.servSize=<span class="kw">sizeof</span>(conndescr);
+    pointdescr.servSize=<span class="kw">sizeof</span>(pointdescr);
+    params.servSize=<span class="kw">sizeof</span>(params);
+
+    <span class="rem">// Ищем среди соседей данного блока блок с наименьшей меткой</span>
+    PrevBlock=NULL;
+    <span class="rem">// Перебираем все связи блока</span>
+    c=NULL;
+    <span class="kw">for</span>(;;)
+      { <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> connBlock;
+        <span class="kw">double</span> connMark;
+        <span class="kw">int</span> numBlocks;
+        <span class="rem">// Получаем очередную связь блока, соединенную с его входом</span>
+        c=<a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a>(BlockData-&gt;Block,c,TRUE,FALSE,NULL);
+        <span class="kw">if</span>(c==NULL) <span class="kw">break</span>; <span class="rem">// Связи кончились</span>
+        <span class="rem">// Получаем параметры этой связи</span>
+        <a class="hidden" href="rdsGetConnDescription.htm" title="А.5.6.23. rdsGetConnDescription &ndash; получить описание связи">rdsGetConnDescription</a>(c,&amp;conndescr);
+        <span class="rem">// Перебираем все точки связи c и ищем среди них соединение</span>
+        <span class="rem">// с узлом графа на другом ее конце</span>
+        connBlock=NULL;
+        numBlocks=<span class="const">0</span>;
+        <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;conndescr.NumPoints;i++)
+          { <span class="rem">// Получаем описание точки связи i</span>
+            <a class="hidden" href="rdsGetPointDescription.htm" title="А.5.6.36. rdsGetPointDescription &ndash; получить описание точки связи">rdsGetPointDescription</a>(c,i,&amp;pointdescr);
+            <span class="rem">// Проверяем тип точки</span>
+            <span class="kw">if</span>(pointdescr.PointType==<a class="hidden" href="RDS_POINTDESCRIPTION.htm#light_ref5" title="RDS_PTBUS">RDS_PTBUS</a>)
+              { <span class="rem">// Связь, соединенная с шиной, нам не годится</span>
+                connBlock=NULL;
+                <span class="kw">break</span>;
+              }
+            <span class="kw">if</span>(pointdescr.PointType!=<a class="hidden" href="RDS_POINTDESCRIPTION.htm#light_ref4" title="RDS_PTBLOCK">RDS_PTBLOCK</a>)
+              <span class="kw">continue</span>;
+            <span class="rem">// Найдена точка соединения с блоком</span>
+            numBlocks++;
+            <span class="kw">if</span>(numBlocks&gt;<span class="const">2</span>) <span class="rem">// Разветвленная связь – не годится</span>
+              { connBlock=NULL;
+                <span class="kw">break</span>;
+              }
+            <span class="kw">if</span>(pointdescr.Block==BlockData-&gt;Block)
+              <span class="kw">continue</span>; <span class="rem">// Это не сосед, а сам данный блок</span>
+            <span class="rem">// Получаем параметры узла блока-соседа</span>
+            <span class="kw">if</span>(!<a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(pointdescr.Block,
+                                     <a class="hidden" href="#light_ref46" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.GetParams">GraphFuncGetParams</a>,&amp;params))
+              { <span class="rem">// Блок не является узлом графа</span>
+                connBlock=NULL;
+                <span class="kw">break</span>;
+              }
+            <span class="rem">// Нашли соседний блок, являющийся узлом графа</span>
+            <span class="kw">if</span>(params.Marked) <span class="rem">// У соседнего узла есть метка</span>
+              { connBlock=pointdescr.Block; <span class="rem">// Запоминаем</span>
+                connMark=params.Mark;
+              }
+          } <span class="rem">// for(int i=0;...)</span>
+        <span class="rem">// Цикл перебора точек связи закончен. В cоnnBlock должен</span>
+        <span class="rem">// находиться идентификатор узла, который эта связь соединяет</span>
+        <span class="rem">// с данным блоком, а в connMark – его метка.</span>
+        <span class="kw">if</span>(connBlock) <span class="rem">// Есть узел графа на другом конце связи</span>
+          { <span class="kw">if</span>(PrevBlock==NULL || minMark&gt;connMark)
+              { <span class="rem">// Найден узел с меньшей маркировкой</span>
+                PrevBlock=connBlock;
+                minMark=connMark;
+                PrevConn=c;
+              }
+          }
+      } <span class="rem">// for(;;)</span>
+
+    <span class="rem">// Перебор связей данного блока закончен. В PrevBlock должен</span>
+    <span class="rem">// находиться идентификатор соседа с наименьшей меткой, из</span>
+    <span class="rem">// которого можно попасть в данный блок, а в PrevConn -</span>
+    <span class="rem">// идентификатор соединяющей их связи</span>
+
+   <span class="kw">if</span>(PrevBlock)
+     { <span class="rem">// Визуально выделяем связь</span>
+       <a class="hidden" href="#ref24" title="Функция визуального выделения связи">MarkConnection</a>(PrevConn);
+       <span class="rem">// Вызываем функцию обратного прослеживания маршрута</span>
+       <span class="rem">// от найденного блока</span>
+       <a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(PrevBlock,<a class="hidden" href="#light_ref49" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.BackTrace">GraphFuncBackTrace</a>,NULL);
+     }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Сначала мы проверяем, есть ли у данного блока метка. Если ее нет, он не достижим из начального
+блока маршрута, и выделять нечего &ndash; функция завершается. Если же она есть, мы взводим в
+данном блоке флаг принадлежности к маршруту <span class="cpp">sInPath</span> и, если наш блок является
+началом маршрута, прекращаем работу &ndash; весь маршрут уже выделен. В противном случае начинаем
+перебирать всех соседей блока и искать среди них узел графа с наименьшей меткой, то есть ближайший
+к началу маршрута.</p>
+
+<p>Для поиска соседей мы в цикле перебираем все связи блока при помощи сервисной функции
+<span class="cpp"><a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a></span>. Мы просматриваем маршрут от конца к началу, поэтому
+нас интересуют только связи, стрелки которых направлены к данному блоку, то есть присоединенные
+к его входам, поэтому в третьем параметре <span class="cpp"><a class="hidden" href="rdsGetBlockLink.htm" title="А.5.6.20. rdsGetBlockLink &ndash; найти очередную связь, соединенную с блоком">rdsGetBlockLink</a></span> передается
+<span class="cpp">TRUE</span>, а в четвертом &ndash; <span class="cpp">FALSE</span>. В пятом параметре
+вместо указателя на структуру описания точки связи передается <span class="cpp">NULL</span>, поскольку
+это описание нас сейчас не интересует.</p>
+
+<p>В найденной связи <span class="cpp">c</span> мы будем перебирать точки в поисках точек соединения
+с блоками, поэтому нам необходимо узнать общее число точек в связи. Для этого мы считываем параметры
+связи в структуру <span class="cpp">conndescr</span> при помощи сервисной функции
+<span class="cpp"><a href="rdsGetConnDescription.htm" title="А.5.6.23. rdsGetConnDescription &ndash; получить описание связи">rdsGetConnDescription</a></span>. Теперь мы можем организовать цикл по всем точкам связи,
+чтобы найти блок на ее конце: счетчик цикла <span class="cpp">i</span> будет изменяться от 0 до
+<span class="cpp">conndescr.NumPoints-1</span>. Идентификатор найденного блока будет записан в
+переменную <span class="cpp">connBlock</span>.</p>
+
+<p>В цикле мы, прежде всего, вызываем сервисную функцию <span class="cpp"><a href="rdsGetPointDescription.htm" title="А.5.6.36. rdsGetPointDescription &ndash; получить описание точки связи">rdsGetPointDescription</a></span>, чтобы
+считать параметры <span class="cpp">i</span>-й точки связи <span class="cpp">с</span> в структуру
+<span class="cpp">pointdescr</span>. Затем мы проверяем тип этой точки. Если это точка соединения связи с
+шиной (<span class="cpp"><a class="hidden" href="RDS_POINTDESCRIPTION.htm#light_ref5" title="RDS_PTBUS">RDS_PTBUS</a></span>), эта связь не может быть дугой графа, даже если где-то,
+на одном из ее концов, будет находиться блок. В этом случае мы обнуляем переменную <span class="cpp">connBlock</span>
+и прекращаем перебор точек связи оператором <span class="cpp">break</span>. Если это внутренняя точка связи,
+мы пропускаем ее и переходим к следующей. Если же это точка соединения с блоком, мы увеличиваем
+счетчик найденных блоков <span class="cpp">numBlocks</span>. Если его значение превысит 2, связь
+разветвлена, и она не может быть дугой графа &ndash; мы прекращаем перебор точек. В противном случае
+мы сравниваем идентификатор соединенного блока с идентификатором данного, и пропускаем эту точку,
+если они совпали &ndash; нас интересует блок на другом конце этой связи. Если идентификаторы не совпали,
+мы вызываем у найденного блока функцию &laquo;<a class="hidden" href="#ref38" title="Функция блока ProgrammersGuide.GraphPath.GetParams">ProgrammersGuide.GraphPath.GetParams</a>&raquo; (ее
+идентификатор хранится в глобальной переменной <span class="cpp"><a class="hidden" href="#light_ref46" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.GetParams">GraphFuncGetParams</a></span>), которая заполнит
+структуру params типа <span class="cpp"><a class="hidden" href="#ref37" title="Структура TProgGuideFuncGetParams">TProgGuideFuncGetParams</a></span> параметрами узла графа,
+если, конечно, найденный блок им является. Если блок не является узлом графа (функция вернула 0), мы
+обнуляем <span class="cpp">connBlock</span> и прекращаем перебор точек &ndash; нам нужны только связи,
+идущие от узлов графа. В противном случае мы запоминаем его идентификатор в переменной <span class="cpp">connBlock</span>,
+а его метку &ndash; в <span class="cpp">connMark</span>.</p>
+
+<p>После завершения цикла по всем точкам связи в переменной <span class="cpp">connBlock</span> должен находится
+идентификатор найденного на противоположном конце связи узла графа или <span class="cpp">NULL</span>, если такого
+узла нет, а в переменной <span class="cpp">connMark</span> &ndash; значение метки этого узла. Теперь мы
+можем сравнить найденное значение метки с найденным на данный момент минимальным значением
+<span class="cpp">minMark</span> и, если найденное значение окажется меньше, заменить значение в
+<span class="cpp">minMark</span> на <span class="cpp">connMark</span> и запомнить идентификатор найденного блока
+узла в переменной <span class="cpp">PrevBlock</span>, а идентификатор идущей от него связи &ndash; в
+<span class="cpp">PrevConn</span>.</p>
+
+<p>Таким образом, после завершения перебора всех связей в переменной <span class="cpp">PrevBlock</span> должен
+оказаться идентификатор блока-соседа с наименьшей меткой, то есть идентификатор предыдущего блока кратчайшего
+маршрута, а в <span class="cpp">PrevConn</span> &ndash; связь, соединяющая этот блок с данным. Нам остается
+только визуально выделить эту связь, вызвав для нее ранее написанную функцию
+<span class="cpp"><a href="#ref24" title="Функция визуального выделения связи">MarkConnection</a></span>, и вызвать для найденного блока функцию
+&laquo;<a class="hidden" href="#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace">ProgrammersGuide.GraphPath.BackTrace</a>&raquo;, реагируя на которую он выделит себя, найдет среди
+своих соседей блок с минимальной меткой, вызовет для него &laquo;<a class="hidden" href="#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace">ProgrammersGuide.GraphPath.BackTrace</a>&raquo;
+и т.д., пока не будет достигнут начальный блок маршрута.</p>
+
+<p>Функции, начиная с модели блока <span class="cpp">GraphNode</span> и заканчивая последней написанной
+<span class="cpp"><a class="hidden" href="#ref79" title="Функция выделения кратчайшего маршрута">GraphNode_OnBackTracePath</a></span>, обращаются к переменным блока, поэтому в каждую
+из них передается параметр <span class="cpp">BlockData</span>, и все они располагаются после макроопределений
+переменных. Теперь, когда макросы для переменных нам больше не нужны, мы можем, как обычно, отменить их:</p>
+
+<pre class="cpp">  <span class="rem">// Отмена макроопределений переменных блока</span>
+  <span class="preproc">#undef sPathMark</span>
+  <span class="preproc">#undef sMarked</span>
+  <span class="preproc">#undef sInPath</span>
+  <span class="preproc">#undef sEnd</span>
+  <span class="preproc">#undef sBegin</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span></pre>
+
+<p>Мы написали все функции, необходимые для работы модели,
+и теперь можно приступать к ее тестированию. Но сначала разберемся, как же она работает.</p>
+
+<p>Представим себе, что в подсистеме собран граф из блоков с этой моделью, и все его блоки находятся
+в исходном состоянии, то есть все их флаги сброшены. Допустим, пользователь нажимает на каком-то
+из блоков правую кнопку мыши и выбирает в контекстном меню пункт &laquo;<span class="menu">Начало маршрута</span>&raquo;. Модель
+блока, в ответ на это, вызывает функцию <span class="cpp"><a href="#ref72" title="Сделать блок началом маршрута">GraphNode_SetBlockAsBegin</a></span>, которая сбрасывает во
+всем графе метки и флаги начала маршрута (ничего не изменится &ndash; мы считаем, что все блоки
+и так находятся в исходном состоянии), взводит в своем блоке флаг начала маршрута <span class="cpp">sBegin</span>
+и вызывает <span class="cpp"><a href="#ref53" title="Функция поиска маршрута">GraphPath_FindPath</a></span>, чтобы найти в графе кратчайший путь. Это ни
+к чему не приводит &ndash; в графе еще не задан флаг конца маршрута, и <span class="cpp"><a class="hidden" href="#ref53" title="Функция поиска маршрута">GraphPath_FindPath</a></span>
+завершается, не выполнив никаких действий.</p>
+
+<p>Теперь пользователь нажимает правую кнопку мыши на другом блоке и выбирает в контекстном меню пункт
+&laquo;<span class="menu">Конец маршрута</span>&raquo;. Модель блока вызывает функцию <span class="cpp"><a href="#ref73" title="Сделать блок концом маршрута">GraphNode_SetBlockAsEnd</a></span>,
+которая сбрасывает в графе метки и флаги конца маршрута (опять ничего не изменится &ndash; взведен только
+флаг начала маршрута, а его функция не трогает), взводит в своем блоке флаг конца маршрута
+<span class="cpp">sEnd</span> и опять вызывает <span class="cpp"><a class="hidden" href="#ref53" title="Функция поиска маршрута">GraphPath_FindPath</a></span>. Теперь в
+графе уже установлены оба флага, поэтому функция <span class="cpp"><a class="hidden" href="#ref53" title="Функция поиска маршрута">GraphPath_FindPath</a></span> вызовет
+&laquo;<a class="hidden" href="#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark">ProgrammersGuide.GraphPath.Mark</a>&raquo; в блоке начала маршрута, передав ему метку 0. Это приведет к
+цепной реакции: блок примет метку и пометит своих соседей расстояниями до себя, те, в свою очередь, пометят
+своих соседей, и так будет продолжаться до тех пор, пока все достижимые из начального блока узла графа не
+будут помечены кратчайшим расстоянием до начала маршрута. После этого
+<span class="cpp"><a class="hidden" href="#ref53" title="Функция поиска маршрута">GraphPath_FindPath</a></span> вызовет
+&laquo;<a class="hidden" href="#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace">ProgrammersGuide.GraphPath.BackTrace</a>&raquo; у блока конца маршрута. Это тоже приведет к цепочке
+вызовов функций: блок конца маршрута выделится, взведя у себя флаг <span class="cpp">sInPath</span>, просмотрев
+метки своих соседей, найдет среди них ближайшего к началу и передаст управление ему, тот &ndash;
+своему соседу и т.д. пока не будет достигнут блок начала маршрута. В результате все блоки на
+кратчайшем маршруте (а, заодно, и связи, их соединяющие) окажутся выделенными.</p>
+
+
+<p>Для тестирования модели можно собрать в какой-либо подсистеме граф, соединяя между собой выход
+<span class="cpp">Ready</span> одного блока со входом <span class="cpp">Start</span> другого (для создания
+однонаправленной дуги) или два входа <span class="cpp">Start</span> друг с другом (для двунаправленной дуги)
+связями произвольного вида. Теперь, установив через контекстное меню один из блоков началом, а другой
+&ndash; концом маршрута, можно увидеть кратчайший путь между этими блоками
+(<a href="#pic3" title="Кратчайший путь в графе">рис.&nbsp;89</a>). Выбор в контекстном меню пункта
+&laquo;<span class="menu">Сбросить все</span>&raquo; вернет граф в исходное состояние.</p>
+
+<div class="pic"><div class="container" id="pic3">
+<img src="../img/GraphPath.png" width="608" height="332" alt="Кратчайший путь в графе" />
+<p id="light_pic3">Рис.&nbsp;89. Кратчайший путь в графе</p>
+</div></div>
+
+
+<p>Конечно, этот пример весьма несовершенен, и его можно существенно улучшить. Можно, например, при разметке
+графа запоминать в личной области данных каждого блока идентификатор узла графа, от которого пришло значение метки
+(при вызове функции &laquo;<a class="hidden" href="#ref43" title="Функция блока ProgrammersGuide.GraphPath.Mark">ProgrammersGuide.GraphPath.Mark</a>&raquo; он передается в поле
+<span class="cpp">Previous</span> структуры параметров) и связь, соединяющую с ним, тогда при
+прослеживании маршрута функцией &laquo;<a class="hidden" href="#ref44" title="Функция блока ProgrammersGuide.GraphPath.BackTrace">ProgrammersGuide.GraphPath.BackTrace</a>&raquo; не придется перебирать
+все соседние блоки в поисках узла с наименьшей меткой. Можно вместо используемого упрощенного алгоритма разметки
+графа реализовать полноценный алгоритм Дейкстры. Но, в любом случае, для взаимодействия узлов между собой нужно
+будет использовать вызов функций блоков.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_13_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_13_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

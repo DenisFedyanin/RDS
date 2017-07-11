@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2">А.2. События блока и связанные с ними описания</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2_4">А.2.4. События общего назначения</a></p>
+<div class="level"><p>А.2.4.3. <span class="cpp">RDS_BFM_CLEANUP</span> &ndash; очистка данных блока</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_BFM_CHECKFUNCSUPPORT.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_DYNVARCHANGE.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_CLEANUP">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.2. События блока и связанные с ними описания</h3>
+<h4 class="off">А.2.4. События общего назначения</h4>
+<h5>А.2.4.3. <span class="cpp">RDS_BFM_CLEANUP</span> &ndash; очистка данных блока</h5>
+
+
+<p class="apphdr">Поток, в котором вызывается <a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функция модели</a></p>
+<p>Главный поток RDS.</p>
+
+<p class="apphdr">Первый параметр функции модели (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_BFM_CLEANUP</span>.</p>
+
+<p class="apphdr">Третий параметр функции модели (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Не используется (<span class="cpp">NULL</span>).</p>
+
+<p class="apphdr">Возвращаемое функцией модели значение</p>
+<p>Не используется, можно возвращать любое значение.</p>
+
+
+<p class="apphdr">Примечания</p>
+<p>Событие <span class="cpp">RDS_BFM_CLEANUP</span> &ndash; последнее событие перед отключением модели от
+блока из-за его удаления, выгрузки схемы из памяти, подключения к блоку новой модели и т.п. Если в реакции на
+событие <span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span> модель отвела память под
+<a href="pm_1_4.htm#ref8" title="Личная область данных блока">личную область данных блока</a>, в реакции на <span class="cpp">RDS_BFM_CLEANUP</span>
+она должна освободить ее. События инициализации и очистки подробно рассмотрены в
+<a href="pm_2_4.htm" title="&sect;2.4. Инициализация и очистка данных блока">&sect;2.4</a>.</p>
+
+
+<p class="apphdr"><span id="light_ref1">Пример</span></p>
+<p><span id="ref2">Отведение</span>
+<span id="ref3">памяти</span> под личную область данных блока оператором C++ <span class="cpp" id="light_ref2">new</span> и ее
+освобождение оператором <span class="cpp" id="light_ref3">delete</span>.</p>
+
+<pre class="cpp">  <span class="rem">// Структура </span><a class="hidden" href="pm_1_4.htm#ref8" title="Личная область данных блока"><span class="rem">личной области данных</span></a><span class="rem"> блока</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="kw">int</span> IntData;
+    <span class="kw">double</span> DoubleData;
+  } TMyBlockData;
+
+  <span class="rem">// Модель блока</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>) <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="app_a_2_1.htm" title="А.2.1. Функция модели блока">Model1</a>(
+    <span class="kw">int</span> CallMode,             <span class="rem">// Событие</span>
+    <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData, <span class="rem">// Данные блока</span>
+    LPVOID ExtParam)          <span class="rem">// Дополнительные параметры</span>
+  { TMyBlockData *data;
+    <span class="kw">switch</span>(CallMode)
+      { <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:   <span class="rem">// Отведение памяти</span>
+          data=<span class="kw">new</span> TMyBlockData;
+          BlockData-&gt;BlockData=data;
+          data-&gt;IntData=<span class="const">0</span>;
+          data-&gt;DoubleData=<span class="const">1.0</span>;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>: <span class="rem">// Освобождение памяти</span>
+          data=(TMyBlockData*)(BlockData-&gt;BlockData);
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }</pre>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_BFM_CHECKFUNCSUPPORT.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_DYNVARCHANGE.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_CLEANUP">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

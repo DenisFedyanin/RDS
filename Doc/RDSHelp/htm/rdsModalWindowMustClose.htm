@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.2.30. rdsModalWindowMustClose &ndash; проверка принудительного закрытия модальных окон</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_2">А.5.2. Управление работой RDS и функции общего назначения</a></p>
+<div class="level"><p>А.5.2.30. <span class="cpp">rdsModalWindowMustClose</span> &ndash; проверка принудительного закрытия модальных окон</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsModalWindowExists.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsRegisterWindow.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsModalWindowMustClose">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.2. Управление работой RDS и функции общего назначения</h4>
+<h5>А.5.2.30. <span class="cpp">rdsModalWindowMustClose</span> &ndash; проверка принудительного закрытия модальных окон</h5>
+
+
+<p>Функция <span class="cpp">rdsModalWindowMustClose</span> возвращает <span class="cpp">TRUE</span>, если в
+данный момент RDS принудительно закрывает все модальные окна.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsModalWindowMustClose(<span class="kw">void</span>);</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_BV</span></p>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p><span class="cpp">TRUE</span>, если RDS принудительно закрывает модальные окна,
+<span class="cpp">FALSE</span> в противном случае.</p>
+
+<p class="apphdr"><span id="ref1">Примечания</span></p>
+<p>Принудительное закрытие модальных окон применяется при управлении
+RDS <a href="pm_index.htm#light_htm:pm_3" title="Глава 3. Управление RDS из других приложений">из внешнего приложения</a>. При открытых модальных окнах некоторые
+действия выполнить невозможно (например, нельзя удалить блок, модель которого открыла модальное окно,
+пока это окно не будет закрыто), поэтому иногда возникает необходимость в принудительном закрытии окон. Для этого
+RDS посылает модальному окну верхнего уровня сообщение Windows
+<span class="cpp" id="light_ref1">WM_CLOSE</span> (команда закрытия окна) до тех пор, пока все
+модальные окна не будут закрыты.
+Если процедура окна написана так, что при получении сообщения <span class="cpp">WM_CLOSE</span> оно
+выводит пользователю запрос о необходимости сохранения данных, это может привести к появлению бесконечного
+цикла: модальное окно получает сообщение <span class="cpp">WM_CLOSE</span> и выводит запрос, окно запроса тоже
+получает сообщение <span class="cpp">WM_CLOSE</span> (что равносильно нажатию кнопки &laquo;<span class="menu">Отмена</span>&raquo;)
+и возвращает управление модальному окну, не закрывая его, модальное окно снова получает сообщение
+<span class="cpp">WM_CLOSE</span> и т.д. Функция <span class="cpp">rdsModalWindowMustClose</span> позволяет
+отличить принудительное закрытие окна от нормального: если она вернет
+<span class="cpp">TRUE</span>, окно следует закрыть без запросов к пользователю, чтобы описанный выше цикл не
+возник.</p>
+
+<p>Проблемы, связанные с открытием модальных окон в моделях блоков, описаны
+в <a href="pm_1_8.htm" title="&sect;1.8. Открытие окон в модели блока">&sect;1.8</a> и <a href="pm_2_7_5.htm" title="&sect;2.7.5. Открытие модальных окон средствами Windows API">&sect;2.7.5 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsBlockModalWinOpen.htm" title="А.5.2.8. rdsBlockModalWinOpen &ndash; сообщение об открытии модального окна">rdsBlockModalWinOpen</a></span>,
+<span class="cpp"><a href="rdsBlockModalWinClose.htm" title="А.5.2.7. rdsBlockModalWinClose &ndash; сообщение о закрытии модального окна">rdsBlockModalWinClose</a></span>,
+<span class="cpp"><a href="rdsModalWindowExists.htm" title="А.5.2.29. rdsModalWindowExists &ndash; наличие открытых модальных окон">rdsModalWindowExists</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsModalWindowExists.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsRegisterWindow.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsModalWindowMustClose">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.6.1. Использование динамических переменных</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_6">&sect;2.6. Динамические переменные</a></p>
+<div class="level"><p>&sect;2.6.1. Использование динамических переменных</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_5_8.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_6_2.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_6_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3>&sect;2.6. Динамические переменные</h3>
+<p class="abstract">Описывается работа с динамическими переменными, то есть с переменными, которые модели
+            блоков создают и уничтожают в процессе работы. Модели могут создавать такие переменные в корневой или
+            родительской подсистеме блока, поэтому несколько блоков могут получать доступ к одной и
+            той же динамической переменной и использовать ее для связи.</p>
+<h4>&sect;2.6.1. Использование динамических переменных</h4>
+<p class="abstract">Описываются общие принципы работы с динамическими переменными &ndash; их создание, уничтожение,
+                получение доступа к созданным (&laquo;подписка&raquo;). Описаны основные сервисные функции RDS,
+                относящиеся к динамическим переменным.</p>
+
+
+<p>Динамические переменные позволяют нескольким блокам обмениваться данными через общую для этих блоков
+область памяти, содержащую переменную одного из используемых в RDS
+<a href="pm_1_5.htm#ref2" title="Типы переменных блока">типов</a>. В отличие от передачи данных по
+<a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связям</a>
+через <a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статические</a> входы и выходы, которая определяется
+пользователем, соединяющим выходы одних блоков со входами других, передача данных через динамические переменные
+задается на этапе проектирования модели блока. RDS не позволяет пользователю, не разрабатывающему модели
+блоков, самостоятельно создавать динамические переменные в произвольном блоке и указывать, с какими переменными
+должен быть связан блок &ndash; все эти действия только выполняются моделями блоков при помощи различных
+сервисных функций. Иногда модель дает пользователю возможность указать имя динамической переменной, используемой
+для связи с другими блоками (например, в окне настроек блока-графика можно указать имя переменной, из которой
+блок берет значение времени), но, чаще всего, обмен данными через динамические переменные скрыт от
+пользователя и не требует от него никаких действий. Это позволяет организовать взаимодействие большого числа
+блоков, не загромождая схему многочисленными связями. Кроме того, передача данных по связям работает только в
+<a href="pm_1_3.htm#ref3" title="Режим расчета">режиме расчета</a>, в то время как данные динамических переменных доступны
+блокам во всех режимах.</p>
+
+<p>Для того, чтобы блоки могли работать с динамической переменной, один из них должен ее создать,
+а остальные &ndash; подписаться на нее, то есть найти динамическую переменную по имени и типу и,
+если такая переменная существует, получить к ней доступ. Динамическая переменная всегда находится в каком-либо
+блоке, при этом чаще всего не в том, который ее создал. Механизм подписки устроен таким образом, что блок
+может получить доступ к своей динамической переменной или к переменной любой из
+<a href="pm_1_2.htm#ref7" title="Родительская подсистема">родительских подсистем</a>
+в иерархии, начиная от непосредственного родителя и заканчивая
+<a href="pm_1_2.htm#ref5" title="Корневая подсистема">корневой подсистемой</a>. Таким образом, если простой блок создаст
+динамическую переменную в себе самом, никто кроме него не сможет на нее подписаться, поскольку он не может
+являться ничьим родителем, то есть внутри него нет других блоков. Обычно простые блоки создают динамические
+переменные либо в родительской, либо в корневой подсистеме. Если блок создал переменную в родительской
+подсистеме, на нее смогут подписаться другие блоки этой же подсистемы и блоки вложенных в нее подсистем.
+Если блок создал переменную в корневой подсистеме, к ней смогут получить доступ все блоки схемы.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/DynVarGraphConnect.png" width="387" height="383" alt="Связь элементов векторной картинки блока с динамическими переменными" />
+<p id="light_pic1">Рис.&nbsp;37. Связь элементов векторной<br />картинки блока с динамическими<br />переменными</p>
+</div></div>
+
+
+<p><span id="ref1">Подсистемы</span>, в отличие от простых блоков, иногда создают динамические переменные, принадлежащие им самим,
+для передачи данных во вложенные блоки. Кроме того, собственные динамические переменные могут использоваться
+для управления элементами
+<a href="um_2_10_1.htm" title="&sect;2.10.1. Общие сведения о редакторе картинки">векторной картинки</a> в подсистемах и
+<a href="pm_1_2.htm#light_ref6" title="Внешний вход подсистемы">внешних входах</a> и <a href="pm_1_2.htm#light_ref8" title="Внешний выход подсистемы">выходах</a>.
+В простом блоке для этой цели можно создать несколько внутренних статических переменных, но все остальные типы
+блоков лишены такой возможности &ndash; структура их переменных не может быть задана произвольно. Для того,
+чтобы связать элемент картинки с собственной динамической переменной, необходимо указать ее имя с префиксом
+&laquo;<span id="light_ref1">$DYN</span>.&raquo;. Например, если для управления элементом
+должна использоваться динамическая переменная с именем &laquo;<span class="rdsvar">Value</span>&raquo;, при редактировании этого
+элемента необходимо ввести в соответствующее поле текст &laquo;<span class="rdsvar">$DYN.Value</span>&raquo;.
+<span id="ref2">При</span>
+<span id="ref3">необходимости</span>,
+элементы картинки блока можно также связать с динамической переменной его родительской подсистемы (используется
+префикс &laquo;<span id="light_ref2">$PARENT</span>.&raquo;) или с первой встреченной
+в иерархии подсистем переменной с заданным именем (используется префикс
+&laquo;<span id="light_ref3">$SEARCH</span>.&raquo;).
+На <a href="#pic1" title="Связь элементов векторной картинки блока с динамическими переменными">рис.&nbsp;37</a>
+изображено окно настройки
+<a href="um_2_10_8.htm" title="&sect;2.10.8. Добавление в картинку вложенных систем координат">системы координат</a>
+в редакторе векторной картинки блока, в котором координаты этой системы связаны с динамическими переменными
+&laquo;<span class="rdsvar">ObjX</span>&raquo; и &laquo;<span class="rdsvar">ObjY</span>&raquo; в родительской подсистеме блока, угол поворота системы координат
+&ndash; с динамической переменной &laquo;<span class="rdsvar">Angle</span>&raquo; в самом блоке, а масштаб &ndash; с первой
+встреченной динамической переменной с именем &laquo;<span class="rdsvar">GlobK</span>&raquo; в иерархии родительских подсистем.</p>
+
+<p><span id="ref4">Чтобы</span>
+<span id="ref5">получить</span>
+доступ к какой-либо динамической переменной, блок должен на нее <span id="light_ref5">подписаться</span>.
+Это касается и переменных, созданных самим блоком &ndash; сервисная функция, создающая динамическую переменную,
+автоматически подписывает на нее блок-создатель. При подписке указывается имя переменной, ее тип, а также блок,
+в котором необходимо ее найти (данный блок, родительская подсистема или корневая подсистема). В результате,
+независимо от того, найдена переменная или нет, RDS создает структуру
+<span class="cpp" id="light_ref4"><a href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a></span>, содержащую информацию о
+переменной, и возвращает указатель на нее модели блока. Структура
+<span class="cpp"><a class="hidden" href="RDS_DYNVARLINK.htm" title="А.4.6. RDS_DYNVARLINK &ndash; подписка на динамическую переменную">RDS_DYNVARLINK</a></span> описана в файле &laquo;<span class="file">RdsDef.h</span>&raquo; следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Data;          <span class="rem">// Указатель на область данных</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> VarName;        <span class="rem">// Имя переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> VarType;        <span class="rem">// Строка типа переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Provider; <span class="rem">// Блок-владелец</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> UID;           <span class="rem">// Служебный идентификатор переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref5" title="Идентификатор переменной">RDS_VHANDLE</a> Var;      <span class="rem">// Идентификатор переменной для</span>
+                          <span class="rem">// сервисных функций</span>
+  } RDS_DYNVARLINK;
+<span class="kw">typedef</span> RDS_DYNVARLINK *RDS_PDYNVARLINK; <span class="rem">// Указатель на структуру</span></pre>
+
+<dl>
+  <dt><span class="cpp">Data</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></i></span>)</dt>
+  <dd>Указатель на область данных переменной. Структура этой области данных в точности соответствует данным
+  такой же статической переменной в дереве переменных блока
+  (см. <a href="pm_index.htm#light_htm:pm_2_5" title="&sect;2.5. Статические переменные блоков">&sect;2.5</a>). Например, для динамической переменной типа
+  <span class="cpp">double</span> поле <span class="cpp">Data</span> будет указывать на восьмибайтовую область
+  памяти, содержащую вещественное число, для строки &ndash; на четырехбайтовую область, содержащую указатель
+  на первый символ строки и т.п.
+  (см. <a href="#pic2" title="Размещение в памяти динамических переменных разных типов">рис.&nbsp;38</a>).
+  Если переменная не найдена, значение этого поля равно <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">VarName</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Строка имени переменной.</dd>
+
+  <dt><span class="cpp">VarType</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd><a href="pm_1_5.htm#ref19" title="Строка типа переменных блока">Строка типа</a> переменной (такая же, как и у статических переменных).</dd>
+
+  <dt><span class="cpp">Provider</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор блока, в котором располагается найденная переменная.</dd>
+
+  <dt><span class="cpp">UID</span>&emsp;(<span class="cpp"><i>LPVOID</i></span>)</dt>
+  <dd>Уникальный идентификатор динамической переменной (служебная, используется внутри RDS).</dd>
+
+  <dt><span class="cpp">Var</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref5" title="Идентификатор переменной">RDS_VHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор переменной, используемый в некоторых сервисных функциях.</dd>
+</dl>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/DynVarInMemory.png" width="754" height="350" alt="Размещение в памяти динамических переменных разных типов" />
+<p id="light_pic2">Рис.&nbsp;38. Размещение в памяти динамических переменных разных типов</p>
+</div></div>
+
+
+<p>Если переменная с заданным именем и типом не существует, RDS запомнит факт подписки, и,
+как только такая переменная будет создана каким-либо блоком, подписавшийся блок немедленно получит к ней
+доступ. Структура <span class="cpp"><a class="hidden" href="RDS_DYNVARLINK.htm" title="А.4.6. RDS_DYNVARLINK &ndash; подписка на динамическую переменную">RDS_DYNVARLINK</a></span> создается один раз при подписке на переменную,
+после чего RDS самостоятельно обновляет значение ее поля <span class="cpp">Data</span> при создании и
+удалении соответствующей динамической переменной. Перед каждым использованием переменной модель блока
+должна проверять ее существование: если в поле <span class="cpp">Data</span> находится значение
+<span class="cpp">NULL</span>, значит, запрошенная переменная еще не создана или уже удалена. Таким образом,
+при создании моделей блоков нужно иметь в виду, что, в отличие от статической переменной, динамическая
+может появляться и исчезать в процессе расчета.</p>
+
+<p><span id="ref6">Для</span>
+подписки на динамическую переменную используется сервисная функция
+<span id="light_ref6" class="cpp"><a href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a></span>:</p>
+
+<pre class="cpp">  <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsSubscribeToDynamicVar(
+    <span class="kw">int</span> Block,      <span class="rem">// В каком блоке искать переменную</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> VarName,  <span class="rem">// Имя переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> VarType,  <span class="rem">// Строка типа переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Search);   <span class="rem">// Искать по иерархии</span></pre>
+
+<p>Функция принимает следующие параметры:</p>
+
+<dl>
+  <dt><span class="cpp">Block</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Одна из трех констант <span class="cpp">RDS_DV*</span>, определяющая, в каком блоке нужно искать переменную:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref7">RDS_DVSELF</span></span></td>
+          <td>в вызвавшем функцию блоке;</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref8">RDS_DVPARENT</span></span></td>
+          <td>в родительской подсистеме;</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref9">RDS_DVROOT</span></span></td>
+          <td>в корневой подсистеме.</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp">VarName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Имя переменной.</dd>
+
+  <dt><span class="cpp">VarType</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Строка типа переменной (такая же, как и у статических переменных).</dd>
+
+  <dt><span class="cpp">Search</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd>Нужно ли искать переменную в цепочке родительских подсистем, если она не найдена в блоке,
+  указанном в параметре <span class="cpp">Block</span>.</dd>
+</dl>
+
+<p class="noindent">Функция <span class="cpp"><a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a></span> возвращает указатель
+на созданную RDS структуру подписки <span class="cpp"><a class="hidden" href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a></span>. Эта структура будет
+находиться в памяти до тех пор, пока блок-подписчик не откажется от подписки на данную переменную или не
+будет удален. В параметрах <span class="cpp">VarName</span> и <span class="cpp">VarType</span> указывается
+соответственно имя динамической переменной и строка ее типа. Как и имена статических переменных, имена
+динамических чувствительны к регистру и не должны содержать некоторых специальных символов (знака доллара,
+точек, запятых и скобок). Строка типа для динамических переменных строится по тому же принципу, что
+и строка типа статических. Например, если необходимо подписаться на переменную &laquo;<span class="rdsvar">Var1</span>&raquo; типа
+<span class="cpp">double</span>, следует передать в параметре <span class="cpp">VarName</span> строку
+&laquo;Var1&raquo; и в параметре <span class="cpp">VarType</span> строку &laquo;D&raquo;. Подписка будет
+успешной, если будет найдена переменная с указанным именем и типом, при этом переменная с тем же именем,
+но другим типом будет проигнорирована. Блоку-подписчику не нужно следить за типом динамической переменной
+&ndash; если поле <span class="cpp">Data</span> структуры <span class="cpp"><a class="hidden" href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a></span> не равно
+<span class="cpp">NULL</span>, значит, найдена переменная, тип которой в точности соответствует запросу.</p>
+
+<p>Если подписка на указанную в параметрах функции переменную принципиально невозможна (например,
+указано недопустимое имя переменной), функция вернет значение <span class="cpp">NULL</span>.</p>
+
+<p>Блок-владелец переменной, на которую необходимо подписаться, задается параметром <span class="cpp">Block</span>.
+В этом параметре может быть передана одна из трех констант, описанных в файле
+&laquo;<span class="file">RdsDef.h</span>&raquo;: <span class="cpp">RDS_DVSELF</span> (искать переменную в блоке, модель которого
+вызвала функцию <span class="cpp"><a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a></span>),
+<span class="cpp">RDS_DVPARENT</span> (искать в родительской подсистеме) или
+<span class="cpp">RDS_DVROOT</span> (искать в корневой подсистеме). Если переменная будет найдена в
+указанном блоке, в поле <span class="cpp">Data</span> структуры <span class="cpp"><a class="hidden" href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a></span> будет
+записан указатель на ее область данных. Если же переменная в указанном блоке не найдена, дальнейшие действия
+RDS определяются параметром <span class="cpp">Search</span>, разрешающим или запрещающим поиск переменной
+вверх по иерархии. Если в <span class="cpp">Search</span> передано значение
+<span class="cpp">FALSE</span>, полю <span class="cpp">Data</span> структуры подписки будет присвоено значение
+<span class="cpp">NULL</span> и работа функции <span class="cpp"><a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a></span> на этом
+завершится. Если же в <span class="cpp">Search</span> передано <span class="cpp">TRUE</span>, RDS попытается
+найти переменную в подсистеме, родительской по отношению к блоку, указанному в параметре <span class="cpp">Block</span>.
+Если и в этой подсистеме указанная переменная не будет обнаружена, будет сделана попытка найти
+ее в родительской подсистеме этой подсистемы и так далее, пока, перебирая подсистемы вверх по иерархии, RDS
+не доберется до корневой подсистемы. Только если и в корневой подсистеме переменная не будет найдена, полю
+<span class="cpp">Data</span> структуры <span class="cpp"><a class="hidden" href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a></span> будет присвоено значение
+<span class="cpp">NULL</span>. Таким образом, если параметр <span class="cpp">Search</span> равен <span class="cpp">TRUE</span>,
+RDS попытается найти динамическую переменную в ближайшей к указанному блоку родительской подсистеме.
+Если параметр <span class="cpp">Block</span> имеет значение <span class="cpp">RDS_DVROOT</span>, значение
+параметра <span class="cpp">Search</span> не имеет значения &ndash; у корневой подсистемы нет родительской и,
+при отсутствии динамической переменной, ее больше негде будет искать.</p>
+
+<p><span id="ref10">Подписка</span>
+<span id="ref11">на</span>
+динамическую переменную с поиском вверх по иерархии подсистем применяется достаточно часто,
+поскольку дает вложенным блокам какой-либо подсистемы возможность получить доступ к переменным этой подсистемы
+независимо от глубины вложенности этих блоков. С помощью этого механизма, например, стандартные блоки для
+динамического расчета получают значение времени. Блок, управляющий динамическим расчетом (так называемый
+<span id="light_ref10">планировщик</span>) создает в подсистеме, в которой он находится, динамическую переменную
+&laquo;<span class="rdsvar"><span id="light_ref11">DynTime</span></span>&raquo; типа
+<span class="cpp">double</span> и изменяет ее значение согласно шагу расчета, заданной синхронизацией с
+реальным временем и другими своими параметрами. Блоки, выполняющие динамический расчет, подписываются на
+эту переменную с поиском по иерархии. В результате, любой блок вложенной подсистемы всегда имеет доступ
+к текущему значению времени, если где-нибудь в цепочке его родительских подсистем находится блок-планировщик.
+В схеме может независимо работать несколько планировщиков, каждый из которых будет предоставлять доступ к текущему
+значению времени блокам своей подсистемы и вложенных в нее подсистем. Это дает возможность, например, моделировать
+какие-либо процессы с разным шагом по времени в разных подсистемах, что часто бывает полезно при расчете
+динамических систем.</p>
+
+<p>Если при подписке с поиском по иерархии была найдена какая-либо переменная, RDS продолжает следить за
+цепочкой подсистем, и, если в более близкой подсистеме появится переменная с тем же именем и типом,
+блок-подписчик будет переключен на нее.</p>
+
+<p>Пусть, например, в корневой подсистеме находится динамическая переменная &laquo;<span class="rdsvar">Var1</span>&raquo; типа
+<span class="cpp">double</span>
+(<a href="#pic3_0" title="Подписка на динамическую переменную с поиском по иерархии: блоки Block1 и Block3 подписаны на переменную Var1 с поиском по иерархии (а), в подсистеме Sys1 появилась переменная Var1 , и блок Block3 получил к ней доступ (б)">рис.&nbsp;39&nbsp;а</a>). Модели блоков
+&laquo;<span class="rdsvar">Block1</span>&raquo; в корневой подсистеме и &laquo;<span class="rdsvar">Block3</span>&raquo; в подсистеме
+&laquo;<span class="rdsvar">Sys1</span>&raquo; вызвали сервисную функцию <span class="cpp"><a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a></span>
+со следующими параметрами:</p>
+
+<pre class="cpp">  <a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(<a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,<span class="str">"Var1"</span>,<span class="str">"D"</span>,TRUE);</pre>
+
+<p class="noindent">то есть оба блока запросили подписку на динамическую переменную
+&laquo;<span class="rdsvar">Var1</span>&raquo; типа <span class="cpp">double</span> (строка &laquo;D&raquo;) в родительской подсистеме
+(константа <span class="cpp">RDS_DVPARENT</span>) с поиском по иерархии. Родительской подсистемой для блока
+&laquo;<span class="rdsvar">Block2</span>&raquo; является корневая, поэтому он сразу же получит доступ к динамической переменной
+&laquo;<span class="rdsvar">Var1</span>&raquo; корневой подсистемы (функция <span class="cpp"><a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a></span>
+запишет в поле <span class="cpp">Data</span> структуры подписки <span class="cpp"><a class="hidden" href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a></span>
+указатель на область данных &laquo;<span class="rdsvar">Var1</span>&raquo;). Блок &laquo;<span class="rdsvar">Block3</span>&raquo; находится в подсистеме
+&laquo;<span class="rdsvar">Sys1</span>&raquo;, в которой нет запрашиваемой переменной. Поскольку при вызове сервисной функции
+был указан поиск по иерархии, функция продолжит искать переменную с указанным именем и типом, найдет ее в
+корневой подсистеме и запишет в поле <span class="cpp">Data</span> структуры подписки указатель на ее
+область данных. Таким образом, блоки &laquo;<span class="rdsvar">Block1</span>&raquo; и &laquo;<span class="rdsvar">Block3</span>&raquo; получили доступ к
+одной и той же динамической переменной, находящейся в корневой подсистеме. При этом
+RDS запомнит тот факт, что блок &laquo;<span class="rdsvar">Block3</span>&raquo; получил доступ к переменной не в той подсистеме,
+в которой он его запрашивал.</p>
+
+<div class="pic"><div class="container" id="pic3">
+<div class="multi" id="pic3_0"><img src="../img/DynVarSearchBasics.png" width="346" height="239" alt="Подписка на динамическую переменную с поиском по иерархии: блоки Block1 и Block3 подписаны на переменную Var1 с поиском по иерархии (а), в подсистеме Sys1 появилась переменная Var1 , и блок Block3 получил к ней доступ (б) 1" /><p id="light_pic3_0">(а)</p></div><div class="multi" id="pic3_1"><img src="../img/DynVarSearchBasics1.png" width="346" height="239" alt="Подписка на динамическую переменную с поиском по иерархии: блоки Block1 и Block3 подписаны на переменную Var1 с поиском по иерархии (а), в подсистеме Sys1 появилась переменная Var1 , и блок Block3 получил к ней доступ (б) 2" /><p id="light_pic3_1">(б)</p></div><p id="light_pic3">Рис.&nbsp;39. Подписка на динамическую переменную с поиском по иерархии:<br />блоки &laquo;<span class="rdsvar">Block1</span>&raquo; и &laquo;<span class="rdsvar">Block3</span>&raquo; подписаны на переменную &laquo;<span class="rdsvar">Var1</span>&raquo; с поиском по иерархии (а),<br />в подсистеме &laquo;<span class="rdsvar">Sys1</span>&raquo; появилась переменная &laquo;<span class="rdsvar">Var1</span>&raquo;, и блок &laquo;<span class="rdsvar">Block3</span>&raquo; получил к ней доступ (б)</p>
+</div></div>
+
+
+<p>Теперь представим себе, что какой-либо блок создал динамическую переменную типа <span class="cpp">double</span> с именем
+&laquo;<span class="rdsvar">Var1</span>&raquo; в подсистеме &laquo;<span class="rdsvar">Sys1</span>&raquo;. Эта переменная удовлетворяет условиям запроса на
+подписку, сделанного блоком &laquo;<span class="rdsvar">Block3</span>&raquo;, и при этом находится ближе к нему по иерархии,
+чем переменная &laquo;<span class="rdsvar">Var1</span>&raquo; корневой подсистемы, на которую &laquo;<span class="rdsvar">Block3</span>&raquo; подписан в
+данный момент. В результате RDS переключит этот блок на использование переменной
+&laquo;<span class="rdsvar">Var1</span>&raquo; подсистемы &laquo;<span class="rdsvar">Sys1</span>&raquo; вместо одноименной переменной корневой подсистемы
+(<a href="#pic3_1" title="Подписка на динамическую переменную с поиском по иерархии: блоки Block1 и Block3 подписаны на переменную Var1 с поиском по иерархии (а), в подсистеме Sys1 появилась переменная Var1 , и блок Block3 получил к ней доступ (б)">рис.&nbsp;39&nbsp;б</a>). При этом от модели блока
+&laquo;<span class="rdsvar">Block3</span>&raquo; не потребуется никаких действий &ndash; все произойдет автоматически. В структуре подписки
+<span class="cpp"><a class="hidden" href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a></span>, которая была создана при вызове сервисной функции
+<span class="cpp"><a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a></span>, в поле <span class="cpp">Data</span> будет записан новый
+указатель, и когда модель блока &laquo;<span class="rdsvar">Block3</span>&raquo; в очередной раз обратится к этому полю, она
+считает данные переменной из подсистемы &laquo;<span class="rdsvar">Sys1</span>&raquo;, а не из корневой подсистемы.</p>
+
+<p>Если через некоторое время переменная &laquo;<span class="rdsvar">Var1</span>&raquo; в подсистеме &laquo;<span class="rdsvar">Sys1</span>&raquo; будет удалена,
+RDS снова изменит поле <span class="cpp">Data</span> структуры подписки таким образом, чтобы оно ссылалось
+на ближайшую переменную с заданным именем и типом, в данном случае &ndash; снова на переменную
+&laquo;<span class="rdsvar">Var1</span>&raquo; корневой подсистемы.</p>
+
+<p>Подписка на динамическую переменную предоставляет блокам доступ к общей области памяти, в
+которой расположены данные этой переменной, поэтому как только один из блоков присвоит переменной новое
+значение, все остальные смогут немедленно считать его. Однако, эти блоки не узнают об изменении переменной,
+пока не обратятся к ней за данными. Запись в область памяти динамической переменной производится внутри модели
+блока без использования каких-либо сервисных функций, и RDS никак не может ее отследить, чтобы
+сообщить об этом другим блокам-подписчикам.</p>
+
+<p><span id="ref12">Как</span>
+правило, это не вызывает проблем, если блок-подписчик срабатывает
+<a href="pm_1_4.htm#ref6" title="Запуск модели каждый такт">каждый такт расчета</a>
+или по таймеру. Независимо от того, изменилась ли динамическая переменная, блок будет постоянно считывать
+ее значение. Это надежный, но неэкономный способ слежения за динамической переменной &ndash; модель блока будет
+постоянно запускаться и тратить время процессора впустую. Более целесообразно заложить в модель блока,
+присваивающего значение динамической переменной, какой-либо механизм, позволяющий уведомить об этом всех
+подписчиков. Проще всего это сделать при помощи сервисной функции
+<span id="light_ref12" class="cpp"><a href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a></span>, специально предназначенной
+для уведомления блоков-подписчиков о возможных изменениях динамической переменной. Функция принимает единственный
+параметр типа <span class="cpp"><a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a></span> &ndash; указатель на структуру
+<span class="cpp"><a class="hidden" href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a></span>, полученный блоком при подписке на переменную, об изменении
+которой нужно сообщить другим блокам. При вызове этой функции модели всех блоков, подписанных на ту
+же самую переменную, будут вызваны в режиме
+<span class="cpp"><span id="light_ref13"><a href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a></span></span>, при этом через параметр модели
+<span class="cpp">ExtParam</span> (см. <a href="pm_2_3.htm" title="&sect;2.3. Структура функции модели блока">&sect;2.3</a>) будет передан
+указатель на структуру подписки на переменную, созданную для вызываемого блока. Если блок подписан на
+несколько динамических переменных, его модель сможет выяснить, какая из них изменилась, сравнив значение
+<span class="cpp">ExtParam</span> с указателями на их структуры. Следует обратить внимание на то, что
+указатель, передаваемый через <span class="cpp">ExtParam</span> в модель блока-подписчика, это не тот же
+самый указатель, который был использован блоком, изменившим переменную, в качестве параметра функции
+<span class="cpp"><a class="hidden" href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a></span>. Хотя переменная одна и та же, для каждого
+подписавшегося на нее блока создается своя структура <span class="cpp"><a class="hidden" href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a></span>, поэтому каждый
+блок-подписчик получит через <span class="cpp">ExtParam</span> указатель на собственную структуру подписки.
+Пример использования механизма уведомления об изменении динамических переменных приведен
+в <a href="pm_2_6_3.htm" title="&sect;2.6.3. Создание и удаление динамической переменной">&sect;2.6.3</a>.</p>
+
+<p><span id="ref14">Следует</span> помнить, что модели 
+блоков-подписчиков будут вызваны в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a></span>
+при изменении значения переменной, только если в модели блока, изменившего переменную, предусмотрен вызов
+сервисной функции <span class="cpp"><a class="hidden" href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a></span>. Все стандартные блоки, работающие с
+динамическими переменными (например, уже упоминавшийся выше планировщик динамического расчета из библиотеки
+&laquo;<span class="file"><span id="light_ref14">Common.dll</span></span>&raquo;), поддерживают этот вызов. Однако, если создается модель блока,
+которая будет работать с какими-либо динамическими переменными вместе с блоками других разработчиков, необходимо
+узнать из описания этих блоков, поддерживается ли ими вызов функции
+<span class="cpp"><a class="hidden" href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a></span>. Если этот вызов не поддерживается или в описании
+ничего об этом не сказано, надежнее проверять значение переменной каждый такт расчета, не полагаясь на
+вызов модели в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a></span>.</p>
+
+<p>Модели блоков, подписанных на динамические переменные, вызываются в режиме
+<span class="cpp"><a class="hidden" href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a></span> не только при вызове каким-либо блоком функции
+<span class="cpp"><a class="hidden" href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a></span>, но и при создании или удалении переменной, а
+также при переключении на другую переменную при подписке с поиском по иерархии
+(<a href="#pic3" title="Подписка на динамическую переменную с поиском по иерархии: блоки Block1 и Block3 подписаны на переменную Var1 с поиском по иерархии (а), в подсистеме Sys1 появилась переменная Var1 , и блок Block3 получил к ней доступ (б)">рис.&nbsp;39</a>). Эти события, в отличие от изменения
+значения переменной, происходят при вызове различных сервисных функций, поэтому RDS в состоянии самостоятельно
+уведомить о них блоки-подписчики.</p>
+
+<p><span id="ref15">Модель</span>
+блока может в любой момент прекратить подписку на динамическую переменную при помощи сервисной функции
+<span id="light_ref15" class="cpp"><a href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a></span>, в
+которую передается указатель на структуру подписки. При вызове этой функции созданная при
+подписке структура <span class="cpp"><a class="hidden" href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a></span> уничтожается, и указатель на нее,
+при помощи которого осуществлялся доступ к переменной, не может быть использован в дальнейшем &ndash;
+теперь он указывает на освобожденную область памяти. При уничтожении блока не обязательно прекращать подписку
+на переменные, на которые блок подписался в процессе работы &ndash; это будет сделано автоматически. Однако,
+для соблюдения хорошего стиля программирования и улучшения читаемости программы лучше явно прекратить
+подписку на переменные при вызове модели в режиме <span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_5_8.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_6_2.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_6_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

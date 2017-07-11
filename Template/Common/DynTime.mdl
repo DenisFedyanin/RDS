@@ -1,0 +1,68 @@
+$BC55MODEL
+Будет создана модель блока, связанного со стандартной динамической переменной времени DynTime, и вычисляющего значения своих переменных по предыдущим значениям входов и состояний
+$VARS
+  signal name "Start" in run default 0
+  signal name "Ready" out default 0
+  double name "rdsbcppTime0" default 0
+  logical name "rdsbcppFirstStep" default 1
+$DYNAMIC
+  double name "DynTime" request "DynTime" parent search
+$ENDDECL
+$MODEL
+double h;
+
+if(DynTime==rdsbcppTime0) // Время не изменилось
+  return;
+// Время изменилось
+h=DynTime-rdsbcppTime0; // Вычисление шага расчета
+
+if(rdsbcppFirstStep) // Инициализация
+  { InitVars(h);
+    rdsbcppFirstStep=0;
+  }
+
+// Выполнение шага расчета
+DoStep(h);
+
+// Запоминание времени последнего расчета
+rdsbcppTime0=DynTime; 
+
+$CLASSDEF
+//---------------------------------------------------------
+// ВНИМАНИЕ! Переменные rdsbcppTime0, rdsbcppFirstStep и 
+// DynTime нужны для работы блока, их не следует изменять 
+// или удалять.
+//---------------------------------------------------------
+
+// Функции, заполняемые пользователем
+
+#pragma argsused
+void InitVars(double h)
+{
+  // Здесь можно считать начальные условия с входов блока,
+  // если это необходимо.
+  // h - шаг расчета.
+}
+//---------------------------------------------------------
+
+#pragma argsused
+void DoStep(double h)
+{
+  // Здесь можно вычислить новые значения выходов блока на 
+  // момент времени DynTime (интервал времени с прошлого 
+  // вычисления - h)
+}
+//---------------------------------------------------------
+$OPTIONS
+  tabs $CLASSDEF
+  window pos 0 0 size 1018 763 hdiv 337 vdiv 319 fdiv 301
+  svc 0 107 1 57 2 57 3 61
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 90
+  dvcheck 1
+  indexcheck 1
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

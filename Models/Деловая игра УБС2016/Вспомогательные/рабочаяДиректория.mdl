@@ -1,0 +1,33 @@
+$BC55MODEL 0.0.0 2016.10.6.15.39.2 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$VARS
+  signal name "Start" in menu run default 1
+  signal name "Ready" out menu default 0
+  string name "CurWorkDir" out menu default ""
+$ENDDECL
+$MDOWN
+char *a = rdsCallDirDialog(NULL, "Выберите рабочую директорию",TRUE);
+CurWorkDir = a;
+rdsFree(a);
+rdsMessageBox(CurWorkDir.c_str(),"workdir",MB_OK);
+$MODEL
+if( !strcmp(CurWorkDir.c_str(),"") ) {
+	CurWorkDir = rdsGetSystemPath(RDS_GSPSYSTEMFULLDIR);
+}
+$OPTIONS
+  tabs $MDOWN $MODEL
+  window pos 102 96 size 1062 660 hdiv 386 vdiv 268 fdiv 253
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 1
+  ignorewarnings 0
+  customerrmsg 0
+  autoreadonlyeditor 0
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

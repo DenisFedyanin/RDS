@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.12.2. Захват мыши, реакция на перемещение курсора</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_12">&sect;2.12. Реакция блоков на действия пользователя</a></p>
+<div class="level"><p>&sect;2.12.2. Захват мыши, реакция на перемещение курсора</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_12_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_3.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_12_2_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.12. Реакция блоков на действия пользователя</h3>
+<h4>&sect;2.12.2. Захват мыши, реакция на перемещение курсора</h4>
+<p class="abstract">Рассматривается реакция модели блока на перемещение курсора мыши и захват мыши &ndash; режим,
+                в котором блок реагирует на мышь даже при выходе курсора за его изображение. Приводится пример блока,
+                изображающего рукоятку, которую можно двигать мышью по двум координатам, изменяя таким образом значения выходов
+                блока.</p>
+
+
+<p>Для создания полноценного пользовательского интерфейса обычно мало реагировать только на
+<a href="pm_2_12_1.htm" title="&sect;2.12.1. Реакция на мышь">щелчки мыши</a>
+на изображении блока. Достаточно часто нужно отслеживать и перемещения курсора &ndash; например,
+для виртуальных рукояток, которые пользователь может двигать, меняя какие-либо значения, или для выделения
+области графика, которую нужно рассмотреть подробнее. Чаще всего в таких случаях перемещения курсора производятся
+при нажатой кнопке мыши: нажатие кнопки отмечает начало операции (перемещения рукоятки, выделения
+области и т.п.), а отпускание &ndash; ее конец. Необходимость закладывать в модель блока реакцию на
+перемещение курсора мыши без нажатия кнопок встречается довольно редко. Такие реакции могут замедлять
+систему в
+<a href="pm_1_3.htm#ref3" title="Режим расчета">режиме расчета</a>, поскольку каждый проход курсора мыши над изображением блока
+будет порождать большое количество вызовов модели этого блока. При этом, поскольку все реакции на действия
+пользователя производятся в главном потоке RDS, поток расчета будет каждый раз останавливаться и ждать
+завершения реакции модели. Кроме того, если перемещение мыши над блоком должно как-либо отражаться на
+его внешнем виде, каждое перемещение курсора над блоком будет приводить к необходимости обновления окна
+подсистемы, что также может приводить к существенному замедлению. По этой причине при включении в
+параметрах блока реакции на мышь, модель будет реагировать на перемещения курсора по изображению блока только
+при нажатой кнопке мыши. Для того, чтобы модель всегда реагировала на перемещения курсора, в параметрах
+блока нужно включить дополнительный флаг (см. <a href="pm_2_12_1.htm#pic1" title="Включение реакции на мышь в параметрах блока">рис.&nbsp;73</a>).</p>
+
+<p><span id="ref1">Как</span>
+уже было написано выше, при покидании курсором мыши описывающего прямоугольника блока, вызовы его модели
+по умолчанию прекращаются. Это не всегда удобно. Например, если пользователь двигает какую-либо
+вертикальную рукоятку, и, изменяя ее значение вертикальными движениями курсора, случайно сдвинет курсор
+по горизонтали, он может выйти за пределы блока и попасть в соседнюю рукоятку. Поскольку взгляд пользователя в
+этот момент, вероятнее всего, будет прикован к индикаторам, по которым он следит за поведением системы, он
+не сразу поймет, почему перестал изменяться нужный ему параметр, и при этом начал изменяться какой-то другой.</p>
+
+<p>Чтобы избежать таких проблем, имеет смысл при начале отслеживания перемещения курсора включать
+<span id="light_ref1">захват мыши</span>. При этом модель блока будет получать сообщения о перемещениях курсора,
+а также нажатии и отпускании кнопок мыши, даже при выходе курсора за пределы изображения блока, до тех пор,
+пока захват не будет снят. Чаще всего захват включают при нажатии кнопки мыши, а выключают &ndash;
+при отпускании, но возможны и другие варианты.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/MouseHandle.png" width="255" height="136" alt="Двухкоординатная рукоятка" />
+<p id="light_pic1">Рис.&nbsp;75. Двухкоординатная рукоятка</p>
+</div></div>
+
+
+<p><span id="ref2">В</span>
+качестве примера рассмотрим <span id="light_ref2">блок, имитирующий двухкоординатную рукоятку</span>.
+Внутри прямоугольника, разделенного на четыре части вертикальными линиями, будет изображаться круг синего цвета
+(<a href="#pic1" title="Двухкоординатная рукоятка">рис.&nbsp;75</a>). Пользователь может
+&laquo;перетаскивать&raquo; этот круг мышью, меняя значения выходов блока &laquo;<span class="rdsvar">x</span>&raquo; и
+&laquo;<span class="rdsvar">y</span>&raquo;. При перемещении круга по горизонтали от левой границы прямоугольника до правой,
+выход &laquo;<span class="rdsvar">x</span>&raquo; будет изменяться от &minus;1 до 1. При перемещении круга по вертикали от
+нижней границы до верхней, выход &laquo;<span class="rdsvar">y</span>&raquo; точно так же будет изменяться от &minus;1 до 1.
+Таким образом, положение круга в центре блока, на пересечении линий, соответствует нулевым значениям обоих выходов.
+Для лучшей визуальной обратной связи сделаем так, чтобы в процессе перетаскивания круг менял цвет на красный.
+Чтобы не делать для блока сложную векторную картинку, будем рисовать его внешний вид
+<a href="pm_2_10_1.htm" title="&sect;2.10.1. Рисование изображения блока в окне подсистемы">программно</a>.</p>
+
+<p>Для упрощения примера мы не будем включать в модель
+<a href="pm_2_7_1.htm" title="&sect;2.7.1. Функция настройки блока и открытие модальных окон">функцию настройки параметров</a> блока (цветов
+прямоугольника и круга, размера круга), но, тем не менее, сделаем их полями класса личной области данных блока.
+При необходимости, функции настройки, загрузки и сохранения этих параметров можно будет написать позже.
+Большую часть реакций модели на мышь мы вынесем в функции-члены класса, чтобы макроопределение для выхода блока
+<span class="cpp">y</span>, которое будет использоваться в функции модели, не конфликтовало с одноименным полем
+структуры <span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a></span> (эта проблема была подробно описана
+в <a href="pm_2_12_1.htm#ref7" title="Возможные конфликты макросов переменных с прочими переменными">&sect;2.12.1</a>).</p>
+
+<p>Блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">x</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">y</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>В такте расчета этот блок не будет выполнять никаких действий, поэтому для него следует установить
+флаг <a href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">запуска по сигналу</a>, чтобы процессорное время не тратилось зря на
+пустой вызов модели. Запишем класс
+<a href="pm_1_4.htm#ref8" title="Личная область данных блока">личной области данных</a> блока, с указанными выше полями-параметрами
+и функциями-членами:</p>
+
+<pre class="cpp">  <span class="rem">//====== Класс личной области данных ======</span>
+  <span class="kw">class</span> TSimpleJoystick
+  { <span class="kw">private</span>:
+      <span class="rem">// Центр круга (рукоятки) до начала перетаскивания</span>
+      <span class="kw">int</span> OldHandleX,OldHandleY;
+      <span class="rem">// Координаты курсора на момент начала перетаскивания</span>
+      <span class="kw">int</span> OldMouseX,OldMouseY;
+    <span class="kw">public</span>:
+      <span class="rem">// Настроечные параметры блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> BorderColor;       <span class="rem">// Цвет рамки блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> FieldColor;        <span class="rem">// Цвет прямоугольника</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> HandleColor;       <span class="rem">// Цвет круга в покое</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> MovingHandleColor; <span class="rem">// Цвет круга при таскании</span>
+      <span class="kw">int</span> HandleSize;             <span class="rem">// Диаметр круга</span>
+
+      <span class="rem">// Реакция на нажатие кнопки мыши</span>
+      <span class="kw">int</span> MouseDown(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,<span class="kw">double</span> x,<span class="kw">double</span> y,<a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> *pFlags);
+      <span class="rem">// Реакция на перемещение курсора мыши</span>
+      <span class="kw">void</span> MouseMove(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,<span class="kw">double</span> *px,<span class="kw">double</span> *py);
+      <span class="rem">// Рисование изображения блока</span>
+      <span class="kw">void</span> Draw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw,<span class="kw">double</span> x,<span class="kw">double</span> y,<a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> moving);
+
+      <span class="rem">// Конструктор класса</span>
+      TSimpleJoystick(<span class="kw">void</span>)
+        { BorderColor=<span class="const">0</span>;          <span class="rem">// Черная рамка</span>
+          FieldColor=<span class="const">0xffffff</span>;    <span class="rem">// Белое поле</span>
+          HandleColor=<span class="const">0xff0000</span>;   <span class="rem">// Синий круг</span>
+          MovingHandleColor=<span class="const">0xff</span>; <span class="rem">// Красный при таскании</span>
+          HandleSize=<span class="const">20</span>;          <span class="rem">// Диаметр круга</span>
+        };
+  };
+  <span class="rem">//=========================================</span></pre>
+
+<p>В закрытой секции класса описаны четыре целых поля, они понадобятся нам при реализации перетаскивания
+круга-рукоятки по прямоугольнику блока. В момент нажатия левой кнопки мыши в пределах круга мы
+запомним координаты центра круга в переменных <span class="cpp">OldHandleX</span> и
+<span class="cpp">OldHandleY</span>, а координаты курсора &ndash; в
+<span class="cpp">OldMouseX</span> и <span class="cpp">OldMouseY</span>. После этого при перемещении курсора
+относительно (<span class="cpp">OldMouseX</span>,<span class="cpp">OldMouseY</span>) мы будем перемещать центр круга
+на то же расстояние относительно (<span class="cpp">OldHandleX</span>,<span class="cpp">OldHandleY</span>), таким
+образом, круг будет двигаться за курсором, не смещаясь относительно него.</p>
+
+<p>В открытой секции класса описаны настроечные параметры блока, функции реакции на мышь и рисования изображения
+блока и, естественно, конструктор класса. В конструкторе всем настроечным параметрам присваиваются оговоренные ранее
+значения. В функции реакции значения выходов блока (или указатели на них, если функция будет в них что-то
+записывать) передаются в параметрах, поскольку положение круга в блоке зависит от текущего значения его выходов
+<span class="cpp">x</span> и <span class="cpp">y</span> и мы не собираемся использовать в функциях-членах
+класса макроопределения для статических переменных.</p>
+
+<p>Теперь рассмотрим функции-члены класса, и начнем с функции рисования <span class="cpp">Draw</span>, которая определяет
+внешний вид нашего блока. Кроме указателя на структуру параметров рисования
+<span class="cpp"><a href="RDS_BFM_DRAW.htm#ref1" title="Структура RDS_DRAWDATA">RDS_DRAWDATA</a></span> в эту функцию передаются текущие значения переменных блока
+<span class="cpp">x</span> и <span class="cpp">y</span> (по ним вычисляются координаты центра рисуемого круга)
+и дополнительный логический параметр <span class="cpp">moving</span>, указывающий на то, идет ли в данный
+момент перетаскивание круга (в этом случае он должен быть нарисован красным вместо синего). Значение
+этого параметра будет вычисляться в основной функции модели, которую мы рассмотрим позже. Функция
+<span class="cpp">Draw</span> имеет следующий вид:</p>
+
+<pre class="cpp">  <span class="rem">// Рисование изображения блока</span>
+  <span class="kw">void</span> TSimpleJoystick::Draw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw,<span class="kw">double</span> x,<span class="kw">double</span> y,BOOL moving)
+  { <span class="kw">int</span> hx,hy,cx,cy;
+    <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> r;
+    <span class="kw">int</span> hR=HandleSize*draw-&gt;DoubleZoom/<span class="const">2</span>; <span class="rem">// Радиус круга-рукоятки</span>
+
+    <span class="rem">// Если размер блока - нулевой, рисовать негде</span>
+    <span class="kw">if</span>(draw-&gt;Height==<span class="const">0</span> || draw-&gt;Width==<span class="const">0</span>)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Рисование поля блока</span>
+    <span id="light_ref3"><a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a></span>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,<span class="const">1</span>,BorderColor,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+    <span id="light_ref4"><a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a></span>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,FieldColor);
+    <span id="light_ref5"><a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a></span>(draw-&gt;Left,draw-&gt;Top,
+                   draw-&gt;Left+draw-&gt;Width,draw-&gt;Top+draw-&gt;Height);
+
+    <span class="rem">// Вычисление центра прямоугольника блока</span>
+    cx=draw-&gt;Left+draw-&gt;Width/<span class="const">2</span>;
+    cy=draw-&gt;Top+draw-&gt;Height/<span class="const">2</span>;
+
+    <span class="rem">// Вычисление координат центра круга-рукоятки</span>
+    hx=cx+x*draw-&gt;Width/<span class="const">2</span>;
+    hy=cy-y*draw-&gt;Height/<span class="const">2</span>;
+
+    <span class="rem">// Установка области отсечения</span>
+    r.left=draw-&gt;Left+<span class="const">1</span>;
+    r.top=draw-&gt;Top+<span class="const">1</span>;
+    r.right=draw-&gt;Left+draw-&gt;Width-<span class="const">1</span>;
+    r.bottom=draw-&gt;Top+draw-&gt;Height-<span class="const">1</span>;
+    <span id="light_ref6"><a class="hidden" href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a></span>(&amp;r);
+
+    <span class="rem">// Линии перекрестия</span>
+    <span id="light_ref7"><a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a></span>(cx,draw-&gt;Top);
+    <span id="light_ref8"><a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a></span>(cx,draw-&gt;Top+draw-&gt;Height);
+    <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(draw-&gt;Left,cy);
+    <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(draw-&gt;Left+draw-&gt;Width,cy);
+
+    <span class="rem">// Рисование круга (цвет зависит от параметра moving)</span>
+    <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref4" title="RDS_GFSTYLE">RDS_GFSTYLE</a>,<span id="light_ref9"><a class="hidden" href="rdsXGSetPenStyle.htm#light_ref11" title="PS_NULL">PS_NULL</a></span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>);
+    <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,
+                       moving?MovingHandleColor:HandleColor);
+    <span id="light_ref10"><a class="hidden" href="rdsXGEllipse.htm" title="А.5.18.6. rdsXGEllipse &ndash; эллипс или окружность">rdsXGEllipse</a></span>(hx-hR,hy-hR,hx+hR+<span class="const">1</span>,hy+hR+<span class="const">1</span>);
+
+    <span class="rem">// Отмена отсечения</span>
+    <a class="hidden" href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a>(NULL);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Если длина или ширина блока &ndash; нулевые, функция немедленно завершается, поскольку ей просто
+негде рисовать изображение. В противном случае рисуется прямоугольник размером с весь блок, по которому будет
+перемещаться перетаскиваемый мышью круг. Координаты центра прямоугольника блока записываются во вспомогательные
+переменные <span class="cpp">cx</span> и <span class="cpp">cy</span> &ndash; этим координатам будет
+соответствовать положение центра круга при нулевых значениях <span class="cpp">x</span> и <span class="cpp">y</span>.
+Затем, по размерам прямоугольника и вещественным значениям выходов блока
+<span class="cpp"></span> и <span class="cpp">y</span>, вычисляются координаты центра круга
+(<span class="cpp">hx</span>,<span class="cpp">hy</span>) так, чтобы при нулевом значении выхода круг оказывался
+в центре блока, а при значении &plusmn;1 &ndash; на границе.</p>
+
+<p>Перед тем, как нарисовать круг внутри прямоугольника блока, необходимо отсечь возможность рисования
+за пределами этого прямоугольника. Дело в том, что при <span class="cpp">x</span> или <span class="cpp">y</span>, равных
+&plusmn;1, центр круга будет находиться точно на границе прямоугольника блока, и, если не принять меры,
+половина круга окажется за пределами изображения блока. Чтобы этого не случилось, вызывается уже
+знакомая нам по <a href="pm_2_10_1.htm#ref12" title="Пример модели графика">блоку-графику</a> функция отсечения по прямоугольнику
+<span class="cpp"><a href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a></span>. Ей передаются координаты с отступом на одну точку внутрь прямоугольника
+блока, чтобы круг, который будет нарисован, не задел рамку прямоугольника.</p>
+
+<p>Далее рисуются линии перекрестия в центре прямоугольника (<span class="cpp">cx</span>,<span class="cpp">cy</span>)
+&ndash; их нужно нарисовать до круга-рукоятки, чтобы они его не перекрывали. Затем, в зависимости от значения
+параметра <span class="cpp">moving</span>, устанавливается нужный цвет заливки (при
+<span class="cpp">moving==TRUE</span> &ndash; <span class="cpp">MovingHandleColor</span>, то есть красный,
+при <span class="cpp">FALSE</span> &ndash; <span class="cpp">HandleColor</span>, то есть синий), и функцией
+<span class="cpp"><a href="rdsXGEllipse.htm" title="А.5.18.6. rdsXGEllipse &ndash; эллипс или окружность">rdsXGEllipse</a></span> рисуется круг заданного в параметрах блока радиуса с центром в
+(<span class="cpp">hx</span>,<span class="cpp">hy</span>). После этого отсечение отключается и функция
+на этом завершается.</p>
+
+<p>Теперь напишем функцию реакции на нажатие кнопки мыши <span class="cpp">MouseDown</span>. Эта функция проверит,
+левая ли кнопка мыши нажата, попал ли курсор мыши в круг рукоятки (для этого в параметрах функции передаются
+вещественные значения обоих выходов блока, от которых зависит положение круга), и, если оба условия выполнены,
+подготовит вспомогательные переменные к перетаскиванию круга и установит в флагах блока, указатель
+на которые передан в параметре <span class="cpp">pFlags</span>, флаг захвата мыши. Функция
+<span class="cpp">MouseDown</span> будет возвращать целое значение, которое функция модели без изменений
+использует в качестве своего результата &ndash; таким образом мы сообщим RDS,
+обработано ли нажатие кнопки мыши.</p>
+
+<pre class="cpp">  <span class="rem">// Реакция на нажатие кнопки мыши</span>
+  <span class="kw">int</span> TSimpleJoystick::MouseDown(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,
+              <span class="kw">double</span> x,<span class="kw">double</span> y,
+              <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> *pFlags)
+  { <span class="kw">int</span> hx,hy,cx,cy,
+        hR=HandleSize*mouse-&gt;DoubleZoom/<span class="const">2</span>; <span class="rem">// Радиус круга</span>
+
+    <span class="rem">// Если размер - нулевой, реакция не имеет смысла</span>
+    <span class="kw">if</span>(mouse-&gt;Height==<span class="const">0</span> || mouse-&gt;Width==<span class="const">0</span>)
+      <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+    <span class="rem">// Если нажата не левая кнопка, перетаскивать не надо</span>
+    <span class="rem">// Разрешаем в этом случае вызов контекстного меню блока</span>
+    <span class="kw">if</span>(mouse-&gt;Button!=<span id="light_ref11"><a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a></span>)
+      <span class="kw">return</span> <span id="light_ref12"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm#light_ref2" title="RDS_BFR_SHOWMENU">RDS_BFR_SHOWMENU</a></span>;
+
+    <span class="rem">// Координаты цента блока</span>
+    cx=mouse-&gt;Left+mouse-&gt;Width/<span class="const">2</span>;
+    cy=mouse-&gt;Top+mouse-&gt;Height/<span class="const">2</span>;
+    <span class="rem">// Координаты центра круга-рукоятки</span>
+    hx=cx+x*mouse-&gt;Width/<span class="const">2</span>;
+    hy=cy-y*mouse-&gt;Height/<span class="const">2</span>;
+
+    <span class="rem">// Проверка попадания курсора в круг</span>
+    <span class="kw">if</span>(abs(mouse-&gt;x-hx)&lt;=hR &amp;&amp; abs(mouse-&gt;y-hy)&lt;=hR)
+      { <span class="rem">// Курсор попал в круг</span>
+        <span class="rem">// Запоминаем координаты центра круга на момент</span>
+        <span class="rem">// начала перетаскивания</span>
+        OldHandleX=hx;
+        OldHandleY=hy;
+        <span class="rem">// Координаты курсора на начало перетаскивания</span>
+        OldMouseX=mouse-&gt;x;
+        OldMouseY=mouse-&gt;y;
+        <span class="rem">// Взводим флаг захвата мыши</span>
+        *pFlags|=<span id="light_ref13"><a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a></span>;
+      }
+    <span class="rem">// Курсор не попал в рукоятку - захватывать мышь</span>
+    <span class="rem">// и подготавливать перетаскивание не нужно</span>
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Если ширина или высота блока &ndash; нулевые, функция немедленно возвращает
+<span class="cpp"><a href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a></span> &ndash; нормальная работа блока в этом случае невозможна.
+В противном случае функция проверяет, левая ли кнопка нажата, и, если это не так, возвращает константу
+<span class="cpp"><a href="RDS_BFM_MOUSEDOWN.htm#light_ref2" title="RDS_BFR_SHOWMENU">RDS_BFR_SHOWMENU</a></span>. Возврат этой константы при реакции на нажатие правой кнопки мыши
+сигнализирует RDS о том, что, несмотря на то, что нажатие было обработано моделью, необходимо открыть
+<a href="um_2_6.htm#pic3" title="Контекстное меню блока (поля ввода)">контекстное меню блока</a>
+(по умолчанию контекстные меню блоков, среагировавших на мышь, не вызываются). На самом деле, нам
+пока не важно, вызовется ли контекстное меню нашего блока при нажатии на нем правой кнопкой мыши в
+режимах <a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a> и расчета. Но в дальнейшем мы добавим в этот
+пример новые возможности, которые будут включаться и отключаться именно через контекстное меню,
+поэтому о его вызове лучше позаботиться сразу.</p>
+
+<p>Если же была нажата левая кнопка мыши, точно так же, как и в функции <span class="cpp">Draw</span>, вычисляются
+координаты центра блока (<span class="cpp">cx</span>,<span class="cpp">cy</span>), и, через них, координаты
+центра рукоятки (<span class="cpp">hx</span>,<span class="cpp">hy</span>). Попадание курсора мыши в круг
+рукоятки проверяется по близости его координат к центру круга &ndash; расстояние по обеим координатам не должно
+быть больше радиуса круга. Если это условие выполняется, можно начинать перетаскивание: текущие
+координаты центра круга сохраняются в полях класса (<span class="cpp">OldHandleX</span>,<span class="cpp">OldHandleY</span>),
+а координаты курсора &ndash; в (<span class="cpp">OldMouseX</span>,<span class="cpp">OldMouseY</span>). Эти
+значения будут использоваться в процессе перетаскивания (в реакции на перемещение курсора) как начальные условия.
+После сохранения начальных значений координат функция захватывает мышь, взводя битовый флаг
+<span class="cpp"><a href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a></span> в поле <span class="cpp">Flags</span> структуры данных блока
+<span class="cpp">BlockData</span> (указатель на это поле должен быть передан в функцию <span class="cpp">MouseDown</span>
+из вызвавшей ее функции модели в параметре <span class="cpp">pFlags</span>). Для взведения флага используется
+побитовая операция &laquo;ИЛИ&raquo; (в данном случае использован оператор присваивания
+&laquo;<span class="cpp">*pFlags|=<a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a></span>&raquo;, который эквивалентен записи
+&laquo;<span class="cpp">*pFlags=*pFlags | <a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a></span>&raquo;).</p>
+
+<p>Последняя функция класса &ndash; <span class="cpp">MouseMove</span> &ndash; реагирует на перемещение курсора.
+Внутри нее по изменившемуся положению курсора вычисляются новые координаты центра перетаскиваемого круга,
+а по ним &ndash; новые значения выходов блока <span class="cpp">x</span> и <span class="cpp">y</span>. Поскольку
+функция не имеет непосредственного доступа к статическим выходам блока, в ее параметрах передаются указатели на
+эти выходы <span class="cpp">px</span> и <span class="cpp">py</span>, а она записывает по этим указателям
+результат своей работы. Мы не будем делать в функции проверку, производится в данный момент перетаскивание
+рукоятки или нет &ndash; возложим эту обязанность на вызывающую функцию. Пока будем считать, что, раз
+<span class="cpp">MouseMove</span> вызвана, значит, в данный момент выполняется перетаскивание.</p>
+
+<pre class="cpp">  <span class="rem">// Реакция на перемещение курсора мыши</span>
+  <span class="kw">void</span> TSimpleJoystick::MouseMove(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,
+                                  <span class="kw">double</span> *px,<span class="kw">double</span> *py)
+  { <span class="kw">int</span> hx,hy,cx,cy;
+
+    <span class="rem">// Если размер - нулевой, реакция не имеет смысла</span>
+    <span class="kw">if</span>(mouse-&gt;Height==<span class="const">0</span> || mouse-&gt;Width==<span class="const">0</span>)
+      { *px=*py=<span class="const">0</span>.<span class="const">0</span>;
+        <span class="kw">return</span>;
+      }
+
+    <span class="rem">// Новые координаты центра рукоятки</span>
+    hx=OldHandleX+(mouse-&gt;x-OldMouseX);
+    hy=OldHandleY+(mouse-&gt;y-OldMouseY);
+
+    <span class="rem">// Координаты центра блока</span>
+    cx=mouse-&gt;Left+mouse-&gt;Width/<span class="const">2</span>;
+    cy=mouse-&gt;Top+mouse-&gt;Height/<span class="const">2</span>;
+
+    <span class="rem">// По новым координатам центра рукоятки вычисляем соответствующие</span>
+    <span class="rem">// им вещественные значения выходов, ограничивая их</span>
+    <span class="rem">// диапазоном [-1...1]</span>
+    *px=<span class="const">2.0</span>*(hx-cx)/mouse-&gt;Width;
+    <span class="kw">if</span>(*px&gt;<span class="const">1.0</span>) *px=<span class="const">1.0</span>;
+    <span class="kw">else</span> <span class="kw">if</span>(*px&lt;-<span class="const">1.0</span>) *px=-<span class="const">1.0</span>;
+    *py=-<span class="const">2.0</span>*(hy-cy)/mouse-&gt;Height;
+    <span class="kw">if</span>(*py&gt;<span class="const">1.0</span>) *py=<span class="const">1.0</span>;
+    <span class="kw">else</span> <span class="kw">if</span>(*py&lt;-<span class="const">1.0</span>) *py=-<span class="const">1.0</span>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Как и в двух других функциях, в этой сначала проверяется, не нулевая ли длина или ширина
+блока (в этом случае выходам блока принудительно присваиваются нули и функция завершается). Если с
+размерами блока все в порядке, вычисляются новые, с учетом перемещения курсора, координаты центра
+круга-рукоятки. Зная координаты рукоятки и курсора мыши до начала перетаскивания, вычислить новые
+координаты рукоятки не сложно. По горизонтали с момента начала перетаскивания курсор переместился на
+(<span class="cpp">mouse-&gt;x-OldMouseX</span>) точек, рукоятка перемещается вместе с курсором,
+значит, для вычисления ее новой горизонтальной координаты нужно к старому ее значению
+<span class="cpp">OldHandleX</span> добавить перемещение курсора мыши. Вертикальное перемещение вычисляется
+аналогично.</p>
+
+<p>По новым координатам рукоятки можно вычислить новые значения выходов блока, разделив для каждой
+из двух координат расстояние от центра круга рукоятки до центра блока на половину размера блока
+(половину ширины или высоты, в зависимости от вычисляемой координаты). При этом вычисленные значения необходимо
+ограничить диапазоном [&ndash;1&hellip;1]. Поскольку блок у нас будет захватывать мышь,
+его модель будет получать от RDS сообщения о перемещении курсора и, реагируя на них, вызывать
+функцию <span class="cpp">MouseMove</span>, даже при выходе курсора за пределы прямоугольника блока.
+Вместе с координатами курсора координаты центра рукоятки тоже выйдут за прямоугольник блока, что,
+без ограничений на диапазон выходов, может привести к весьма неприятной ситуации: если перетащить круг рукоятки за
+пределы блока и отпустить там, в него уже невозможно будет попасть мышью, чтобы перетащить обратно.
+Действительно, по окончании перетаскивания модель снимет захват мыши, поэтому реакция на нажатие кнопки будет
+вызываться только при нахождении курсора в пределах прямоугольника блока. А круг рукоятки находится за
+его пределами (к тому же еще и не изображается, поскольку функция <span class="cpp">Draw</span>
+устанавливает отсечение рисования вне прямоугольника). Значит, в этом случае проверка попадания курсора в
+рукоятку в функции <span class="cpp">MouseDown</span> никогда не выполнится, и новое перетаскивание никогда
+не начнется. Если же ограничивать выходы блока диапазоном [&ndash;1&hellip;1], центр рукоятки не сможет
+покинуть прямоугольник блока, как бы далеко от него ни переместил курсор пользователь.</p>
+
+<p>Теперь, когда все функции класса написаны, можно написать функцию модели блока, которая
+будет их вызывать и работать с захватом мыши:</p>
+
+<pre class="cpp">  <span class="rem">// Двухкоординатная рукоятка</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> SimpleJoystick(<span class="kw">int</span> CallMode,
+            <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+            <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x      (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define y      (*((double *)(pStart+10)))</span>
+    <span class="rem">// Вспомогательная переменная - указатель на личную область,</span>
+    <span class="rem">//приведенный к правильному типу</span>
+    TSimpleJoystick *data=(TSimpleJoystick*)(BlockData-&gt;BlockData);
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          BlockData-&gt;BlockData=<span class="kw">new</span> TSimpleJoystick();
+          <span class="kw">break</span>;
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+        <span class="rem">// Проверка допустимости типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDD}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+        <span class="rem">// Нажатие кнопки мыши</span>
+        <span class="kw">case</span> <span id="light_ref14"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>:
+          <span class="kw">return</span> data-&gt;MouseDown((<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam,x,y,
+            &amp;(BlockData-&gt;Flags));
+        <span class="rem">// Отпускание кнопки мыши</span>
+        <span class="kw">case</span> <span id="light_ref15"><a class="hidden" href="RDS_BFM_MOUSEUP.htm" title="А.2.6.11. RDS_BFM_MOUSEUP &ndash; отпускание кнопки мыши">RDS_BFM_MOUSEUP</a></span>:
+          <span class="rem">// Снятие захвата мыши</span>
+          <span id="light_ref16"><a class="hidden" href="RDS_SETFLAG.htm" title="А.5.2.4. Макрос RDS_SETFLAG &ndash; установка битового флага">RDS_SETFLAG</a></span>(BlockData-&gt;Flags,<a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>,FALSE);
+          <span class="kw">break</span>;
+        <span class="rem">// Перемещение курсора мыши</span>
+        <span class="kw">case</span> <span id="light_ref17"><a class="hidden" href="RDS_BFM_MOUSEMOVE.htm" title="А.2.6.10. RDS_BFM_MOUSEMOVE &ndash; перемещение курсора мыши">RDS_BFM_MOUSEMOVE</a></span>:
+          <span class="rem">// Проверка: включен ли захват мыши</span>
+          <span class="kw">if</span>(BlockData-&gt;Flags &amp; <a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>)	<span class="rem">// Включен</span>
+            { <span class="rem">// Вызываем функцию реакции</span>
+              data-&gt;MouseMove((<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam,&amp;x,&amp;y);
+              Ready=<span class="const">1</span>; <span class="rem">// Взводим сигнал готовности</span>
+            }
+          <span class="kw">break</span>;
+        <span class="rem">// Рисование</span>
+        <span class="kw">case</span> <span id="light_ref18"><a class="hidden" href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a></span>:
+          data-&gt;Draw((<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a>)ExtParam,x,y,
+          BlockData-&gt;Flags &amp; <a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Поскольку в этой модели предусмотрена личная область данных блока, при вызовах в режимах
+<span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span> и <span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span> эта область, как обычно,
+создается и уничтожается. Вызов проверки типов статических переменных <span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>
+тоже не отличается от рассмотренных уже много раз. Мы не будем в очередной раз подробно описывать эти
+реакции, вместо этого сосредоточимся на реакциях модели на нажатие кнопок и перемещение курсора мыши.</p>
+
+<p>При нажатии какой-либо кнопки мыши модель вызывается в режиме <span class="cpp"><a href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>. При
+этом она немедленно вызывает функцию-член личной области данных блока <span class="cpp">MouseDown</span>,
+передавая ей приведенный к правильному типу указатель на структуру описания произошедшего события,
+текущие значения выходов блока <span class="cpp">x</span> и <span class="cpp">y</span>, а также
+указатель на поле флагов структуры <span class="cpp">BlockData</span> для взведения в этом поле,
+при необходимости, флага захвата мыши.</p>
+
+<p>При отпускании кнопки (реакция <span class="cpp"><a href="RDS_BFM_MOUSEUP.htm" title="А.2.6.11. RDS_BFM_MOUSEUP &ndash; отпускание кнопки мыши">RDS_BFM_MOUSEUP</a></span>) модель снимает захват мыши,
+сбрасывая флаг <span class="cpp"><a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a></span>. Для сброса флага используется макрос для сброса
+и установки битовых флагов <span class="cpp"><a href="RDS_SETFLAG.htm" title="А.5.2.4. Макрос RDS_SETFLAG &ndash; установка битового флага">RDS_SETFLAG</a></span>, описанный в
+&laquo;<span class="file">RdsDef.h</span>&raquo; следующим образом:</p>
+
+<pre class="cpp">  <span class="preproc">#define </span><a class="hidden" href="RDS_SETFLAG.htm" title="А.5.2.4. Макрос RDS_SETFLAG &ndash; установка битового флага"><span class="preproc">RDS_SETFLAG</span></a><span class="preproc">(storage,mask,value) \</span>
+<span class="preproc">    ((storage) = (value)? \</span>
+<span class="preproc">    ((storage) | (mask)): \</span>
+<span class="preproc">    ((</span><a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита"><span class="preproc">DWORD</span></a><span class="preproc">)((storage) &amp; (~(mask)))))</span></pre>
+
+<p>Параметр <span class="cpp">storage</span> соответствует переменной типа <span class="cpp"><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></span>, в которой
+устанавливается или сбрасывается флаг, параметр <span class="cpp">mask</span> &ndash; битовой маске флага,
+а вместо <span class="cpp">value</span> подставляется <span class="cpp">TRUE</span> для установки флага или
+<span class="cpp">FALSE</span> для сброса. На самом деле, отключение захвата мыши можно было бы записать и так:</p>
+
+<pre class="cpp">  BlockData-&gt;Flags=BlockData-&gt;Flags &amp; (~(<a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>));</pre>
+
+<p class="noindent">однако, запись с макросом читается несколько лучше. Больше при отпускании
+кнопки мыши никаких действий не выполняется. Модель даже не проверяет, была ли захвачена мышь,
+прежде чем сбросить флаг захвата &ndash; если он и так сброшен, его повторный сброс ничему не помешает.</p>
+
+<p>При перемещении курсора мыши модель вызывается в режиме <span class="cpp"><a href="RDS_BFM_MOUSEMOVE.htm" title="А.2.6.10. RDS_BFM_MOUSEMOVE &ndash; перемещение курсора мыши">RDS_BFM_MOUSEMOVE</a></span>. Если флаг
+<span class="cpp"><a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a></span> взведен (побитовое &laquo;И&raquo; поля
+<span class="cpp">Flags</span> структуры <span class="cpp">BlockData</span> c
+<span class="cpp"><a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a></span> дает ненулевой результат), значит, мышь в данный момент
+захвачена (то есть идет перетаскивание рукоятки), и вызывается функция <span class="cpp"></span>. В нее, как и в
+<span class="cpp">MouseDown</span>, передается указатель на структуру <span class="cpp"><a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a></span>,
+содержащую координаты курсора мыши, текущий размер блока и т.п. Кроме того, ей передаются указатели на
+выходы блока <span class="cpp">x</span> и <span class="cpp">y</span>, чтобы функция могла изменить их
+значения. После вызова <span class="cpp">MouseMove</span> выходу готовности блока присваивается единица,
+чтобы измененные значения выходов блока передались по связям.</p>
+
+<p>Последняя реакция в модели блока &ndash; рисование его изображения (<span class="cpp"><a href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a></span>). В
+ней вызывается уже описанная функция <span class="cpp">Draw</span>, в которую передается указатель на
+структуру параметров рисования, текущие значения выходов блока (чтобы функция нарисовала рукоятку в нужном
+месте) и признак захвата мыши, от которого зависит цвет рукоятки (при перетаскивании она меняет
+цвет на красный).</p>
+
+<p>Для проверки работы получившейся модели нужно задать в параметрах блока
+программное рисование (см. <a href="pm_2_10_1.htm#pic1" title="Индикатор уровня и параметры его внешнего вида">рис.&nbsp;58</a>),
+<a href="pm_2_12_1.htm#pic1" title="Включение реакции на мышь в параметрах блока">разрешить блоку реагировать на мышь</a>, и подключить к
+его выходам пару числовых индикаторов
+(см. (см. <a href="#pic1" title="Двухкоординатная рукоятка">рис.&nbsp;75</a>). В режиме расчета синий круг-рукоятку внутри
+блока можно будет перетаскивать левой кнопкой мыши, при этом значения на индикаторах будут меняться
+в соответствии с перемещением рукоятки. При выведении курсора за пределы прямоугольника блока рукоятка останется
+на его границе, а при возврате курсора обратно в прямоугольник снова будет следовать за ним. На самом деле,
+рукоятку можно перетаскивать и в режиме моделирования, но значения индикаторов при этом меняться не
+будут, поскольку данные по связям передаются только в режиме расчета.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_12_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_3.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

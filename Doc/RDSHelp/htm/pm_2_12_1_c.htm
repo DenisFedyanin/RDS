@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.12.1. Реакция на мышь</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_12">&sect;2.12. Реакция блоков на действия пользователя</a></p>
+<div class="level"><p>&sect;2.12.1. Реакция на мышь</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_11.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_2.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_12_1.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделями блоков,
+увеличивающих и уменьшающих выход по щелчку мыши. В библиотеке три модели:</p>
+
+<ul>
+  <li><span class="cpp">PlusMinus</span> &ndash; увеличение выхода на единицу при щелчке
+  на верхней половине изображения блока и уменьшение на единицу при щелчке на
+  нижней половине;</li>
+  <li><span class="cpp">PlusMinus_a</span> &ndash; аналогично <span class="cpp">PlusMinus</span>,
+  но при наличии у блока <a href="pm_1_4.htm#light_ref4" title="Векторная картинка блока">векторной картинки</a> увеличение выхода на единицу происходит
+  при щелчке на элементе с идентификатором 1, уменьшение на единицу &ndash;
+  при щелчке на элементе с идентификатором &minus;1;</li>
+  <li><span class="cpp">PlusMinus_b</span> &ndash; аналогично <span class="cpp">PlusMinus</span>,
+  но при наличии у блока векторной картинки к выходу прибавляется идентификатор ее элемента,
+  на который пришелся щелчок.</li>
+</ul>
+
+<p class="noindent">В каждой следующей версии модели изменения относительно предыдущей версии выделены
+<span class="changes">цветом</span>.</p>
+
+<pre class="cpp">  <span class="rem">// Реакция на мышь</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+  <span class="rem">// Увеличение/уменьшение значения по щелчку - первый вариант</span>
+  <span class="rem">// (распознается щелчок по верхней/нижней части блока)</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> RDSCALL PlusMinus(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define v      (*((int *)(pStart+2)))</span>
+    <span class="rem">// Вспомогательная — указатель на структуру события мыши</span>
+    <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSI}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Реакция на нажатие кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a>:
+          <span class="rem">// Приведение ExtParam к нужному типу</span>
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam;
+          <span class="kw">if</span>(mouse-&gt;Button==<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a>)
+            { <span class="rem">// Нажата левая кнопка</span>
+              <span class="kw">if</span>(mouse-&gt;y&lt;mouse-&gt;Top+mouse-&gt;Height/<span class="const">2</span>)
+                v++; <span class="rem">// В верхней половине блока - увеличиваем</span>
+              <span class="kw">else</span>
+                v--; <span class="rem">// В нижней половине блока — уменьшаем</span>
+              <span class="rem">// Взводим сигнал готовности</span>
+              Ready=<span class="const">1</span>;
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef v</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+
+  <span class="rem">// Увеличение/уменьшение значения по щелчку - второй вариант</span>
+  <span class="rem">// (распознается щелчок по элементам картинки)</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> RDSCALL PlusMinus_a(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define v      (*((int *)(pStart+2)))</span>
+    <span class="rem">// Вспомогательная — указатель на структуру события мыши</span>
+    <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSI}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Реакция на нажатие кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a>:
+          <span class="rem">// Приведение ExtParam к нужному типу</span>
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam;
+          <span class="kw">if</span>(mouse-&gt;Button==<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a>)
+            { <span class="rem">// Нажата левая кнопка</span>
+            <span class="changes">  <span class="rem">// Проверяем, есть ли у блока картинка (получаем описание блока)  </span></span>
+            <span class="changes">  <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a> descr;                                       </span>
+            <span class="changes">  descr.servSize=<span class="kw">sizeof</span>(descr);                                     </span>
+            <span class="changes">  <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(BlockData-&gt;Block,&amp;descr);                  </span>
+            <span class="changes">  <span class="kw">if</span>(descr.Flags &amp; <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#light_ref15" title="RDS_BDF_HASPICTURE">RDS_BDF_HASPICTURE</a>)                              </span>
+            <span class="changes">    { <span class="rem">// Картинка есть – определяем идентификатор                   </span></span>
+            <span class="changes">      <span class="rem">// элемента под курсором                                      </span></span>
+            <span class="changes">      <span class="kw">int</span> id=<a class="hidden" href="rdsGetMouseObjectId.htm" title="А.5.6.31. rdsGetMouseObjectId &ndash; элемент векторной картинки блока под курсором мыши">rdsGetMouseObjectId</a>(mouse);                            </span>
+            <span class="changes">      <span class="kw">switch</span>(id)                                                    </span>
+            <span class="changes">        { <span class="kw">case</span> <span class="const">1</span>:  v++; <span class="kw">break</span>;                                      </span>
+            <span class="changes">          <span class="kw">case</span> -<span class="const">1</span>: v--; <span class="kw">break</span>;                                      </span>
+            <span class="changes">        }                                                           </span>
+            <span class="changes">    }                                                               </span>
+            <span class="changes">  <span class="kw">else</span> </span><span class="kw">if</span>(mouse-&gt;y&lt;mouse-&gt;Top+mouse-&gt;Height/<span class="const">2</span>)
+                v++; <span class="rem">// В верхней половине блока - увеличиваем</span>
+              <span class="kw">else</span>
+                v--; <span class="rem">// В нижней половине блока — уменьшаем</span>
+              <span class="rem">// Взводим сигнал готовности</span>
+              Ready=<span class="const">1</span>;
+            }
+          <span class="kw">break</span>;
+
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef v</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+
+  <span class="rem">// Увеличение/уменьшение значения по щелчку - третий вариант</span>
+  <span class="rem">// (распознается щелчок по элементам картинки, идентификатор элемента определяет приращение v)</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> PlusMinus_b(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define v      (*((int *)(pStart+2)))</span>
+    <span class="rem">// Вспомогательная — указатель на структуру события мыши</span>
+    <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSI}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Реакция на нажатие кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a>:
+          <span class="rem">// Приведение ExtParam к нужному типу</span>
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam;
+          <span class="kw">if</span>(mouse-&gt;Button==<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a>)
+            { <span class="rem">// Нажата левая кнопка</span>
+              <span class="rem">// Проверяем, есть ли у блока картинка (получаем</span>
+              <span class="rem">// описание блока)</span>
+              <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a> descr;
+              descr.servSize=<span class="kw">sizeof</span>(descr);
+              <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(BlockData-&gt;Block,&amp;descr);
+              <span class="kw">if</span>(descr.Flags &amp; <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#light_ref15" title="RDS_BDF_HASPICTURE">RDS_BDF_HASPICTURE</a>)
+                { <span class="rem">// Картинка есть – определяем идентификатор</span>
+                  <span class="rem">// элемента под курсором</span>
+                  <span class="kw">int</span> id=<a class="hidden" href="rdsGetMouseObjectId.htm" title="А.5.6.31. rdsGetMouseObjectId &ndash; элемент векторной картинки блока под курсором мыши">rdsGetMouseObjectId</a>(mouse);
+                <span class="changes">  v+=id;  </span>
+                }
+              <span class="kw">else</span> <span class="kw">if</span>(mouse-&gt;y&lt;mouse-&gt;Top+mouse-&gt;Height/<span class="const">2</span>)
+                v++; <span class="rem">// В верхней половине блока - увеличиваем</span>
+              <span class="kw">else</span>
+                v--; <span class="rem">// В нижней половине блока — уменьшаем</span>
+              <span class="rem">// Взводим сигнал готовности</span>
+              Ready=<span class="const">1</span>;
+            }
+          <span class="kw">break</span>;
+
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef v</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_11.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_2.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

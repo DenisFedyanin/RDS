@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.5.8. Использование выходов с управляющими переменными</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_5">&sect;2.5. Статические переменные блоков</a></p>
+<div class="level"><p>&sect;2.5.8. Использование выходов с управляющими переменными</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_5_7.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_6_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_8">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_5_8.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделями, использующими дополнительные переменные
+для управления выходными связями. Библиотека содержит две модели:</p>
+
+<ul>
+  <li><span class="cpp">TestSW2</span> &ndash; блок, передающий входное значение либо только по одной из 
+  двух выходных связей, либо по обеим;</li>
+  <li><span class="cpp">TestSW</span> &ndash; блок-демультиплексор с выходом-массивом.</li>
+</ul>
+
+<pre class="cpp">  <span class="rem">// Управление срабатыванием выходных связей</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+  <span class="rem">//============ Переключатель ==============</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestSW2(<span class="kw">int</span> CallMode,
+                        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x       (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define N       (*((int *)(pStart+10)))</span>
+  <span class="preproc">#define L0      (*((char *)(pStart+14)))</span>
+  <span class="preproc">#define L1      (*((char *)(pStart+15)))</span>
+  <span class="preproc">#define y0      (*((double *)(pStart+16)))</span>
+  <span class="preproc">#define y1      (*((double *)(pStart+24)))</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDILLDD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">switch</span>(N)
+            { <span class="kw">case</span> <span class="const">0</span>: <span class="rem">// Передать данные на выход y0</span>
+                y0=x;
+                L0=<span class="const">1</span>; <span class="rem">// Разрешить y0</span>
+                L1=<span class="const">0</span>; <span class="rem">// Запретить y1</span>
+                <span class="kw">break</span>;
+              <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Передать данные на выход y1</span>
+                y1=x;
+                L0=<span class="const">0</span>; <span class="rem">// Запретить y0</span>
+                L1=<span class="const">1</span>; <span class="rem">// Разрешить y1</span>
+                <span class="kw">break</span>;
+              <span class="kw">default</span>: <span class="rem">// Передать данные на оба выхода</span>
+                y0=y1=x;
+                L0=L1=<span class="const">1</span>; <span class="rem">// Разрешить оба выхода</span>
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y1</span>
+  <span class="preproc">#undef y0</span>
+  <span class="preproc">#undef L1</span>
+  <span class="preproc">#undef L0</span>
+  <span class="preproc">#undef N</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//=========== Демультиплексор =============</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestSW(<span class="kw">int</span> CallMode,
+                       <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                       <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x       (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define N       (*((int *)(pStart+10)))</span>
+  <span class="preproc">#define pY      ((void **)(pStart+14))</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDIMD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">if</span>(N&lt;<span class="const">0</span>) <span class="rem">// Значение N не должно быть отрицательным</span>
+            Ready=<span class="const">0</span>; <span class="rem">// Не передавать ничего по связям</span>
+          <span class="kw">else</span> <span class="rem">// Значение N не отрицательно</span>
+            { <span class="kw">int</span> count;
+              <span class="kw">double</span> *array;
+              <span class="rem">// Число элементов в массиве Y</span>
+              count=<a class="hidden" href="RDS_ARRAYEXISTS.htm" title="А.5.15.3. Макрос RDS_ARRAYEXISTS &ndash; проверка наличия элементов в матрице/массиве">RDS_ARRAYEXISTS</a>(pY)?<a class="hidden" href="RDS_ARRAYCOLS.htm" title="А.5.15.1. Макрос RDS_ARRAYCOLS &ndash; число столбцов матрицы/массива">RDS_ARRAYCOLS</a>(pY):<span class="const">0</span>;
+              <span class="kw">if</span>(N&gt;=count) <span class="rem">// Число элементов недостаточно</span>
+                { <span class="rem">// Увеличение размера Y</span>
+                  <span class="kw">if</span>(!<a class="hidden" href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a>(pY,<span class="const">1</span>,N+<span class="const">1</span>,TRUE,NULL))
+                    { <span class="rem">// Ошибка: не удалось увеличить размер массива</span>
+                      <a class="hidden" href="rdsStopCalc.htm" title="А.5.2.42. rdsStopCalc &ndash; остановка расчета">rdsStopCalc</a>(); <span class="rem">// Остановка расчета</span>
+                      <span class="rem">// Не передавать ничего по связям</span>
+                      Ready=<span class="const">0</span>;
+                      <span class="rem">// Вывод сообщения</span>
+                      <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(<span class="str">"Мало памяти"</span>,
+                                    <span class="str">"Ошибка"</span>,
+                                    MB_OK | MB_ICONERROR);
+                      <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+                    }
+                }
+              <span class="rem">// Получить указатель на первый элемент Y</span>
+              array=(<span class="kw">double</span>*)<a class="hidden" href="RDS_ARRAYDATA.htm" title="А.5.15.2. Макрос RDS_ARRAYDATA &ndash; указатель на первый элемент матрицы/массива">RDS_ARRAYDATA</a>(pY);
+              <span class="rem">// Записать в Y[N] значение входа</span>
+              array[N]=x;
+            } <span class="rem">// else (N&gt;=0)</span>
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef pY</span>
+  <span class="preproc">#undef N</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_5_7.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_6_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_8">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

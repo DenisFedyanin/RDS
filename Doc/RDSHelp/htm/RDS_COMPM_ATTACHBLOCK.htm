@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.3.4.1. RDS_COMPM_ATTACHBLOCK &ndash; подключение модели к блоку</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_3">А.3. События модуля автокомпиляции и связанные с ними структуры</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_3_4">А.3.4. События модуля автокомпиляции</a></p>
+<div class="level"><p>А.3.4.1. <span class="cpp">RDS_COMPM_ATTACHBLOCK</span> &ndash; подключение модели к блоку</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_COMPMODELDATA.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_COMPM_CANATTACHBLK.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_COMPM_ATTACHBLOCK">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.3. События модуля автокомпиляции и связанные с ними структуры</h3>
+<h4>А.3.4. События модуля автокомпиляции</h4>
+<h5>А.3.4.1. <span class="cpp">RDS_COMPM_ATTACHBLOCK</span> &ndash; подключение модели к блоку</h5>
+
+
+<p class="apphdr">Первый параметр <a href="app_a_3_1.htm" title="А.3.1. Функция модуля автокомпиляции">функции модуля</a> (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_COMPM_ATTACHBLOCK</span>.</p>
+
+<p class="apphdr">Третий параметр функции модуля (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Указатель на структуру <span class="cpp"><a href="#ref1" title="Структура RDS_COMPBLOCKOPDATA">RDS_COMPBLOCKOPDATA</a></span>,
+содержащую идентификатор блока, идентификатор подключаемой к нему модели и причину подключения.</p>
+
+<p class="apphdr">Возвращаемое функцией модуля значение</p>
+<p>Не используется, можно возвращать любое значение.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Событие <span class="cpp">RDS_COMPM_ATTACHBLOCK</span> возникает при подключении очередного блока
+к модели, то есть при включении в параметрах этого блока автоматической компиляции его модели с
+указанием данного модуля автокомпиляции в качестве обслуживающего модель. Подключение блока к
+модели происходит при указании имени модели в
+<a href="um_2_9_1.htm#pic12" title="Вкладка компиляция окна параметров блока (модель не подключена)">окне параметров блока</a>, при загрузке схемы с
+блоками, модели
+которых компилируются автоматически, при вставке таких блоков из буфера обмена и т.п, то есть во
+всех случаях, когда RDS устанавливает связь между автокомпилируемой моделью и блоком. Обычно
+в реакции на это событие параметры блока приводятся в соответствие с моделью, например, блоку
+назначается указанная в модели структура статических переменных.</p>
+
+<p><span id="ref1">В</span> <span id="ref2">параметре</span>
+<span class="cpp">ExtParam</span> при реакции на это событие передается указатель на структуру
+<span class="cpp">RDS_COMPBLOCKOPDATA</span> (эта же структура используется и в реакции на событие
+<span class="cpp"><a href="RDS_COMPM_DETACHBLOCK.htm" title="А.3.4.7. RDS_COMPM_DETACHBLOCK &ndash; отключение модели от блока">RDS_COMPM_DETACHBLOCK</a></span>):</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span> {
+    <a class="hidden" href="RDS_COMPMODELDATA.htm#ref2" title="Указатель на RDS_COMPMODELDATA">RDS_PCOMPMODELDATA</a> Model;  <span class="rem">// Данные модели</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block;         <span class="rem">// Идентификатор блока</span>
+    <span class="kw">int</span> AttachReason;          <span class="rem">// Причина подключения блока</span>
+                               <span class="rem">// (константа RDS_COMP_AR_*)</span>
+  } <span id="light_ref1">RDS_COMPBLOCKOPDATA</span>;
+  <span class="kw">typedef</span> RDS_COMPBLOCKOPDATA *<span id="light_ref2">RDS_PCOMPBLOCKOPDATA</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">Model</span>&emsp;(<span class="cpp"><i>RDS_PCOMPMODELDATA</i></span>)</dt>
+  <dd>Указатель на данные модели (<span class="cpp"><a href="RDS_COMPMODELDATA.htm" title="А.3.3. RDS_COMPMODELDATA &ndash; структура данных модели">RDS_COMPMODELDATA</a></span>), подключаемой к блоку в
+  реакции на <span class="cpp"><a href="#top">RDS_COMPM_ATTACHBLOCK</a></span>
+  или отключаемой от него в реакции на <span class="cpp"><a href="RDS_COMPM_DETACHBLOCK.htm" title="А.3.4.7. RDS_COMPM_DETACHBLOCK &ndash; отключение модели от блока">RDS_COMPM_DETACHBLOCK</a></span>.</dd>
+
+  <dt><span class="cpp">Block</span>&emsp;(<span class="cpp"><i>RDS_BHANDLE</i></span>)</dt>
+  <dd>Уникальный идентификатор блока (<span class="cpp"><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></span>), изменение параметров которого
+  вызвало это событие.</dd>
+
+  <dt><span id="ref3"><span class="cpp">AttachReason</span>&emsp;(<span class="cpp"><i>int</i></span>)</span></dt>
+    <dd><span id="light_ref3">Причина подключения модели к блоку</span> (не используется в реакции
+    на событие отключения модели). В этом поле может находиться
+    одна из следующих констант:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref4">RDS_COMP_AR_LOADSYSTEM</span></span></td>
+          <td>Модель подключается к блоку в процессе загрузки всей схемы.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref5">RDS_COMP_AR_LOADCLIPBRD</span></span></td>
+          <td>Модель подключается к новому блоку, вставляемому из буфера обмена.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref6">RDS_COMP_AR_LOADFROMFILE</span></span></td>
+          <td>Модель подключается к новому блоку, вставляемому из файла или библиотеки.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref7">RDS_COMP_AR_LOADUNDO</span></span></td>
+          <td>Имя подключенной к блоку модели изменилось из-за отмены изменений пользователем или
+          возврата ранее отмененных изменений.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref8">RDS_COMP_AR_MANUALSET</span></span></td>
+          <td>Новая модель задана для блока пользователем в
+          <a href="um_2_9_1.htm#pic12" title="Вкладка компиляция окна параметров блока (модель не подключена)">окне параметров</a> или вызовом одной из
+          сервисных функций &ndash; например, <span class="cpp"><a href="rdscompSetBlockModel.htm" title="А.5.34.12. rdscompSetBlockModel &ndash; подключить модель к блоку">rdscompSetBlockModel</a></span>.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref9">RDS_COMP_AR_RENAMEMODEL</span></span></td>
+          <td>Модель переименована &ndash; производится подключение всех обслуживавшихся ей блоков к
+          модели с новым именем.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref10">RDS_COMP_AR_UNKNOWN</span></span></td>
+          <td>Прочие причины изменения имени автокомпилируемой модели блока.</td>
+        </tr>
+      </table>
+    </div></div>
+    </dd>
+</dl>
+
+<p class="apphdr">Пример</p>
+<p>Пример реакции модуля на событие
+<span class="cpp">RDS_COMPM_ATTACHBLOCK</span> приведен в
+<a href="pm_4_4.htm" title="&sect;4.4. Компиляция моделей">&sect;4.4 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_COMPM_DETACHBLOCK.htm" title="А.3.4.7. RDS_COMPM_DETACHBLOCK &ndash; отключение модели от блока">RDS_COMPM_DETACHBLOCK</a></span>,
+<span class="cpp"><a href="rdscompSetBlockModel.htm" title="А.5.34.12. rdscompSetBlockModel &ndash; подключить модель к блоку">rdscompSetBlockModel</a></span>,
+<span class="cpp"><a href="rdscompAttachDifferentModel.htm" title="А.5.34.1. rdscompAttachDifferentModel &ndash; замена имени подключаемой модели">rdscompAttachDifferentModel</a></span>,
+<span class="cpp"><a href="rdscompRenameModel.htm" title="А.5.34.8. rdscompRenameModel &ndash; переименовать модель">rdscompRenameModel</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_COMPMODELDATA.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_COMPM_CANATTACHBLK.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_COMPM_ATTACHBLOCK">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

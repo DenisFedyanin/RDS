@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.12.4. rdsSetBlockTimer &ndash; создать таймер</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_12">А.5.12. Таймеры блоков</a></p>
+<div class="level"><p>А.5.12.4. <span class="cpp">rdsSetBlockTimer</span> &ndash; создать таймер</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsRestartBlockTimer.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsStopBlockTimer.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsSetBlockTimer">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.12. Таймеры блоков</h4>
+<h5>А.5.12.4. <span class="cpp">rdsSetBlockTimer</span> &ndash; создать таймер</h5>
+
+
+<p>Функция <span class="cpp">rdsSetBlockTimer</span> создает новый таймер с указанными параметрами или
+изменяет параметры существующего.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref3" title="Идентификатор таймера">RDS_TIMERID</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsSetBlockTimer(
+      <a class="hidden" href="app_ids.htm#light_ref3" title="Идентификатор таймера">RDS_TIMERID</a> Timer,   <span class="rem">// Идентификатор существующего таймера</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Delay,         <span class="rem">// Интервал срабатывания, мс</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Mode,          <span class="rem">// Режим работы</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Start           <span class="rem">// Запустить немедленно</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_ThThDwDwB</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Timer</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref3" title="Идентификатор таймера">RDS_TIMERID</a></i></span>)</dt>
+  <dd><span class="cpp">NULL</span>, если нужно создать новый таймер, или идентификатор таймера,
+  параметры которого нужно изменить.</dd>
+
+  <dt><span class="cpp">Delay</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</dt>
+  <dd>Интервал срабатывания таймера в миллисекундах.</dd>
+
+  <dt><span class="cpp">Mode</span>&emsp;(<span class="cpp"><i>DWORD</i></span>)</dt>
+  <dd>Режим работы таймера (аналогичен одноименному полю структуры <span class="cpp"><a href="RDS_TIMERDESCRIPTION.htm#ref1" title="Структура RDS_TIMERDESCRIPTION">RDS_TIMERDESCRIPTION</a></span>).
+  Формируется как объединение битовым ИЛИ константы режима (<span class="cpp">RDS_TIMERM_*</span>), константы
+  способа срабатывания (<span class="cpp">RDS_TIMERS_*</span>) и флагов режима
+  (<span class="cpp">RDS_TIMERF_*</span>). Константа режима может быть одной из следующих:<br />
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref1">RDS_TIMERM_LOOP</span></span></td>
+          <td>Таймер циклический, после срабатывания он автоматически перезапускается с той же задержкой.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref2">RDS_TIMERM_STOP</span></span></td>
+          <td>Таймер однократный, после срабатывания таймера он будет остановлен. Его можно перезапустить повторным
+          вызовом <span class="cpp">rdsSetBlockTimer</span> или функцией <span class="cpp"><a href="rdsRestartBlockTimer.htm" title="А.5.12.3. rdsRestartBlockTimer &ndash; перезапустить таймер">rdsRestartBlockTimer</a></span>.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref3">RDS_TIMERM_DELETE</span></span></td>
+          <td>Таймер однократный, после срабатывания таймера он будет автоматически удален.</td>
+        </tr>
+      </table>
+    </div></div>
+    Константа способа срабатывания может быть одной из следующих:<br />
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref4">RDS_TIMERS_SIGNAL</span></span></td>
+          <td>При срабатывании таймера у блока-владельца <a href="pm_1_5.htm#ref4" title="Обязательные сигналы простого блока">взводится сигнал запуска</a>,
+          то есть его первой
+          сигнальной переменной присваивается значение 1. Таймер работает только в
+          <a href="pm_1_3.htm#ref3" title="Режим расчета">режиме расчета</a>.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref5">RDS_TIMERS_TIMER</span></span></td>
+          <td>При срабатывании таймера модель блока-владельца вызывается в потоке расчета для реакции на событие
+          <span class="cpp"><a href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a></span>. Таймер работает только в режиме расчета.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref6">RDS_TIMERS_WINREF</span></span></td>
+          <td>При срабатывании таймера модель блока-владельца вызывается в главном потоке для реакции на
+          событие <span class="cpp"><a href="RDS_BFM_WINREFRESH.htm" title="А.2.6.21. RDS_BFM_WINREFRESH &ndash; обновление окон блока">RDS_BFM_WINREFRESH</a></span>. Таймер работает только в режиме расчета.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref7">RDS_TIMERS_SYSTIMER</span></span></td>
+          <td>При срабатывании таймера модель блока-владельца вызывается в главном потоке для реакции на
+          событие <span class="cpp">RDS_BFM_TIMER</span>. Таймер работает во всех режимах.</td>
+        </tr>
+      </table>
+    </div></div>
+    На данный момент поддерживается единственный флаг режима:<br />
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref8">RDS_TIMERF_FIXFREQ</span></span></td>
+          <td>При способе срабатывания <span class="cpp">RDS_TIMERS_WINREF</span> к этому таймеру не будет применяться
+          <a href="um_2_18.htm#ref23" title="Автоподстройка частоты обновления окон">автоматическое снижение частоты</a> при чрезмерной загрузке
+          процессора процедурами обновления окон. При остальных способах срабатывания флаг игнорируется.</td>
+        </tr>
+      </table>
+    </div></div>
+
+  </dd>
+
+  <dt><span class="cpp">Start</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span> &ndash; запустить таймер немедленно после создания или изменения параметров,
+  <span class="cpp">FALSE</span> &ndash; не запускать таймер (он будет находиться в остановленном состоянии).</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Идентификатор созданного таймера. Если функция была вызвана не для создания таймера, а для
+изменения параметров существующего (параметр <span class="cpp">Timer</span> не равен
+<span class="cpp">NULL</span>), возвращаемое значение будет совпадать с <span class="cpp">Timer</span>.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция создает новый таймер в блоке, модель которого в данный момент выполняется, или изменяет параметры
+ранее созданного таймера в этом блоке. Параметры функции определяют интервал срабатывания таймера, реакцию
+блока на его срабатывание, автоматический перезапуск таймера и т.п.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции <span class="cpp">rdsSetBlockTimer</span> приведен
+в <a href="pm_2_9_2.htm" title="&sect;2.9.2. Циклический таймер">&sect;2.9.2 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_TIMERDESCRIPTION.htm#ref1" title="Структура RDS_TIMERDESCRIPTION">RDS_TIMERDESCRIPTION</a></span>,
+<span class="cpp"><a href="rdsDeleteBlockTimer.htm" title="А.5.12.1. rdsDeleteBlockTimer &ndash; удалить таймер">rdsDeleteBlockTimer</a></span>,
+<span class="cpp"><a href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsRestartBlockTimer.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsStopBlockTimer.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsSetBlockTimer">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

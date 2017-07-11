@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.5.3. Доступ к матрицам и массивам</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_5">&sect;2.5. Статические переменные блоков</a></p>
+<div class="level"><p>&sect;2.5.3. Доступ к матрицам и массивам</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_5_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_5_4.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_5_3_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.5. Статические переменные блоков</h3>
+<h4>&sect;2.5.3. Доступ к матрицам и массивам</h4>
+<p class="abstract">Описываются особенности работы с матрицами и массивами: их размещение в памяти, макросы для доступа к ним, сервисные функции для изменения размера матриц. Приводится пример блока, умножающего вход-матрицу на вход-число и выдающего результат на выход.</p>
+
+
+<p>Работать с массивами и матрицами несколько сложнее, чем с простыми переменными. Простые переменные имеют
+фиксированный размер, в то время как размер массивов и матриц может изменяться в процессе расчета. По этой
+причине в дереве переменных блока хранятся не сами ячейки матрицы, а указатель на динамически отводимый блок
+данных переменного размера, в котором они находятся
+(<a href="#pic1" title="Размещение в памяти данных матрицы">рис.&nbsp;20</a>).</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/MatrixInMemory.png" width="689" height="304" alt="Размещение в памяти данных матрицы" />
+<p id="light_pic1">Рис.&nbsp;20. Размещение в памяти данных матрицы</p>
+</div></div>
+
+
+<p>Данные матрицы занимают в дереве переменных блока 8 байтов. Первые 4 байта содержат указатель на область
+данных матрицы, в которой хранится ее текущий размер и элементы. Вторые 4 байта представляют собой указатель на
+блок управления матрицей. Это служебные данные, модель блока не должна изменять эти четыре байта. Область
+данных матрицы отводится динамически только в том случае, если матрица не пустая, то есть ее размер не 0&times;0
+(для пустых матриц поле указателя на данные содержит <span class="cpp">NULL</span>). Эта область начинается с
+двух четырехбайтовых целых чисел, указывающих текущий размер матрицы, за которыми последовательно, строка за строкой,
+записываются ее элементы. Размер элемента зависит от типа переменной. Например, если переменная определена как
+&laquo;матрица double&raquo;, каждый ее элемент будет представлять собой
+вещественное число двойной точности (<span class="cpp">double</span>) и занимать 8 байтов.</p>
+
+<p>Для того, чтобы получить значение заданного элемента матрицы, функция модели сначала должна проверить матрицу
+на пустоту. Если указатель на данные матрицы равен <span class="cpp">NULL</span>, то матрица пуста, и
+дальнейшие вычисления не имеют смысла. Если же указатель ссылается на какую-то область памяти, необходимо
+считать из нее размеры матрицы, и, при необходимости, проверить, существует ли в матрице элемент с
+указанными индексами. После этого смещение в байтах к элементу матрицы, находящемуся в строке <span class="cpp">r</span>
+и столбце <span class="cpp">c</span>, можно вычислить по следующей формуле:</p>
+
+<p class="center">(<span class="cpp">r</span> &times; <i>число_столбцов</i> + <span class="cpp">с</span> ) &times; <i>размер_элемента</i> + 8</p>
+
+<p class="noindent">Поскольку элементы матрицы хранятся в памяти построчно, для того, чтобы получить номер
+первого элемента строки <span class="cpp">r</span>, необходимо умножить <span class="cpp">r</span> на число
+элементов в строке, то есть на число столбцов. Затем к получившемуся значению добавляется номер элемента в строке
+<span class="cpp">с</span>, в результате чего получается порядковый номер элемента
+[<span class="cpp">r</span>,<span class="cpp">c</span>] в массиве элементов матрицы. Остается умножить этот номер
+на размер элемента, чтобы получить смещение в байтах, и добавить 8, чтобы пропустить первые 8 байтов, занимаемые
+данными о размере матрицы (4 + 4).</p>
+
+<p>Для изменения размера или очистки матрицы следует использовать сервисную функцию
+<span class="cpp"><span id="light_ref1"><a href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a></span></span>. Она позволяет изменять размеры матриц без потери текущих данных:
+при указании размера, большего текущего, новые строки и столбцы дописываются в конец матрицы и заполняются
+<a href="um_1_4.htm#ref22" title="Значение переменной по умолчанию">значением по умолчанию</a>, указанным для матрицы в редакторе переменных
+(см. <a href="pm_1_5.htm#pic2" title="Редактор переменных">рис.&nbsp;9</a>), при уменьшении размера матрица обрезается справа и
+снизу. Если же вызвать эту функцию, указав размер 0&times;0, матрица будет очищена.</p>
+
+<p>Массив в RDS &ndash; это матрица с числом строк, равным 1, поэтому данные массивов хранятся в памяти
+точно так же, как и данные матриц.</p>
+
+<p>Для работы с массивами и матрицами модель блока может использовать два способа: один из них более простой,
+другой &ndash; более быстрый. Здесь будут рассмотрены оба.</p>
+
+<p>Чтобы упростить написание функции модели можно использовать сервисную функцию
+<span class="cpp"><span id="light_ref2"><a href="rdsGetVarArrayAccessData.htm" title="А.5.15.8. rdsGetVarArrayAccessData &ndash; заполнить структуру описания матрицы/массива">rdsGetVarArrayAccessData</a></span></span>, которая записывает всю информацию о матрице в специальную
+структуру <span class="cpp"><span id="light_ref3"><a href="RDS_ARRAYACCESSDATA.htm" title="А.4.1. RDS_ARRAYACCESSDATA &ndash; описание матрицы/массива">RDS_ARRAYACCESSDATA</a></span></span>. Эта структура имеет следующие поля:</p>
+
+<ul>
+  <li><span class="cpp"><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Exists</span> &ndash; принимает значение <span class="cpp">TRUE</span>, если матрица
+  содержит элементы, и <span class="cpp">FALSE</span>, если она пуста;</li>
+  <li><span class="cpp">int Rows</span> &ndash; число строк в матрице;</li>
+  <li><span class="cpp">int Cols</span> &ndash; число столбцов в матрице;</li>
+  <li><span class="cpp">int ItemSize</span> &ndash; размер элемента матрицы в байтах;</li>
+  <li><span class="cpp"><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Data</span> &ndash; указатель на первый элемент матрицы.</li>
+</ul>
+
+<p class="noindent">Вместе с этой структурой можно использовать макрос <span class="cpp"><span id="light_ref4"><a href="RDS_ARRAYITEM.htm" title="А.5.15.4. Макрос RDS_ARRAYITEM &ndash; элемент матрицы с заданными индексами">RDS_ARRAYITEM</a></span></span>, с помощью
+которого можно обращаться к элементу по двум индексам. Например, чтобы обратиться к элементу
+[<span class="cpp">r</span>,<span class="cpp">c</span>] переменной типа &laquo;матрица double&raquo;,
+параметры которой считаны в структуру с именем <span class="cpp">str</span>, можно написать
+<span class="cpp">RDS_ARRAYITEM(double,&str,r,c)</span>.</p>
+
+<p>В качестве примера рассмотрим блок, который умножает каждый элемент входной матрицы вещественных чисел
+<span class="cpp">X</span> на константу <span class="cpp">k</span> и выдает результат на выход
+<span class="cpp">Y</span>. С учетом
+<a href="pm_1_5.htm#ref4" title="Обязательные сигналы простого блока">обязательных сигналов</a>
+<span class="cpp">Start</span> и <span class="cpp">Ready</span> структура переменных блока будет выглядеть
+следующим образом:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+  </tr>
+  <tr>
+    <td class="center">0</td>
+    <td>Start</td>
+    <td class="center">Сигнал</td>
+    <td class="center">1</td>
+    <td class="center">Вход</td>
+  </tr>
+  <tr>
+    <td class="center">1</td>
+    <td>Ready</td>
+    <td class="center">Сигнал</td>
+    <td class="center">1</td>
+    <td class="center">Выход</td>
+  </tr>
+  <tr>
+    <td class="center">2</td>
+    <td>X</td>
+    <td class="center">Матрица double</td>
+    <td class="center">8</td>
+    <td class="center">Вход</td>
+  </tr>
+  <tr>
+    <td class="center">10</td>
+    <td>k</td>
+    <td class="center">double</td>
+    <td class="center">8</td>
+    <td class="center">Вход</td>
+  </tr>
+  <tr>
+    <td class="center">18</td>
+    <td>Y</td>
+    <td class="center">Матрица double</td>
+    <td class="center">8</td>
+    <td class="center">Выход</td>
+  </tr>
+</table>
+</div></div>
+
+<p>Функция модели блока будет выглядеть так:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestMatr(<span class="kw">int</span> CallMode,
+                         <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                         <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define pX     ((void **)(pStart+2))</span>
+  <span class="preproc">#define k      (*((double *)(pStart+10)))</span>
+  <span class="preproc">#define pY     ((void **)(pStart+18))</span>
+    <span class="rem">// Структуры с информацией о матрицах</span>
+    <a class="hidden" href="RDS_ARRAYACCESSDATA.htm" title="А.4.1. RDS_ARRAYACCESSDATA &ndash; описание матрицы/массива">RDS_ARRAYACCESSDATA</a> XD,YD;
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSMDDMD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="rem">// Считать информацию о матрице X в структуру XD</span>
+          <a class="hidden" href="rdsGetVarArrayAccessData.htm" title="А.5.15.8. rdsGetVarArrayAccessData &ndash; заполнить структуру описания матрицы/массива">rdsGetVarArrayAccessData</a>(pX,&amp;XD);
+          <span class="kw">if</span>(XD.Exists) <span class="rem">// Матрица X существует</span>
+            { <span class="rem">// Задать размер Y и считать информацию о ней в YD</span>
+              <a class="hidden" href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a>(pY,XD.Rows,XD.Cols,FALSE,&amp;YD);
+              <span class="rem">// Присвоить значения элементам Y</span>
+              <span class="kw">for</span>(<span class="kw">int</span> r=<span class="const">0</span>;r&lt;XD.Rows;r++)
+                <span class="kw">for</span>(<span class="kw">int</span> c=<span class="const">0</span>;c&lt;XD.Cols;c++)
+                  <a class="hidden" href="RDS_ARRAYITEM.htm" title="А.5.15.4. Макрос RDS_ARRAYITEM &ndash; элемент матрицы с заданными индексами">RDS_ARRAYITEM</a>(<span class="kw">double</span>,&amp;YD,r,c)=
+                    k*<a class="hidden" href="RDS_ARRAYITEM.htm" title="А.5.15.4. Макрос RDS_ARRAYITEM &ndash; элемент матрицы с заданными индексами">RDS_ARRAYITEM</a>(<span class="kw">double</span>,&amp;XD,r,c);
+            }
+          <span class="kw">else</span> <span class="rem">// Матрица X не существует</span>
+            <span class="rem">// Очистить матрицу Y</span>
+            <a class="hidden" href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a>(pY,<span class="const">0</span>,<span class="const">0</span>,FALSE,NULL);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef pY</span>
+  <span class="preproc">#undef k</span>
+  <span class="preproc">#undef pX</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Макроопределения для этой модели отличаются от предыдущих примеров. Для матриц <span class="cpp">X</span> и
+<span class="cpp">Y</span> вместо определений для доступа к самим переменным вводятся определения для указателей
+<span class="cpp">pX</span> и <span class="cpp">pY</span>. В языке C нет стандартного типа, описывающего
+конструкцию, аналогичную матрице RDS, поэтому создать макроопределение для самой переменной-матрицы
+невозможно (при желании, можно создать класс в C++, который будет описывать матрицу RDS и облегчать
+обращение к ее элементам при помощи своих функций-членов). Сервисные функции RDS, обслуживающие матрицы
+и массивы, работают именно с указателями, поэтому такое описание вполне оправдано. В модели также используются
+локальные переменные-структуры типа <span class="cpp">RDS_ARRAYACCESSDATA</span>, в которые будет записываться
+информация о матрицах.</p>
+
+<p>При вызове этой модели с параметром <span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> производится сравнение переданной
+строки типа переменных блока со строкой &laquo;{SSMDDMD}&raquo;. Первые две буквы
+&laquo;S&raquo; соответствуют двум обязательным сигналам, &laquo;MD&raquo; &ndash; первой матрице
+<span class="cpp">double</span> (<span class="cpp">X</span>),
+&laquo;D&raquo; &ndash; вещественной переменной <span class="cpp">k</span>, и завершающие буквы
+&laquo;MD&raquo; &ndash; матрице <span class="cpp">Y</span>. Сравнив эти строки, модель возвращает
+RDS соответствующую константу: <span class="cpp">RDS_BFR_DONE</span>, если строки совпали (переменные имеют
+правильный тип), и <span class="cpp">RDS_BFR_BADVARSMSG</span>, если они отличаются (пользователю будет
+выведено сообщение о недопустимой структуре переменных блока).</p>
+
+<p>При вызове модели с параметром <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span> сначала вызывается сервисная функция
+<span class="cpp"><a href="rdsGetVarArrayAccessData.htm" title="А.5.15.8. rdsGetVarArrayAccessData &ndash; заполнить структуру описания матрицы/массива">rdsGetVarArrayAccessData</a></span>, записывающая информацию о матрице <span class="cpp">X</span> в
+локальную структуру <span class="cpp">XD</span>. Если матрица <span class="cpp">X</span> существует
+(<span class="cpp">XD.Exists</span> имеет значение <span class="cpp">TRUE</span>), формируется выходная матрица
+<span class="cpp">Y</span>. Для этого сначала размер <span class="cpp">Y</span> делается равным размеру
+<span class="cpp">X</span> при помощи вызова сервисной функции
+<span class="cpp"><a href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a></span>. Кроме указателя на изменяемую матрицу (<span class="cpp">pY</span>) и
+нового числа строк и столбцов, этой функции передается значение <span class="cpp">FALSE</span>, указывающее на то,
+что старые данные матрицы <span class="cpp">Y</span> можно не сохранять, и указатель на локальную структуру
+<span class="cpp">YD</span>, в которую будет записана информация об измененной матрице <span class="cpp">Y</span>.
+В данном примере функция <span class="cpp">rdsResizeVarArray</span> будет вызываться даже тогда, когда размеры
+матриц <span class="cpp">Y</span> и <span class="cpp">X</span> совпадают. Это не приведет к дополнительным
+задержкам, поскольку эта функция изменяет размер матрицы только тогда, когда это необходимо. Можно было бы
+вызывать ее только при несовпадении размеров, но это потребовало бы дополнительного вызова
+<span class="cpp">rdsGetVarArrayAccessData</span> для выяснения размера <span class="cpp">Y</span> и не дало
+бы выигрыша в быстродействии.</p>
+
+<p>После того, как размер матрицы <span class="cpp">Y</span> установлен, каждому ее элементу присваивается
+значение произведения переменной <span class="cpp">k</span> и соответствующего элемента матрицы
+<span class="cpp">X</span>. Для перебора элементов матриц служат два цикла, вложенные один в другой:
+внешний цикл по переменной <span class="cpp">r</span> (номер строки), изменяющейся от 0 до
+<span class="cpp">XD.Rows-1</span>, и внутренний цикл по переменной <span class="cpp">c</span> (номер столбца),
+изменяющейся от 0 до <span class="cpp">XD.Cols-1</span>. Для обращения к элементам матриц служит макрос
+<span class="cpp"><a href="RDS_ARRAYITEM.htm" title="А.5.15.4. Макрос RDS_ARRAYITEM &ndash; элемент матрицы с заданными индексами">RDS_ARRAYITEM</a></span>, которое используется и в левой, и в правой части выражения. В этом макросе
+вычисляется смещение к заданному элементу матрицы с использованием данных вспомогательной структуры
+<span class="cpp">RDS_ARRAYACCESSDATA</span>. Например, текст</p>
+
+<pre class="cpp">  <a class="hidden" href="RDS_ARRAYITEM.htm" title="А.5.15.4. Макрос RDS_ARRAYITEM &ndash; элемент матрицы с заданными индексами">RDS_ARRAYITEM</a>(<span class="kw">double</span>,&XD,r,c)</pre>
+
+<p class="noindent">эквивалентен выражению</p>
+
+<pre class="cpp">  * (<span class="kw">double</span>*) (  ((<span class="kw">char</span>*)XD.Data) + (r*XD.Cols + c) * XD.ItemSize )</pre>
+
+<p class="noindent">К указателю на первый элемент матрицы <span class="cpp">XD.Data</span>, приведенному к
+указателю на однобайтовый тип <span class="cpp">char</span>, добавляется вычисленное смещение к элементу
+[<span class="cpp">r</span>,<span class="cpp">c</span>] в байтах, после чего указатель приводится к типу
+<span class="cpp">double*</span>, чтобы можно было работать с вещественными переменными.</p>
+
+<p>Все указанные действия выполняются только тогда, когда матрица <span class="cpp">X</span> существует, то есть
+имеет ненулевые размеры. Если же она не существует (<span class="cpp">XD.Exists</span> имеет значение
+<span class="cpp">FALSE</span>), матрица <span class="cpp">Y</span> очищается вызовом
+<span class="cpp">rdsResizeVarArray</span> с указанием нулевого числа строк и столбцов.</p>
+
+<p>При создании блоков, работающих с массивами и матрицами в режиме расчета, следует помнить, что операции с
+матрицами могут занимать достаточно продолжительное время, особенно при больших размерах матриц. Поэтому для
+таких блоков крайне нежелательно устанавливать
+<a href="pm_1_4.htm#ref6" title="Запуск модели каждый такт">флаг срабатывания в каждом такте расчета</a>. Вместо этого следует вызывать
+модель таких блоков только при срабатывании входных связей. Для описанного блока, например, следует на вкладке
+&laquo;<span class="menu">Общие</span>&raquo; окна параметров
+(<a href="pm_1_4.htm#pic1" title="Параметры блока &ndash; общие">рис.&nbsp;5</a>)
+включить запуск по сигналу, после чего в окне редактирования переменных
+(<a href="pm_1_5.htm#pic2" title="Редактор переменных">рис.&nbsp;9</a>)
+задать для переменной <span class="cpp">Start</span> начальное значение 1 и установить флаг
+&laquo;<span class="menu">Пуск</span>&raquo; для входов <span class="cpp">X</span> и <span class="cpp">k</span>. Таким образом, модель
+блока будет вызвана при первом запуске расчета для вычисления начального значения выхода (сигнал запуска
+<span class="cpp">Start</span> в этот момент будет иметь значение 1, после чего автоматически сбросится) и при
+каждом поступлении на входы <span class="cpp">X</span> и <span class="cpp">k</span> новых значений. Во всех
+остальных случаях она вызываться не будет, не тратя тем самым процессорное время на повторные вычисления
+значения выхода при неизменных входах.</p>
+
+<p>Использование структур <span class="cpp">RDS_ARRAYACCESSDATA</span> делает текст программы более читаемым,
+но это не самый быстрый способ работы с матрицами. Хотя вызов <span class="cpp">rdsGetVarArrayAccessData</span>
+выполняется достаточно быстро, всю информацию о матрице можно получить и без него. Изменим приведенную выше
+модель блока, убрав из нее локальные переменные <span class="cpp">XD </span>и
+<span class="cpp">YD</span>. Реакция модели на выполнение одного такта моделирования теперь будет выглядеть
+следующим образом:</p>
+
+<pre class="cpp">      <span class="rem">// Выполнение такта моделирования</span>
+      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+        <span class="kw">if</span>(<a class="hidden" href="RDS_ARRAYEXISTS.htm" title="А.5.15.3. Макрос RDS_ARRAYEXISTS &ndash; проверка наличия элементов в матрице/массиве">RDS_ARRAYEXISTS</a>(pX)) <span class="rem">// Матрица X существует</span>
+          { <span class="rem">// Вспомогательные переменные</span>
+            <span class="kw">int</span> xr,xc;
+            <span class="kw">double</span> *ydata,*xdata;
+            <span class="rem">// Получить размеры матрицы X</span>
+            xr=<a class="hidden" href="RDS_ARRAYROWS.htm" title="А.5.15.6. Макрос RDS_ARRAYROWS &ndash; число строк матрицы/массива">RDS_ARRAYROWS</a>(pX);
+            xc=<a class="hidden" href="RDS_ARRAYCOLS.htm" title="А.5.15.1. Макрос RDS_ARRAYCOLS &ndash; число столбцов матрицы/массива">RDS_ARRAYCOLS</a>(pX);
+            <span class="rem">// Задать размер Y равным размеру X</span>
+            <a class="hidden" href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a>(pY,xr,xc,FALSE,NULL);
+            <span class="rem">// Получить указатель на первый элемент X</span>
+            xdata=(<span class="kw">double</span>*)<a class="hidden" href="RDS_ARRAYDATA.htm" title="А.5.15.2. Макрос RDS_ARRAYDATA &ndash; указатель на первый элемент матрицы/массива">RDS_ARRAYDATA</a>(pX);
+            <span class="rem">// Получить указатель на первый элемент Y</span>
+            ydata=(<span class="kw">double</span>*)<a class="hidden" href="RDS_ARRAYDATA.htm" title="А.5.15.2. Макрос RDS_ARRAYDATA &ndash; указатель на первый элемент матрицы/массива">RDS_ARRAYDATA</a>(pY);
+            <span class="rem">// Присвоить значения элементам Y</span>
+            <span class="kw">for</span>(<span class="kw">int</span> r=<span class="const">0</span>;r&lt;xr;r++)
+              <span class="kw">for</span>(<span class="kw">int</span> c=<span class="const">0</span>;c&lt;xc;c++)
+                ydata[r*xc+c]=k*xdata[r*xc+c];
+          }
+        <span class="kw">else</span> <span class="rem">// Матрица X пуста</span>
+          <a class="hidden" href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a>(pY,<span class="const">0</span>,<span class="const">0</span>,FALSE,NULL);
+        <span class="kw">break</span>;</pre>
+
+<p>Как и в предыдущем варианте примера, сначала необходимо проверить, существует ли матрица
+<span class="cpp">X</span>. Для этого используется макрос
+<span class="cpp"><span id="light_ref5"><a href="RDS_ARRAYEXISTS.htm" title="А.5.15.3. Макрос RDS_ARRAYEXISTS &ndash; проверка наличия элементов в матрице/массиве">RDS_ARRAYEXISTS</a></span></span>, который возвращает <span class="cpp">FALSE</span>, если указатель
+на область данных матрицы равен <span class="cpp">NULL</span>, то есть если в матрице нет элементов (поскольку
+в данном примере в определении <span class="cpp">pX</span> указатель уже приведен к типу
+<span class="cpp">void**</span>, вместо <span class="cpp">RDS_ARRAYEXISTS(pX)</span> можно было просто написать
+<span class="cpp">*pX!=NULL</span>). Далее, если матрица существует, число ее строк присваивается вспомогательной
+переменной <span class="cpp">xr</span> при помощи макроса <span class="cpp"><span id="light_ref6"><a href="RDS_ARRAYROWS.htm" title="А.5.15.6. Макрос RDS_ARRAYROWS &ndash; число строк матрицы/массива">RDS_ARRAYROWS</a></span></span>, а
+число столбцов &ndash; переменной <span class="cpp">xc</span> при помощи <span class="cpp"><span id="light_ref7"><a href="RDS_ARRAYCOLS.htm" title="А.5.15.1. Макрос RDS_ARRAYCOLS &ndash; число столбцов матрицы/массива">RDS_ARRAYCOLS</a></span></span>.
+Оба этих макроса нельзя использовать для пустых матриц, поскольку они считывают размеры из области данных,
+которая у пустых матриц отсутствует. Например, текст</p>
+
+<pre class="cpp">  <a class="hidden" href="RDS_ARRAYROWS.htm" title="А.5.15.6. Макрос RDS_ARRAYROWS &ndash; число строк матрицы/массива">RDS_ARRAYROWS</a>(pX)</pre>
+
+<p class="noindent">преобразуется в</p>
+
+<pre class="cpp">  *( *( (<span class="kw">int</span>**)pX ) )</pre>
+
+<p>В этом выражении указатель <span class="cpp">pX</span> приводится к типу
+&laquo;указатель на указатель на int&raquo;. Данные, на которые ссылается указатель <span class="cpp">pX</span>,
+в свою очередь также являются указателем, указывающим на область данных матрицы, первые 4 байта которой
+представляют собой целое число (<span class="cpp">int</span>) &ndash; число строк матрицы
+(см. <a href="#pic1" title="Размещение в памяти данных матрицы">рис.&nbsp;20</a>).
+Если бы матрица была пуста, выполнение операции <span class="cpp">*((int**)pX)</span> дало бы значение
+<span class="cpp">NULL</span>, и попытка получить данные по этому указателю привела бы к возникновению ошибки.</p>
+
+<p>После того, как размеры матрицы <span class="cpp">X</span> считаны, размеры <span class="cpp">Y</span>
+делаются такими же при помощи уже описанного вызова <span class="cpp">rdsResizeVarArray</span>, только в данном
+случае вместо указателя на структуру <span class="cpp">RDS_ARRAYACCESSDATA</span> функции передается значение
+<span class="cpp">NULL</span> &ndash; вспомогательные структуры теперь не используются. Далее указатели на
+первый элемент матриц <span class="cpp">X</span> и <span class="cpp">Y</span> присваиваются локальным переменным
+<span class="cpp">xdata</span> и <span class="cpp">ydata</span> при помощи макроса
+<span class="cpp"><span id="light_ref8"><a href="RDS_ARRAYDATA.htm" title="А.5.15.2. Макрос RDS_ARRAYDATA &ndash; указатель на первый элемент матрицы/массива">RDS_ARRAYDATA</a></span></span>. Поскольку элементы обеих матриц &ndash; вещественные числа двойной
+точности (<span class="cpp">double</span>), оба указателя приводятся к типу <span class="cpp">double*</span>, что
+позволяет использовать адресную арифметику и обращаться к элементам матриц как к элементам одномерных массивов
+<span class="cpp">xdata</span> и <span class="cpp">ydata</span>. В результате всех этих присвоений
+вспомогательные переменные будут ссылаться на матрицу <span class="cpp">X</span> так, как показано
+на <a href="#pic2" title="Матрица X и вспомогательные переменные модели">рис.&nbsp;21</a>.</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/MatrixInMemory1.png" width="722" height="343" alt="Матрица X и вспомогательные переменные модели" />
+<p id="light_pic2">Рис.&nbsp;21. Матрица X и вспомогательные переменные модели</p>
+</div></div>
+
+
+<p>Переменная <span class="cpp">ydata</span> ссылается на первый элемент матрицы <span class="cpp">Y</span>
+аналогичным образом. Вспомогательные переменные для размеров <span class="cpp">Y</span> не вводятся,
+т.к. после вызова <span class="cpp">rdsResizeVarArray</span> они должны быть равны
+<span class="cpp">xr</span> и <span class="cpp">xc</span>.</p>
+
+<p>Далее, как и в первом варианте модели, в двух циклах производится вычисление элементов матрицы
+<span class="cpp">Y</span>. Для получения индекса элемента в одномерных массивах <span class="cpp">xdata</span> и
+<span class="cpp">ydata</span>, соответствующего элементу матриц [<span class="cpp">r</span>,<span class="cpp">c</span>],
+номер строки <span class="cpp">r</span> умножается на число элементов в строке <span class="cpp">xc</span>
+(что дает индекс первого элемента строки <span class="cpp">r</span>), после чего к нему добавляется номер
+столбца <span class="cpp">c</span>.</p>
+
+<p>Можно заметить, что в обоих вариантах этого примера все элементы матрицы <span class="cpp">X</span>
+обрабатываются одинаково &ndash; каждый из них умножается на одно и то же число <span class="cpp">k</span>
+независимо от номера элемента. Поскольку все элементы матриц хранятся в памяти последовательно, в данном случае
+можно упростить модель, заменив два цикла по номеру строки и столбца одним, перебирающим все элементы общего массива
+элементов размером <span class="cpp">xr</span> &times; <span class="cpp">xc</span>:</p>
+
+<pre class="cpp">            <span class="rem">// Присвоить значения элементам Y</span>
+            <span class="changes"><span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;xr*xc;i++)</span>
+              <span class="changes">ydata[i]=k*xdata[i];</span></pre>
+
+<p>Если бы номера строки и столбца были важны для вычисления элементов матрицы <span class="cpp">Y</span> (например,
+если после умножения на <span class="cpp">k</span> необходимо было бы транспонировать результат), замена двух
+циклов на один была бы невозможна.</p>
+
+<p>Для проверки этой модели можно подключить к созданному блоку три стандартных блока: поле ввода к входу
+<span class="cpp">k</span>, редактор матриц к входу <span class="cpp">X</span> и блок отображения матриц к
+выходу <span class="cpp">Y</span>
+(<a href="#pic3" title="Тестирование блока умножения матрицы на константу">рис.&nbsp;22</a>).
+При запущенном расчете любые изменения, внесенные в окно редактора матриц или в поле ввода, должны немедленно
+отражаться на выходной матрице.</p>
+
+<div class="pic"><div class="container" id="pic3">
+<img src="../img/MatrMulK_arrows.png" width="528" height="277" alt="Тестирование блока умножения матрицы на константу" />
+<p id="light_pic3">Рис.&nbsp;22. Тестирование блока умножения матрицы на константу</p>
+</div></div>
+
+
+<p>Чтобы не загромождать этот пример, в тексте модели мы не проверяем логическое значение, возвращаемое функцией
+<span class="cpp">rdsResizeVarArray</span>. В настоящих моделях блоков такая проверка необходима. Если размер
+матрицы изменить не удалось (например, из-за нехватки памяти), функция возвращает <span class="cpp">FALSE</span>.
+Если при этом модель, не проверив возвращенное значение, будет обращаться к элементам матрицы, под которые не
+удалось отвести память, вероятнее всего произойдет ошибка общей защиты. Также в этом примере не производится
+сравнение <span class="cpp">k</span> и элементов матрицы <span class="cpp">X</span> со
+<a href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">специальным значением</a>,
+возвращаемым функцией <span class="cpp"><a href="rdsGetHugeDouble.htm" title="А.5.2.22. rdsGetHugeDouble &ndash; получение значения-индикатора математической ошибки">rdsGetHugeDouble</a></span>, которое используется для сигнализации об ошибке.
+В модели, оперирующей вещественными числами двойной точности, такая проверка позволяет избежать возникновения
+исключений при выполнении арифметических операций.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_5_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_5_4.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

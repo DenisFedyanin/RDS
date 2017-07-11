@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.6.3. Смена отображаемой в порте подсистемы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3">Глава 3. Управление RDS из других приложений</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3_6">&sect;3.6. Отображение схемы RDS в собственном окне приложения</a></p>
+<div class="level"><p>&sect;3.6.3. Смена отображаемой в порте подсистемы</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_3_6_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_6_4.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_6_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_3_6_3.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст приложения Windows, показывающего произвольную схему RDS в своем собственном окне
+через порт вывода с помощью библиотеки RdsCtrl.dll.
+В программу из <a href="pm_3_6_2.htm" title="&sect;3.6.2. Рисование и прокрутка изображения">&sect;3.6.2</a>
+добавлена возможность перехода по подсистемам. Внесенные в программу изменения
+выделены <span class="changes">цветом</span>.</p>
+
+<pre class="cpp">  <span class="rem">// Описания, необходимые для используемого компилятора</span>
+  <span class="rem">// (в других компиляторах они не понадобятся или будут другими)</span>
+  <span class="preproc">#define _WIN32_WINNT 0x0400</span>
+  <span class="preproc">#define WINVER 0x0400</span>
+  <span class="rem">// Необходимые файлы заголовков</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;Commctrl.h&gt;</span>
+  <span class="preproc">#include &lt;stdio.h&gt;</span>
+
+  <span class="rem">// Описания, необходимые для RdsCtrl.dll</span>
+  <a class="hidden" href="pm_3_2.htm#ref3" title="Доступ к функциям библиотеки RdsCtrl.dll"><span class="preproc">#define RDSCTRL_SERV_FUNC_BODY GetRdsCtrlFuncs</span></a>
+  <span class="preproc">#include &lt;RdsCtrl.h&gt;</span>
+
+  <span class="rem">// Вспомогательный класс для удобства работы со строками</span>
+  <span class="rem">// произвольной длины</span>
+  <span class="kw">class</span> <a class="hidden" href="pm_3_3.htm#ref3" title="Вспомогательный класс для хранения строк">TDynString</a>
+  { <span class="kw">public</span>:
+      <span class="rem">// Указатель на динамическую строку</span>
+      <span class="kw">char</span> *c_str;
+      <span class="rem">// Освободить память</span>
+      <span class="kw">void</span> Free(<span class="kw">void</span>)
+        { <span class="kw">if</span>(c_str) <span class="kw">delete</span>[] c_str;
+          c_str=NULL; };
+      <span class="rem">// Записать строку в объект</span>
+      <span class="kw">void</span> Set(<span class="kw">char</span> *s)
+        { Free();	<span class="rem">// Освободить старую</span>
+          <span class="kw">if</span>(s!=NULL) <span class="rem">// Отвести память и скопировать новую</span>
+            { c_str=<span class="kw">new</span> <span class="kw">char</span>[strlen(s)+<span class="const">1</span>];
+              strcpy(c_str,s);
+            }
+        };
+      <span class="rem">// Строка пустая?</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> IsEmpty(<span class="kw">void</span>)
+        { <span class="kw">return</span> c_str==NULL || (*c_str)==<span class="const">0</span>;};
+      <span class="rem">// Конструктор и деструктор</span>
+      TDynString(<span class="kw">void</span>){c_str=NULL;};
+      ~TDynString(){Free();};
+  };
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Буфер для индицируемого программой текста</span>
+  <span class="kw">char</span> buffer[<span class="const">2000</span>]=<span class="str">"Программа запущена"</span>;
+  <span class="rem">// Главное окно программы (для доступа к нему из функций)</span>
+  <a class="hidden" href="app_ids.htm#light_ref18" title="Дескриптор окна">HWND</a> MainWin;
+  <span class="rem">// Дескрипторы полос прокрутки главного окна</span>
+  <a class="hidden" href="app_ids.htm#light_ref18" title="Дескриптор окна">HWND</a> HorzScroll,VertScroll;
+  <span class="rem">// Дескриптор служебного окна всплывающей подсказки</span>
+  <a class="hidden" href="app_ids.htm#light_ref18" title="Дескриптор окна">HWND</a> ToolTip;
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Последнее запомненное положение курсора мыши в окне</span>
+  <span class="kw">int</span> LastX=<span class="const">0</span>,LastY=<span class="const">0</span>;
+  <span class="rem">// Зона последней выведенной всплывающей подсказки</span>
+  <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> LastToolTipRect;
+  <span class="rem">// Флаг необходимости реакции на движение мыши без</span>
+  <span class="rem">// нажатых кнопок</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> FreeMouseMove;
+  <span class="rem">// Строка для хранения полученного текста всплывающей подсказки</span>
+  <a class="hidden" href="pm_3_3.htm#ref3" title="Вспомогательный класс для хранения строк">TDynString</a> HintString;
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Отступ сверху до изображения подсистемы</span>
+  <span class="preproc">#define VIEWPORTTOP 55</span>
+
+  <span class="rem">// Идентификаторы кнопок окна программы</span>
+  <span class="preproc">#define IDC_OPENBUTTON  101</span>
+  <span class="preproc">#define IDC_BACKBUTTON  102</span>
+  <span class="preproc">#define IDC_ZOOMIN      103</span>
+  <span class="preproc">#define IDC_ZOOMOUT     104</span>
+  <span class="rem">// Идентификатор всплывающей подсказки для порта вывода</span>
+  <span class="preproc">#define VIEWPORTTIP_ID  105</span>
+  <span class="rem">// Начальный идентификатор пунктов контекстного меню блока</span>
+  <span class="preproc">#define IDC_MENUSTART   200</span>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция вывода текстового сообщения в окне программы</span>
+  <span class="kw">void</span> DisplayText(<span class="kw">char</span> *text)
+  { <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> rect;
+    <span class="rem">// Определяем размер клиентской области окна</span>
+    GetClientRect(MainWin,&amp;rect);
+    <span class="rem">// Ограничиваем область снизу (ниже будут располагаться кнопки)</span>
+    rect.bottom=<span class="const">30</span>;
+    <span class="kw">if</span>(text) <span class="rem">// Копируем текст в буфер</span>
+      { strncpy(buffer,text,<span class="kw">sizeof</span>(buffer)-<span class="const">1</span>);
+        buffer[<span class="kw">sizeof</span>(buffer)-<span class="const">1</span>]=<span class="const">0</span>; <span class="rem">// Если строка слишком длинная</span>
+      }
+    <span class="kw">else</span>
+      strcpy(buffer,<span class="str">"(NULL)"</span>);
+    <span class="rem">// Указываем Windows, что область rect нужно перерисовать</span>
+    InvalidateRect(MainWin,&amp;rect,TRUE);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Глобальные переменные для связи с RDS</span>
+  HMODULE RdsCtrl=NULL; <span class="rem">// Библиотека управления</span>
+  <span class="kw">int</span> RdsLink=-<span class="const">1</span>;   <span class="rem">// Связь с RDS</span>
+  <span class="kw">int</span> Viewport=-<span class="const">1</span>;  <span class="rem">// Порт вывода</span>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция возврата строки</span>
+  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> ReturnString(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ptr,<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> str)
+  { <a class="hidden" href="pm_3_3.htm#ref3" title="Вспомогательный класс для хранения строк">TDynString</a> *pDS=(<a class="hidden" href="pm_3_3.htm#ref3" title="Вспомогательный класс для хранения строк">TDynString</a>*)ptr;
+    <span class="kw">if</span>(pDS) pDS-&gt;Set(str);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Получить текущие размеры области, доступной для порта вывода</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> GetAvailableRect(<a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> *rect)
+  { <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> ClientArea;
+    <span class="rem">// Получаем стандартную щирину и высоту полос прокрутки</span>
+    <span class="kw">int</span> w=GetSystemMetrics(SM_CXVSCROLL),
+        h=GetSystemMetrics(SM_CYHSCROLL);
+    <span class="kw">if</span>(rect==NULL) <span class="kw">return</span> FALSE;
+    <span class="rem">// Получаем размер клиентской (внутренней) области окна</span>
+    <span class="kw">if</span>(!GetClientRect(MainWin,&amp;ClientArea))
+      <span class="kw">return</span> FALSE;
+
+    <span class="rem">// Ограничиваем внутреннюю область сверху, снизу и справа</span>
+    rect-&gt;left=<span class="const">0</span>;
+    rect-&gt;top=VIEWPORTTOP;
+    rect-&gt;right=ClientArea.right-w;
+    rect-&gt;bottom=ClientArea.bottom-h;
+    <span class="kw">return</span> TRUE;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Подстроить полосы прокрутки под текущий размер окна</span>
+  <span class="kw">void</span> AdjustScrollBars(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> rect;
+    <span class="rem">// Получаем стандартную щирину и высоту полос прокрутки</span>
+    <span class="kw">int</span> w=GetSystemMetrics(SM_CXVSCROLL),
+        h=GetSystemMetrics(SM_CYHSCROLL);
+    <span class="rem">// Получаем доступные размеры порта вывода</span>
+    <span class="kw">if</span>(!GetAvailableRect(&amp;rect))
+      <span class="kw">return</span>;
+
+    <span class="rem">// Горизонтальная полоса – по нижнему краю окна</span>
+    SetWindowPos(HorzScroll,NULL,
+                 rect.left,rect.bottom,
+                 rect.right-rect.left,h,
+                 SWP_NOZORDER);
+
+    <span class="rem">// Вертикальная полоса – по правому краю окна</span>
+    SetWindowPos(VertScroll,NULL,
+                 rect.right,rect.top,
+                 w,rect.bottom-rect.top,
+                 SWP_NOZORDER);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Установить параметры полос прокрутки</span>
+  <span class="kw">void</span> SetScrollBarParams(<span class="kw">void</span>)
+  { <span class="kw">int</span> w,h,m;
+    <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> rect;
+    SCROLLINFO si;
+
+    <span class="rem">// Есть ли связь с RDS и порт вывода?</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Размеры прямоугольника, доступного в окне для порта</span>
+    <span class="kw">if</span>(!GetAvailableRect(&amp;rect))
+      <span class="kw">return</span>;
+
+    <span class="rem">// Получаем размер рабочего поля подсистемы в текущем масштабе</span>
+    <span class="kw">if</span>(!<a class="hidden" href="rdsctrlGetViewportSysArea.htm" title="Б.3.7.2. rdsctrlGetViewportSysArea &ndash; получить размеры рабочего поля подсистемы в порте вывода">rdsctrlGetViewportSysArea</a>(RdsLink,Viewport,-<span class="const">1.0</span>,&amp;w,&amp;h))
+      <span class="kw">return</span>;
+
+    <span class="rem">// Заполняем общие поля структуры для установки параметров</span>
+    <span class="rem">// полосы прокрутки</span>
+    si.cbSize=<span class="kw">sizeof</span>(si);
+    si.fMask=SIF_RANGE|SIF_PAGE|SIF_DISABLENOSCROLL;
+    si.nMin=<span class="const">0</span>;
+
+    <span class="rem">// Максимум прокрутки по горизонтали</span>
+    m=w-(rect.right-rect.left);
+    <span class="kw">if</span>(m&lt;<span class="const">0</span>) m=<span class="const">0</span>;
+    si.nMax=m;
+    si.nPage=rect.right-rect.left;
+    SetScrollInfo(HorzScroll,SB_CTL,&amp;si,TRUE);
+
+    <span class="rem">// Максимум прокрутки по вертикали</span>
+    m=h-(rect.bottom-rect.top);
+    <span class="kw">if</span>(m&lt;<span class="const">0</span>) m=<span class="const">0</span>;
+    si.nMax=m;
+    si.nPage=rect.bottom-rect.top;
+    SetScrollInfo(VertScroll,SB_CTL,&amp;si,TRUE);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Рисование подсистемы в порте вывода</span>
+  <span class="kw">void</span> DrawViewport(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> rect;
+    <span class="rem">// Проверяем наличие связи с RDS и существование порта</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+    <span class="rem">// Получаем прямоугольник, доступный для вывода</span>
+    <span class="kw">if</span>(!GetAvailableRect(&amp;rect))
+      <span class="kw">return</span>;
+    <span class="rem">// Устанавливаем координаты и размер порта</span>
+    <a class="hidden" href="rdsctrlSetViewportRect.htm" title="Б.3.7.7. rdsctrlSetViewportRect &ndash; задать положение порта вывода в окне">rdsctrlSetViewportRect</a>(RdsLink,Viewport,
+          rect.left,rect.top,    <span class="rem">// координаты</span>
+          rect.right-rect.left,  <span class="rem">// ширина</span>
+          rect.bottom-rect.top); <span class="rem">// высота</span>
+    <span class="rem">// Устанавливаем положение видимой в порте области</span>
+    <a class="hidden" href="rdsctrlSetViewportParams.htm" title="Б.3.7.6. rdsctrlSetViewportParams &ndash; установить масштаб и сдвиг подсистемы в порте вывода">rdsctrlSetViewportParams</a>(RdsLink,Viewport,-<span class="const">1.0</span>,
+          GetScrollPos(HorzScroll,SB_CTL),
+          GetScrollPos(VertScroll,SB_CTL),
+          <span class="const">0</span>);
+    <span class="rem">// Командуем RDS перерисовать порт вывода</span>
+    <a class="hidden" href="rdsctrlUpdateViewport.htm" title="Б.3.7.10. rdsctrlUpdateViewport &ndash; обновить порт вывода">rdsctrlUpdateViewport</a>(RdsLink,Viewport);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Загрузка RdsCtrl.dll и создание связи</span>
+  <span class="kw">void</span> InitRdsCtrl(<span class="kw">void</span>)
+  {
+    <span class="kw">if</span>(RdsCtrl==NULL) <span class="rem">// Библиотека еще не загружена</span>
+      { <span class="kw">char</span> rdsctrldll[MAX_PATH+<span class="const">1</span>],*s;
+        <span class="rem">// Считаем, что наша программа находится в одной папке с RDS</span>
+        <span class="rem">// Получаем путь к RdsCtrl.dll из пути к нашей программе</span>
+        GetModuleFileName(NULL,rdsctrldll,MAX_PATH);
+        s=strrchr(rdsctrldll,<span class="str">'&#92;&#92;'</span>); <span class="rem">// Ищем последний '&#92;'</span>
+        <span class="kw">if</span>(!s) <span class="rem">// Ошибка</span>
+          { DisplayText(<span class="str">"Библиотека не найдена"</span>);
+            <span class="kw">return</span>;
+          }
+        <span class="rem">// Заменяем имя файла в пути</span>
+        strcpy(s+<span class="const">1</span>,<span class="str">"RdsCtrl.dll"</span>);
+
+        <span class="rem">// Загружаем библиотеку RdsCtrl.dll</span>
+        RdsCtrl=LoadLibrary(rdsctrldll);
+        <span class="kw">if</span>(RdsCtrl==NULL) <span class="rem">// Загрузка не удалась</span>
+          { DisplayText(<span class="str">"Ошибка загрузки RdsCtrl.dll"</span>);
+            <span class="kw">return</span>;
+          }
+        <span class="rem">// Получаем доступ к функциям библиотеки</span>
+        <span class="kw">if</span>(!GetRdsCtrlFuncs(RdsCtrl))
+          { <span class="rem">// Ошибка</span>
+            DisplayText(<span class="str">"Нет доступа к функциям RdsCtrl.dll"</span>);
+            <span class="rem">// Выгружаем библиотеку - она бесполезна</span>
+            FreeLibrary(RdsCtrl);
+            RdsCtrl=NULL;
+            <span class="kw">return</span>;
+          }
+        <span class="rem">// Доступ к функциям получен – можно их вызывать</span>
+
+        <span class="rem">// Установка функции возврата строки</span>
+        <a class="hidden" href="rdsctrlSetStringCallback.htm" title="Б.3.2.10. rdsctrlSetStringCallback &ndash; регистрация функции возврата строки">rdsctrlSetStringCallback</a>(ReturnString);
+        <span class="rem">// Сброс идентификатора связи (если он почему-то не сброшен)</span>
+        RdsLink=-<span class="const">1</span>;
+      } <span class="rem">// if(RdsCtrl==NULL)</span>
+
+    <span class="rem">// Создание связи с RDS</span>
+    <span class="kw">if</span>(RdsLink&lt;<span class="const">0</span>) <span class="rem">// Связь не создана</span>
+      { <span class="rem">// Создаем связь (rds.exe пока не запускается)</span>
+        RdsLink=<a class="hidden" href="rdsctrlCreateLink.htm" title="Б.3.2.3. rdsctrlCreateLink &ndash; создать связь с RDS">rdsctrlCreateLink</a>();
+        <span class="kw">if</span>(RdsLink&lt;<span class="const">0</span>) <span class="rem">// Ошибка</span>
+          { DisplayText(<span class="str">"Ошибка создания связи с RDS"</span>);
+            <span class="kw">return</span>;
+          }
+        <span class="rem">// Запрет главного окна RDS</span>
+        <a class="hidden" href="rdsctrlShowMainWindow.htm" title="Б.3.3.13. rdsctrlShowMainWindow &ndash; видимость главного окна RDS">rdsctrlShowMainWindow</a>(RdsLink,FALSE);
+        <span class="rem">// Запрет открытия окон подсистем</span>
+        <a class="hidden" href="rdsctrlEnableSubsystemWindows.htm" title="Б.3.3.7. rdsctrlEnableSubsystemWindows &ndash; разрешение открытия окон подсистем">rdsctrlEnableSubsystemWindows</a>(RdsLink,FALSE);
+        <span class="rem">// Отключение пользовательского интерфейса</span>
+        <a class="hidden" href="rdsctrlEnableUI.htm" title="Б.3.3.8. rdsctrlEnableUI &ndash; разрешение интерфейса пользователя RDS">rdsctrlEnableUI</a>(RdsLink,FALSE);
+      }
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Привязка к порту вывода подсистемы system</span>
+  <span class="kw">void</span> SetViewport(<span class="kw">char</span> *system)
+  { <span class="kw">int</span> nvp;
+    <span class="kw">int</span> ScrollX,ScrollY;
+
+    <span class="rem">// Проверяем, создана ли связь с RDS</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Создаем новый порт или меняем параметры созданного</span>
+    nvp=<a class="hidden" href="rdsctrlSetViewport.htm" title="Б.3.7.5. rdsctrlSetViewport &ndash; создать порт вывода">rdsctrlSetViewport</a>(RdsLink,Viewport,MainWin,system,<span class="const">0</span>);
+    <span class="kw">if</span>(nvp==-<span class="const">1</span>) <span class="rem">// Задать параметры порта не получилось</span>
+      <span class="kw">return</span>;
+    Viewport=nvp;
+
+    <span class="rem">// Получаем запомненное положение прокрутки</span>
+    <a class="hidden" href="rdsctrlGetViewportParams.htm" title="Б.3.7.1. rdsctrlGetViewportParams &ndash; получить масштаб и сдвиг подсистемы в порте вывода">rdsctrlGetViewportParams</a>(RdsLink,nvp,NULL,&amp;ScrollX,&amp;ScrollY);
+
+    <span class="rem">// Настраиваем полосы прокрутки по рабочему полю</span>
+    SetScrollBarParams();
+    <span class="rem">// Устанавливаем полосы прокрутки в запомненное положение</span>
+    SetScrollPos(HorzScroll,SB_CTL,ScrollX,TRUE);
+    SetScrollPos(VertScroll,SB_CTL,ScrollY,TRUE);
+
+    <span class="rem">// Нужна ли какому-либо блоку подсистемы реакция на перемещение</span>
+    <span class="rem">// мыши без нажатия кнопок</span>
+    FreeMouseMove=(<a class="hidden" href="rdsctrlGetVPMouseLevel.htm" title="Б.3.7.3. rdsctrlGetVPMouseLevel &ndash; получить тип реакции на мышь у подсистемы в порте вывода">rdsctrlGetVPMouseLevel</a>(RdsLink,nvp)==<span class="const">2</span>);
+
+    <span class="rem">// Командуем обновить окно программы</span>
+    InvalidateRect(MainWin,NULL,TRUE);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция, вызываемая перед завершением программы</span>
+  <span class="kw">void</span> BeforeExit(<span class="kw">void</span>)
+  {
+    <span class="kw">if</span>(RdsCtrl!=NULL) <span class="rem">// Библиотека загружена</span>
+      { <span class="kw">if</span>(RdsLink&gt;=<span class="const">0</span>) <span class="rem">// Создана связь с RDS</span>
+          { <span class="kw">if</span>(Viewport&gt;=<span class="const">0</span>) <span class="rem">// Уничтожаем порт вывода</span>
+              { <a class="hidden" href="rdsctrlReleaseViewport.htm" title="Б.3.7.4. rdsctrlReleaseViewport &ndash; уничтожить порт вывода">rdsctrlReleaseViewport</a>(RdsLink,Viewport);
+                Viewport=-<span class="const">1</span>;
+              }
+            <span class="rem">// Завершаем RDS</span>
+            <a class="hidden" href="rdsctrlClose.htm" title="Б.3.2.1. rdsctrlClose &ndash; завершить RDS">rdsctrlClose</a>(RdsLink);
+            <span class="rem">// Удаляем связь</span>
+            <a class="hidden" href="rdsctrlDeleteLink.htm" title="Б.3.2.4. rdsctrlDeleteLink &ndash; уничтожить связь с RDS">rdsctrlDeleteLink</a>(RdsLink);
+            RdsLink=-<span class="const">1</span>;
+          }
+        <span class="rem">// Выгружаем библиотеку</span>
+        FreeLibrary(RdsCtrl);
+        RdsCtrl=NULL;
+      }
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Открыть файл схемы (filename – имя файла)</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> LoadScheme(<span class="kw">char</span> *filename)
+  {
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span>)
+      { <span class="rem">// Библиотека RdsCtrl.dll еще не загружена</span>
+        InitRdsCtrl(); <span class="rem">// Загружаем</span>
+        <span class="kw">if</span>(RdsCtrl==NULL) <span class="rem">// Ошибка</span>
+          <span class="kw">return</span> FALSE;
+        <span class="rem">// Запускаем rds.exe</span>
+        <span class="kw">if</span>(!<a class="hidden" href="rdsctrlConnect.htm" title="Б.3.2.2. rdsctrlConnect &ndash; запустить RDS">rdsctrlConnect</a>(RdsLink))
+          { DisplayText(<span class="str">"Ошибка запуска RDS"</span>);
+            <span class="kw">return</span> FALSE;
+          }
+      }
+    <span class="kw">else</span> <span class="kw">if</span>(Viewport&gt;=<span class="const">0</span>) <span class="rem">// Уничтожаем порт вывода</span>
+      { <a class="hidden" href="rdsctrlReleaseViewport.htm" title="Б.3.7.4. rdsctrlReleaseViewport &ndash; уничтожить порт вывода">rdsctrlReleaseViewport</a>(RdsLink,Viewport);
+        Viewport=-<span class="const">1</span>;
+      }
+
+    <span class="rem">// Если rds.exe не работает (пользователь вышел из RDS),</span>
+    <span class="rem">// перезапускаем RDS</span>
+    <a class="hidden" href="rdsctrlRestoreConnection.htm" title="Б.3.2.8. rdsctrlRestoreConnection &ndash; перезапустить RDS при необходимости">rdsctrlRestoreConnection</a>(RdsLink);
+
+    <span class="rem">// RDS работает - загружаем схему</span>
+    <span class="kw">if</span>(!<a class="hidden" href="rdsctrlLoadSystemFromFile.htm" title="Б.3.5.6. rdsctrlLoadSystemFromFile &ndash; загрузить схему из файла">rdsctrlLoadSystemFromFile</a>(RdsLink,filename,FALSE))
+      { <span class="rem">// Ошибка загрузки</span>
+        DisplayText(<span class="str">"Ошибка загрузки схемы"</span>);
+        <span class="kw">return</span> FALSE;
+      }
+    <span class="rem">// Переходим в режим моделирования</span>
+    <a class="hidden" href="rdsctrlSetCalcMode.htm" title="Б.3.4.27. rdsctrlSetCalcMode &ndash; включить режим моделирования">rdsctrlSetCalcMode</a>(RdsLink);
+    <span class="rem">// Создаем порт вывода и привязываем его к корневой подсистеме</span>
+    SetViewport(<span class="str">""</span>);
+    <span class="kw">return</span> TRUE;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Нажатие кнопки "Открыть"</span>
+  <span class="kw">void</span> OpenButtonClick(<span class="kw">void</span>)
+  { <span class="kw">char</span> filename[MAX_PATH+<span class="const">1</span>]=<span class="str">""</span>; <span class="rem">// Буфер для имени файла</span>
+    OPENFILENAME ofn;
+    <span class="rem">// Заполняем структуру OPENFILENAME</span>
+    ZeroMemory(&amp;ofn,<span class="kw">sizeof</span>(ofn));
+    ofn.lStructSize=<span class="kw">sizeof</span>(ofn);
+    ofn.hwndOwner=MainWin;
+    ofn.lpstrFile=filename;
+    ofn.nMaxFile=<span class="kw">sizeof</span>(filename);
+    ofn.lpstrFilter=<span class="str">"Схемы (*.rds)&#92;0*.rds&#92;0Все файлы&#92;0*.*&#92;0"</span>;
+    ofn.nFilterIndex=<span class="const">1</span>;
+    ofn.Flags=OFN_EXPLORER | OFN_FILEMUSTEXIST;
+    <span class="rem">// Вызываем стандартный диалог открытия файла</span>
+    <span class="kw">if</span>(GetOpenFileName(&amp;ofn)) <span class="rem">// Пользователь выбрал файл</span>
+      { <span class="rem">// Загружаем схему</span>
+        <span class="kw">if</span>(LoadScheme(filename))
+          DisplayText(filename);
+      }
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Изменение масштаба (multiplier - множитель)</span>
+  <span class="kw">void</span> ZoomButtonClick(<span class="kw">double</span> multiplier)
+  { <span class="kw">double</span> zoom;
+    <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> rect;
+    <span class="kw">int</span> halfwidth,halfheight,cx,cy,sx,sy;
+
+    <span class="rem">// Проверяем наличие связи с RDS и существование порта</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Получаем прямоугольник, доступный для вывода</span>
+    <span class="kw">if</span>(!GetAvailableRect(&amp;rect))
+      <span class="kw">return</span>;
+
+    <span class="rem">// Получаем текущий масштаб и положение прокрутки подсистемы</span>
+    <a class="hidden" href="rdsctrlGetViewportParams.htm" title="Б.3.7.1. rdsctrlGetViewportParams &ndash; получить масштаб и сдвиг подсистемы в порте вывода">rdsctrlGetViewportParams</a>(RdsLink,Viewport,&amp;zoom,&amp;sx,&amp;sy);
+
+    <span class="rem">// Вычисляем координаты центра видимой части в старом масштабе</span>
+    halfwidth=(rect.right-rect.left)/<span class="const">2</span>,
+    halfheight=(rect.bottom-rect.top)/<span class="const">2</span>;
+    cx=(sx+halfwidth)/zoom;
+    cy=(sy+halfheight)/zoom;
+
+    <span class="rem">// Новый масштаб</span>
+    zoom*=multiplier;
+
+    <span class="rem">// Вычисление новых координат прокрутки, чтобы в новом масштабе</span>
+    <span class="rem">// центр изображения не сдвинулся</span>
+    sx=(<span class="kw">int</span>)(cx*zoom)-halfwidth;
+    <span class="kw">if</span>(sx&lt;<span class="const">0</span>) sx=<span class="const">0</span>;
+    sy=(<span class="kw">int</span>)(cy*zoom)-halfheight;
+    <span class="kw">if</span>(sy&lt;<span class="const">0</span>) sy=<span class="const">0</span>;
+
+    <span class="rem">// Установка нового масштаба и положения полос прокрутки</span>
+    <a class="hidden" href="rdsctrlSetViewportParams.htm" title="Б.3.7.6. rdsctrlSetViewportParams &ndash; установить масштаб и сдвиг подсистемы в порте вывода">rdsctrlSetViewportParams</a>(RdsLink,Viewport,zoom,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>);
+    SetScrollBarParams();
+    SetScrollPos(HorzScroll,SB_CTL,sx,TRUE);
+    SetScrollPos(VertScroll,SB_CTL,sy,TRUE);
+
+    <span class="rem">// Обновление порта вывода</span>
+    InvalidateRect(MainWin,&amp;rect,TRUE);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Реакция на полосы прокрутки</span>
+  <span class="kw">void</span> DoScroll(UINT msg,WORD btn)
+  { <span class="kw">int</span> sx,sy,pagex,pagey,sx_track,sy_track;
+    <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> rect;
+    SCROLLINFO si;
+
+    <span class="rem">// Проверяем наличие связи с RDS</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Получаем текущую позицию горизонтальной полосы</span>
+    si.cbSize=<span class="kw">sizeof</span>(si);
+    si.fMask=SIF_ALL;
+    <span class="kw">if</span>(!GetScrollInfo(HorzScroll,SB_CTL,&amp;si))
+      <span class="kw">return</span>;
+    sx=si.nPos;
+    sx_track=si.nTrackPos;
+    <span class="rem">// Получаем текущую позицию вертикальной полосы</span>
+    <span class="kw">if</span>(!GetScrollInfo(VertScroll,SB_CTL,&amp;si))
+      <span class="kw">return</span>;
+    sy=si.nPos;
+    sy_track=si.nTrackPos;
+
+    <span class="rem">// Получаем доступный для порта вывода прямоугольник</span>
+    <span class="kw">if</span>(!GetAvailableRect(&amp;rect))
+      <span class="kw">return</span>;
+    <span class="rem">// Размер страницы прокрутки – половина прямокгольника</span>
+    pagex=(rect.right-rect.left)/<span class="const">2</span>;
+    pagey=(rect.bottom-rect.top)/<span class="const">2</span>;
+
+    <span class="rem">// Разбираемся с поступившим сообщением</span>
+    <span class="kw">if</span>(msg==WM_HSCROLL) <span class="rem">// Горизонтальная прокрутка</span>
+      { <span class="kw">switch</span>(btn)
+          { <span class="kw">case</span> SB_LINELEFT:   sx-=<span class="const">5</span>; <span class="kw">break</span>;
+            <span class="kw">case</span> SB_LINERIGHT:  sx+=<span class="const">5</span>; <span class="kw">break</span>;
+            <span class="kw">case</span> SB_PAGELEFT:   sx-=pagex; <span class="kw">break</span>;
+            <span class="kw">case</span> SB_PAGERIGHT:  sx+=pagex; <span class="kw">break</span>;
+            <span class="kw">case</span> SB_THUMBTRACK: sx=sx_track; <span class="kw">break</span>;
+          }
+        <span class="rem">// Устанавливаем новое положение полосы</span>
+        SetScrollPos(HorzScroll,SB_CTL,sx,TRUE);
+        <span class="rem">// Командуем обновить область порта вывода</span>
+        InvalidateRect(MainWin,&amp;rect,FALSE);
+      }
+    <span class="kw">else</span> <span class="rem">// Вертикальная прокрутка</span>
+      { <span class="kw">switch</span>(btn)
+          { <span class="kw">case</span> SB_LINEDOWN:   sy+=<span class="const">5</span>; <span class="kw">break</span>;
+            <span class="kw">case</span> SB_LINEUP:     sy-=<span class="const">5</span>; <span class="kw">break</span>;
+            <span class="kw">case</span> SB_PAGELEFT:   sy-=pagey; <span class="kw">break</span>;
+            <span class="kw">case</span> SB_PAGERIGHT:  sy+=pagey; <span class="kw">break</span>;
+            <span class="kw">case</span> SB_THUMBTRACK: sy=sy_track; <span class="kw">break</span>;
+          }
+        <span class="rem">// Устанавливаем новое положение полосы</span>
+        SetScrollPos(VertScroll,SB_CTL,sy,TRUE);
+        <span class="rem">// Командуем обновить область порта вывода</span>
+        InvalidateRect(MainWin,&amp;rect,FALSE);
+      }
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Передача в RDS нажатия/отпускания клавиши</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> RdsKeyboardOperation(<a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> down,<span class="kw">int</span> keycode,<a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> flags)
+  {
+    <span class="rem">// Здесь мы будем вызывать в схеме реакцию на клавиши.</span>
+    <span class="rem">// Функция вернет TRUE, если блок среагировал</span>
+    <span class="kw">return</span> FALSE;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Передача в RDS действия мышью</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> RdsMouseOperation(UINT msg,<span class="kw">int</span> X,<span class="kw">int</span> Y,WPARAM keys)
+  {
+    <span class="rem">// Здесь мы будем передавать в RDS информацию о нажатии и</span>
+    <span class="rem">// отпускании кнопок мыши и о перемещении курсора. Функция</span>
+    <span class="rem">// вернет TRUE, если действие обработано блоком схемы.</span>
+    <span class="kw">return</span> FALSE;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Создание внутренних элементов окна</span>
+  <span class="kw">void</span> CreateControls(<a class="hidden" href="app_ids.htm#light_ref18" title="Дескриптор окна">HWND</a> hWindow)
+  { HINSTANCE app;
+    <a class="hidden" href="app_ids.htm#light_ref18" title="Дескриптор окна">HWND</a> open;
+    TOOLINFO ti;
+
+    <span class="rem">// Получаем идентификатор приложения</span>
+    app=(HINSTANCE)GetWindowLong(hWindow,GWL_HINSTANCE);
+
+    <span class="rem">// Кнопка "Открыть"</span>
+    open=CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Открыть"</span>,      <span class="rem">// Имя класса и текст</span>
+        WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, <span class="rem">// Стили</span>
+        <span class="const">0</span>,<span class="const">30</span>,<span class="const">100</span>,<span class="const">24</span>,                           <span class="rem">// x,y,ширина,высота</span>
+        hWindow,                               <span class="rem">// Родительское окно</span>
+        (HMENU)IDC_OPENBUTTON,                 <span class="rem">// Идентификатор кнопки</span>
+        app,NULL);
+    <span class="rem">// Кнопка "Назад"</span>
+    CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Назад"</span>,
+        WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+        <span class="const">121</span>,<span class="const">30</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,
+        (HMENU)IDC_BACKBUTTON,app,NULL);
+    <span class="rem">// Кнопка "Масшт +"</span>
+    CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Масшт +"</span>,
+        WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+        <span class="const">242</span>,<span class="const">30</span>,<span class="const">90</span>,<span class="const">24</span>,hWindow,
+        (HMENU)IDC_ZOOMIN,app,NULL);
+    <span class="rem">// Кнопка "Масшт -"</span>
+    CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Масшт -"</span>,
+        WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+        <span class="const">363</span>,<span class="const">30</span>,<span class="const">90</span>,<span class="const">24</span>,hWindow,
+        (HMENU)IDC_ZOOMOUT,app,NULL);
+    <span class="rem">// Горизонтальная полоса прокрутки</span>
+    HorzScroll=CreateWindow(<span class="str">"SCROLLBAR"</span>,NULL,
+        WS_VISIBLE | WS_CHILD | SBS_HORZ,
+        <span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,hWindow,NULL,app,NULL);
+    <span class="rem">// Вертикальная полоса прокрутки</span>
+    VertScroll=CreateWindow(<span class="str">"SCROLLBAR"</span>,NULL,
+        WS_VISIBLE | WS_CHILD | SBS_VERT,
+        <span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,hWindow,NULL,app,NULL);
+    <span class="rem">// Создаем окно для всплывающей подсказки</span>
+    ToolTip=CreateWindow(TOOLTIPS_CLASS,NULL,
+        TTS_ALWAYSTIP,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,hWindow,
+        NULL,app,NULL);
+    <span class="rem">// Добавляем подсказку к кнопке "Открыть"</span>
+    ti.cbSize=<span class="kw">sizeof</span>(ti);
+    ti.uFlags=TTF_IDISHWND|TTF_SUBCLASS;
+    ti.uId=(UINT_PTR)open;
+    ti.lpszText=<span class="str">"Загрузить схему"</span>;
+    ti.hwnd=MainWin;
+    SendMessage(ToolTip,TTM_ADDTOOL,<span class="const">0</span>,(LPARAM)(&amp;ti));
+    <span class="rem">// Добавляем подсказку к зоне порта вывода</span>
+    ti.uFlags=TTF_SUBCLASS;
+    ti.hwnd=MainWin;
+    ti.uId=VIEWPORTTIP_ID; <span class="rem">// Идентификатор зоны подсказки</span>
+    ti.lpszText=LPSTR_TEXTCALLBACK; <span class="rem">// Запрос текста</span>
+    SetRectEmpty(&amp;(ti.rect)); <span class="rem">// Пока без размера</span>
+    SendMessage(ToolTip,TTM_ADDTOOL,<span class="const">0</span>,(LPARAM)(&amp;ti));
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Получение текста всплывающей подсказки к схеме</span>
+  <span class="kw">void</span> GetTooltip(TOOLTIPTEXT *tiptext)
+  {
+    <span class="rem">// Здесь мы будем получать у RDS текст подсказки к</span>
+    <span class="rem">// заданной точке подсистемы.</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Установка зоны всплывающей подсказки размером во все</span>
+  <span class="rem">// доступное место окна программы</span>
+  <span class="kw">void</span> AdjustToolTipRect(<span class="kw">void</span>)
+  { TOOLINFO ti;
+    ti.cbSize=<span class="kw">sizeof</span>(ti);
+    ti.hwnd=MainWin;
+    ti.uId=VIEWPORTTIP_ID;
+    GetAvailableRect(&amp;(ti.rect));
+    SendMessage(ToolTip,TTM_NEWTOOLRECT,<span class="const">0</span>,(LPARAM)(&amp;ti));
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Показать контекстное меню</span>
+  <span class="kw">void</span> ShowPopupMenu(<span class="kw">int</span> screenx,<span class="kw">int</span> screeny)
+  {
+    <span class="rem">// Здесь мы будем выводить контекстное меню</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Реакция на выбор пункта меню</span>
+  <span class="kw">void</span> PopupMenuClick(<span class="kw">int</span> id)
+  {
+    <span class="rem">// Здесь мы будем передавать в RDS идентификатор</span>
+    <span class="rem">// выбранного пользователем пункта меню</span>
+  }
+  <span class="rem">//=========================================</span>
+
+<div class="changes">  <span class="rem">// Открыть в порте вывода подсистему под курсором мыши</span>
+  <span class="kw">void</span> SubSystemToViewport(<span class="kw">int</span> x,<span class="kw">int</span> y)
+  { <a class="hidden" href="pm_3_3.htm#ref3" title="Вспомогательный класс для хранения строк">TDynString</a> blockname; <span class="rem">// Имя подсистемы</span>
+    <span class="rem">// Проверяем наличие связи с RDS и существование порта</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+    <span class="rem">// Получаем имя блока в точке (x,y)</span>
+    <span class="kw">if</span>(!<a class="hidden" href="rdsctrlViewportBlockAtPos.htm" title="Б.3.7.11. rdsctrlViewportBlockAtPos &ndash; получить имя блока в указанной точке порта вывода">rdsctrlViewportBlockAtPos</a>(RdsLink,Viewport,x,y,&amp;blockname))
+      <span class="kw">return</span>;
+    <span class="rem">// Если блока нет, ничего не делаем</span>
+    <span class="kw">if</span>(blockname.IsEmpty())
+      <span class="kw">return</span>;
+    <span class="rem">// Привязываем подсистему blockname к порту вывода</span>
+    SetViewport(blockname.c_str);
+    <span class="rem">// Выводим ее полное имя в верхней части окна</span>
+    DisplayText(blockname.c_str);
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Реакция на кнопку "Назад"</span>
+  <span class="kw">void</span> BackButtonClick(<span class="kw">void</span>)
+  { <a class="hidden" href="pm_3_3.htm#ref3" title="Вспомогательный класс для хранения строк">TDynString</a> sysname; <span class="rem">// Имя текущей подсистемы</span>
+    <span class="kw">char</span> *s;
+    <span class="rem">// Проверяем наличие связи с RDS и существование порта</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+    <span class="rem">// Получаем имя подсистемы, привязанной к порту</span>
+    <a class="hidden" href="rdsctrlViewportSystem.htm" title="Б.3.7.15. rdsctrlViewportSystem &ndash; получить имя подсистемы в порте вывода">rdsctrlViewportSystem</a>(RdsLink,Viewport,&amp;sysname);
+    <span class="kw">if</span>(sysname.IsEmpty()) <span class="rem">// Строка пустая</span>
+      <span class="kw">return</span>;
+    <span class="rem">// Ищем последнее двоеточие в строке полного имени</span>
+    <span class="rem">// и заменяем его на 0</span>
+    s=strrchr(sysname.c_str,<span class="str">':'</span>);
+    <span class="kw">if</span>(s==NULL) <span class="rem">// Нет двоеточия – некуда возвращаться</span>
+      <span class="kw">return</span>;
+    *s=<span class="const">0</span>;
+    <span class="rem">// Теперь из полного имени подсистемы выброшено имя</span>
+    <span class="rem">// последнего блока, то есть мы получили имя</span>
+    <span class="rem">// родительской подсистемы</span>
+
+    <span class="rem">// Привязываем к порту родительскую подсистему</span>
+    SetViewport(sysname.c_str);
+    <span class="rem">// Выводим ее полное имя в верхней части окна</span>
+    DisplayText(sysname.c_str);
+  }
+  <span class="rem">//=========================================</span></div>
+  <span class="rem">// Процедура главного окна</span>
+  LRESULT CALLBACK MainWndProc(<a class="hidden" href="app_ids.htm#light_ref18" title="Дескриптор окна">HWND</a> hWindow,UINT msg,
+        WPARAM wParam,LPARAM lParam)
+  { PAINTSTRUCT ps;
+    <a class="hidden" href="app_ids.htm#light_ref16" title="Контекст устройства Windows">HDC</a> hDC;
+    <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> rect;
+    POINT pt;
+    NMHDR *nmhdr;
+
+    <span class="kw">switch</span>(msg)
+      { <span class="rem">// Создание окна</span>
+        <span class="kw">case</span> WM_CREATE:
+          <span class="rem">// Запоминаем дескриптор окна в глобальной переменной</span>
+          MainWin=hWindow;
+          <span class="rem">// Создаем кнопки, полосы прокрутки и т.д.</span>
+          CreateControls(hWindow);
+          <span class="rem">// Очищаем запомненный прямоугольник всплывающей подсказки</span>
+          SetRectEmpty(&amp;LastToolTipRect);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Закрытие окна</span>
+        <span class="kw">case</span> WM_DESTROY:
+          BeforeExit(); <span class="rem">// Выгружаем RdsCtrl.dll</span>
+          PostQuitMessage(<span class="const">0</span>); <span class="rem">// Завершаем программу</span>
+          <span class="kw">return</span> <span class="const">0</span>;
+
+        <span class="rem">// Рисование в окне</span>
+        <span class="kw">case</span> WM_PAINT:
+          <span class="rem">// Выводим текст из buffer в верхней части</span>
+          hDC = BeginPaint(hWindow,&amp;ps);
+          GetClientRect(hWindow,&amp;rect);
+          rect.bottom=<span class="const">30</span>;
+          DrawText(hDC,buffer,-<span class="const">1</span>,&amp;rect,
+            DT_SINGLELINE|DT_CENTER|DT_VCENTER);
+          EndPaint(hWindow,&amp;ps);
+          <span class="rem">// Рисуем содержимое подсистемы</span>
+          DrawViewport();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Команда от органов управления</span>
+        <span class="kw">case</span> WM_COMMAND:
+          <span class="kw">if</span>(LOWORD(wParam)&gt;=IDC_MENUSTART) <span class="rem">// Выбран пункт меню</span>
+            { PopupMenuClick(LOWORD(wParam));
+              <span class="kw">break</span>;
+            }
+          <span class="kw">if</span>(HIWORD(wParam)==BN_CLICKED) <span class="rem">// Нажата кнопка</span>
+            { <span class="kw">switch</span> (LOWORD(wParam))
+                { <span class="kw">case</span> IDC_OPENBUTTON: OpenButtonClick();    <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_BACKBUTTON: BackButtonClick();    <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_ZOOMIN:     ZoomButtonClick(<span class="const">2.0</span>); <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_ZOOMOUT:    ZoomButtonClick(<span class="const">0</span>.<span class="const">5</span>); <span class="kw">break</span>;
+                }
+            }
+          <span class="kw">break</span>;
+
+        <span class="rem">// Изменение размеров окна</span>
+        <span class="kw">case</span> WM_SIZE:
+          <span class="rem">// Подстраиваем полосы прокрутки под новый размер</span>
+          AdjustScrollBars();
+          SetScrollBarParams();
+          <span class="rem">// Увеличиваем зону вплывающей подсказки</span>
+          AdjustToolTipRect();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Прокрутка (горизонтальная или вертикальная)</span>
+        <span class="kw">case</span> WM_HSCROLL:
+        <span class="kw">case</span> WM_VSCROLL:
+          DoScroll(msg,LOWORD(wParam));
+          <span class="kw">break</span>;
+
+        <span class="rem">// Действия мышью</span>
+        <span class="kw">case</span> WM_MOUSEMOVE: <span class="rem">// Перемещение</span>
+          pt.x=LOWORD(lParam);
+          pt.y=HIWORD(lParam);
+          <span class="rem">// Если курсор вышел за пределы последней зоны всплывающей</span>
+          <span class="rem">// подсказки, делаем эту зону размером в весь порт вывода</span>
+          <span class="kw">if</span>(!PtInRect(&amp;LastToolTipRect,pt))
+            AdjustToolTipRect();
+          <span class="rem">// Информируем RDS о перемещении мыши</span>
+          RdsMouseOperation(msg,pt.x,pt.y,wParam);
+          <span class="rem">// Запоминаем последние координаты курсора</span>
+          LastX=pt.x;
+          LastY=pt.y;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> WM_LBUTTONDOWN: <span class="rem">// Нажатие и отпускание кнопок</span>
+        <span class="kw">case</span> WM_MBUTTONDOWN:
+        <span class="kw">case</span> WM_RBUTTONDOWN:
+        <span class="kw">case</span> WM_LBUTTONUP:
+        <span class="kw">case</span> WM_MBUTTONUP:
+        <span class="kw">case</span> WM_RBUTTONUP:
+          <span class="rem">// Информируем RDS</span>
+          <span class="kw">if</span>(RdsMouseOperation(msg,LOWORD(lParam),HIWORD(lParam),wParam))
+            <span class="kw">return</span> <span class="const">0</span>;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> WM_LBUTTONDBLCLK: <span class="rem">// Двойной щелчок</span>
+          pt.x=LOWORD(lParam);
+          pt.y=HIWORD(lParam);
+          <span class="rem">// Информируем RDS</span>
+          <span class="kw">if</span>(!RdsMouseOperation(msg,pt.x,pt.y,wParam))
+            <span class="rem">// Блок не среагировал – пытаемся открыть подсистему</span>
+            SubSystemToViewport(pt.x,pt.y);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Нажатие клавиш</span>
+        <span class="kw">case</span> WM_KEYDOWN:
+        <span class="kw">case</span> WM_SYSKEYDOWN:
+          <span class="rem">// Информируем RDS</span>
+          <span class="kw">if</span>(RdsKeyboardOperation(TRUE,(<span class="kw">int</span>)wParam,(DWORD)lParam))
+            <span class="kw">return</span> <span class="const">0</span>;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Отпускание клавиш</span>
+        <span class="kw">case</span> WM_KEYUP:
+        <span class="kw">case</span> WM_SYSKEYUP:
+          <span class="rem">// Информируем RDS</span>
+          <span class="kw">if</span>(RdsKeyboardOperation(FALSE,(<span class="kw">int</span>)wParam,(DWORD)lParam))
+            <span class="kw">return</span> <span class="const">0</span>;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов контекстного меню</span>
+        <span class="kw">case</span> WM_CONTEXTMENU:
+          <span class="kw">if</span>(((<a class="hidden" href="app_ids.htm#light_ref18" title="Дескриптор окна">HWND</a>)wParam)==MainWin) <span class="rem">// В окне программы</span>
+            ShowPopupMenu(LOWORD(lParam),HIWORD(lParam));
+          <span class="kw">break</span>;
+
+        <span class="rem">// Разные уведомления</span>
+        <span class="kw">case</span> WM_NOTIFY:
+          nmhdr=(NMHDR*)lParam;
+          <span class="kw">switch</span>(nmhdr-&gt;code)
+            { <span class="rem">// Запрос текста от всплывающей подсказки</span>
+              <span class="kw">case</span> TTN_NEEDTEXT:
+                GetTooltip((LPTOOLTIPTEXT)lParam);
+                <span class="kw">break</span>;
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> DefWindowProc(hWindow,msg,wParam,lParam);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Главная функция приложения</span>
+  <span class="kw">int</span> WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
+        PSTR szCmdLine,<span class="kw">int</span> iCmdShow)
+  { <span class="kw">static</span> <span class="kw">char</span> appName[] = <span class="str">"Управление RDS – порт вывода"</span>,
+                className[]=<span class="str">"RDSControlTestWindow"</span>;
+    WNDCLASSEX myWin;
+    <a class="hidden" href="app_ids.htm#light_ref18" title="Дескриптор окна">HWND</a> hWindow;
+    MSG msg;
+
+    <span class="rem">// Создание главного окна</span>
+    myWin.cbSize=<span class="kw">sizeof</span>(myWin);
+    myWin.style=CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
+    myWin.lpfnWndProc=MainWndProc;
+    myWin.cbClsExtra=<span class="const">0</span>;
+    myWin.cbWndExtra=<span class="const">0</span>;
+    myWin.hInstance=hInstance;
+    myWin.hIcon=<span class="const">0</span>;
+    myWin.hIconSm=<span class="const">0</span>;
+    myWin.hCursor=<span class="const">0</span>;
+    myWin.hbrBackground=(HBRUSH)(COLOR_WINDOW+<span class="const">1</span>);
+    myWin.lpszMenuName=<span class="const">0</span>;
+    myWin.lpszClassName=className;
+    <span class="kw">if</span>(!RegisterClassEx(&amp;myWin)) <span class="kw">return</span> <span class="const">0</span>;
+    hWindow=CreateWindow(className,appName,
+      WS_OVERLAPPEDWINDOW,
+      CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,
+      <span class="const">0</span>,<span class="const">0</span>,hInstance,<span class="const">0</span>);
+    <span class="rem">// Открытие созданного окна</span>
+    ShowWindow(hWindow,iCmdShow);
+    UpdateWindow(hWindow);
+
+    <span class="rem">// Инициализация стандартных компонентов</span>
+    INITCOMMONCONTROLSEX icc;
+    icc.dwSize=<span class="kw">sizeof</span>(icc);
+    icc.dwICC=ICC_WIN95_CLASSES;
+    <span class="kw">if</span>(!InitCommonControlsEx(&amp;icc))
+      DisplayText(<span class="str">"Ошибка InitCommonControlsEx"</span>);
+
+    <span class="rem">// Цикл обработки сообщений приложения</span>
+    <span class="kw">while</span>(GetMessage(&amp;msg,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>))
+      { TranslateMessage(&amp;msg);
+        DispatchMessage(&amp;msg);
+      }
+    <span class="kw">return</span> <span class="const">0</span>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_3_6_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_6_4.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_6_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

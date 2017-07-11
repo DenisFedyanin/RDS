@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.5.3. Доступ к матрицам и массивам</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_5">&sect;2.5. Статические переменные блоков</a></p>
+<div class="level"><p>&sect;2.5.3. Доступ к матрицам и массивам</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_5_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_5_4.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_5_3.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделями умножения матрицы на константу. 
+Библиотека содержит три варианта модели:</p>
+
+<ul>
+  <li><span class="cpp">TestMatr</span> &ndash; модель с использованием вспомогательных структур 
+  <span class="cpp"><a href="RDS_ARRAYACCESSDATA.htm" title="А.4.1. RDS_ARRAYACCESSDATA &ndash; описание матрицы/массива">RDS_ARRAYACCESSDATA</a></span>;</li>
+  <li><span class="cpp">TestMatr1</span> &ndash; модель с использованием макросов;</li>
+  <li><span class="cpp">TestMatr2</span> &ndash; модель с использованием макросов, все элементы матрицы обрабатываются
+  в одном цикле.</li>
+</ul>
+
+<p class="noindent">Изменения от варианта к варианту выделены цветом.</p>
+
+<pre class="cpp">  <span class="rem">// Умножение матрицы на константу</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include </span><a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">&lt;RdsFunc.h&gt;</span></a>
+
+  <span class="rem">//========== Главная функция DLL ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+
+  <span class="rem">//===================================================================</span>
+  <span class="rem">// Первый вариант - доступ к матрицам через вспомогательные структуры</span>
+  <span class="rem">//===================================================================</span>
+
+  <span class="rem">//============= Модель блока ==============</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestMatr(<span class="kw">int</span> CallMode,
+                         <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                         <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define pX      ((void **)(pStart+2))</span>
+  <span class="preproc">#define k       (*((double *)(pStart+10)))</span>
+  <span class="preproc">#define pY      ((void **)(pStart+18))</span>
+    <span class="rem">// Структуры с информацией о матрицах</span>
+    <a class="hidden" href="RDS_ARRAYACCESSDATA.htm#ref1" title="Структура RDS_ARRAYACCESSDATA">RDS_ARRAYACCESSDATA</a> XD,YD;
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSMDDMD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="rem">// Считать информацию о матрице X в структуру XD</span>
+          <a class="hidden" href="rdsGetVarArrayAccessData.htm" title="А.5.15.8. rdsGetVarArrayAccessData &ndash; заполнить структуру описания матрицы/массива">rdsGetVarArrayAccessData</a>(pX,&amp;XD);
+          <span class="kw">if</span>(XD.Exists) <span class="rem">// Матрица X существует</span>
+            { <span class="rem">// Задать размер Y и считать информацию о ней в YD</span>
+              <a class="hidden" href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a>(pY,XD.Rows,XD.Cols,FALSE,&amp;YD);
+              <span class="rem">// Присвоить значения элементам Y</span>
+              <span class="kw">for</span>(<span class="kw">int</span> r=<span class="const">0</span>;r&lt;XD.Rows;r++)
+                <span class="kw">for</span>(<span class="kw">int</span> c=<span class="const">0</span>;c&lt;XD.Cols;c++)
+                  <a class="hidden" href="RDS_ARRAYITEM.htm" title="А.5.15.4. Макрос RDS_ARRAYITEM &ndash; элемент матрицы с заданными индексами">RDS_ARRAYITEM</a>(<span class="kw">double</span>,&amp;YD,r,c)=
+                    k*<a class="hidden" href="RDS_ARRAYITEM.htm" title="А.5.15.4. Макрос RDS_ARRAYITEM &ndash; элемент матрицы с заданными индексами">RDS_ARRAYITEM</a>(<span class="kw">double</span>,&amp;XD,r,c);
+            }
+          <span class="kw">else</span> <span class="rem">// Матрица X не существует</span>
+            <span class="rem">// Очистить матрицу Y</span>
+            <a class="hidden" href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a>(pY,<span class="const">0</span>,<span class="const">0</span>,FALSE,NULL);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef pY</span>
+  <span class="preproc">#undef k</span>
+  <span class="preproc">#undef pX</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//===================================================</span>
+  <span class="rem">// Второй вариант - доступ к матрицам через указатели</span>
+  <span class="rem">//===================================================</span>
+
+  <span class="rem">//============= Модель блока ==============</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestMatr1(<span class="kw">int</span> CallMode,
+                         <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                         <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define pX      ((void **)(pStart+2))</span>
+  <span class="preproc">#define k       (*((double *)(pStart+10)))</span>
+  <span class="preproc">#define pY      ((void **)(pStart+18))</span>
+    <span class="rem">// Структуры с информацией о матрицах</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSMDDMD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="changes"><span class="kw">if</span>(<a class="hidden" href="RDS_ARRAYEXISTS.htm" title="А.5.15.3. Макрос RDS_ARRAYEXISTS &ndash; проверка наличия элементов в матрице/массиве">RDS_ARRAYEXISTS</a>(pX)) <span class="rem">// Матрица X существует </span></span>
+            <span class="changes">{ <span class="rem">// Вспомогательные переменные </span></span>
+              <span class="changes"><span class="kw">int</span> xr,xc;</span>
+              <span class="changes"><span class="kw">double</span> *ydata,*xdata;</span>
+              <span class="changes"><span class="rem">// Получить размеры матрицы X </span></span>
+              <span class="changes">xr=<a class="hidden" href="RDS_ARRAYROWS.htm" title="А.5.15.6. Макрос RDS_ARRAYROWS &ndash; число строк матрицы/массива">RDS_ARRAYROWS</a>(pX);</span>
+              <span class="changes">xc=<a class="hidden" href="RDS_ARRAYCOLS.htm" title="А.5.15.1. Макрос RDS_ARRAYCOLS &ndash; число столбцов матрицы/массива">RDS_ARRAYCOLS</a>(pX);</span>
+              <span class="changes"><span class="rem">// Задать размер Y равным размеру X </span></span>
+              <span class="changes"><a class="hidden" href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a>(pY,xr,xc,FALSE,NULL);</span>
+              <span class="changes"><span class="rem">// Получить указатель на первый элемент X </span></span>
+              <span class="changes">xdata=(<span class="kw">double</span>*)<a class="hidden" href="RDS_ARRAYDATA.htm" title="А.5.15.2. Макрос RDS_ARRAYDATA &ndash; указатель на первый элемент матрицы/массива">RDS_ARRAYDATA</a>(pX);</span>
+              <span class="changes"><span class="rem">// Получить указатель на первый элемент Y </span></span>
+              <span class="changes">ydata=(<span class="kw">double</span>*)<a class="hidden" href="RDS_ARRAYDATA.htm" title="А.5.15.2. Макрос RDS_ARRAYDATA &ndash; указатель на первый элемент матрицы/массива">RDS_ARRAYDATA</a>(pY);</span>
+              <span class="changes"><span class="rem">// Присвоить значения элементам Y </span></span>
+              <span class="changes"><span class="kw">for</span>(<span class="kw">int</span> r=<span class="const">0</span>;r&lt;xr;r++)</span>
+                <span class="changes"><span class="kw">for</span>(<span class="kw">int</span> c=<span class="const">0</span>;c&lt;xc;c++)</span>
+                  <span class="changes">ydata[r*xc+c]=k*xdata[r*xc+c];</span>
+            <span class="changes">}</span>
+          <span class="kw">else</span> <span class="rem">// Матрица X пуста</span>
+            <a class="hidden" href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a>(pY,<span class="const">0</span>,<span class="const">0</span>,FALSE,NULL);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef pY</span>
+  <span class="preproc">#undef k</span>
+  <span class="preproc">#undef pX</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//=======================================</span>
+  <span class="rem">// Третий вариант - один цикл вместо двух</span>
+  <span class="rem">//=======================================</span>
+
+  <span class="rem">//============= Модель блока ==============</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestMatr2(<span class="kw">int</span> CallMode,
+                         <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                         <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define pX      ((void **)(pStart+2))</span>
+  <span class="preproc">#define k       (*((double *)(pStart+10)))</span>
+  <span class="preproc">#define pY      ((void **)(pStart+18))</span>
+    <span class="rem">// Структуры с информацией о матрицах</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSMDDMD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">if</span>(<a class="hidden" href="RDS_ARRAYEXISTS.htm" title="А.5.15.3. Макрос RDS_ARRAYEXISTS &ndash; проверка наличия элементов в матрице/массиве">RDS_ARRAYEXISTS</a>(pX)) <span class="rem">// Матрица X существует</span>
+            { <span class="rem">// Вспомогательные переменные</span>
+              <span class="kw">int</span> xr,xc;
+              <span class="kw">double</span> *ydata,*xdata;
+              <span class="rem">// Получить размеры матрицы X</span>
+              xr=<a class="hidden" href="RDS_ARRAYROWS.htm" title="А.5.15.6. Макрос RDS_ARRAYROWS &ndash; число строк матрицы/массива">RDS_ARRAYROWS</a>(pX);
+              xc=<a class="hidden" href="RDS_ARRAYCOLS.htm" title="А.5.15.1. Макрос RDS_ARRAYCOLS &ndash; число столбцов матрицы/массива">RDS_ARRAYCOLS</a>(pX);
+              <span class="rem">// Задать размер Y равным размеру X</span>
+              <a class="hidden" href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a>(pY,xr,xc,FALSE,NULL);
+              <span class="rem">// Получить указатель на первый элемент X</span>
+              xdata=(<span class="kw">double</span>*)<a class="hidden" href="RDS_ARRAYDATA.htm" title="А.5.15.2. Макрос RDS_ARRAYDATA &ndash; указатель на первый элемент матрицы/массива">RDS_ARRAYDATA</a>(pX);
+              <span class="rem">// Получить указатель на первый элемент Y</span>
+              ydata=(<span class="kw">double</span>*)<a class="hidden" href="RDS_ARRAYDATA.htm" title="А.5.15.2. Макрос RDS_ARRAYDATA &ndash; указатель на первый элемент матрицы/массива">RDS_ARRAYDATA</a>(pY);
+              <span class="rem">// Присвоить значения элементам Y</span>
+              <span class="changes"><span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;xr*xc;i++)</span>
+                <span class="changes">ydata[i]=k*xdata[i];</span>
+            }
+          <span class="kw">else</span> <span class="rem">// Матрица X пуста</span>
+            <a class="hidden" href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a>(pY,<span class="const">0</span>,<span class="const">0</span>,FALSE,NULL);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef pY</span>
+  <span class="preproc">#undef k</span>
+  <span class="preproc">#undef pX</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_5_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_5_4.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

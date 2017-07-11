@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.7.2.8. Использование выходов с управляющими переменными</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_7">&sect;3.7. Принципы создания автокомпилируемых моделей блоков</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_7_2">&sect;3.7.2. Работа со статическими переменными блока</a></p>
+<div class="level"><p>&sect;3.7.2.8. Использование выходов с управляющими переменными</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="um_3_7_2_7.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_7_3_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_2_8">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.7. Принципы создания автокомпилируемых моделей блоков</h3>
+<h4 class="off">&sect;3.7.2. Работа со статическими переменными блока</h4>
+<h5>&sect;3.7.2.8. Использование выходов с управляющими переменными</h5>
+<p class="abstract">Описывается использование управляющих переменных, которые позволяют либо запретить передачу по связям значения конкретного выхода блока, либо активировать только связь, подключенную к конкретному элементу выхода-массива.</p>
+
+
+<p>В <a href="um_3_7_2_6.htm" title="&sect;3.7.2.6. Использование сигналов">&sect;3.7.2.6</a> описывается использование
+<a href="um_1_4.htm#ref27" title="Сигнал готовности блока">второй сигнальной переменной</a>
+блока (выхода &laquo;<span class="rdsvar">Ready</span>&raquo;) для запрещения срабатывания всех
+<a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связей</a>, подключенных к выходам блока в конце
+<a href="um_1_3.htm#ref4" title="Такт расчета">такта расчета</a>. Перед выполнением реакции модели на такт расчета RDS
+присваивает этой переменной единицу, поэтому, если в модели не предпринять никаких действий, значения всех
+выходов блока будут переданы по связям на входы блоков, соединенных с ним. Если модель запишет в эту
+переменную ноль, данные передаваться не будут. Обычно модель блока запрещает работу выходных связей в
+тех случаях, когда значения на выходах блока не изменились, и нет смысла передавать их дальше, запуская
+тем самым модели соединенных блоков и зря тратя процессорное время.</p>
+
+<p>Управление сигналом &laquo;<span class="rdsvar">Ready</span>&raquo; позволяет запретить работу только всем выходным связям
+одновременно &ndash; это не всегда удобно. RDS позволяет разрешать и запрещать выходные связи
+индивидуально. Это может оказаться полезным при при создании различных блоков-выключателей и демультиплексоров,
+управляющих передачей данных со входа на один или несколько выходов.
+В <a href="um_3_7_2_3.htm" title="&sect;3.7.2.3. Модели с массивами">&sect;3.7.2.3</a> рассматривался
+<a href="um_3_7_2_3.htm#ref6" title="Пример простого демультиплексора">простой демультиплексор</a>
+&ndash; в нем значение, поступавшее на вход, передавалось на выход с номером, определяемым
+дополнительным целым входом. Однако, в том блоке все равно срабатывали все выходные связи &ndash; это не
+мешало его работе, потому что &laquo;неактивные&raquo; выходы просто еще раз передавали по связям
+свои старые значения. Тем не менее, это приводило к напрасному срабатыванию моделей во всех
+цепочках подключенных к этим выходам блоков и лишней трате процессорного времени. Далее
+мы исправим модель так, чтобы в конце такта расчета срабатывала только связь, подключенная к выходу
+с нужным номером.</p>
+
+<p>Чтобы разрешать и запрещать передачу данных отдельного выхода блока, необходимо ввести в его
+структуру переменных дополнительную логическую или целую переменную и связать с ней выход, задав для него
+тип &laquo;выход/логическая&raquo; вместо &laquo;выход&raquo; и указав имя этой
+дополнительной переменной. Если выход связан с логической переменной, то связи, подключенные к нему,
+будут передавать данные только в том случае, если связанная логическая переменная будет иметь значение 1.
+Разумеется, сигнал &laquo;<span class="rdsvar">Ready</span>&raquo; также должен быть равен единице, иначе ни одна выходная связь
+блока не сработает независимо от значений управляющих логических переменных отдельных его выходов. Если
+выход блока является массивом, можно связать его с целой дополнительной переменной &ndash; в этом случае
+будет разрешена работа связей, подключенных ко всему массиву как к одной сложной переменной и к элементу массива
+с номером, определяемым этой целой переменной. Связи, подсоединенные к элементам массива с номерами,
+отличными от значения целой связанной переменной, будут отключены.</p>
+
+<p>Для иллюстрации управления отдельными связями создадим блок-переключатель, который будет выдавать
+свой вещественных вход &laquo;<span class="rdsvar">x</span>&raquo; на выход &laquo;<span class="rdsvar">y0</span>&raquo;, если целый вход
+&laquo;<span class="rdsvar">N</span>&raquo; будет равен 0, на выход &laquo;<span class="rdsvar">y1</span>&raquo;, если &laquo;<span class="rdsvar">N</span>&raquo; будет равен 1, и
+на оба выхода одновременно для любого другого значения &laquo;<span class="rdsvar">N</span>&raquo; (подобная модель рассматривается в
+<a href="pm_2_5_8.htm" title="&sect;2.5.8. Использование выходов с управляющими переменными">&sect;2.5.8 руководства программиста</a>). Для управления выходом &laquo;<span class="rdsvar">y0</span>&raquo;
+введем внутреннюю логическую переменную &laquo;<span class="rdsvar">L0</span>&raquo;, для управления &laquo;<span class="rdsvar">y1</span>&raquo;
+&ndash; &laquo;<span class="rdsvar">L1</span>&raquo;. Блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Start</td>
+    <td class="center">Сигнал</td>
+    <td class="center">Вход</td>
+    <td class="center">&checkmark;</td>
+    <td class="center">1</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Ready</td>
+    <td class="center">Сигнал</td>
+    <td class="center">Выход</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">x</td>
+    <td class="center">double</td>
+    <td class="center">Вход</td>
+    <td class="center">&checkmark;</td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">N</td>
+    <td class="center">int</td>
+    <td class="center">Вход</td>
+    <td class="center">&checkmark;</td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">L0</td>
+    <td class="center">Логический</td>
+    <td class="center">Внутренняя</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">L1</td>
+    <td class="center">Логический</td>
+    <td class="center">Внутренняя</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">y0</td>
+    <td class="center">double</td>
+    <td class="center">Выход/логический<br />&laquo;L0&raquo;</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">y1</td>
+    <td class="center">double</td>
+    <td class="center">Выход/логический<br />&laquo;L1&raquo;</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+</table>
+</div></div>
+
+<p><a href="um_3_7_2_1.htm#light_ref6" title="Создание нового блока с моделью">Создадим</a> новый блок с автокомпилируемой моделью, зададим для него запуск
+по сигналу и введем в его модель указанную выше структуру переменных. На
+<a href="um_3_3.htm#pic8" title="Окно редактора пустой модели">вкладке &laquo;<span class="menu">модель</span>&raquo;</a>
+в правой части окна редактора введем следующий текст:</p>
+
+<pre class="cpp">  y0=y1=x; // Копирование входа в оба выхода
+  switch(N)
+    { case 0: // N==0 – разрешить y0 через L0
+        L0=1; L1=0; break;
+      case 1: // N==1 – разрешить y1 через L1
+        L0=0; L1=1; break;
+      default: // Разрешить обе связи
+        L0=L1=1;
+    }</pre>
+
+<p>В этой модели мы сразу копируем вход <span class="cpp">x</span> и в <span class="cpp">y0</span>, и в
+<span class="cpp">y1</span>. Если бы мы не управляли выходными связями индивидуально, это привело бы к тому,
+что, независимо от <span class="cpp">N</span>, блок передавал бы значение входа на оба выхода. Однако, далее,
+в операторе <span class="cpp">switch</span>, в зависимости от значения <span class="cpp">N</span>, мы присваиваем
+единицу или ноль управляющим логическим переменным <span class="cpp">L0</span> и <span class="cpp">L1</span>. При
+нулевом <span class="cpp">N</span> единица будет только в <span class="cpp">L0</span> &ndash; работа связи,
+отходящей от <span class="cpp">y0</span>, будет разрешена, а от <span class="cpp">y1</span> &ndash;
+запрещена. При <span class="cpp">N==1</span> единица будет только в <span class="cpp">L1</span> &ndash; будет
+разрешена только связь от <span class="cpp">y1</span>. При любом другом значении <span class="cpp">N</span> (метка
+<span class="cpp">default</span> в операторе <span class="cpp">switch</span>) и
+<span class="cpp">L0</span>, и <span class="cpp">L1</span> получат значение 1, что разрешит обе выходных связи.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/AC_switch_2_test.png" width="227" height="69" alt="Проверка переключателя" />
+<p id="light_pic1">Рис.&nbsp;382. Проверка переключателя</p>
+</div></div>
+
+
+<p>Для тестирования модели соберем схему, изображенную
+на <a href="#pic1" title="Проверка переключателя">рис.&nbsp;382</a>.
+Запустив расчет и изменяя значение в поле ввода, подключенном к &laquo;<span class="rdsvar">x</span>&raquo;, можно наблюдать появление
+этого же значения на индикаторе, подключенном к выходу, соответствующему значению &laquo;<span class="rdsvar">N</span>&raquo;. При этом,
+если остановить расчет, открыть
+<a href="um_2_9_1.htm#ref1" title="Открытие окна параметров блока">окно параметров блока</a>
+и просмотреть текущие значения его переменных на вкладке
+&laquo;<span class="menu">переменные</span>&raquo;
+(<a href="#pic2" title="Текущие значения переменных блока-переключателя">рис.&nbsp;383</a>),
+можно заметить, что, несмотря на то, что значения на индикаторах разные, значения обоих выходов блока
+одинаковые. Значение одного из выходов не передается в индикатор по связи из-за нулевого значения связанной с
+этим выходом управляющей переменной.</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/AC_switch_2_test2.png" width="534" height="338" alt="Текущие значения переменных блока-переключателя" />
+<p id="light_pic2">Рис.&nbsp;383. Текущие значения переменных блока-переключателя</p>
+</div></div>
+
+
+<p>Вернемся теперь к описанной в <a href="um_3_7_2_3.htm" title="&sect;3.7.2.3. Модели с массивами">&sect;3.7.2.3</a> модели
+<a href="um_3_7_2_3.htm#ref6" title="Пример простого демультиплексора">демультиплексора</a> и соберем с его использованием новую схему, изображенную
+на <a href="#pic3" title="Новая схема тестирования демультиплексора">рис.&nbsp;384</a>.
+Она отличается от старой схемы
+с <a href="um_3_7_2_3.htm#pic3" title="Тестирование модели демультиплексора">рис.&nbsp;370</a>
+тем, что каждая связь, идущая от выхода блока к индикатору, теперь разветвляется, и вторая ее ветвь
+подключается к сигнальному входу счета &laquo;<span class="rdsvar">C</span>&raquo; стандартного счетчика сигналов.
+В RDS к сигнальным входам можно подключать связи не только сигнального типа: в этом случае входу
+будет присваиваться единица при срабатывании связи, какое бы значение при этом по ней ни передавалось.</p>
+
+<div class="pic"><div class="container" id="pic3">
+<img src="../img/AC_switch_3_test.png" width="389" height="132" alt="Новая схема тестирования демультиплексора" />
+<p id="light_pic3">Рис.&nbsp;384. Новая схема тестирования демультиплексора</p>
+</div></div>
+
+
+<p>Запустив расчет и изменяя значение в поле ввода, подключенном к входу &laquo;<span class="rdsvar">x</span>&raquo; демультиплексора,
+можно будет видеть, что срабатывает не только счетчик, подключенный к связи, отходящей от выхода блока с
+нужным номером, но и некоторые другие. Например, на
+<a href="#pic3" title="Новая схема тестирования демультиплексора">рис.&nbsp;384</a>,
+несмотря на то, что <span class="cpp">N==1</span>, при изменении значения в поле ввода
+&laquo;<span class="rdsvar">x</span>&raquo; будет увеличиваться значение не только на счетчике, подключенном к выходу &laquo;<span class="rdsvar">Y[1]</span>&raquo;,
+но и на счетчике, подключенном к &laquo;<span class="rdsvar">Y[0]</span>&raquo;. Значение счетчика, подключенного к
+&laquo;<span class="rdsvar">Y[2]</span>&raquo; изменяться не будет только по той причине, что в нашей модели мы изменяем размер выходного
+массива &laquo;<span class="rdsvar">Y</span>&raquo; только при необходимости, и пока &laquo;<span class="rdsvar">N</span>&raquo; не окажется большим или равным
+двум, элемент массива &laquo;<span class="rdsvar">Y[2]</span>&raquo; просто не будет существовать, а, значит, и связь от этого элемента
+сработать не сможет. Мы наблюдаем вполне ожидаемую картину: независимо от того, что происходит внутри блока
+и в какой именно элемент массива он записывает значение своего входа, срабатывают все выходные связи этого блока.</p>
+
+<p>Теперь изменим структуру переменных блока, связав его выход &laquo;<span class="rdsvar">Y</span>&raquo; с целой управляющей переменной
+&laquo;<span class="rdsvar">N</span>&raquo; (несмотря на то, что переменная целая, роль переменной &laquo;<span class="rdsvar">Y</span>&raquo; в выпадающем списке
+все равно будет называться &laquo;выход/логический&raquo;):</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Start</td>
+    <td class="center">Сигнал</td>
+    <td class="center">Вход</td>
+    <td class="center">&checkmark;</td>
+    <td class="center">1</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Ready</td>
+    <td class="center">Сигнал</td>
+    <td class="center">Выход</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">x</td>
+    <td class="center">double</td>
+    <td class="center">Вход</td>
+    <td class="center">&checkmark;</td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">N</td>
+    <td class="center">int</td>
+    <td class="center">Вход</td>
+    <td class="center">&checkmark;</td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Y</td>
+    <td class="center">Массив double</td>
+    <td class="center">Выход/логический<br />&laquo;N&raquo;</td>
+    <td></td>
+    <td class="center">[&nbsp;]&nbsp;0</td>
+  </tr>
+
+</table>
+</div></div>
+
+<p>Других изменений в модель блока вносить не нужно, и программа на вкладке &laquo;<span class="menu">модель</span>&raquo; редактора
+останется той же самой. Мы просто сделали вход &laquo;<span class="rdsvar">N</span>&raquo; управляющей целой переменной для выходного
+массива &laquo;<span class="rdsvar">Y</span>&raquo;, и теперь из всех связей, подключенных к элементам &laquo;<span class="rdsvar">Y</span>&raquo;, будет
+срабатывать только та, которая отходит от элемента с номером, равным текущему значению &laquo;<span class="rdsvar">N</span>&raquo;.
+Теперь при запуске расчета и изменении значения в поле ввода &laquo;<span class="rdsvar">x</span>&raquo; считать будет только один
+единственный счетчик &ndash; связи, подключенные к остальным, срабатывать не будут.</p>
+
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="um_3_7_2_7.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_7_3_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_2_8">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

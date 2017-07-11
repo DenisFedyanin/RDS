@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.6.39. rdsMakeUniqueBlockName &ndash; создать уникальное имя блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_6">А.5.6. Операции с блоками и связями</a></p>
+<div class="level"><p>А.5.6.39. <span class="cpp">rdsMakeUniqueBlockName</span> &ndash; создать уникальное имя блока</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsIsRoot.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsMoveBlock.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsMakeUniqueBlockName">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.6. Операции с блоками и связями</h4>
+<h5>А.5.6.39. <span class="cpp">rdsMakeUniqueBlockName</span> &ndash; создать уникальное имя блока</h5>
+
+
+<p>Функция <span class="cpp">rdsMakeUniqueBlockName</span> возвращает динамическую строку, содержащую
+<a href="pm_1_4.htm#ref1" title="имя блока">имя блока</a>, которое будет уникальным в указанной
+<a href="um_1_2.htm#light_ref10" title="Подсистема">подсистеме</a>. Имя формируется на основе переданной в параметрах строки.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsMakeUniqueBlockName(
+      <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> System,    <span class="rem">// Подсистема</span>
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Name             <span class="rem">// Желаемое имя блока</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_SBhS</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">System</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор подсистемы, для которой нужно создать уникальное имя блока.</dd>
+
+  <dt><span class="cpp">Name</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на строку (<span class="cpp">char*</span>) с желаемым именем блока. Если передать в этом
+  параметре <span class="cpp">NULL</span>, будет сформировано имя вида
+  &laquo;Block<i>N</i>&raquo;, где <i>N</i> &ndash; некоторый номер.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Указатель на созданную в динамической памяти строку, содержащую созданное уникальное (то есть не
+встречающееся в подсистеме <span class="cpp">System</span>) имя блока, или
+<span class="cpp">NULL</span>, если <span class="cpp">System</span> &ndash; не подсистема, а блок
+какого-либо другого типа.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Уникальное имя блока формируется из строки <span class="cpp">Name</span> следующим образом: если в
+подсистеме <span class="cpp">System</span> нет блока с именем <span class="cpp">Name</span>, возвращается
+динамическая копия строки <span class="cpp">Name</span>. Если блок с таким именем есть, то цифры в
+конце строки <span class="cpp">Name</span> изменяются так, чтобы получившееся имя стало уникальным в
+подсистеме (например, если в подсистеме есть блоки с именами &laquo;<span class="rdsvar">Mul1</span>&raquo; &ndash; &laquo;<span class="rdsvar">Mul64</span>&raquo;,
+а в параметре <span class="cpp">Name</span> передана строка &laquo;Mul1&raquo;, функция вернет
+&laquo;Mul65&raquo;). Если строка <span class="cpp">Name</span> не оканчивается на цифры, к ней будет
+добавлен номер, делающий ее уникальной (номера начинаются с единицы). Точно таким же образом
+RDS корректирует имена вставляемых из буфера обмена или из библиотеки блоков, если их имена совпадают с
+уже имеющимися в подсистеме.</p>
+
+<p>Динамическая строка, созданная этой функцией, должна быть
+<span class="emph">обязательно</span> освобождена вызовом <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции <span class="cpp">rdsMakeUniqueBlockName</span> приведен
+в <a href="pm_2_16_2.htm" title="&sect;2.16.2. Добавление и удаление блоков и связей">&sect;2.16.2 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>,
+<span class="cpp"><a href="rdsGetChildBlockByName.htm" title="А.5.6.21. rdsGetChildBlockByName &ndash; блок подсистемы по имени">rdsGetChildBlockByName</a></span>,
+<span class="cpp"><a href="rdsDuplicateBlock.htm" title="А.5.6.10. rdsDuplicateBlock &ndash; сделать копию блока">rdsDuplicateBlock</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsIsRoot.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsMoveBlock.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsMakeUniqueBlockName">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

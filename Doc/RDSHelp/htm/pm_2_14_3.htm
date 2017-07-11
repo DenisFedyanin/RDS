@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.14.3. Сохранение и загрузка состояния блоков</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_14">&sect;2.14. Программное управление расчетом</a></p>
+<div class="level"><p>&sect;2.14.3. Сохранение и загрузка состояния блоков</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_14_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_14_4.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_14_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_14_3_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.14. Программное управление расчетом</h3>
+<h4>&sect;2.14.3. Сохранение и загрузка состояния блоков</h4>
+<p class="abstract">Описывается механизм возврата блоков в запомненное состояние. Рассматривается пример, в
+                котором запоминание состояния подсистемы и возврат к этому состоянию производятся по команде
+                пользователя.</p>
+
+
+<p>Рассмотренная в <a href="pm_2_14_2.htm" title="&sect;2.14.2. Сброс подсистемы в начальное состояние">&sect;2.14.2</a> сервисная функция
+<span class="cpp"><a href="rdsResetSystemState.htm" title="А.5.7.3. rdsResetSystemState &ndash; сбросить состояние блока или подсистемы">rdsResetSystemState</a></span> позволяет вернуть всю схему или
+отдельную <a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистему</a> в исходное состояние, то есть в состояние,
+предшествовавшее первому запуску расчета. В RDS есть еще один механизм, позволяющий
+&laquo;вернуть в прошлое&raquo; какой-либо блок или подсистему: вызовом сервисной функции
+<span class="cpp"><span id="light_ref1"><a href="rdsSaveSystemState.htm" title="А.5.7.4. rdsSaveSystemState &ndash; сохранить состояние блока/подсистемы">rdsSaveSystemState</a></span></span> можно сохранить в памяти текущее состояние одного
+или нескольких блоков, а затем, вызвав <span class="cpp"><span id="light_ref2"><a href="rdsLoadSystemState.htm" title="А.5.7.2. rdsLoadSystemState &ndash; загрузить сохраненное состояние">rdsLoadSystemState</a></span></span>, вернуть эти
+блоки в запомненное состояние. Этот механизм используется значительно реже, чем программный сброс,
+однако, в некоторых случаях он тоже может быть полезен. В системе может быть запомнено произвольное число
+состояний блоков, каждое из которых получает уникальный целый идентификатор.</p>
+
+<p>Функция <span class="cpp"><a class="hidden" href="rdsSaveSystemState.htm" title="А.5.7.4. rdsSaveSystemState &ndash; сохранить состояние блока/подсистемы">rdsSaveSystemState</a></span> принимает следующие параметры:</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsSaveSystemState.htm" title="А.5.7.4. rdsSaveSystemState &ndash; сохранить состояние блока/подсистемы">rdsSaveSystemState</a>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,   <span class="rem">// Блок или подсистема</span>
+    <span class="kw">int</span> num,             <span class="rem">// Идентификатор сохраняемого состояния</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Recursive,      <span class="rem">// Сохранять ли вложенные блоки</span>
+    RDS_BBhpB CallBack); <span class="rem">// Указатель на функцию проверки</span>
+                         <span class="rem">// необходимости сохранения или NULL</span></pre>
+
+<p>В параметре <span class="cpp">Block</span> передается идентификатор блока или подсистемы,
+чье состояние необходимо сохранить. Если в этом параметре передан идентификатор подсистемы,
+а в параметре <span class="cpp">Recursive</span> &ndash; значение <span class="cpp">TRUE</span>, то
+будет сохранено не только состояние самой подсистемы, но и состояния всех ее внутренних блоков и
+подсистем. В параметре <span class="cpp">num</span> передается идентификатор запомненного состояния,
+которое нужно заменить на сохраняемое, или &minus;1, если необходимо запомнить новое состояние.
+Функция возвращает идентификатор запомненного состояния: если в параметре <span class="cpp">num</span>
+был передан идентификатор существующего запомненного состояния, будет возвращено значение <span class="cpp">num</span>,
+если же в num было передано значение &minus;1 или любое другое целое число, не соответствующее ни
+одному из существующих идентификаторов, будет создан и возвращен новый уникальный идентификатор запомненного
+состояния.</p>
+
+<p>В последнем параметре функции (<span class="cpp">CallBack</span>) может быть передан указатель на функцию вида</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <i>func</i>(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block,<a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> *pContinue);</pre>
+
+<p>Если этот параметр не равен <span class="cpp">NULL</span>, указанная функция будет вызываться для
+каждого блока, состояние которого должно быть сохранено. Состояние блока <span class="cpp">block</span> будет
+сохранено только в том случае, если функция вернет <span class="cpp"></span>. При этом, если
+функция запишет по указателю, переданному в параметре <span class="cpp">pContinue</span>, значение
+<span class="cpp">FALSE</span>, перебор блоков и сохранение их состояний будет остановлено.
+Таким образом, при сохранении состояния подсистем с вложенными блоками, можно гибко управлять тем,
+какие именно блоки должны сохраниться.</p>
+
+<p>Для загрузки ранее запомненного состояния служит функция <span class="cpp"><a class="hidden" href="rdsLoadSystemState.htm" title="А.5.7.2. rdsLoadSystemState &ndash; загрузить сохраненное состояние">rdsLoadSystemState</a></span>:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsLoadSystemState.htm" title="А.5.7.2. rdsLoadSystemState &ndash; загрузить сохраненное состояние">rdsLoadSystemState</a>(
+    <span class="kw">int</span> num,             <span class="rem">// Идентификатор загружаемого состояния</span>
+    RDS_BBhpB CallBack); <span class="rem">// Указатель на функцию проверки</span>
+                         <span class="rem">// необходимости загрузки или NULL</span></pre>
+
+<p>В параметре <span class="cpp">num</span> передается уникальный идентификатор загружаемого состояния.
+Идентификатор подсистемы или блока, состояние которого будет загружено, не передается: загружаются
+состояния тех блоков, которые были запомнены с идентификатором <span class="cpp">num</span>. Если после
+сохранения часть блоков была удалена, ничего страшного не произойдет &ndash; будут загружены состояния только
+тех блоков, которые остались в схеме. В параметре <span class="cpp">CallBack</span>, если необходимо,
+передается указатель на функцию обратного вызова того же формата, который использовалась в
+<span class="cpp"><a class="hidden" href="rdsSaveSystemState.htm" title="А.5.7.4. rdsSaveSystemState &ndash; сохранить состояние блока/подсистемы">rdsSaveSystemState</a></span>, только теперь она определяет необходимость загрузки состояния
+конкретного блока.</p>
+
+<p>При сохранении состояния блока запоминаются значения всех его
+<a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статических переменных</a>. Затем, поскольку
+RDS не может работать с <a href="pm_1_4.htm#ref8" title="Личная область данных блока">личной областью данных</a>
+блока, а в ней могут находиться какие-то параметры, связанные с состоянием этого блока,
+модель блока вызывается в режиме <span class="cpp"><span id="light_ref3"><a href="RDS_BFM_SAVESTATE.htm" title="А.2.4.13. RDS_BFM_SAVESTATE &ndash; запись состояния блока">RDS_BFM_SAVESTATE</a></span></span>. Внутри этого вызова
+модель может сохранить необходимые параметры при помощи
+<a href="pm_2_8_2.htm#light_ref1" title="Пример сохранения параметров блока в двоичном формате">уже знакомой нам</a> функции записи в двоичном виде
+<span class="cpp"><span id="light_ref4"><a href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a></span></span>. Сохранение состояния блока в текстовом формате
+не предусмотрено, поскольку проблемы с совместимостью форматов здесь вряд ли возникнут: запомненное
+состояние хранится только в памяти и теряется при выгрузке схемы или при смене модели блока. При
+загрузке состояния блока значения статических переменных восстанавливаются, а затем модель блока
+вызывается в режиме <span class="cpp"><span id="light_ref5"><a href="RDS_BFM_LOADSTATE.htm" title="А.2.4.8. RDS_BFM_LOADSTATE &ndash; загрузка состояния блока">RDS_BFM_LOADSTATE</a></span></span> для загрузки параметров личной области
+данных, если это необходимо, при помощи функции <span class="cpp"><span id="light_ref6"><a href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a></span></span>. Таким образом,
+следует помнить, что блоки, текущие параметры которых хранятся не только в статических переменных,
+должны поддерживать загрузку и сохранение этих параметров в режимах
+<span class="cpp"><a class="hidden" href="RDS_BFM_SAVESTATE.htm" title="А.2.4.13. RDS_BFM_SAVESTATE &ndash; запись состояния блока">RDS_BFM_SAVESTATE</a></span>/<span class="cpp"><a class="hidden" href="RDS_BFM_LOADSTATE.htm" title="А.2.4.8. RDS_BFM_LOADSTATE &ndash; загрузка состояния блока">RDS_BFM_LOADSTATE</a></span>.</p>
+
+<p>В отличие от многих других вспомогательных объектов, создаваемых блоками, сохраненное состояние
+никак не привязано к блоку, вызвавшему функцию <span class="cpp"><a class="hidden" href="rdsSaveSystemState.htm" title="А.5.7.4. rdsSaveSystemState &ndash; сохранить состояние блока/подсистемы">rdsSaveSystemState</a></span>, и не
+будет удалено из памяти при его удалении. При выгрузке всей схемы оно, разумеется, будет удалено,
+чтобы не вызывать утечек памяти, но до этого момента оно будет оставаться в памяти и может быть в
+любой момент загружено любым блоком схемы, которому известен целый идентификатор этого состояния
+(сохранивший блок может передать его другому блоку по <a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связи</a>
+или через <a href="pm_2_13_1.htm" title="&sect;2.13.1. Общие принципы вызова функций блоков">вызов функции блока</a>). Если сохраненное состояние
+больше не нужно, оно может быть принудительно удалено из памяти сервисной функцией
+<span class="cpp"><span id="light_ref7"><a href="rdsDeleteSystemState.htm" title="А.5.7.1. rdsDeleteSystemState &ndash; удалить сохраненное состояние">rdsDeleteSystemState</a></span></span>, в которую передается идентификатор
+удаляемого состояния.</p>
+
+<p>В качестве примера рассмотрим простой блок, который будет сохранять и загружать состояние своей
+<a href="pm_1_2.htm#ref7" title="Родительская подсистема">родительской подсистемы</a> по щелчку мыши. Обработку щелчков мыши
+мы возьмем из модели блока, увеличивающего и уменьшающего значение выхода
+(см. <a href="pm_2_12_1.htm#ref2" title="Пример блока, реагирующего на щелчки мыши">&sect;2.12.1</a>) &ndash; будем сохранять состояние при
+щелчке левой кнопкой мыши по верхней части изображения блока и загружать его при щелчке по
+нижней части. Кроме того, дадим пользователю возможность нарисовать кнопки сохранения и загрузки
+в <a href="um_2_10_1.htm" title="&sect;2.10.1. Общие сведения о редакторе картинки">редакторе картинки</a> блока: если у блока есть картинка,
+будем <a href="pm_2_12_1.htm#ref8" title="Пример опознания элемента векторной картинки под курсором">определять идентификатор ее элемента</a>
+под курсором мыши, для положительных идентификаторов будем сохранять состояния, для отрицательных &ndash;
+загружать.</p>
+
+<p>Нам потребуется где-то хранить целый идентификатор сохраненного состояния, чтобы его можно
+было потом загрузить. Статические переменные блока для этого не подходят &ndash; они изменяются
+при загрузке состояния родительской подсистемы, и мы потеряем этот идентификатор. Будем хранить его
+в личной обрасти данных блока, которая будет представлять собой единственное число типа
+<span class="cpp">int</span>. Статические переменные нашему блоку не нужны (разумеется, у него будут два
+обязательных сигнала &laquo;<span class="rdsvar"><a href="um_1_4.htm#ref25" title="Сигнал запуска блока">Start</a></span>&raquo;
+и &laquo;<span class="rdsvar"><a href="um_1_4.htm#ref27" title="Сигнал готовности блока">Ready</a></span>&raquo;, но мы не будем ими пользоваться). Модель
+блока будет достаточно простой:</p>
+
+<pre class="cpp">  <span class="rem">// Запись и загрузка состояния</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+      <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> SaveLoadState(<span class="kw">int</span> CallMode,
+                          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse;
+    <span class="rem">// Указатель на личную обрасть данных блока (int)</span>
+    <span class="kw">int</span> *pSaveId=(<span class="kw">int</span>*)(BlockData-&gt;BlockData);
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Создание личной области данных (одно число int)</span>
+          BlockData-&gt;BlockData=pSaveId=<span class="kw">new</span> <span class="kw">int</span>;
+          <span class="rem">// Исходное значение идентификатора: -1 (то есть нет)</span>
+          *pSaveId=-<span class="const">1</span>;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Удаление сохраненного состояния (если есть)</span>
+          <a class="hidden" href="rdsDeleteSystemState.htm" title="А.5.7.1. rdsDeleteSystemState &ndash; удалить сохраненное состояние">rdsDeleteSystemState</a>(*pSaveId);
+          <span class="rem">// Уничтожение личной области</span>
+          <span class="kw">delete</span> pSaveId;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Нажатие кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a>:
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam;
+          <span class="kw">if</span>(mouse-&gt;Button==<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a>) <span class="rem">// Левая кнопка</span>
+            { <span id="light_ref8"><a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a></span> descr;
+              descr.servSize=<span class="kw">sizeof</span>(descr);
+              <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> save=FALSE,load=FALSE;
+              <span class="rem">// Есть ли у блока картинка?</span>
+              <span id="light_ref9"><a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a></span>(BlockData-&gt;Block,&amp;descr);
+              <span class="kw">if</span>(descr.Flags &amp; <span id="light_ref10"><a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#light_ref15" title="RDS_BDF_HASPICTURE">RDS_BDF_HASPICTURE</a></span>)
+                { <span class="rem">// Картинка есть – смотрим идентификатор элемента под курсором</span>
+                  <span class="kw">int</span> pic_id=<span id="light_ref11"><a class="hidden" href="rdsGetMouseObjectId.htm" title="А.5.6.31. rdsGetMouseObjectId &ndash; элемент векторной картинки блока под курсором мыши">rdsGetMouseObjectId</a></span>(mouse);
+                  <span class="kw">if</span>(pic_id&gt;<span class="const">0</span>)
+                    save=TRUE;
+                  <span class="kw">else</span> <span class="kw">if</span>(pic_id&lt;<span class="const">0</span>)
+                    load=TRUE;
+                }
+              <span class="kw">else</span> <span class="kw">if</span>(mouse-&gt;y&lt;mouse-&gt;Top+mouse-&gt;Height/<span class="const">2</span>)
+                save=TRUE; <span class="rem">// Картинки нет, верх блока</span>
+              <span class="kw">else</span>
+                load=TRUE; <span class="rem">// Картинки нет, низ блока</span>
+              <span class="kw">if</span>(save) <span class="rem">// Сохраняем состояние</span>
+                *pSaveId=<a class="hidden" href="rdsSaveSystemState.htm" title="А.5.7.4. rdsSaveSystemState &ndash; сохранить состояние блока/подсистемы">rdsSaveSystemState</a>(BlockData-&gt;Parent,
+                             *pSaveId,TRUE,NULL);
+              <span class="kw">if</span>(load) <span class="rem">// Загружаем состояние</span>
+                { <a class="hidden" href="rdsLoadSystemState.htm" title="А.5.7.2. rdsLoadSystemState &ndash; загрузить сохраненное состояние">rdsLoadSystemState</a>(*pSaveId,NULL);
+                  <span class="rem">// Необходимо обновить окно подсистемы</span>
+                  <span id="light_ref12"><a class="hidden" href="rdsRefreshBlockWindows.htm" title="А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна">rdsRefreshBlockWindows</a></span>(BlockData-&gt;Parent,TRUE);
+                }
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>При инициализации модели мы создаем личную область данных блока размером в одно целое число
+оператором &laquo;<span class="cpp">new int</span>&raquo;, а затем записываем в нее число &minus;1, которое означает,
+что у нас пока нет сохраненного состояния. При очистке модели мы удаляем сохраненное состояние,
+идентификатор которого содержится в личной области и на которое указывает переменная
+<span class="cpp">pSaveId</span>, при помощи функции <span class="cpp"><a class="hidden" href="rdsDeleteSystemState.htm" title="А.5.7.1. rdsDeleteSystemState &ndash; удалить сохраненное состояние">rdsDeleteSystemState</a></span>.
+Если мы ни разу не сохраняли состояние, и там осталось значение &minus;1, ничего страшного не произойдет:
+если число, переданное в функцию <span class="cpp"><a class="hidden" href="rdsDeleteSystemState.htm" title="А.5.7.1. rdsDeleteSystemState &ndash; удалить сохраненное состояние">rdsDeleteSystemState</a></span>, не соответствует
+никакому идентификатору сохраненного состояния, функция не выполнит никаких действий. Затем оператором
+<span class="cpp">delete</span> удаляется сама личная область данных.</p>
+
+<p>Загрузка и сохранение состояний выполняется в реакции на нажатие кнопки мыши
+<span class="cpp"><a href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>. Прежде всего, нажатая кнопка сравнивается с константой
+<span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a></span>, обозначающей левую кнопку мыши. Если они совпали, мы проверяем,
+есть ли у блока картинка. Для блоков с картинкой считывается идентификатор элемента под курсором мыши и,
+в зависимости от его идентификатора, значение <span class="cpp">TRUE</span> присваивается вспомогательной
+переменной <span class="cpp">load</span> или <span class="cpp">save</span>. Для блоков без картинки
+значение <span class="cpp">TRUE</span> присваивается переменной <span class="cpp">save</span> при попадании
+в верхнюю часть блока, и переменной <span class="cpp">load</span> &ndash; при попадании в нижнюю. Таким
+образом, после всех этих действий, переменная <span class="cpp">save</span> будет истинной, если мы должны
+сохранить состояние подсистемы, а переменная <span class="cpp">load</span> &ndash; если мы должны загрузить
+его. Если значение <span class="cpp">save</span> истинно, вызывается функция
+<span class="cpp"><a class="hidden" href="rdsSaveSystemState.htm" title="А.5.7.4. rdsSaveSystemState &ndash; сохранить состояние блока/подсистемы">rdsSaveSystemState</a></span> для сохранения состояния родительской подсистемы этого блока
+(<span class="cpp">BlockData-&gt;Parent</span>) со всеми вложенными блоками (в параметре
+<span class="cpp">Recursive</span> передается <span class="cpp">TRUE</span>). В качестве идентификатора
+сохраняемого состояния передается значение, хранящееся в личной области данных блока
+(<span class="cpp">*pSaveId</span>), туда же записывается результат возврата функции. Таким образом,
+при самом первом сохранении состояния, когда в личной области данных находится значение &minus;1,
+функция добавит состояние к набору уже сохраненных (если они есть) и создаст для него новый идентификатор,
+который запишется в личную область блока. При всех последующих сохранениях функция будет заменять
+сохраненное состояние с этим идентификатором на новое.</p>
+
+<p>Если истинно значение <span class="cpp">load</span>, вызывается
+<span class="cpp"><a class="hidden" href="rdsLoadSystemState.htm" title="А.5.7.2. rdsLoadSystemState &ndash; загрузить сохраненное состояние">rdsLoadSystemState</a></span> для загрузки состояния с идентификатором
+<span class="cpp">*pSaveId</span>. Попытка загрузить состояние, не записывая его (при этом в
+личной области данных блока будет находиться &minus;1) не приведет к ошибкам, функция просто не
+выполнит никаких действий. После загрузки состояния вызывается функция
+<span class="cpp"><a href="rdsRefreshBlockWindows.htm" title="А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна">rdsRefreshBlockWindows</a></span> для принудительного обновления окна подсистемы, поскольку
+параметры ее блоков изменились, и это могло отразиться на их внешнем виде.</p>
+
+<p>Для проверки работы созданной модели следует создать новый блок и подключить к нему эту модель,
+<a href="pm_2_12_1.htm#pic1" title="Включение реакции на мышь в параметрах блока">разрешив</a>
+ей реагировать на действия пользователя мышью. Внешним видом блока можно сделать прямоугольник со словами
+&laquo;записать&raquo; и &laquo;загрузить&raquo;, расположенными друг под другом. Рядом
+с ним следует собрать схему, подобную изображенной на
+<a href="#pic1" title="Схема для проверки работы блока сохранения и загрузки состояния подсистемы">рис.&nbsp;104</a>. В этой схеме генератор синусоидальных колебаний подключен к
+двум графикам: в верхней части схемы расположен созданный нами ранее
+<a href="pm_2_10_1.htm#ref12" title="Пример модели графика">блок-график</a>, в нижней &ndash; стандартный график из библиотеки блоков
+RDS. Если запустить расчет, щелкнуть по верхней части созданного блока, а затем, подождав некоторое
+время, щелкнуть по его нижней части, можно будет увидеть, как блоки в подсистеме вернутся в состояние
+на момент первого щелчка.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/SaveState.png" width="444" height="403" alt="Схема для проверки работы блока сохранения и загрузки состояния подсистемы" />
+<p id="light_pic1">Рис.&nbsp;104. Схема для проверки работы блока сохранения и загрузки состояния подсистемы</p>
+</div></div>
+
+
+<p>На самом деле, в это состояние вернутся все блоки, кроме верхнего, созданного нами, графика &ndash;
+он просто перестанет рисоваться. Дело в том, что все текущие параметры этого блока, включая массивы
+отсчетов, хранятся в личной области данных. Когда мы писали модель этого блока, мы не включили в
+нее поддержку режимов <span class="cpp"><a class="hidden" href="RDS_BFM_SAVESTATE.htm" title="А.2.4.13. RDS_BFM_SAVESTATE &ndash; запись состояния блока">RDS_BFM_SAVESTATE</a></span> и
+<span class="cpp"><a class="hidden" href="RDS_BFM_LOADSTATE.htm" title="А.2.4.8. RDS_BFM_LOADSTATE &ndash; загрузка состояния блока">RDS_BFM_LOADSTATE</a></span>, поэтому блок не реагирует на запись и загрузку
+своего состояния. Сейчас мы исправим эту ошибку.</p>
+
+<p>Прежде всего, <span class="changes">добавим</span> в класс личной области данных блока-графика описания двух новый функций
+для записи и загрузки состояния &ndash; мы будем вызывать их из функции модели блока:</p>
+
+<pre class="cpp">  <span class="rem">//=========================================</span>
+  <span class="rem">// Простой график – личная область данных</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">class</span> TSimplePlotData
+  {
+      <span class="rem">// &hellip;</span>
+
+      <span class="kw">void</span> Draw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> DrawData); <span class="rem">// Функция рисования</span>
+
+<div class="changes">      <span class="kw">void</span> SaveState(<span class="kw">void</span>);  <span class="rem">// Функция записи состояния</span>
+      <span class="kw">void</span> LoadState(<span class="kw">void</span>);  <span class="rem">// Функция загрузки состояния</span></div>
+      TSimplePlotData(<span class="kw">void</span>); <span class="rem">// Конструктор класса</span>
+      ~TSimplePlotData();    <span class="rem">// Деструктор класса</span>
+  };
+  <span class="rem">//=========================================</span></pre>
+
+<p>Эти функции будут устроены очень просто: при сохранении состояния мы должны записать все
+изменяющиеся параметры блока, включая массивы отсчетов, при помощи функции
+<span class="cpp"><a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a></span>, а при загрузке &ndash; загрузить их при помощи
+<span class="cpp"><a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a></span> (при этом нужно будет заново отвести массивы отсчетов
+перед их непосредственной загрузкой, поскольку их размер мог измениться). Функция записи
+будет выглядеть так:</p>
+
+<pre class="cpp">  <span class="rem">// Запись состояния блока</span>
+  <span class="kw">void</span> TSimplePlotData::SaveState(<span class="kw">void</span>)
+  {
+    <span class="rem">// Макрос для записи одной переменной</span>
+    <span class="preproc">#define WRITEBLOCKDATAVAR(v) </span><a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате"><span class="preproc">rdsWriteBlockData</span></a><span class="preproc">(&amp;v,sizeof(v))</span>
+
+    WRITEBLOCKDATAVAR(TimeStep);
+    WRITEBLOCKDATAVAR(Xmin);
+    WRITEBLOCKDATAVAR(Xmax);
+    WRITEBLOCKDATAVAR(XGridStep);
+
+    <span class="rem">// Запись массивов отсчетов</span>
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(Times,Count*<span class="kw">sizeof</span>(<span class="kw">double</span>));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(Values,Count*<span class="kw">sizeof</span>(<span class="kw">double</span>));
+
+    WRITEBLOCKDATAVAR(NextIndex);
+    WRITEBLOCKDATAVAR(NextTime);
+
+    <span class="rem">// Отмена макроса</span>
+    <span class="preproc">#undef WRITEBLOCKDATAVAR</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции, чтобы для каждой переменной A не писать конструкцию вида</p>
+<pre class="cpp">  <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;A,<span class="kw">sizeof</span>(A));</pre>
+
+<p class="noindent">мы вводим макрос <span class="cpp">WRITEBLOCKDATAVAR</span>. Сначала мы записываем
+параметры горизонтальной оси графика <span class="cpp">TimeStep</span>, <span class="cpp">Xmin</span> и
+<span class="cpp">Xmax</span>, которые однозначно определяют размер массивов отсчетов
+<span class="cpp">Count</span>. Затем, на всякий случай, сохраняется шаг сетки горизонтальной оси
+<span class="cpp">XGridStep</span> &ndash; вдруг пользователь изменил его после записи состояния.
+Параметры вертикальной оси мы не записываем, хотя можно было бы записать и их: будем считать, что
+изменения, внесенные пользователем в настройки этой оси, отменять при загрузке состояния не нужно. После этого
+мы записываем оба массива отсчетов <span class="cpp">Times</span> и <span class="cpp">Values</span>,
+с которыми работает график, и переменные <span class="cpp">NextIndex</span> и <span class="cpp">NextTime</span>,
+определяющие текущую точку записи в эти массивы. На этом работа функции завершается &ndash;
+мы записали все важные или изменяющиеся со временем переменные из личной области данных блока.</p>
+
+<p>Функция загрузки состояния будет очень похожа на функцию записи:</p>
+
+<pre class="cpp">  <span class="rem">// Загрузка состояния блока</span>
+  <span class="kw">void</span> TSimplePlotData::LoadState(<span class="kw">void</span>)
+  {
+    <span class="rem">// Макрос для загрузки одной переменной</span>
+    <span class="preproc">#define READBLOCKDATAVAR(v) </span><a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате"><span class="preproc">rdsReadBlockData</span></a><span class="preproc">(&amp;v,sizeof(v))</span>
+
+    READBLOCKDATAVAR(TimeStep);
+    READBLOCKDATAVAR(Xmin);
+    READBLOCKDATAVAR(Xmax);
+    READBLOCKDATAVAR(XGridStep);
+
+    <span class="rem">// Отведение массивов перед загрузкой</span>
+    AllocateArrays();
+    <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(Times,Count*<span class="kw">sizeof</span>(<span class="kw">double</span>));
+    <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(Values,Count*<span class="kw">sizeof</span>(<span class="kw">double</span>));
+
+    READBLOCKDATAVAR(NextIndex);
+    READBLOCKDATAVAR(NextTime);
+
+    <span class="rem">// Отмена макроса</span>
+    <span class="preproc">#undef READBLOCKDATAVAR</span>
+
+    <span class="rem">// Сброс параметров оптимизации рисования</span>
+    OldZoom=-<span class="const">1.0</span>;
+    LastDrawnIndex=-<span class="const">1</span>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции мы тоже вводим макрос, упрощающий загрузку одной переменной, а
+затем начинаем загружать переменные в том же порядке, в котором мы их записывали. Перед
+загрузкой массивов отсчетов вызывается функция <span class="cpp">AllocateArrays</span>, которая
+отведет эти массивы заново согласно новым загруженным параметрам горизонтальной оси графика,
+и вычислит значение <span class="cpp">Count</span>. В самом конце функции необходимо сбросить
+переменные, которые мы используем для ускорения работы функции рисования графика
+(см. <a href="pm_2_10_2.htm" title="&sect;2.10.2. Оптимизация рисования">&sect;2.10.2</a>) &ndash; параметры графика изменились,
+и прежние значения вспомогательных переменных рисования теперь не годятся, их
+нужно будет вычислить заново.</p>
+
+<p>В оператор <span class="cpp">switch(CallMode)</span> внутри функции модели
+<span class="cpp">SimplePlot</span> необходимо внести два новых оператора <span class="cpp">case</span>
+для вызова функций загрузки и записи состояния:</p>
+
+<pre class="cpp">        <span class="rem">// Запись состояния блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVESTATE.htm" title="А.2.4.13. RDS_BFM_SAVESTATE &ndash; запись состояния блока">RDS_BFM_SAVESTATE</a>:
+          data-&gt;SaveState();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Загрузка состояния блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADSTATE.htm" title="А.2.4.8. RDS_BFM_LOADSTATE &ndash; загрузка состояния блока">RDS_BFM_LOADSTATE</a>:
+          data-&gt;LoadState();
+          <span class="kw">break</span>;</pre>
+
+<p>Это все изменения, которые нужно внести в модель блока-графика. Теперь при загрузке состояния
+подсистемы в схеме на <a href="#pic1" title="Схема для проверки работы блока сохранения и загрузки состояния подсистемы">рис.&nbsp;104</a> в запомненное состояние
+будут возвращаться оба графика.</p>
+
+<p>Механизм возврата в запомненное состояние может использоваться для проведения сложных
+вычислений (например, если какая-то переменная схемы отклонилась от заданного значения, можно
+&laquo;вернуться в прошлое&raquo; и скорректировать параметры, чтобы не допустить этого отклонения),
+для создания пользовательских точек остановки расчета, к которым можно возвращаться по команде, и т.п.
+Следует только помнить, что запомненные состояния существуют только в памяти и никак не могут быть
+сохранены для работы при следующей загрузке схемы.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_14_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_14_4.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_14_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

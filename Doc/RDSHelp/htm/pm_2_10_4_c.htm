@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.10.4. Панели блоков в окне подсистемы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_10">&sect;2.10. Программное рисование внешнего вида блока</a></p>
+<div class="level"><p>&sect;2.10.4. Панели блоков в окне подсистемы</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_10_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_11.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_10_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_10_4.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ двух библиотек (DLL) с моделями блоков, создающих панели
+в окне <a href="pm_1_2.htm#ref7" title="Родительская подсистема">родительской подсистемы</a>.</p>
+
+<p>Первая библиотека содержит модель, создающую и обслуживающую пустую панель (во второй
+библиотеке будет добавлено формирование на этой панели трехмерного изображения
+с помощью OpenGL).</p>
+
+<pre class="cpp">  <span class="rem">// Панели блоков в окне подсистемы - первый пример</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">// Глобальная переменная для значения ошибки</span>
+  <span class="kw">double</span> <a class="hidden" href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">DoubleErrorValue</a>;
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+        <span class="kw">else</span>
+          <a class="hidden" href="rdsGetHugeDouble.htm" title="А.5.2.22. rdsGetHugeDouble &ndash; получение значения-индикатора математической ошибки">rdsGetHugeDouble</a>(&amp;<a class="hidden" href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">DoubleErrorValue</a>);
+
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+
+  <span class="rem">//=================================================</span>
+  <span class="rem">// Личная область данных блока</span>
+  <span class="rem">//=================================================</span>
+  <span class="kw">class</span> TOpenGLInstr
+  { <span class="kw">private</span>:
+      <a class="hidden" href="app_ids.htm#light_ref3" title="Идентификатор таймера">RDS_TIMERID</a> RefreshTimer; <span class="rem">// Таймер обновления</span>
+
+    <span class="kw">public</span>:
+      <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> Panel;        <span class="rem">// Объект-панель</span>
+
+      <span class="rem">// Сохранение параметров блока</span>
+      <span class="kw">void</span> SaveText(<span class="kw">void</span>);
+      <span class="rem">// Загрузка параметров блока</span>
+      <span class="kw">void</span> LoadText(<span class="kw">char</span> *text);
+
+      <span class="rem">// Создание таймера обновления</span>
+      <span class="kw">void</span> CreateRefreshTimer(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> parent);
+
+      <span class="rem">// Конструктор класса</span>
+      TOpenGLInstr(<span class="kw">void</span>);
+      <span class="rem">// Деструктор класса</span>
+      ~TOpenGLInstr();
+  };
+  <span class="rem">//=================================================</span>
+
+  <span class="rem">// Конструктор класса личной области данных</span>
+  TOpenGLInstr::TOpenGLInstr(<span class="kw">void</span>)
+  { <span class="rem">// Создаем панель в окне подсистемы</span>
+    Panel=<a class="hidden" href="rdsPANCreate.htm" title="А.5.31.1. rdsPANCreate &ndash; создать объект для работы с панелью">rdsPANCreate</a>(<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">300</span>,<span class="const">300</span>,
+                       <a class="hidden" href="rdsPANCreate.htm#light_ref8" title="RDS_PAN_F_SCALABLE">RDS_PAN_F_SCALABLE</a>|<a class="hidden" href="rdsPANCreate.htm#light_ref2" title="RDS_PAN_F_BORDER">RDS_PAN_F_BORDER</a>|
+                       <a class="hidden" href="rdsPANCreate.htm#light_ref9" title="RDS_PAN_F_SIZEABLE">RDS_PAN_F_SIZEABLE</a>|<a class="hidden" href="rdsPANCreate.htm#light_ref5" title="RDS_PAN_F_MOVEABLE">RDS_PAN_F_MOVEABLE</a>|
+                       <a class="hidden" href="rdsPANCreate.htm#light_ref3" title="RDS_PAN_F_CAPTION">RDS_PAN_F_CAPTION</a>|<a class="hidden" href="rdsPANCreate.htm#light_ref4" title="RDS_PAN_F_HIDDEN">RDS_PAN_F_HIDDEN</a>|
+                       <a class="hidden" href="rdsPANCreate.htm#light_ref7" title="RDS_PAN_F_PAINTMSG">RDS_PAN_F_PAINTMSG</a>,
+                       <span class="str">"Прибор"</span>);
+    <span class="rem">// Инициализируем идентификатор еще не созданного таймера</span>
+    RefreshTimer=NULL;
+  }
+  <span class="rem">//=================================================</span>
+
+  <span class="rem">// Деструктор класса личной области данных</span>
+  TOpenGLInstr::~TOpenGLInstr()
+  { <span class="rem">// Удаление панели</span>
+    <span class="kw">if</span>(Panel)
+      <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(Panel);
+    <span class="rem">// Удаление таймера</span>
+    <span class="kw">if</span>(RefreshTimer)
+      <a class="hidden" href="rdsDeleteBlockTimer.htm" title="А.5.12.1. rdsDeleteBlockTimer &ndash; удалить таймер">rdsDeleteBlockTimer</a>(RefreshTimer);
+  }
+  <span class="rem">//=================================================</span>
+
+  <span class="rem">// Создание таймера обновления панели</span>
+  <span class="kw">void</span> TOpenGLInstr::CreateRefreshTimer(RDS_BHANDLE parent)
+  { <span class="rem">// Структура для получения переметров окна подсистемы</span>
+    <a class="hidden" href="RDS_EDITORPARAMETERS.htm#ref1" title="Структура RDS_EDITORPARAMETERS">RDS_EDITORPARAMETERS</a> WinParams;
+    <span class="rem">// Определение интервала обновления окна подсистемы</span>
+    WinParams.servSize=<span class="kw">sizeof</span>(<a class="hidden" href="RDS_EDITORPARAMETERS.htm#ref1" title="Структура RDS_EDITORPARAMETERS">RDS_EDITORPARAMETERS</a>);
+    <a class="hidden" href="rdsGetEditorParameters.htm" title="А.5.8.6. rdsGetEditorParameters &ndash; получить описание окна подсистемы">rdsGetEditorParameters</a>(parent,&amp;WinParams);
+    <span class="rem">// Интервал - в WinParams.RefreshDelay</span>
+
+    <span class="rem">// Создание таймера</span>
+    RefreshTimer=<a class="hidden" href="rdsSetBlockTimer.htm" title="А.5.12.4. rdsSetBlockTimer &ndash; создать таймер">rdsSetBlockTimer</a>(RefreshTimer, <span class="rem">// Идентификатор</span>
+                   WinParams.RefreshDelay,      <span class="rem">// Интервал</span>
+                   <a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref4" title="RDS_TIMERM_LOOP">RDS_TIMERM_LOOP</a> | <a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref9" title="RDS_TIMERS_WINREF">RDS_TIMERS_WINREF</a> |
+                   <a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref11" title="RDS_TIMERF_FIXFREQ">RDS_TIMERF_FIXFREQ</a>,          <span class="rem">// Режим и флаги</span>
+                   TRUE);                       <span class="rem">// Запустить таймер</span>
+  }
+  <span class="rem">//=================================================</span>
+
+  <span class="rem">// Функция сохранения параметров блока</span>
+  <span class="kw">void</span> TOpenGLInstr::SaveText(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini; <span class="rem">// Идентификатор вспомогательного объекта</span>
+
+    <span class="rem">// При сохранении блока в отдельный файл на диске параметры</span>
+    <span class="rem">// панели записывать не нужно</span>
+    <span class="kw">if</span>(<a class="hidden" href="rdsGetSystemInt.htm" title="А.5.2.24. rdsGetSystemInt &ndash; получить целый системный параметр">rdsGetSystemInt</a>(<a class="hidden" href="rdsGetSystemInt.htm#light_ref6" title="RDS_GSISAVELOADACTION">RDS_GSISAVELOADACTION</a>)==<a class="hidden" href="rdsGetSystemInt.htm#light_ref20" title="RDS_LS_SAVETOFILE">RDS_LS_SAVETOFILE</a>)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Создание вспомогательного объекта для работы с данными</span>
+    ini=<a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a>(TRUE);
+
+    <span class="rem">// Параметры записываются в секцию "[Window]"</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a>,<span class="const">0</span>,<span class="str">"Window"</span>);
+
+    <span class="rem">// Получение параметров панели и запись их в объект</span>
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"Left"</span>,<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_LEFT.htm" title="А.5.31.8. Команда RDS_PAN_LEFT &ndash; горизонтальная координата панели">RDS_PAN_LEFT</a>,<span class="const">0</span>));
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"Top"</span>,<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_TOP.htm" title="А.5.31.13. Команда RDS_PAN_TOP &ndash; вертикальная координата панели">RDS_PAN_TOP</a>,<span class="const">0</span>));
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"Width"</span>,<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_WIDTH.htm" title="А.5.31.15. Команда RDS_PAN_WIDTH &ndash; общая ширина панели">RDS_PAN_WIDTH</a>,<span class="const">0</span>));
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"Height"</span>,<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_HEIGHT.htm" title="А.5.31.7. Команда RDS_PAN_HEIGHT &ndash; общая высота панели">RDS_PAN_HEIGHT</a>,<span class="const">0</span>));
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"Visible"</span>,<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_VISIBLE.htm" title="А.5.31.14. Команда RDS_PAN_VISIBLE &ndash; видимость панели">RDS_PAN_VISIBLE</a>,<span class="const">0</span>));
+
+    <span class="rem">// Сохранение получившегося текста в файл, в который в данный</span>
+    <span class="rem">// момент идет запись</span>
+    <a class="hidden" href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a>(ini,<a class="hidden" href="RDS_HINI_SAVEBLOCKTEXT.htm" title="А.5.27.16. Команда RDS_HINI_SAVEBLOCKTEXT &ndash; передать текст параметров блока в RDS">RDS_HINI_SAVEBLOCKTEXT</a>);
+
+    <span class="rem">// Удаление вспомогательного объекта</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(ini);
+  }
+  <span class="rem">//=================================================</span>
+
+  <span class="rem">// Функция загрузки параметров блока</span>
+  <span class="kw">void</span> TOpenGLInstr::LoadText(<span class="kw">char</span> *text)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini; <span class="rem">// Идентификатор вспомогательного объекта</span>
+
+    <span class="rem">// Создание вспомогательного объекта для работы с данными</span>
+    ini=<a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a>(TRUE);
+
+    <span class="rem">// Запись в объект полученного от RDS текста с параметрами блока</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_SETTEXT.htm" title="А.5.27.18. Команда RDS_HINI_SETTEXT &ndash; занести текст в объект">RDS_HINI_SETTEXT</a>,<span class="const">0</span>,text);
+
+    <span class="rem">// Установка "[Window]" в качестве текущей секции и чтение</span>
+    <span class="rem">// из нее пяти целых параметров</span>
+    <span class="kw">if</span>(rdsINIOpenSection(ini,<span class="str">"Window"</span>))
+      { <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_LEFT.htm" title="А.5.31.8. Команда RDS_PAN_LEFT &ndash; горизонтальная координата панели">RDS_PAN_LEFT</a>,<span class="const">0</span>,
+                        <a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"Left"</span>,<span class="const">0</span>));
+        <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_TOP.htm" title="А.5.31.13. Команда RDS_PAN_TOP &ndash; вертикальная координата панели">RDS_PAN_TOP</a>,<span class="const">0</span>,
+                        <a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"Top"</span>,<span class="const">0</span>));
+        <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_WIDTH.htm" title="А.5.31.15. Команда RDS_PAN_WIDTH &ndash; общая ширина панели">RDS_PAN_WIDTH</a>,<span class="const">0</span>,
+                        <a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"Width"</span>,<span class="const">0</span>));
+        <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_HEIGHT.htm" title="А.5.31.7. Команда RDS_PAN_HEIGHT &ndash; общая высота панели">RDS_PAN_HEIGHT</a>,<span class="const">0</span>,
+                        <a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"Height"</span>,<span class="const">0</span>));
+        <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_VISIBLE.htm" title="А.5.31.14. Команда RDS_PAN_VISIBLE &ndash; видимость панели">RDS_PAN_VISIBLE</a>,<span class="const">0</span>,
+                        <a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"Visible"</span>,<span class="const">0</span>));
+      }
+    <span class="rem">// Удаление вспомогательного объекта</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(ini);
+  }
+  <span class="rem">//=================================================</span>
+
+  <span class="rem">// Модель блока с панелью</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>) <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> OpenGLInstr(
+        <span class="kw">int</span> CallMode,
+        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Указатель на личную область, приведенный к нужному типу</span>
+    TOpenGLInstr *data=(TOpenGLInstr*)(BlockData-&gt;BlockData);
+    <span class="rem">// Вспомогательная – указатель на структуру параметров при</span>
+    <span class="rem">// действиях с панелью (будет использована в реакциях)</span>
+    <a class="hidden" href="RDS_BFM_BLOCKPANEL.htm#ref2" title="Указатель на RDS_PANOPERATION">RDS_PPANOPERATION</a> param;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Создание личной области данных</span>
+          <span class="rem">// (при этом в конструкторе будет создана панель)</span>
+          BlockData-&gt;BlockData=data=<span class="kw">new</span> TOpenGLInstr();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка данных блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// В деструкторе класса панель будет уничтожена</span>
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Запуск расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a>:
+          <span class="rem">// Создание таймера обновления</span>
+          data-&gt;CreateRefreshTimer(BlockData-&gt;Parent);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов функции настройки или двойной щелчок</span>
+        <span class="rem">// левой кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm" title="А.2.6.8. RDS_BFM_MOUSEDBLCLICK &ndash; двойной щелчок мыши">RDS_BFM_MOUSEDBLCLICK</a>:
+          <span class="rem">// Показать панель</span>
+          <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(data-&gt;Panel,<a class="hidden" href="RDS_PAN_VISIBLE.htm" title="А.5.31.14. Команда RDS_PAN_VISIBLE &ndash; видимость панели">RDS_PAN_VISIBLE</a>,<span class="const">0</span>,<span class="const">1</span>);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Сохранение параметров блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a>:
+          data-&gt;SaveText();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Загрузка параметров блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a>:
+          data-&gt;LoadText((<span class="kw">char</span>*)ExtParam);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Действия с панелью</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_BLOCKPANEL.htm" title="А.2.6.1. RDS_BFM_BLOCKPANEL &ndash; уведомление от панели блока в подсистеме">RDS_BFM_BLOCKPANEL</a>:
+          <span class="rem">// Приведение указателя на структуру, переданного в</span>
+          <span class="rem">// ExtParam, к нужному типу</span>
+          param=(<a class="hidden" href="RDS_BFM_BLOCKPANEL.htm#ref2" title="Указатель на RDS_PANOPERATION">RDS_PPANOPERATION</a>)ExtParam;
+          <span class="rem">// Разные действия в зависимости от операции с панелью</span>
+          <span class="kw">switch</span>(param-&gt;Operation)
+            { <span class="rem">// Создание оконного объекта для панели</span>
+              <span class="kw">case</span> <a class="hidden" href="RDS_BFM_BLOCKPANEL.htm#light_ref3" title="RDS_PANOP_CREATE">RDS_PANOP_CREATE</a>:
+                <span class="rem">// Здесь будет инициализация рисования на панели</span>
+                <span class="kw">break</span>;
+              <span class="rem">// Уничтожение оконного объекта панели</span>
+              <span class="kw">case</span> <a class="hidden" href="RDS_BFM_BLOCKPANEL.htm#light_ref4" title="RDS_PANOP_DESTROY">RDS_PANOP_DESTROY</a>:
+                <span class="rem">// Здесь будет очистка инициализированного</span>
+                <span class="kw">break</span>;
+              <span class="rem">// Размер панели изменен</span>
+              <span class="kw">case</span> <a class="hidden" href="RDS_BFM_BLOCKPANEL.htm#light_ref5" title="RDS_PANOP_RESIZED">RDS_PANOP_RESIZED</a>:
+                <span class="rem">// Здесь будет реакция на изменение размера</span>
+                <span class="rem">// и перерисовка панели</span>
+                <span class="kw">break</span>;
+              <span class="rem">// Необходимо перерисовать изображение</span>
+              <span class="kw">case</span> <a class="hidden" href="RDS_BFM_BLOCKPANEL.htm#light_ref7" title="RDS_PANOP_PAINT">RDS_PANOP_PAINT</a>:
+                <span class="rem">// Здесь будет перерисовка панели</span>
+                <span class="kw">break</span>;
+            }
+          <span class="kw">break</span>;
+
+       <span class="rem">// Необходимо обновить окна блока (вызывается таймером)</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_WINREFRESH.htm" title="А.2.6.21. RDS_BFM_WINREFRESH &ndash; обновление окон блока">RDS_BFM_WINREFRESH</a>:
+          <span class="rem">// Здесь будет перерисовка панели</span>
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=================================================</span></pre>
+
+<p>Эта же библиотека с добавленными функциями формирования трехмерного изображения
+(добавки выделены <span class="changes">цветом</span>).</p>
+
+<pre class="cpp">  <span class="rem">// Панели блоков в окне подсистемы - OpenGL</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+<div class="changes">  <span class="preproc">#include &lt;math.h&gt;</span>
+  <span class="preproc">#include &lt;gl/gl.h&gt;</span>
+  <span class="preproc">#include &lt;gl/glu.h&gt;</span></div>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">// Глобальная переменная для значения ошибки</span>
+  <span class="kw">double</span> <a class="hidden" href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">DoubleErrorValue</a>;
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+        <span class="kw">else</span>
+          <a class="hidden" href="rdsGetHugeDouble.htm" title="А.5.2.22. rdsGetHugeDouble &ndash; получение значения-индикатора математической ошибки">rdsGetHugeDouble</a>(&amp;<a class="hidden" href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">DoubleErrorValue</a>);
+
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+
+  <span class="rem">//=================================================</span>
+  <span class="rem">// Личная область данных блока</span>
+  <span class="rem">//=================================================</span>
+  <span class="kw">class</span> TOpenGLInstr
+  { <span class="kw">private</span>:
+<div class="changes">      HGLRC Hrc;                 <span class="rem">// Контекст OpenGL</span></div>
+      <a class="hidden" href="app_ids.htm#light_ref3" title="Идентификатор таймера">RDS_TIMERID</a> RefreshTimer; <span class="rem">// Таймер обновления</span>
+
+    <span class="kw">public</span>:
+      <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> Panel;        <span class="rem">// Объект-панель</span>
+
+<div class="changes">      <span class="rem">// Настройка вывода изображения на панель</span>
+      <span class="kw">void</span> <a class="hidden" href="pm_2_10_4.htm#ref69" title="Настройка вывода изображения на панель">InitWindow</a>(<a class="hidden" href="app_ids.htm#light_ref18" title="Дескриптор окна">HWND</a> window);
+      <span class="rem">// Отключение OpenGL</span>
+      <span class="kw">void</span> <a class="hidden" href="pm_2_10_4.htm#ref77" title="Функция отключения OpenGL">Clear</a>(<span class="kw">void</span>);
+      <span class="rem">// Рисование трехмерной сцены</span>
+      <span class="kw">void</span> <a class="hidden" href="pm_2_10_4.htm#ref81" title="Функция рисования трехмерной сцены">RenderScene</a>(<span class="kw">double</span> Dir,<span class="kw">double</span> List,<span class="kw">double</span> Pitch);</div>
+      <span class="rem">// Сохранение параметров блока</span>
+      <span class="kw">void</span> SaveText(<span class="kw">void</span>);
+      <span class="rem">// Загрузка параметров блока</span>
+      <span class="kw">void</span> LoadText(<span class="kw">char</span> *text);
+
+      <span class="rem">// Создание таймера обновления</span>
+      <span class="kw">void</span> CreateRefreshTimer(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> parent);
+
+      <span class="rem">// Конструктор класса</span>
+      TOpenGLInstr(<span class="kw">void</span>);
+      <span class="rem">// Деструктор класса</span>
+      ~TOpenGLInstr();
+  };
+  <span class="rem">//=================================================</span>
+
+<div class="changes">  <span class="rem">// Вычисление нормали к треугольнику</span>
+  <span class="rem">// p1,p2,p3 – массивы координат вершин {x,y,z}</span>
+  <span class="rem">// norm – массив, в котором возвращаются вычисленные</span>
+  <span class="rem">// координаты нормали</span>
+  <span class="kw">void</span> NormalToTriangle(GLfloat *p1,GLfloat *p2,
+                        GLfloat *p3,GLfloat *norm)
+  { <span class="kw">double</span> m[<span class="const">3</span>],a[<span class="const">3</span>],b[<span class="const">3</span>],R; <span class="rem">// Вспомогательные переменные</span>
+
+    <span class="rem">// Символические имена для координат векторов</span>
+    <span class="preproc">#define x 0</span>
+    <span class="preproc">#define y 1</span>
+    <span class="preproc">#define z 2</span>
+
+    <span class="rem">// Вычисляем векторное произведение векторов</span>
+    <span class="rem">// a (p1-&gt;p2) и b (p1-&gt;p3)</span>
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;<span class="const">3</span>;i++)
+      { a[i]=p2[i]-p1[i];
+        b[i]=p3[i]-p1[i];
+      }
+    m[x]=a[y]*b[z]-a[z]*b[y];
+    m[y]=a[z]*b[x]-a[x]*b[z];
+    m[z]=a[x]*b[y]-a[y]*b[x];
+
+    <span class="rem">// Длина получившегося вектора</span>
+    R=sqrt(m[x]*m[x]+m[y]*m[y]+m[z]*m[z]);
+
+    <span class="rem">// Приводим вектор к единичной длине</span>
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;<span class="const">3</span>;i++)
+      norm[i]=(GLfloat)(m[i]/R);
+
+    <span class="rem">// Отмена макроопределений символических имен координат</span>
+    <span class="preproc">#undef x</span>
+    <span class="preproc">#undef y</span>
+    <span class="preproc">#undef z</span>
+  }
+  <span class="rem">//=================================================</span></div>
+<div class="changes">  <span class="rem">// Построение треугольника p1-p2-p3</span>
+  <span class="kw">void</span> DrawTriangleGL(GLfloat *p1,GLfloat *p2,GLfloat *p3)
+  { GLfloat norm[<span class="const">3</span>]; <span class="rem">// Массив для вычисления нормали</span>
+
+    <span class="rem">// Вычислить нормаль</span>
+    <a class="hidden" href="pm_2_10_4.htm#ref57" title="Функция вычисления нормали к треугольнику">NormalToTriangle</a>(p1,p2,p3,norm);
+    <span class="rem">// Установить нормаль в OpenGL</span>
+    glNormal3fv(norm);
+    <span class="rem">// Задать три точки треугольника</span>
+    glVertex3fv(p1);
+    glVertex3fv(p2);
+    glVertex3fv(p3);
+  }
+  <span class="rem">//=================================================</span></div>
+<div class="changes">  <span class="rem">// Рисование окружности в OpenGL</span>
+  <span class="kw">void</span> DrawCircleGL(GLfloat R,<span class="kw">int</span> N,GLfloat cR,GLfloat cG,GLfloat cB)
+  { <span class="kw">double</span> aStep=(<span class="const">2.0</span>*M_PI)/N; <span class="rem">// Шаг ломаной по углу, радиан</span>
+    <span class="rem">// Массивы для задания материала</span>
+    GLfloat MaterialAmbDiff[<span class="const">4</span>],
+            MaterialSpecular[<span class="const">4</span>]={<span class="const">1.0</span>,<span class="const">1.0</span>,<span class="const">1.0</span>,<span class="const">1.0</span>};
+    <span class="rem">// Запись цвета материала в массив</span>
+    MaterialAmbDiff[<span class="const">0</span>]=cR;
+    MaterialAmbDiff[<span class="const">1</span>]=cG;
+    MaterialAmbDiff[<span class="const">2</span>]=cB;
+    MaterialAmbDiff[<span class="const">3</span>]=<span class="const">1.0</span>; <span class="rem">// Непрозрачный</span>
+    <span class="rem">// Установка отражающих свойств (материала) фигуры</span>
+    glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,
+        MaterialAmbDiff);
+    glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS, <span class="const">50.0</span>);
+    glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,MaterialSpecular);
+    <span class="rem">// Нормаль – по оси Z (окружность в плоскости XY)</span>
+    glNormal3f(<span class="const">0</span>.<span class="const">0</span>,<span class="const">0</span>.<span class="const">0</span>,<span class="const">1.0</span>);
+    <span class="rem">// Рисуем замкнутую ломаную линию</span>
+    glBegin(GL_LINE_LOOP);
+      <span class="kw">for</span>(<span class="kw">int</span> j=<span class="const">0</span>;j&lt;N;j++) <span class="rem">// Цикл по углу</span>
+        { <span class="kw">double</span> a=aStep*j; <span class="rem">// Угол</span>
+          <span class="kw">double</span> x=R*cos(a),y=R*sin(a); <span class="rem">// Координаты точки</span>
+          glVertex3f((GLfloat)x,(GLfloat)y,<span class="const">0</span>);
+        }
+    glEnd();
+  }
+  <span class="rem">//=================================================</span></div>
+<div class="changes">  <span class="rem">// Рисование центрального объекта блока</span>
+  <span class="kw">void</span> DrawArrowGL(<span class="kw">double</span> R,<span class="kw">double</span> l,<span class="kw">double</span> w,<span class="kw">double</span> h,<span class="kw">double</span> b)
+  { <span class="rem">// Массивы для координат точек фигуры</span>
+    GLfloat p1[<span class="const">3</span>],p2[<span class="const">3</span>],p3[<span class="const">3</span>],p4[<span class="const">3</span>];
+    <span class="rem">// Материал – дно и корма (белый цвет)</span>
+    GLfloat MaterialBack[]  = {<span class="const">1.0</span>, <span class="const">1.0</span>, <span class="const">1.0</span>, <span class="const">1.0</span>};
+    <span class="rem">// Материал – левый борт (красный цвет)</span>
+    GLfloat MaterialLeft[]  = {<span class="const">1.0</span>, <span class="const">0</span>.<span class="const">5</span>, <span class="const">0</span>.<span class="const">5</span>, <span class="const">1.0</span>};
+    <span class="rem">// Материал – правый борт (зеленый цвет)</span>
+    GLfloat MaterialRight[] = {<span class="const">0</span>.<span class="const">5</span>, <span class="const">1.0</span>, <span class="const">0</span>.<span class="const">5</span>, <span class="const">1.0</span>};
+
+    <span class="rem">// Символические имена для координат точек</span>
+    <span class="preproc">#define x 0</span>
+    <span class="preproc">#define y 1</span>
+    <span class="preproc">#define z 2</span>
+
+    <span class="rem">// Вычисление координат точек фигуры</span>
+    p1[x]=<span class="const">0</span>;  p1[y]=R;       p1[z]=<span class="const">0</span>;
+    p2[x]=-w; p2[y]=R-l;     p2[z]=<span class="const">0</span>;
+    p3[x]=w;  p3[y]=p2[y];   p3[z]=<span class="const">0</span>;
+    p4[x]=<span class="const">0</span>;  p4[y]=p2[y]+b; p4[z]=h;
+
+    <span class="rem">// Построение граней</span>
+    glBegin(GL_TRIANGLES);
+      <span class="rem">// Свойства материала – общие для всех</span>
+      glMaterialf(GL_FRONT,GL_SHININESS,<span class="const">20.0</span>);
+      <span class="rem">// Свойства материала – корма и дно</span>
+      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,MaterialBack);
+      glMaterialfv(GL_FRONT,GL_SPECULAR,MaterialBack);
+      <span class="rem">// Нижний треугольник (дно)</span>
+      <a class="hidden" href="pm_2_10_4.htm#ref58" title="Функция построения треугольника">DrawTriangleGL</a>(p1,p3,p2);
+      <span class="rem">// Задний треугольник (корма)</span>
+      <a class="hidden" href="pm_2_10_4.htm#ref58" title="Функция построения треугольника">DrawTriangleGL</a>(p2,p3,p4);
+      <span class="rem">// Свойства материала – левый борт</span>
+      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,MaterialLeft);
+      glMaterialfv(GL_FRONT,GL_SPECULAR,MaterialLeft);
+      <span class="rem">// Левый передний треугольник</span>
+      <a class="hidden" href="pm_2_10_4.htm#ref58" title="Функция построения треугольника">DrawTriangleGL</a>(p2,p4,p1);
+      <span class="rem">// Свойства материала – правый борт</span>
+      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,MaterialRight);
+      glMaterialfv(GL_FRONT,GL_SPECULAR,MaterialRight);
+      <span class="rem">// Правый передний треугольник</span>
+      <a class="hidden" href="pm_2_10_4.htm#ref58" title="Функция построения треугольника">DrawTriangleGL</a>(p4,p3,p1);
+    glEnd();
+
+    <span class="rem">// Отмена макроопределений символических имен координат</span>
+    <span class="preproc">#undef x</span>
+    <span class="preproc">#undef y</span>
+    <span class="preproc">#undef z</span>
+  }
+  <span class="rem">//=================================================</span></div>
+  <span class="rem">// Конструктор класса личной области данных</span>
+  TOpenGLInstr::TOpenGLInstr(<span class="kw">void</span>)
+  { <span class="rem">// Создаем панель в окне подсистемы</span>
+    Panel=<a class="hidden" href="rdsPANCreate.htm" title="А.5.31.1. rdsPANCreate &ndash; создать объект для работы с панелью">rdsPANCreate</a>(<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">300</span>,<span class="const">300</span>,
+                       <a class="hidden" href="rdsPANCreate.htm#light_ref8" title="RDS_PAN_F_SCALABLE">RDS_PAN_F_SCALABLE</a>|<a class="hidden" href="rdsPANCreate.htm#light_ref2" title="RDS_PAN_F_BORDER">RDS_PAN_F_BORDER</a>|
+                       <a class="hidden" href="rdsPANCreate.htm#light_ref9" title="RDS_PAN_F_SIZEABLE">RDS_PAN_F_SIZEABLE</a>|<a class="hidden" href="rdsPANCreate.htm#light_ref5" title="RDS_PAN_F_MOVEABLE">RDS_PAN_F_MOVEABLE</a>|
+                       <a class="hidden" href="rdsPANCreate.htm#light_ref3" title="RDS_PAN_F_CAPTION">RDS_PAN_F_CAPTION</a>|<a class="hidden" href="rdsPANCreate.htm#light_ref4" title="RDS_PAN_F_HIDDEN">RDS_PAN_F_HIDDEN</a>|
+                       <a class="hidden" href="rdsPANCreate.htm#light_ref7" title="RDS_PAN_F_PAINTMSG">RDS_PAN_F_PAINTMSG</a>,
+                       <span class="str">"Прибор"</span>);
+    <span class="rem">// Инициализируем идентификатор еще не созданного таймера</span>
+    RefreshTimer=NULL;
+  }
+  <span class="rem">//=================================================</span>
+
+  <span class="rem">// Деструктор класса личной области данных</span>
+  TOpenGLInstr::~TOpenGLInstr()
+  { <span class="rem">// Удаление панели</span>
+    <span class="kw">if</span>(Panel)
+      <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(Panel);
+    <span class="rem">// Удаление таймера</span>
+    <span class="kw">if</span>(RefreshTimer)
+      <a class="hidden" href="rdsDeleteBlockTimer.htm" title="А.5.12.1. rdsDeleteBlockTimer &ndash; удалить таймер">rdsDeleteBlockTimer</a>(RefreshTimer);
+  }
+  <span class="rem">//=================================================</span>
+
+  <span class="rem">// Создание таймера обновления панели</span>
+  <span class="kw">void</span> TOpenGLInstr::CreateRefreshTimer(RDS_BHANDLE parent)
+  { <span class="rem">// Структура для получения переметров окна подсистемы</span>
+    <a class="hidden" href="RDS_EDITORPARAMETERS.htm#ref1" title="Структура RDS_EDITORPARAMETERS">RDS_EDITORPARAMETERS</a> WinParams;
+    <span class="rem">// Определение интервала обновления окна подсистемы</span>
+    WinParams.servSize=<span class="kw">sizeof</span>(<a class="hidden" href="RDS_EDITORPARAMETERS.htm#ref1" title="Структура RDS_EDITORPARAMETERS">RDS_EDITORPARAMETERS</a>);
+    <a class="hidden" href="rdsGetEditorParameters.htm" title="А.5.8.6. rdsGetEditorParameters &ndash; получить описание окна подсистемы">rdsGetEditorParameters</a>(parent,&amp;WinParams);
+    <span class="rem">// Интервал - в WinParams.RefreshDelay</span>
+
+    <span class="rem">// Создание таймера</span>
+    RefreshTimer=<a class="hidden" href="rdsSetBlockTimer.htm" title="А.5.12.4. rdsSetBlockTimer &ndash; создать таймер">rdsSetBlockTimer</a>(RefreshTimer, <span class="rem">// Идентификатор</span>
+                   WinParams.RefreshDelay,      <span class="rem">// Интервал</span>
+                   <a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref4" title="RDS_TIMERM_LOOP">RDS_TIMERM_LOOP</a> | <a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref9" title="RDS_TIMERS_WINREF">RDS_TIMERS_WINREF</a> |
+                   <a class="hidden" href="RDS_TIMERDESCRIPTION.htm#light_ref11" title="RDS_TIMERF_FIXFREQ">RDS_TIMERF_FIXFREQ</a>,          <span class="rem">// Режим и флаги</span>
+                   TRUE);                       <span class="rem">// Запустить таймер</span>
+  }
+  <span class="rem">//=================================================</span>
+
+  <span class="rem">// Функция сохранения параметров блока</span>
+  <span class="kw">void</span> TOpenGLInstr::SaveText(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini; <span class="rem">// Идентификатор вспомогательного объекта</span>
+
+    <span class="rem">// При сохранении блока в отдельный файл на диске параметры</span>
+    <span class="rem">// панели записывать не нужно</span>
+    <span class="kw">if</span>(<a class="hidden" href="rdsGetSystemInt.htm" title="А.5.2.24. rdsGetSystemInt &ndash; получить целый системный параметр">rdsGetSystemInt</a>(<a class="hidden" href="rdsGetSystemInt.htm#light_ref6" title="RDS_GSISAVELOADACTION">RDS_GSISAVELOADACTION</a>)==<a class="hidden" href="rdsGetSystemInt.htm#light_ref20" title="RDS_LS_SAVETOFILE">RDS_LS_SAVETOFILE</a>)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Создание вспомогательного объекта для работы с данными</span>
+    ini=<a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a>(TRUE);
+
+    <span class="rem">// Параметры записываются в секцию "[Window]"</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a>,<span class="const">0</span>,<span class="str">"Window"</span>);
+
+    <span class="rem">// Получение параметров панели и запись их в объект</span>
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"Left"</span>,<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_LEFT.htm" title="А.5.31.8. Команда RDS_PAN_LEFT &ndash; горизонтальная координата панели">RDS_PAN_LEFT</a>,<span class="const">0</span>));
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"Top"</span>,<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_TOP.htm" title="А.5.31.13. Команда RDS_PAN_TOP &ndash; вертикальная координата панели">RDS_PAN_TOP</a>,<span class="const">0</span>));
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"Width"</span>,<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_WIDTH.htm" title="А.5.31.15. Команда RDS_PAN_WIDTH &ndash; общая ширина панели">RDS_PAN_WIDTH</a>,<span class="const">0</span>));
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"Height"</span>,<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_HEIGHT.htm" title="А.5.31.7. Команда RDS_PAN_HEIGHT &ndash; общая высота панели">RDS_PAN_HEIGHT</a>,<span class="const">0</span>));
+    <a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a>(ini,<span class="str">"Visible"</span>,<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_VISIBLE.htm" title="А.5.31.14. Команда RDS_PAN_VISIBLE &ndash; видимость панели">RDS_PAN_VISIBLE</a>,<span class="const">0</span>));
+
+    <span class="rem">// Сохранение получившегося текста в файл, в который в данный</span>
+    <span class="rem">// момент идет запись</span>
+    <a class="hidden" href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a>(ini,<a class="hidden" href="RDS_HINI_SAVEBLOCKTEXT.htm" title="А.5.27.16. Команда RDS_HINI_SAVEBLOCKTEXT &ndash; передать текст параметров блока в RDS">RDS_HINI_SAVEBLOCKTEXT</a>);
+
+    <span class="rem">// Удаление вспомогательного объекта</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(ini);
+  }
+  <span class="rem">//=================================================</span>
+
+  <span class="rem">// Функция загрузки параметров блока</span>
+  <span class="kw">void</span> TOpenGLInstr::LoadText(<span class="kw">char</span> *text)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini; <span class="rem">// Идентификатор вспомогательного объекта</span>
+
+    <span class="rem">// Создание вспомогательного объекта для работы с данными</span>
+    ini=<a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a>(TRUE);
+
+    <span class="rem">// Запись в объект полученного от RDS текста с параметрами блока</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<a class="hidden" href="RDS_HINI_SETTEXT.htm" title="А.5.27.18. Команда RDS_HINI_SETTEXT &ndash; занести текст в объект">RDS_HINI_SETTEXT</a>,<span class="const">0</span>,text);
+
+    <span class="rem">// Установка "[Window]" в качестве текущей секции и чтение</span>
+    <span class="rem">// из нее пяти целых параметров</span>
+    <span class="kw">if</span>(rdsINIOpenSection(ini,<span class="str">"Window"</span>))
+      { <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_LEFT.htm" title="А.5.31.8. Команда RDS_PAN_LEFT &ndash; горизонтальная координата панели">RDS_PAN_LEFT</a>,<span class="const">0</span>,
+                        <a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"Left"</span>,<span class="const">0</span>));
+        <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_TOP.htm" title="А.5.31.13. Команда RDS_PAN_TOP &ndash; вертикальная координата панели">RDS_PAN_TOP</a>,<span class="const">0</span>,
+                        <a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"Top"</span>,<span class="const">0</span>));
+        <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_WIDTH.htm" title="А.5.31.15. Команда RDS_PAN_WIDTH &ndash; общая ширина панели">RDS_PAN_WIDTH</a>,<span class="const">0</span>,
+                        <a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"Width"</span>,<span class="const">0</span>));
+        <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_HEIGHT.htm" title="А.5.31.7. Команда RDS_PAN_HEIGHT &ndash; общая высота панели">RDS_PAN_HEIGHT</a>,<span class="const">0</span>,
+                        <a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"Height"</span>,<span class="const">0</span>));
+        <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(Panel,<a class="hidden" href="RDS_PAN_VISIBLE.htm" title="А.5.31.14. Команда RDS_PAN_VISIBLE &ndash; видимость панели">RDS_PAN_VISIBLE</a>,<span class="const">0</span>,
+                        <a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a>(ini,<span class="str">"Visible"</span>,<span class="const">0</span>));
+      }
+    <span class="rem">// Удаление вспомогательного объекта</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(ini);
+  }
+  <span class="rem">//=================================================</span>
+
+<div class="changes">  <span class="rem">// Настройка вывода изображения на панель</span>
+  <span class="kw">void</span> TOpenGLInstr::InitWindow(<a class="hidden" href="app_ids.htm#light_ref18" title="Дескриптор окна">HWND</a> window)
+  { <a class="hidden" href="app_ids.htm#light_ref16" title="Контекст устройства Windows">HDC</a> Hdc; <span class="rem">// Контекст устройства Windows</span>
+    <span class="rem">// Структура для установки формата изображения</span>
+    PIXELFORMATDESCRIPTOR pfd = {
+      <span class="kw">sizeof</span>(PIXELFORMATDESCRIPTOR), <span class="rem">// Размер структуры</span>
+      <span class="const">1</span>,                             <span class="rem">// Номер версии</span>
+      PFD_DRAW_TO_WINDOW |           <span class="rem">// Вывод в окно</span>
+        PFD_SUPPORT_OPENGL |         <span class="rem">// Поддержка OpenGL</span>
+        PFD_DOUBLEBUFFER,            <span class="rem">// Двойная буферизация</span>
+      PFD_TYPE_RGBA,                 <span class="rem">// Формат цвета – RGBA</span>
+      <span class="const">24</span>,                            <span class="rem">// Глубина цвета – 24 бита</span>
+      <span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,                   <span class="rem">// (здесь не используется)</span>
+      <span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>,                 <span class="rem">// (здесь не используется)</span>
+      <span class="const">32</span>,                            <span class="rem">// Z-буфер - 32 бита</span>
+      <span class="const">0</span>,<span class="const">0</span>,                           <span class="rem">// (здесь не используется)</span>
+      PFD_MAIN_PLANE,                <span class="rem">// Главный слой</span>
+      <span class="const">0</span>,                             <span class="rem">// Зарезервировано</span>
+      <span class="const">0</span>,<span class="const">0</span>,                           <span class="rem">// Маски слоев (не исп.)</span>
+    };
+    <span class="kw">int</span> PixelFormat;
+
+    <span class="rem">// Получение контекста оконного объекта</span>
+    Hdc=GetDC(window);
+
+    <span class="rem">// Установка формата изображения по структуре pfd</span>
+    PixelFormat=ChoosePixelFormat(Hdc,&amp;pfd);
+    SetPixelFormat(Hdc,PixelFormat,&amp;pfd);
+
+    <span class="rem">// Создание контекста OpenGL</span>
+    Hrc=wglCreateContext(Hdc);
+
+    <span class="rem">// Установка этого контекста в качестве текущего</span>
+    wglMakeCurrent(Hdc,Hrc);
+  }
+  <span class="rem">//=================================================</span></div>
+<div class="changes">  <span class="rem">// Отключение OpenGL</span>
+  <span class="kw">void</span> TOpenGLInstr::Clear()
+  { <span class="rem">// Отключение текущего контекста OpenGL</span>
+    wglMakeCurrent(NULL,NULL);
+    <span class="rem">// Уничтожение созданного контекста</span>
+    wglDeleteContext(Hrc);
+  }
+  <span class="rem">//=================================================</span></div>
+<div class="changes">  <span class="rem">// Служебная функция – настройка параметров OpenGL</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> TOpenGLInstr::SetupGLParams(<a class="hidden" href="app_ids.htm#light_ref16" title="Контекст устройства Windows">HDC</a> *pHdc)
+  { <span class="rem">// Параметры перспективной проекции</span>
+    <span class="kw">const</span> GLfloat zNear=<span class="const">0</span>.<span class="const">1</span>;   <span class="rem">// Ближняя плоскость отсечения</span>
+    <span class="kw">const</span> GLfloat zFar=<span class="const">1000.0</span>; <span class="rem">// Дальняя плоскость отсечения</span>
+    <span class="kw">const</span> GLfloat vAngle=<span class="const">30.0</span>; <span class="rem">// Угол зрения</span>
+
+    <a class="hidden" href="app_ids.htm#light_ref16" title="Контекст устройства Windows">HDC</a> Hdc;	<span class="rem">// Контекст устройства (окна) Windows</span>
+
+    <span class="rem">// Расположение источника освещения</span>
+    <span class="kw">const</span> <span class="kw">double</span> lightDistance=<span class="const">500.0</span>; <span class="rem">// Расстояние до объекта</span>
+    <span class="kw">const</span> <span class="kw">double</span> lightRotation=-<span class="const">55.0</span>; <span class="rem">// Азимут в градусах</span>
+    <span class="kw">const</span> <span class="kw">double</span> lightPitch=<span class="const">45.0</span>;     <span class="rem">// Угол места в градусах</span>
+
+    <span class="rem">// Вспомогательные переменные</span>
+    <a class="hidden" href="RDS_PANDESCRIPTION.htm#ref1" title="Структура RDS_PANDESCRIPTION">RDS_PANDESCRIPTION</a> descr;
+    <span class="kw">int</span> width,height;
+    GLfloat array[<span class="const">4</span>];
+    <span class="kw">double</span> l_r,l_p;
+
+    <span class="rem">// Получение описания панели и дескриптора ее окна</span>
+    descr.servSize=<span class="kw">sizeof</span>(<a class="hidden" href="RDS_PANDESCRIPTION.htm#ref1" title="Структура RDS_PANDESCRIPTION">RDS_PANDESCRIPTION</a>);
+    <span class="kw">if</span>(!RDS(Panel,&amp;descr)) <span class="rem">// Не удалось</span>
+      <span class="kw">return</span> FALSE;
+    <span class="kw">if</span>(descr.Handle==NULL) <span class="rem">// Нет оконного объекта</span>
+      <span class="kw">return</span> FALSE;
+    <span class="rem">// Проверка высоты и ширины панели</span>
+    <span class="kw">if</span>(descr.Height==<span class="const">0</span> || descr.Width==<span class="const">0</span>)
+      <span class="kw">return</span> FALSE; <span class="rem">// Негде рисовать</span>
+
+    <span class="rem">// Получение контекста окна и передача в вызвавшую функцию</span>
+    <span class="rem">// его через параметр-указатель</span>
+    Hdc=GetDC(descr.Handle);
+    <span class="kw">if</span>(pHdc) *pHdc=Hdc;
+
+    <span class="rem">// Установка контекста Hrc, созданного при инициализации,</span>
+    <span class="rem">// в качестве текущего</span>
+    <span class="kw">if</span>(!wglMakeCurrent(Hdc,Hrc))
+      <span class="kw">return</span> FALSE; <span class="rem">// Не удалось</span>
+
+    <span class="rem">// Уcтановка различных параметров, влияющих на качество рисования</span>
+    <span class="rem">// и способ закраски многоугольников</span>
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glHint(GL_POLYGON_SMOOTH_HINT,GL_FASTEST);
+    glEnable(GL_POINT_SMOOTH);
+    glBlendFunc (GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
+    glClearColor(<span class="const">0</span>.0f,<span class="const">0</span>.0f,<span class="const">0</span>.0f,<span class="const">1.0</span>f); <span class="rem">// Цвет фона - черный</span>
+    glClearDepth(<span class="const">1.0</span>); <span class="rem">// Значение для очистки Z-буфера</span>
+
+    <span class="rem">//----------- Установка освещения ----------</span>
+    <span class="rem">// Общее рассеянное освещение</span>
+    array[<span class="const">0</span>]=array[<span class="const">1</span>]=array[<span class="const">2</span>]=<span class="const">0</span>.<span class="const">5</span>; <span class="rem">// Белый, интенсивность 0.5</span>
+    array[<span class="const">3</span>]=<span class="const">1.0</span>;
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT,array);
+    <span class="rem">// Вычисление координат источника света</span>
+    l_r=(lightRotation*M_PI)/<span class="const">180.0</span>;
+    l_p=(lightPitch*M_PI)/<span class="const">180.0</span>;
+    array[<span class="const">0</span>]=(GLfloat)(lightDistance*cos(l_p)*sin(l_r)); <span class="rem">// X</span>
+    array[<span class="const">1</span>]=(GLfloat)(lightDistance*sin(l_p));          <span class="rem">// Y</span>
+    array[<span class="const">2</span>]=(GLfloat)(lightDistance*cos(l_p)*cos(l_r)); <span class="rem">// Z</span>
+    array[<span class="const">3</span>]=<span class="const">0</span>.<span class="const">0</span>;
+    glLightfv(GL_LIGHT0,GL_POSITION,array);
+    <span class="rem">// Рассеянное освещение от источника отсутствует</span>
+    array[<span class="const">0</span>]=array[<span class="const">1</span>]=array[<span class="const">2</span>]=<span class="const">0</span>.<span class="const">0</span>; <span class="rem">// Отсутствует - интенсивность 0</span>
+    array[<span class="const">3</span>]=<span class="const">1.0</span>;
+    glLightfv(GL_LIGHT0,GL_AMBIENT,array);
+    <span class="rem">// Другие виды освещения – белый цвет</span>
+    array[<span class="const">0</span>]=array[<span class="const">1</span>]=array[<span class="const">2</span>]=<span class="const">0</span>.<span class="const">5</span>; <span class="rem">// Белый, интенсивность 0.5</span>
+    glLightfv(GL_LIGHT0,GL_DIFFUSE,array);
+    glLightfv(GL_LIGHT0,GL_SPECULAR,array);
+    <span class="rem">// Включение источника света</span>
+    glEnable(GL_LIGHT0);
+    <span class="rem">// Разрешение расчета освещения</span>
+    glEnable(GL_LIGHTING);
+    <span class="rem">// Режим расчета “затенения"</span>
+    glShadeModel(GL_SMOOTH);
+    <span class="rem">// Способ расчета освещения</span>
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+    <span class="rem">//------------------------------------------</span>
+
+    <span class="rem">// Установка области окна для рисования</span>
+    glViewport(<span class="const">0</span>,<span class="const">0</span>,descr.Width,descr.Height);
+
+    <span class="rem">// Настройка перспективной проекции на эту область</span>
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(vAngle,
+      (GLfloat)descr.Width/(GLfloat)descr.Height,
+      zNear,zFar);
+
+    <span class="rem">// Переключение на матрицу моделей (для рисования объектов)</span>
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    <span class="kw">return</span> TRUE; <span class="rem">// Установка параметров успешно завершена</span>
+  }
+  <span class="rem">//=================================================</span></div>
+<div class="changes">  <span class="rem">// Рисование трехмерной сцены</span>
+  <span class="kw">void</span> TOpenGLInstr::RenderScene(<span class="kw">double</span> Dir,<span class="kw">double</span> List,<span class="kw">double</span> Pitch)
+  { <a class="hidden" href="app_ids.htm#light_ref16" title="Контекст устройства Windows">HDC</a> Hdc; <span class="rem">// Контекст устройства Windows</span>
+    <span class="rem">// Угол места камеры в градусах</span>
+    <span class="kw">const</span> GLfloat Camera_Pitch=-<span class="const">50.0</span>;
+    <span class="rem">// Расстояние до камеры</span>
+    <span class="kw">const</span> GLfloat Camera_Distance=<span class="const">300.0</span>;
+
+    <span class="rem">// Настройка параметров OpenGL и получение контекста окна</span>
+    <span class="kw">if</span>(!<a class="hidden" href="pm_2_10_4.htm#ref78" title="Функция настройки параметров OpenGL">SetupGLParams</a>(&amp;Hdc))
+      <span class="kw">return</span>;
+
+    <span class="rem">// Очистка буфера изображения и Z-буфера</span>
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    <span class="rem">// Записать матрицу трансформаций в стек</span>
+    glPushMatrix();
+    <span class="rem">// Трансформации камеры</span>
+    glTranslatef(<span class="const">0</span>.<span class="const">0</span>,<span class="const">0</span>.<span class="const">0</span>,-Camera_Distance); <span class="rem">// Отодвигаем от камеры</span>
+    glRotatef(Camera_Pitch,<span class="const">1</span>,<span class="const">0</span>,<span class="const">0</span>); <span class="rem">// Поворачиваем</span>
+    <span class="rem">// Рисование неподвижной зеленой (0,1,0) окружности</span>
+    <a class="hidden" href="pm_2_10_4.htm#ref61" title="Функция рисования окружности">DrawCircleGL</a>(<span class="const">60</span>,<span class="const">100</span>,<span class="const">0</span>.<span class="const">0</span>,<span class="const">1.0</span>,<span class="const">0</span>.<span class="const">0</span>);
+
+    <span class="kw">if</span>(Dir!=<a class="hidden" href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">DoubleErrorValue</a> &amp;&amp;
+       List!=<a class="hidden" href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">DoubleErrorValue</a> &amp;&amp;
+       Pitch!=<a class="hidden" href="pm_2_5_1.htm#ref12" title="Проверка вещественного числа на признак ошибки">DoubleErrorValue</a>) <span class="rem">// Можно рисовать</span>
+      { <span class="rem">// Поворот на угол курса</span>
+        <span class="kw">if</span>(Dir!=<span class="const">0</span>.<span class="const">0</span>)
+          glRotatef(Dir,<span class="const">0</span>,<span class="const">0</span>,<span class="const">1</span>);
+        <span class="rem">// Поворот на угол дифферента</span>
+        <span class="kw">if</span>(Pitch!=<span class="const">0</span>.<span class="const">0</span>)
+          glRotatef(Pitch,<span class="const">1</span>,<span class="const">0</span>,<span class="const">0</span>);
+        <span class="rem">// Поворот на угол крена</span>
+        <span class="kw">if</span>(List!=<span class="const">0</span>.<span class="const">0</span>)
+          glRotatef(-List,<span class="const">0</span>,<span class="const">1</span>,<span class="const">0</span>);
+
+        <span class="rem">// Рисование подвижной белой (1,1,1) окружности</span>
+        <a class="hidden" href="pm_2_10_4.htm#ref61" title="Функция рисования окружности">DrawCircleGL</a>(<span class="const">55</span>,<span class="const">100</span>,<span class="const">1.0</span>,<span class="const">1.0</span>,<span class="const">1.0</span>);
+        <span class="rem">// Рисование центрального объекта</span>
+        <a class="hidden" href="pm_2_10_4.htm#ref67" title="Функция рисования центрального объекта блока">DrawArrowGL</a>(<span class="const">50</span>,<span class="const">80</span>,<span class="const">30</span>,<span class="const">10</span>,<span class="const">10</span>);
+      }
+    <span class="rem">// Восстановить матрицу трансформаций из стека</span>
+    glPopMatrix();
+    <span class="rem">// Завершить незавершенное рисование, если нужно</span>
+    glFlush();
+    <span class="rem">// Поменять местами видимый и рабочий буферы</span>
+    SwapBuffers(Hdc);
+  }
+  <span class="rem">//=================================================</span></div>
+
+  <span class="rem">// Модель блока с панелью</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>) <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> OpenGLInstr(
+        <span class="kw">int</span> CallMode,
+        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+<div class="changes">  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define Dir   (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define List  (*((double *)(pStart+10)))</span>
+  <span class="preproc">#define Pitch (*((double *)(pStart+18)))</span></div>
+    <span class="rem">// Указатель на личную область, приведенный к нужному типу</span>
+    TOpenGLInstr *data=(TOpenGLInstr*)(BlockData-&gt;BlockData);
+    <span class="rem">// Вспомогательная – указатель на структуру параметров при</span>
+    <span class="rem">// действиях с панелью (будет использована в реакциях)</span>
+    <a class="hidden" href="RDS_BFM_BLOCKPANEL.htm#ref2" title="Указатель на RDS_PANOPERATION">RDS_PPANOPERATION</a> param;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Создание личной области данных</span>
+          <span class="rem">// (при этом в конструкторе будет создана панель)</span>
+          BlockData-&gt;BlockData=data=<span class="kw">new</span> TOpenGLInstr();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка данных блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// В деструкторе класса панель будет уничтожена</span>
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+<div class="changes">        <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDDD}"</span>))
+            <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+          <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;</div>
+        <span class="rem">// Запуск расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a>:
+          <span class="rem">// Создание таймера обновления</span>
+          data-&gt;CreateRefreshTimer(BlockData-&gt;Parent);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов функции настройки или двойной щелчок</span>
+        <span class="rem">// левой кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm" title="А.2.6.8. RDS_BFM_MOUSEDBLCLICK &ndash; двойной щелчок мыши">RDS_BFM_MOUSEDBLCLICK</a>:
+          <span class="rem">// Показать панель</span>
+          <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(data-&gt;Panel,<a class="hidden" href="RDS_PAN_VISIBLE.htm" title="А.5.31.14. Команда RDS_PAN_VISIBLE &ndash; видимость панели">RDS_PAN_VISIBLE</a>,<span class="const">0</span>,<span class="const">1</span>);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Сохранение параметров блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a>:
+          data-&gt;SaveText();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Загрузка параметров блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a>:
+          data-&gt;LoadText((<span class="kw">char</span>*)ExtParam);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Действия с панелью</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_BLOCKPANEL.htm" title="А.2.6.1. RDS_BFM_BLOCKPANEL &ndash; уведомление от панели блока в подсистеме">RDS_BFM_BLOCKPANEL</a>:
+          <span class="rem">// Приведение указателя на структуру, переданного в</span>
+          <span class="rem">// ExtParam, к нужному типу</span>
+          param=(<a class="hidden" href="RDS_BFM_BLOCKPANEL.htm#ref2" title="Указатель на RDS_PANOPERATION">RDS_PPANOPERATION</a>)ExtParam;
+          <span class="rem">// Разные действия в зависимости от операции с панелью</span>
+          <span class="kw">switch</span>(param-&gt;Operation)
+            { <span class="rem">// Создание оконного объекта для панели</span>
+              <span class="kw">case</span> <a class="hidden" href="RDS_BFM_BLOCKPANEL.htm#light_ref3" title="RDS_PANOP_CREATE">RDS_PANOP_CREATE</a>:
+              <span class="changes">  <span class="rem">// Настройка вывода изображения на панель      </span></span>
+              <span class="changes">  data-&gt;<a class="hidden" href="pm_2_10_4.htm#ref69" title="Настройка вывода изображения на панель">InitWindow</a>(param-&gt;Panel-&gt;Handle);        </span>
+                <span class="kw">break</span>;
+              <span class="rem">// Уничтожение оконного объекта панели</span>
+              <span class="kw">case</span> <a class="hidden" href="RDS_BFM_BLOCKPANEL.htm#light_ref4" title="RDS_PANOP_DESTROY">RDS_PANOP_DESTROY</a>:
+              <span class="changes">  <span class="rem">// Отключение OpenGL                           </span></span>
+              <span class="changes">  data-&gt;<a class="hidden" href="pm_2_10_4.htm#ref77" title="Функция отключения OpenGL">Clear</a>();                                 </span>
+                <span class="kw">break</span>;
+              <span class="rem">// Размер панели изменен</span>
+              <span class="kw">case</span> <a class="hidden" href="RDS_BFM_BLOCKPANEL.htm#light_ref5" title="RDS_PANOP_RESIZED">RDS_PANOP_RESIZED</a>:
+              <span class="changes">  <span class="rem">// При изменении размера – просто перерисовка  </span></span>
+              <span class="changes">  data-&gt;<a class="hidden" href="pm_2_10_4.htm#ref81" title="Функция рисования трехмерной сцены">RenderScene</a>(Dir,List,Pitch);             </span>
+                <span class="kw">break</span>;
+              <span class="rem">// Необходимо перерисовать изображение</span>
+              <span class="kw">case</span> <a class="hidden" href="RDS_BFM_BLOCKPANEL.htm#light_ref7" title="RDS_PANOP_PAINT">RDS_PANOP_PAINT</a>:
+              <span class="changes">  data-&gt;<a class="hidden" href="pm_2_10_4.htm#ref81" title="Функция рисования трехмерной сцены">RenderScene</a>(Dir,List,Pitch);             </span>
+                <span class="kw">break</span>;
+            }
+          <span class="kw">break</span>;
+
+       <span class="rem">// Необходимо обновить окна блока (вызывается таймером)</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_WINREFRESH.htm" title="А.2.6.21. RDS_BFM_WINREFRESH &ndash; обновление окон блока">RDS_BFM_WINREFRESH</a>:
+        <span class="changes">  <span class="rem">// Перерисовка изображения          </span></span>
+        <span class="changes">  data-&gt;<a class="hidden" href="pm_2_10_4.htm#ref81" title="Функция рисования трехмерной сцены">RenderScene</a>(Dir,List,Pitch);  </span>
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+<div class="changes">  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef Pitch</span>
+  <span class="preproc">#undef List</span>
+  <span class="preproc">#undef Dir</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span></div>
+  }
+  <span class="rem">//=================================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_10_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_11.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_10_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

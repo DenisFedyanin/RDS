@@ -1,0 +1,450 @@
+EXPSYSTXT
+version 1 rev 0 4017.5.17.19.25.0
+
+types
+ begin
+  struct type "Complex" 
+   begin
+    double name "Re" default "0"
+    double name "Im" default "0"
+   end
+  struct type "Convert" 
+   begin
+    int name "alter_k" default 0
+    int name "alter_p" default 0
+    int name "alter_v" default 0
+    int name "alter_nad" default 0
+    int name "alter_tr" default 0
+    int name "alter_nacpr" default 0
+    double name "alter_nacyd" default "0"
+   end
+  struct type "RestructCist" 
+   begin
+    matrix double name "param_unitid" default "[ ] 0"
+    matrix double name "sub_out" default "[ ] 0"
+    matrix struct type "Convert" name "cont" default "[ ] {0, 0, 0, 0, 0, 0, 0}"
+    double name "manual_z" default "0"
+   end
+ end
+
+pictures
+ begin
+  picture id 0
+   begin
+    ellipse from -60 -30 size 120 60 solid color 0 fill 16777215  colorvar "bgcolor"
+    textblock from -60 -26 size 120 52 text "Узел когнитивной карты" font "Arial" height 13 color 0 var "text"
+   end
+  picture id 1
+   begin
+    rect from 0 0 size 29 29 solid color 0 fill 16777215
+    ellipse from 7 7 diameter 16 arc -0.4637339822548933732 3.926990816987241395 solid color 0
+    polygon points 3 solid color 0 fill 0 shape 25 19 20 16 19 22 end
+   end
+ end
+
+styles
+ begin
+  style name "Стандартная связь" solid scalewidth color 0 arrow 10 2 dotsize 5 default conn all types
+  style name "Стандартная шина" solid width 5 scalewidth color 0 arrow 10 5 dotsize 0 default bus
+ end
+
+global
+ begin
+  object name "kgnode.mdl" type "ICS.l49.Common.dll.bcpp55.model.scheme.$BC55MODEL" id 0 string "$BC55MODEL 0.0.0 2017.3.14.16.51.0 0\r\nМодель блока для модуля автокомп"+
+  +"иляции RDS BCpp55@Common.dll\r\n$NOSHARE\r\n$VARS\r\n  signal name \"Start\" i"+
+  +"n menu run default 0\r\n  signal name \"Ready\" out menu default 0\r\n  matr"+
+  +"ix double oneindex name \"x\" in menu default \"[ ] 0\"\r\n  matrix double o"+
+  +"neindex name \"x0\" default \"[ ] 0\"\r\n  double name \"init\" in menu run de"+
+  +"fault \"0\"\r\n  signal name \"init_signal\" in run default 1\r\n  double name"+
+  +" \"y\" out menu default \"0\"\r\n  logical name \"flag\" default 0\r\n  matrix d"+
+  +"ouble oneindex name \"z\" default \"[ ] 0\"\r\n  double name \"t0\" default \"0"+
+  +"\"\r\n$DYNAMIC\r\n  double name \"DynTime\" request \"DynTime\" parent search\r\n"+
+  +"$ENDDECL\r\n$POPUP\r\nContextPopup(MenuData);\r\n$MENU\r\nMenuFunction(MenuDat"+
+  +"a);\r\n$MODEL\r\n\r\nif(init_signal && CheckInputSource(rdsbcppBlockData->Bl"+
+  +"ock,init.Num(),NULL)){\r\n	ival=init;\r\n	init_signal=0;\r\n	}\r\n\r\nif(DynTime"+
+  +">t0){\r\n\r\n	z.Resize(x.Size());\r\n	x0.Resize(x.Size());\r\n	for(int i=0; i<"+
+  +"z.Size(); i++){\r\n		z[i]=0.0;\r\n		if(!flag){\r\n			x0[i]=0.0;\r\n			flag=1;\r"+
+  +"\n			}\r\n		}\r\n\r\n	// Выполнение функций связей\r\n	\r\n	if(regime==0){\r\n		#de"+
+  +"fine y x[0]\r\n		z[0]=y+sin(y)+1;\r\n		#undef y\r\n		}\r\n	else{\r\n		#define y "+
+  +"(x[0]-x0[0])\r\n		z[0]=y+sin(y)+1;\r\n		x0[0]=x[0];\r\n		#undef y\r\n		}\r\n\r\n	i"+
+  +"f(regime==0){\r\n		#define y x[1]\r\n		z[1]=1.500000*y;\r\n		#undef y\r\n		}\r\n"+
+  +"	else{\r\n		#define y (x[1]-x0[1])\r\n		z[1]=1.500000*y;\r\n		x0[1]=x[1];\r\n	"+
+  +"	#undef y\r\n		}\r\n\r\n	if(regime==0){\r\n		#define y x[2]\r\n		z[2]=2.570000*y"+
+  +";\r\n		#undef y\r\n		}\r\n	else{\r\n		#define y (x[2]-x0[2])\r\n		z[2]=2.570000*"+
+  +"y;\r\n		x0[2]=x[2];\r\n		#undef y\r\n		}\r\n\r\n\r\n	// Выполнение функции узла\r\n	"+
+  +"Calc();\r\n\r\n	t0=DynTime;\r\n	}\r\n$INIT\r\nConstructor();\r\n$RESET\r\nReset();\r\n"+
+  +"flag=0;\r\n$CLASSDEF\r\n#include <kgmaps/kgmaps_class.cpp>\r\n$SETUP\r\nResult"+
+  +"=NSetup();\r\nCheckAndRewriteMdl();\r\n$OTHER\r\nMdlChange(CallMode, ExtPara"+
+  +"m, Result);\r\n$SAVETEXT\r\nSave();\r\n$LOADTEXT\r\nLoad(LoadedText);\r\n$GLOBAL"+
+  +"\r\n#include 	<kgmaps/kgmaps_global.cpp>\r\n$DRAW\r\nDraw(DrawData);\r\n$CLEAN"+
+  +"UP\r\nClear();\r\n$OPTIONS\r\n  tabs $MODEL $INIT $RESET $CLASSDEF $SETUP $O"+
+  +"THER $SAVETEXT $LOADTEXT $GLOBAL $DRAW\r\n  window max hdiv 337 vdiv 436"+
+  +" fdiv 409\r\n  svc 0 90 1 90 2 90 3 90\r\n  dvc 0 90 1 90 2 90\r\n  fnc 0 90"+
+  +" 1 90 2 90\r\n  pvc 0 90 1 90 2 100\r\n  dvcheck 0\r\n  indexcheck 1\r\n  init"+
+  +"calc 0\r\n  initcalcstart 0\r\n  ignorewarnings 0\r\n  customerrmsg 0\r\n  aut"+
+  +"oreadonlyeditor 0\r\n  genvartypemacros 0\r\n  matherr 1\r\n  catchall 0\r\n  "+
+  +"dvstart 1\r\n  searchlinks auto deep\r\n" 
+  object name "kgnode1.mdl" type "ICS.l49.Common.dll.bcpp55.model.scheme.$BC55MODEL" id 0 string "$BC55MODEL 0.0.0 2017.3.14.16.51.0 0\r\nМодель блока для модуля автокомп"+
+  +"иляции RDS BCpp55@Common.dll\r\n$NOSHARE\r\n$VARS\r\n  signal name \"Start\" i"+
+  +"n menu run default 0\r\n  signal name \"Ready\" out menu default 0\r\n  matr"+
+  +"ix double oneindex name \"x\" in menu default \"[ ] 0\"\r\n  matrix double o"+
+  +"neindex name \"x0\" default \"[ ] 0\"\r\n  double name \"init\" in menu run de"+
+  +"fault \"0\"\r\n  signal name \"init_signal\" in run default 1\r\n  double name"+
+  +" \"y\" out menu default \"0\"\r\n  logical name \"flag\" default 0\r\n  matrix d"+
+  +"ouble oneindex name \"z\" default \"[ ] 0\"\r\n  double name \"t0\" default \"0"+
+  +"\"\r\n$DYNAMIC\r\n  double name \"DynTime\" request \"DynTime\" parent search\r\n"+
+  +"$ENDDECL\r\n$POPUP\r\nContextPopup(MenuData);\r\n$MENU\r\nMenuFunction(MenuDat"+
+  +"a);\r\n$MODEL\r\n\r\nif(init_signal && CheckInputSource(rdsbcppBlockData->Bl"+
+  +"ock,init.Num(),NULL)){\r\n	ival=init;\r\n	init_signal=0;\r\n	}\r\n\r\nif(DynTime"+
+  +">t0){\r\n\r\n	z.Resize(x.Size());\r\n	x0.Resize(x.Size());\r\n	for(int i=0; i<"+
+  +"z.Size(); i++){\r\n		z[i]=0.0;\r\n		if(!flag){\r\n			x0[i]=0.0;\r\n			flag=1;\r"+
+  +"\n			}\r\n		}\r\n\r\n	// Выполнение функций связей\r\n	\r\n\r\n	// Выполнение функц"+
+  +"ии узла\r\n	Calc();\r\n\r\n	t0=DynTime;\r\n	}\r\n$INIT\r\nConstructor();\r\n$RESET\r\n"+
+  +"Reset();\r\nflag=0;\r\n$CLASSDEF\r\n#include <kgmaps/kgmaps_class.cpp>\r\n$SET"+
+  +"UP\r\nResult=NSetup();\r\nCheckAndRewriteMdl();\r\n$OTHER\r\nMdlChange(CallMod"+
+  +"e, ExtParam, Result);\r\n$SAVETEXT\r\nSave();\r\n$LOADTEXT\r\nLoad(LoadedText)"+
+  +";\r\n$GLOBAL\r\n#include 	<kgmaps/kgmaps_global.cpp>\r\n$DRAW\r\nDraw(DrawData"+
+  +");\r\n$CLEANUP\r\nClear();\r\n$OPTIONS\r\n  tabs $MODEL $INIT $RESET $CLASSDEF"+
+  +" $SETUP $OTHER $SAVETEXT $LOADTEXT $GLOBAL $DRAW\r\n  window max hdiv 33"+
+  +"7 vdiv 436 fdiv 409\r\n  svc 0 90 1 90 2 90 3 90\r\n  dvc 0 90 1 90 2 90\r\n"+
+  +"  fnc 0 90 1 90 2 90\r\n  pvc 0 90 1 90 2 100\r\n  dvcheck 0\r\n  indexcheck"+
+  +" 1\r\n  initcalc 0\r\n  initcalcstart 0\r\n  ignorewarnings 0\r\n  customerrms"+
+  +"g 0\r\n  autoreadonlyeditor 0\r\n  genvartypemacros 0\r\n  matherr 1\r\n  catc"+
+  +"hall 0\r\n  dvstart 1\r\n  searchlinks auto deep\r\n" 
+  object name "kgnode2.mdl" type "ICS.l49.Common.dll.bcpp55.model.scheme.$BC55MODEL" id 0 string "$BC55MODEL 0.0.0 2017.3.14.16.51.0 0\r\nМодель блока для модуля автокомп"+
+  +"иляции RDS BCpp55@Common.dll\r\n$NOSHARE\r\n$VARS\r\n  signal name \"Start\" i"+
+  +"n menu run default 0\r\n  signal name \"Ready\" out menu default 0\r\n  matr"+
+  +"ix double oneindex name \"x\" in menu default \"[ ] 0\"\r\n  matrix double o"+
+  +"neindex name \"x0\" default \"[ ] 0\"\r\n  double name \"init\" in menu run de"+
+  +"fault \"0\"\r\n  signal name \"init_signal\" in run default 1\r\n  double name"+
+  +" \"y\" out menu default \"0\"\r\n  logical name \"flag\" default 0\r\n  matrix d"+
+  +"ouble oneindex name \"z\" default \"[ ] 0\"\r\n  double name \"t0\" default \"0"+
+  +"\"\r\n$DYNAMIC\r\n  double name \"DynTime\" request \"DynTime\" parent search\r\n"+
+  +"$ENDDECL\r\n$POPUP\r\nContextPopup(MenuData);\r\n$MENU\r\nMenuFunction(MenuDat"+
+  +"a);\r\n$MODEL\r\n\r\nif(init_signal && CheckInputSource(rdsbcppBlockData->Bl"+
+  +"ock,init.Num(),NULL)){\r\n	ival=init;\r\n	init_signal=0;\r\n	}\r\n\r\nif(DynTime"+
+  +">t0){\r\n\r\n	z.Resize(x.Size());\r\n	x0.Resize(x.Size());\r\n	for(int i=0; i<"+
+  +"z.Size(); i++){\r\n		z[i]=0.0;\r\n		if(!flag){\r\n			x0[i]=0.0;\r\n			flag=1;\r"+
+  +"\n			}\r\n		}\r\n\r\n	// Выполнение функций связей\r\n	\r\n\r\n	// Выполнение функц"+
+  +"ии узла\r\n	Calc();\r\n\r\n	t0=DynTime;\r\n	}\r\n$INIT\r\nConstructor();\r\n$RESET\r\n"+
+  +"Reset();\r\nflag=0;\r\n$CLASSDEF\r\n#include <kgmaps/kgmaps_class.cpp>\r\n$SET"+
+  +"UP\r\nResult=NSetup();\r\nCheckAndRewriteMdl();\r\n$OTHER\r\nMdlChange(CallMod"+
+  +"e, ExtParam, Result);\r\n$SAVETEXT\r\nSave();\r\n$LOADTEXT\r\nLoad(LoadedText)"+
+  +";\r\n$GLOBAL\r\n#include 	<kgmaps/kgmaps_global.cpp>\r\n$DRAW\r\nDraw(DrawData"+
+  +");\r\n$CLEANUP\r\nClear();\r\n$OPTIONS\r\n  tabs $MODEL $INIT $RESET $CLASSDEF"+
+  +" $SETUP $OTHER $SAVETEXT $LOADTEXT $GLOBAL $DRAW\r\n  window max hdiv 33"+
+  +"7 vdiv 436 fdiv 409\r\n  svc 0 90 1 90 2 90 3 90\r\n  dvc 0 90 1 90 2 90\r\n"+
+  +"  fnc 0 90 1 90 2 90\r\n  pvc 0 90 1 90 2 100\r\n  dvcheck 0\r\n  indexcheck"+
+  +" 1\r\n  initcalc 0\r\n  initcalcstart 0\r\n  ignorewarnings 0\r\n  customerrms"+
+  +"g 0\r\n  autoreadonlyeditor 0\r\n  genvartypemacros 0\r\n  matherr 1\r\n  catc"+
+  +"hall 0\r\n  dvstart 1\r\n  searchlinks auto deep\r\n" 
+  object name "kgnode3.mdl" type "ICS.l49.Common.dll.bcpp55.model.scheme.$BC55MODEL" id 0 string "$BC55MODEL 0.0.0 2017.3.14.16.51.0 0\r\nМодель блока для модуля автокомп"+
+  +"иляции RDS BCpp55@Common.dll\r\n$NOSHARE\r\n$VARS\r\n  signal name \"Start\" i"+
+  +"n menu run default 0\r\n  signal name \"Ready\" out menu default 0\r\n  matr"+
+  +"ix double oneindex name \"x\" in menu default \"[ ] 0\"\r\n  matrix double o"+
+  +"neindex name \"x0\" default \"[ ] 0\"\r\n  double name \"init\" in menu run de"+
+  +"fault \"0\"\r\n  signal name \"init_signal\" in run default 1\r\n  double name"+
+  +" \"y\" out menu default \"0\"\r\n  logical name \"flag\" default 0\r\n  matrix d"+
+  +"ouble oneindex name \"z\" default \"[ ] 0\"\r\n  double name \"t0\" default \"0"+
+  +"\"\r\n$DYNAMIC\r\n  double name \"DynTime\" request \"DynTime\" parent search\r\n"+
+  +"$ENDDECL\r\n$POPUP\r\nContextPopup(MenuData);\r\n$MENU\r\nMenuFunction(MenuDat"+
+  +"a);\r\n$MODEL\r\n\r\nif(init_signal && CheckInputSource(rdsbcppBlockData->Bl"+
+  +"ock,init.Num(),NULL)){\r\n	ival=init;\r\n	init_signal=0;\r\n	}\r\n\r\nif(DynTime"+
+  +">t0){\r\n\r\n	z.Resize(x.Size());\r\n	x0.Resize(x.Size());\r\n	for(int i=0; i<"+
+  +"z.Size(); i++){\r\n		z[i]=0.0;\r\n		if(!flag){\r\n			x0[i]=0.0;\r\n			flag=1;\r"+
+  +"\n			}\r\n		}\r\n\r\n	// Выполнение функций связей\r\n	\r\n\r\n	// Выполнение функц"+
+  +"ии узла\r\n	Calc();\r\n\r\n	t0=DynTime;\r\n	}\r\n$INIT\r\nConstructor();\r\n$RESET\r\n"+
+  +"Reset();\r\nflag=0;\r\n$CLASSDEF\r\n#include <kgmaps/kgmaps_class.cpp>\r\n$SET"+
+  +"UP\r\nResult=NSetup();\r\nCheckAndRewriteMdl();\r\n$OTHER\r\nMdlChange(CallMod"+
+  +"e, ExtParam, Result);\r\n$SAVETEXT\r\nSave();\r\n$LOADTEXT\r\nLoad(LoadedText)"+
+  +";\r\n$GLOBAL\r\n#include 	<kgmaps/kgmaps_global.cpp>\r\n$DRAW\r\nDraw(DrawData"+
+  +");\r\n$CLEANUP\r\nClear();\r\n$OPTIONS\r\n  tabs $MODEL $INIT $RESET $CLASSDEF"+
+  +" $SETUP $OTHER $SAVETEXT $LOADTEXT $GLOBAL $DRAW\r\n  window max hdiv 33"+
+  +"7 vdiv 436 fdiv 409\r\n  svc 0 90 1 90 2 90 3 90\r\n  dvc 0 90 1 90 2 90\r\n"+
+  +"  fnc 0 90 1 90 2 90\r\n  pvc 0 90 1 90 2 100\r\n  dvcheck 0\r\n  indexcheck"+
+  +" 1\r\n  initcalc 0\r\n  initcalcstart 0\r\n  ignorewarnings 0\r\n  customerrms"+
+  +"g 0\r\n  autoreadonlyeditor 0\r\n  genvartypemacros 0\r\n  matherr 1\r\n  catc"+
+  +"hall 0\r\n  dvstart 1\r\n  searchlinks auto deep\r\n" 
+ end
+
+system name "Sys1"
+ begin
+  layers
+   begin
+    layer id 1 name "Слой 1"
+    config name "Основная" current layers =1 end
+   end
+  editor
+   begin
+    window maximized pos 320 170 size 640 682 open printbar 592 2 layerbar 141 2 zoombar 452 2 displaybar 654 2 calcbar 11 2 status
+    field size 2000 2000
+    grid size 5 5 snap color 16711680
+    crosscolor 16711680
+    blocknames show spacing 7 font "Arial" height 12 color 0
+    varnames show font "Arial" height 10
+   end
+  print
+   begin
+   end
+  content
+   begin
+    dllblock name "Block2" id 6
+     begin
+      pos 410 185
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in menu run default 0
+        signal name "Ready" out menu default 0
+        matrix double oneindex name "x" in menu default "[ ] 0"
+        matrix double oneindex name "x0" default "[ ] 0"
+        double name "init" in menu run default "0"
+        signal name "init_signal" in run default 1
+        double name "y" out menu default "0"
+        logical name "flag" default 0
+        matrix double oneindex name "z" default "[ ] 0"
+        double name "t0" default "0"
+       end
+      auto
+       begin
+       end
+      picture id 0 end
+      dll file "kgnode.dll" func "rdsbcppBlockEntryPoint" cycle draw setup "" auto
+      dlldata text
+       Regime 0 NodeName "Здоровье" Font " font \"Arial\" height 17 bold charset rus color 0" NodeColor 4259584 NodeShowCVal 1 NodeNDecCVal 1 NodeIVal "0" NodeFunc 0 QRP 0
+      enddlldata
+      autocomp file "$DLL$\\Common.dll" func "SearchComp" model "kgnode.mdl" alt "C:\\Program Files\\RDS\\Samples\\kgmaps\\kgnode.mdl\nC:\\Program Files\\RDS\\Samples\\kgmaps\\kgmaps.rds"
+      rect 145 65
+     end
+    dllblock name "DDisplay1" id 11
+     begin
+      pos 645 170
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run hide default 0
+        signal name "Ready" out hide default 0
+        double name "v" in menu run hide default "0"
+       end
+      dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "" auto
+      dlldata text
+       value prec 1 font "Arial" height 15 color 0 set 0 initial
+       frame border 0 fill 12632256
+      enddlldata
+      rect 75 19
+     end
+    dllblock name "RTP1" id 12
+     begin
+      pos 50 35
+      layer id 1
+      name hidden
+      vars
+       begin
+        signal name "Start" in run default 1
+        signal name "Ready" out default 0
+        signal name "DoStep" out menu default 0
+        signal name "NextStep" in menu run default 0
+        double name "Time" out default "0"
+        double name "Load" out default "0"
+        signal name "Stop" in menu default 0
+        signal name "Finish" out menu default 0
+        signal name "Suspend" in default 0
+        signal name "Resume" in run default 0
+        double name "StepVal" in run default "0"
+        double name "SyncMul" in run default "0"
+        signal name "CalcStart" out menu default 0
+        signal name "ResumeNoSync" in run default 0
+       end
+      picture id 1 end
+      dll file "$DLL$\\Common.dll" func "DynamicSync" setup "Настройка" auto
+      dlldata text
+       s "0.1" a 2 b 20 t "1" r 1 c 1 f "100" d 1 e 0 x 1
+      enddlldata
+     end
+    dllblock name "Block1" id 17
+     begin
+      pos 140 120
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in menu run default 0
+        signal name "Ready" out menu default 0
+        matrix double oneindex name "x" in menu default "[ ] 0"
+        matrix double oneindex name "x0" default "[ ] 0"
+        double name "init" in menu run default "0"
+        signal name "init_signal" in run default 1
+        double name "y" out menu default "0"
+        logical name "flag" default 0
+        matrix double oneindex name "z" default "[ ] 0"
+        double name "t0" default "0"
+       end
+      auto
+       begin
+       end
+      picture id 0 end
+      dll file "kgnode1.dll" func "rdsbcppBlockEntryPoint" cycle draw setup "" auto
+      dlldata text
+       Regime 0 NodeName "Сон" Font " font \"Arial\" height 17 bold charset rus color 0" NodeColor 8388736 NodeShowCVal 1 NodeNDecCVal 1 NodeIVal "10" NodeFunc 2 QRP 0
+      enddlldata
+      autocomp file "$DLL$\\Common.dll" func "SearchComp" model "kgnode1.mdl" alt "C:\\Program Files\\RDS\\Samples\\kgmaps\\kgnode1.mdl\nC:\\Program Files\\RDS\\Samples\\kgmaps\\kgmaps.rds"
+      rect 145 65
+     end
+    dllblock name "Block3" id 18
+     begin
+      pos 130 245
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in menu run default 0
+        signal name "Ready" out menu default 0
+        matrix double oneindex name "x" in menu default "[ ] 0"
+        matrix double oneindex name "x0" default "[ ] 0"
+        double name "init" in menu run default "0"
+        signal name "init_signal" in run default 1
+        double name "y" out menu default "0"
+        logical name "flag" default 0
+        matrix double oneindex name "z" default "[ ] 0"
+        double name "t0" default "0"
+       end
+      auto
+       begin
+       end
+      picture id 0 end
+      dll file "kgnode2.dll" func "rdsbcppBlockEntryPoint" cycle draw setup "" auto
+      dlldata text
+       Regime 0 NodeName "Еда" Font " font \"Arial\" height 17 bold charset rus color 0" NodeColor 8454143 NodeShowCVal 1 NodeNDecCVal 1 NodeIVal "5" NodeFunc 2 QRP 0
+      enddlldata
+      autocomp file "$DLL$\\Common.dll" func "SearchComp" model "kgnode2.mdl" alt "C:\\Program Files\\RDS\\Samples\\kgmaps\\kgnode2.mdl\nC:\\Program Files\\RDS\\Samples\\kgmaps\\kgmaps.rds"
+      rect 145 65
+     end
+    dllblock name "Block4" id 19
+     begin
+      pos 200 345
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in menu run default 0
+        signal name "Ready" out menu default 0
+        matrix double oneindex name "x" in menu default "[ ] 0"
+        matrix double oneindex name "x0" default "[ ] 0"
+        double name "init" in menu run default "0"
+        signal name "init_signal" in run default 1
+        double name "y" out menu default "0"
+        logical name "flag" default 0
+        matrix double oneindex name "z" default "[ ] 0"
+        double name "t0" default "0"
+       end
+      auto
+       begin
+       end
+      picture id 0 end
+      dll file "kgnode3.dll" func "rdsbcppBlockEntryPoint" cycle draw setup "" auto
+      dlldata text
+       Regime 0 NodeName "Вода" Font " font \"Arial\" height 17 bold charset rus color 0" NodeColor 12615680 NodeShowCVal 1 NodeNDecCVal 1 NodeIVal "15" NodeFunc 2 QRP 0
+      enddlldata
+      autocomp file "$DLL$\\Common.dll" func "SearchComp" model "kgnode3.mdl" alt "C:\\Program Files\\RDS\\Samples\\kgmaps\\kgnode3.mdl\nC:\\Program Files\\RDS\\Samples\\kgmaps\\kgmaps.rds"
+      rect 145 65
+     end
+    conn id 7
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      label text "y+sin(y)+1" center show pos 335 153
+      param
+       begin
+        name "RFuncType" int 1
+        name "RK" double "0"
+        name "RCustFunc" string "y+sin(y)+1"
+       end
+      points
+       begin
+        id 0 block "Block1" var "y" out pos 140 45 cname 11 -14 fixed
+        id 1 block "Block2" var "x[0]" in pos 20 10 cname left up
+        id 2 pos 385 170
+       end
+      lines
+       begin
+        line 0 2 ctrl1 30 26 ctrl2 -43 -10
+        line 2 1 ctrl1 14 2 ctrl2 -18 -13
+       end
+     end
+    conn id 10
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      param
+       begin
+        name "RFuncType" int 0
+        name "RK" double "0"
+        name "RCustFunc" string ""
+       end
+      points
+       begin
+        id 0 block "Block2" var "y" out pos 145 35 cname right up
+        id 1 block "DDisplay1" var "v" in pos 0 10 cname left up hidden
+       end
+      lines
+       begin
+        line 0 1 ctrl1 35 10 ctrl2 -45 0
+       end
+     end
+    conn id 14
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      label text "1.5" center show pos 309 227
+      param
+       begin
+        name "RFuncType" int 0
+        name "RK" double "1.5"
+        name "RCustFunc" string ""
+       end
+      points
+       begin
+        id 0 block "Block3" var "y" out pos 145 30 cname right up
+        id 1 block "Block2" var "x[1]" in pos 0 25 cname left up
+       end
+      lines
+       begin
+        line 0 1 ctrl1 75 -10 ctrl2 -130 0
+       end
+     end
+    conn id 16
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      label text "2.57" center show pos 359 318
+      param
+       begin
+        name "RFuncType" int 0
+        name "RK" double "2.57"
+        name "RCustFunc" string ""
+       end
+      points
+       begin
+        id 0 block "Block4" var "y" out pos 145 30 cname right up
+        id 1 block "Block2" var "x[2]" in pos 15 50 cname -4 11 fixed
+       end
+      lines
+       begin
+        line 1 0 ctrl1 -100 65 ctrl2 95 -60
+       end
+     end
+   end
+  end
+
+additional
+ begin
+  window layer pos 528 117 size 269 392
+  window system ""
+ end

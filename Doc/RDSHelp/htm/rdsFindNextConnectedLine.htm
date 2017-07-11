@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.6.14. rdsFindNextConnectedLine &ndash; найти отрезок связи, соединенный с точкой</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_6">А.5.6. Операции с блоками и связями</a></p>
+<div class="level"><p>А.5.6.14. <span class="cpp">rdsFindNextConnectedLine</span> &ndash; найти отрезок связи, соединенный с точкой</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsEnumConnectedBlocksByVar.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsForceBlockRedraw.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsFindNextConnectedLine">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.6. Операции с блоками и связями</h4>
+<h5>А.5.6.14. <span class="cpp">rdsFindNextConnectedLine</span> &ndash; найти отрезок связи, соединенный с точкой</h5>
+
+
+<p>Функция <span class="cpp">rdsFindNextConnectedLine</span> находит внутри
+<a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связи</a>
+или <a href="um_2_8.htm" title="&sect;2.8. Использование шин">шины</a>
+очередной отрезок, соединенный с точкой с указанным номером.</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsFindNextConnectedLine(
+      <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> Conn,              <span class="rem">// Связь</span>
+      <span class="kw">int</span> PointNum,                  <span class="rem">// Номер точки</span>
+      <span class="kw">int</span> StartLineNum,              <span class="rem">// Начальный номер отрезка</span>
+      <a class="hidden" href="RDS_LINEDESCRIPTION.htm#ref2" title="Указатель на RDS_LINEDESCRIPTION">RDS_PLINEDESCRIPTION</a> pLDescr,  <span class="rem">// Заполняемое описание</span>
+      <span class="kw">int</span> *pNextPoint                <span class="rem">// Номер точки на другом конце</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_IChIILdpI</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Conn</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор связи, внутри которой ищется отрезок.</dd>
+
+  <dt><span class="cpp">PointNum</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Номер точки, с которой найденный отрезок должен соединяться одним из своих двух концов. Нумерация точек
+  в связи начинается с нуля.</dd>
+
+  <dt><span class="cpp">StartLineNum</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Номер отрезка, начиная с которого (включительно) производится поиск. Если отрезок
+  <span class="cpp">StartLineNum</span> соединен с точкой <span class="cpp">PointNum</span>, функция вернет
+  <span class="cpp">StartLineNum</span>. Нумерация отрезков в связи начинается с нуля.</dd>
+
+  <dt><span class="cpp">pLDescr</span>&emsp;(<span class="cpp"><i><a href="RDS_LINEDESCRIPTION.htm#ref2" title="Указатель на RDS_LINEDESCRIPTION">RDS_PLINEDESCRIPTION</a></i></span>)</dt>
+  <dd>Указатель на структуру описания отрезка связи <span class="cpp"><a href="RDS_LINEDESCRIPTION.htm#ref1" title="Структура RDS_LINEDESCRIPTION">RDS_LINEDESCRIPTION</a></span>, которую
+  функция должна заполнить параметрами найденного отрезка. Если вызывающей программе не нужно это описание,
+  в этом параметре можно передать <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">pNextPoint</span>&emsp;(<span class="cpp"><i>int*</i></span>)</dt>
+  <dd>Указатель на целую переменную, в которую функция запишет номер точки, находящейся на противоположном от
+  точки <span class="cpp">PointNum</span> конце найденного отрезка. Если вызывающей программе не нужен этот
+  номер, в параметре <span class="cpp">pNextPoint</span> можно передать <span class="cpp">NULL</span>.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Номер найденного отрезка внутри связи <span class="cpp">Conn</span>. Если отрезок не найден,
+возвращается значение &minus;1.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Функция <span class="cpp">rdsFindNextConnectedLine</span> позволяет анализировать геометрию связи
+<span class="cpp">Conn</span>. Связь в RDS состоит из точек и соединяющих их отрезков, причем к
+каждой точке может подходить один отрезок (для конечных точек связи), два отрезка (для точек излома) или
+больше двух отрезков (для точек ветвления). Отрезок связи может быть прямой линией или кривой Безье.
+Общее число точек и отрезков в связи можно получить из структуры
+<span class="cpp"><a href="RDS_CONNDESCRIPTION.htm#ref1" title="Структура RDS_CONNDESCRIPTION">RDS_CONNDESCRIPTION</a></span>, заполняемой функцией
+<span class="cpp"><a href="rdsGetConnDescription.htm" title="А.5.6.23. rdsGetConnDescription &ndash; получить описание связи">rdsGetConnDescription</a></span>.</p>
+
+<p>Зная номер точки в связи, можно перебрать все подходящие к ней отрезки последовательными вызовами
+<span class="cpp">rdsFindNextConnectedLine</span>: при первом вызове нужно в параметре
+<span class="cpp">StartLineNum</span> передать 0, а при каждом следующем &ndash; число, на единицу
+большее возвращенного функцией, до тех пор, пока она не вернет &minus;1. Возвращаемые функцией числа
+будут номерами найденных отрезков, причем функция одновременно будет заполнять структуру описания
+отрезка, указатель на которую передается в параметре <span class="cpp">pLDescr</span>, и возвращать через
+параметр <span class="cpp">pNextPoint</span> номер точки на другом конце найденного отрезка. Таким образом,
+двигаясь от точки к точке, можно проанализировать граф связи <span class="cpp">Conn</span> со всеми
+ее внутренними точками и отрезками.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsGetConnDescription.htm" title="А.5.6.23. rdsGetConnDescription &ndash; получить описание связи">rdsGetConnDescription</a></span>,
+<span class="cpp"><a href="RDS_CONNDESCRIPTION.htm#ref1" title="Структура RDS_CONNDESCRIPTION">RDS_CONNDESCRIPTION</a></span>,
+<span class="cpp"><a href="RDS_LINEDESCRIPTION.htm#ref1" title="Структура RDS_LINEDESCRIPTION">RDS_LINEDESCRIPTION</a></span>,
+<span class="cpp"><a href="rdsGetLineDescription.htm" title="А.5.6.30. rdsGetLineDescription &ndash; получить описание отрезка связи">rdsGetLineDescription</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsEnumConnectedBlocksByVar.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsForceBlockRedraw.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsFindNextConnectedLine">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

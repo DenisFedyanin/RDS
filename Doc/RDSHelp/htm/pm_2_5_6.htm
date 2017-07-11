@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.5.6. Работа с переменными произвольного типа</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_5">&sect;2.5. Статические переменные блоков</a></p>
+<div class="level"><p>&sect;2.5.6. Работа с переменными произвольного типа</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_5_5.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_5_7.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_6">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_5_6_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.5. Статические переменные блоков</h3>
+<h4>&sect;2.5.6. Работа с переменными произвольного типа</h4>
+<p class="abstract">Описываются особенности работы с переменными, тип которых может изменяться в процессе
+                работы системы. Приведен пример блока &ndash; универсального выключателя, пропускающего или не
+                пропускающего значение входа произвольного типа на выход в зависимости от дополнительного логического
+                входа. Также приводится пример блока, выдающего на выходы разные значения в зависимости
+                от типа значения, поступившего на вход. В третьем примере модель меняет тип выхода в
+                зависимости от значения целого числа на входе.</p>
+
+
+<p>Переменные <a href="pm_1_5.htm#light_ref15" title="Произвольный тип переменной блока">произвольного типа</a>
+могут содержать данные любого из других типов, используемых в RDS. Фактический тип такой переменной,
+то есть тип хранимых в ней данных, может изменяться в процессе работы, поэтому переменные произвольного типа
+устроены сложнее и передаются по <a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связям</a>
+медленнее, чем все остальные. Чаще всего они применяются
+при создании универсальных блоков-переключателей, передающих данные с заданного входа на
+заданный выход в зависимости от каких-либо условий. Такие блоки обычно не интересуются фактическим значением
+своего входа, они просто передают его на один из выходов без изменения. Если входы и выходы такого блока имеют
+произвольный тип, его можно использовать для коммутации любых значений: матриц, структур, целых и вещественных
+чисел и т.д. В противном случае пришлось бы писать отдельную модель для коммутации значений каждого из
+возможных типов.</p>
+
+<p>Данные переменной произвольного типа в дереве переменных занимают 8 байтов
+(<a href="#pic1" title="Размещение в памяти данных переменной произвольного типа">рис.&nbsp;29</a>).
+В первых четырех хранится указатель на динамически отводимую память, в которой размещаются данные
+того фактического типа, который в данный момент имеет эта переменная. Если переменная в данный момент не
+имеет фактического типа, в первых четырех байтах ее данных содержится нулевой указатель
+<span class="cpp">NULL</span>. Во вторых четырех байтах хранится служебная информация, по которой
+RDS определяет фактический тип переменной (модель не должна изменять их значения).</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/VarTypeInMemory.png" width="695" height="216" alt="Размещение в памяти данных переменной произвольного типа" />
+<p id="light_pic1">Рис.&nbsp;29. Размещение в памяти данных переменной произвольного типа</p>
+</div></div>
+
+
+<p>Для любого фактического типа отводимая область данных устроена точно так же, как у
+<a href="pm_2_5_1.htm" title="&sect;2.5.1. Доступ к статическим переменным и работа в режиме расчета">статической переменной</a>
+такого же типа в дереве переменных блока.
+На <a href="#pic2" title="Примеры отведения памяти в переменной произвольного типа для разных фактических типов">рис.&nbsp;30</a>
+приведено несколько примеров размещения в памяти переменных с разными фактическими типами.</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/VarTypeMemoryEx.png" width="731" height="500" alt="Примеры отведения памяти в переменной произвольного типа для разных фактических типов" />
+<p id="light_pic2">Рис.&nbsp;30. Примеры отведения памяти в переменной произвольного типа для разных фактических типов</p>
+</div></div>
+
+
+<p><span id="ref1">Самое</span>
+простое и наиболее часто используемое действие над переменными произвольного типа &ndash; копирование
+данных одной переменной в другую при помощи сервисной функции
+<span class="cpp"><span id="light_ref2"><a href="rdsCopyRuntimeType.htm" title="А.5.14.4. rdsCopyRuntimeType &ndash; копировать переменную произвольного типа">rdsCopyRuntimeType</a></span></span>. Именно эта функция используется в моделях различных блоков-переключателей.
+<span id="light_ref1">В качестве примера</span> рассмотрим простой блок со входом произвольного типа &laquo;<span class="rdsvar">x</span>&raquo;, логическим входом
+&laquo;<span class="rdsvar">Enable</span>&raquo; и выходом произвольного типа &laquo;<span class="rdsvar">y</span>&raquo;. Если значение входа
+&laquo;<span class="rdsvar">Enable</span>&raquo; равно единице, блок должен передавать данные со входа &laquo;<span class="rdsvar">x</span>&raquo; на выход
+&laquo;<span class="rdsvar">y</span>&raquo; независимо от их типа. Если же значение &laquo;<span class="rdsvar">Enable</span>&raquo; равно нулю, блок не
+должен пропускать данные на выход. Такой блок можно использовать в качестве универсального
+выключателя, разрешающего или запрещающего передачу данных в зависимости от значения
+&laquo;<span class="rdsvar">Enable</span>&raquo;. Его можно вставить в разрыв связи любого типа &minus;
+на <a href="#pic3" title="Универсальный выключатель, работающий с переменными любых типов">рис.&nbsp;31</a>
+слева он управляет передачей вещественного числа, справа &ndash; передачей матрицы. Блок сам изменит
+тип своего выхода y согласно типу входа &laquo;<span class="rdsvar">x</span>&raquo;.</p>
+
+<div class="pic"><div class="container" id="pic3">
+<img src="../img/TestVarSwitch.png" width="565" height="117" alt="Универсальный выключатель, работающий с переменными любых типов" />
+<p id="light_pic3">Рис.&nbsp;31. Универсальный выключатель, работающий с переменными любых типов</p>
+</div></div>
+
+
+<p>Блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">x</td>
+<td class="center">Произвольный</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center"></td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">Enable</td>
+<td class="center">Логический</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">11</td>
+<td class="vcenter">y</td>
+<td class="center">Произвольный</td>
+<td class="center">8</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center"></td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Поскольку тип передаваемых данных для этого блока не важен, в его модели целесообразно использовать функцию
+<span class="cpp"><a class="hidden" href="rdsCopyRuntimeType.htm" title="А.5.14.4. rdsCopyRuntimeType &ndash; копировать переменную произвольного типа">rdsCopyRuntimeType</a></span>:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestVarSwitch(<span class="kw">int</span> CallMode,
+                              <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                              <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define px     ((void **)(pStart+2))</span>
+  <span class="preproc">#define Enable (*((char *)(pStart+10)))</span>
+  <span class="preproc">#define py     ((void **)(pStart+11))</span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSVLV}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">if</span>(Enable) <span class="rem">// Передача разрешена</span>
+            <a class="hidden" href="rdsCopyRuntimeType.htm" title="А.5.14.4. rdsCopyRuntimeType &ndash; копировать переменную произвольного типа">rdsCopyRuntimeType</a>(py,px); <span class="rem">// Копирование x в y</span>
+          <span class="kw">else</span> <span class="rem">// Передача запрещена</span>
+            Ready=<span class="const">0</span>; <span class="rem">// Блокировка передачи данных по связям</span>
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef py</span>
+  <span class="preproc">#undef Enable</span>
+  <span class="preproc">#undef px</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Для переменных произвольного типа &laquo;<span class="rdsvar">x</span>&raquo; и &laquo;<span class="rdsvar">y</span>&raquo; вместо определений для
+доступа к самим переменным вводятся определения для указателей <span class="cpp">px</span> и
+<span class="cpp">py</span>. Эти указатели передаются в сервисные функции, обслуживающие переменные произвольного
+типа (в том числе и в <span class="cpp"><a class="hidden" href="rdsCopyRuntimeType.htm" title="А.5.14.4. rdsCopyRuntimeType &ndash; копировать переменную произвольного типа">rdsCopyRuntimeType</a></span>).</p>
+
+<p>Проверка типа переменных производится стандартным образом &ndash; в данном случае переменным произвольного
+типа соответствуют буквы &laquo;V&raquo; в строке, передаваемой в модель блока при вызове
+<span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>. При вызове модели с параметром
+<span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span> проверяется значение логического входа <span class="cpp">Enable</span>. Если
+это значение ненулевое, то есть передача данных разрешена, вызывается функция
+<span class="cpp"><a class="hidden" href="rdsCopyRuntimeType.htm" title="А.5.14.4. rdsCopyRuntimeType &ndash; копировать переменную произвольного типа">rdsCopyRuntimeType</a>(py,px)</span>, копирующая значение входа
+<span class="cpp">x</span> в выход <span class="cpp">y</span>. Эта функция самостоятельно отводит память для
+нового значения <span class="cpp">y</span> и, при необходимости, освобождает память, занимаемую прежним
+значением &ndash; никаких дополнительных действий от программиста не требуется. Если же значение входа
+<span class="cpp">Enable</span> равно нулю, т.е. передача данных запрещена, сигнальному выходу
+<span class="cpp">Ready</span> присваивается 0. Как уже упоминалось выше, сигнал <span class="cpp">Ready</span>
+&ndash; один из двух
+<a href="pm_1_5.htm#ref4" title="Обязательные сигналы простого блока">обязательных сигналов</a>, присутствующих в каждом
+<a href="pm_1_2.htm#light_ref3" title="Простой блок">простом блоке</a>. Если значение <span class="cpp">Ready</span> будет равно нулю,
+связи, соединенные с выходом этого блока, не сработают, что и требуется при запрещении передачи данных. Значение
+1 присваивается сигналу <span class="cpp">Ready</span> автоматически при каждом запуске модели, поэтому
+явно присваивать ему единицу при разрешении передачи не требуется.</p>
+
+<p>Приведенную модель, как и любую модель со сложными переменными, желательно вызывать только при изменении
+входных данных. Для этого следует включить для блока с этой моделью
+<a href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">запуск по сигналу</a>, после чего в
+<a href="pm_1_5.htm#pic2" title="Редактор переменных">окне редактирования переменных</a> задать для переменной
+<span class="cpp">Start</span> начальное значение 1 и установить флаг
+&laquo;<span class="menu">пуск</span>&raquo; для входов <span class="cpp">x</span> и <span class="cpp">Enable</span>.</p>
+
+<p>Модель блока-выключателя получилась очень простой, поскольку, несмотря на сложную структуру переменных
+произвольного типа, копирование данных из одной переменной в другую производится внутри сервисной функции
+<span class="cpp"><a class="hidden" href="rdsCopyRuntimeType.htm" title="А.5.14.4. rdsCopyRuntimeType &ndash; копировать переменную произвольного типа">rdsCopyRuntimeType</a></span>. Модель блока, самостоятельно анализирующая фактический тип
+переменной и считывающая ее данные, или самостоятельно присваивающая значение выходу произвольного типа,
+будет гораздо сложнее. На самом деле, необходимость в создании таких моделей возникает очень редко &ndash;
+как правило, не существует действия, которое можно было бы выполнить и над числами, и над матрицами, и
+над строками, и над всеми возможными структурами. Для выполнения действий над группой похожих типов (например,
+над числами всех видов) можно обойтись и без произвольного типа. RDS позволяет соединять связями входы
+и выходы разных типов, если эти типы могут быть приведены один к другому (например, допускается присоединение
+выхода типа <span class="cpp">double</span> ко входу типа <span class="cpp">int</span>, и наоборот). Для
+выполнения какого-либо действия обычно достаточно создать модель, выполняющую это действие над переменными наиболее
+общего типа. Например, блок, вычисляющий сумму двух вещественных чисел типа <span class="cpp">double</span>,
+может также использоваться для сложения чисел типа <span class="cpp">int</span>, <span class="cpp">char</span>,
+<span class="cpp">short</span> и <span class="cpp">float</span>.</p>
+
+<p>Тем не менее, модель блока может, при необходимости, работать с данными переменной произвольного типа
+непосредственно. Рассмотрим в качестве примера модель блока с входом произвольного типа &laquo;<span class="rdsvar">x</span>&raquo;,
+выдающую строку фактического типа этого входа на выход &laquo;<span class="rdsvar">type</span>&raquo;. Кроме того, если вход
+&laquo;<span class="rdsvar">x</span>&raquo; имеет фактический тип <span class="cpp">double</span> или <span class="cpp">int</span>, эта модель
+должна выдать его значение на вещественный выход &laquo;<span class="rdsvar">val</span>&raquo;. Если &laquo;<span class="rdsvar">x</span>&raquo; &ndash;
+массив или матрица любого типа, на &laquo;<span class="rdsvar">val</span>&raquo; необходимо выдать число элементов в матрице. Если же
+&laquo;<span class="rdsvar">x</span>&raquo; имеет другой фактический тип, выход &laquo;<span class="rdsvar">val</span>&raquo; должен быть равен нулю.
+Практическая ценность этого примера сомнительна, но он позволит проиллюстрировать работу с произвольным типом.
+Блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">x</td>
+<td class="center">Произвольный</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center"></td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">type</td>
+<td class="center">Строка</td>
+<td class="center">4</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center"></td>
+</tr>
+<tr><td class="center">14</td>
+<td class="vcenter">val</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Для получения строки фактического типа входа &laquo;<span class="rdsvar">x</span>&raquo; и указателя на его область данных будем
+использовать сервисную функцию <span class="cpp"><span id="light_ref3"><a href="rdsGetRuntimeTypeData.htm" title="А.5.14.13. rdsGetRuntimeTypeData &ndash; получить фактические данные переменной произвольного типа">rdsGetRuntimeTypeData</a></span></span>. Модель блока будет
+выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestVar1(<span class="kw">int</span> CallMode,
+                         <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                         <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define px     ((void **)(pStart+2))</span>
+  <span class="preproc">#define type   (*((char **)(pStart+10)))</span>
+  <span class="preproc">#define val    (*((double *)(pStart+14)))</span>
+    <span class="rem">// Вспомогательные переменные</span>
+    <span class="kw">char</span> *s;  <span class="rem">// Строка фактического типа входа x</span>
+    <span class="kw">void</span> *v;  <span class="rem">// Указатель на данные входа x</span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSVAD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="rem">// Освобождение прежнего значения строки type</span>
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(type);
+          <span class="rem">// Получение указателя на данные (v)</span>
+          <span class="rem">// и строки фактического типа (s) входа x</span>
+          v=<a class="hidden" href="rdsGetRuntimeTypeData.htm" title="А.5.14.13. rdsGetRuntimeTypeData &ndash; получить фактические данные переменной произвольного типа">rdsGetRuntimeTypeData</a>(px,&amp;s);
+          <span class="rem">// Занесение строки типа в выход type</span>
+          type=s;
+          <span class="rem">// Анализ типа, если переменная не пуста</span>
+          <span class="kw">if</span>(v!=NULL) <span class="rem">// У входа x есть фактический тип</span>
+            <span class="kw">switch</span>(*s) <span class="rem">// Анализ первого символа строки типа</span>
+              { <span class="kw">case</span> <span class="str">'D'</span>: <span class="rem">// Фактический тип – double</span>
+                  val=*((<span class="kw">double</span>*)v);
+                  <span class="kw">break</span>;
+                <span class="kw">case</span> <span class="str">'I'</span>: <span class="rem">// Фактический тип – int</span>
+                  val=*((<span class="kw">int</span>*)v);
+                  <span class="kw">break</span>;
+                <span class="kw">case</span> <span class="str">'M'</span>: <span class="rem">// Фактический тип – матрица или массив</span>
+                  <span class="kw">if</span>(<a class="hidden" href="RDS_ARRAYEXISTS.htm" title="А.5.15.3. Макрос RDS_ARRAYEXISTS &ndash; проверка наличия элементов в матрице/массиве">RDS_ARRAYEXISTS</a>(v)) <span class="rem">// Матрица не пуста</span>
+                    val=<a class="hidden" href="RDS_ARRAYROWS.htm" title="А.5.15.6. Макрос RDS_ARRAYROWS &ndash; число строк матрицы/массива">RDS_ARRAYROWS</a>(v)*<a class="hidden" href="RDS_ARRAYCOLS.htm" title="А.5.15.1. Макрос RDS_ARRAYCOLS &ndash; число столбцов матрицы/массива">RDS_ARRAYCOLS</a>(v);
+                  <span class="kw">else</span> <span class="rem">// Матрица пуста (0x0)</span>
+                    val=<span class="const">0</span>;
+                  <span class="kw">break</span>;
+                <span class="kw">default</span>: <span class="rem">// Другой фактический тип</span>
+                  val=<span class="const">0</span>.<span class="const">0</span>;
+              } <span class="rem">// Конец switch(*s)</span>
+          <span class="kw">else</span> <span class="rem">// У входа x нет фактического типа</span>
+            val=<span class="const">0</span>.<span class="const">0</span>;
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef val</span>
+  <span class="preproc">#undef type</span>
+  <span class="preproc">#undef px</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>При вызове модели с параметром <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span> сначала вызывается функция
+<span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span> для освобождения данных прежнего значения выходной строки <span class="cpp">type</span>.
+Далее при помощи функции <span class="cpp"><a href="rdsGetRuntimeTypeData.htm" title="А.5.14.13. rdsGetRuntimeTypeData &ndash; получить фактические данные переменной произвольного типа">rdsGetRuntimeTypeData</a></span> определяется фактический тип входа
+<span class="cpp">x</span>. В первом параметре функции передается указатель на исследуемую переменную произвольного
+типа (<span class="cpp">px</span>), во втором &ndash; указатель на переменную, в которую нужно записать
+указатель на динамически сформированную строку фактического типа (в данном случае передается указатель на вспомогательную
+переменную <span class="cpp">s</span>). Функция возвращает указатель на область данных входа,
+который присваивается вспомогательной переменной <span class="cpp">v</span>. Если у входа <span class="cpp">x</span>
+нет фактического типа, переменным <span class="cpp">v</span> и <span class="cpp">s</span> будет присвоено значение
+<span class="cpp">NULL</span>. На самом деле, если бы в этой модели не нужна была строка типа, можно было бы
+не использовать сервисную функцию <span class="cpp"><a class="hidden" href="rdsGetRuntimeTypeData.htm" title="А.5.14.13. rdsGetRuntimeTypeData &ndash; получить фактические данные переменной произвольного типа">rdsGetRuntimeTypeData</a></span>, а получить указатель
+на область данных входа <span class="cpp">v</span> при помощи оператора
+<span class="cpp">v=*px</span>. Однако, в данном случае удобнее получить оба указателя в одном вызове.</p>
+
+<p>Все динамически сформированные строки, возвращаемые сервисными функциями RDS, совместимы с функцией
+<span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>, поэтому указатели на эти строки могут непосредственно присваиваться
+переменным блока. В данном случае указатель на строку типа, который функция
+<span class="cpp"><a class="hidden" href="rdsGetRuntimeTypeData.htm" title="А.5.14.13. rdsGetRuntimeTypeData &ndash; получить фактические данные переменной произвольного типа">rdsGetRuntimeTypeData</a></span> записала в переменную <span class="cpp">s</span>, присваивается
+выходу <span class="cpp">type</span>.</p>
+
+<p>Далее необходимо проверить фактический тип входа <span class="cpp">x</span>, и, в зависимости от него,
+вычислить значение выхода <span class="cpp">val</span>. Если значение <span class="cpp">v</span>, которое вернула
+функция <span class="cpp"><a class="hidden" href="rdsGetRuntimeTypeData.htm" title="А.5.14.13. rdsGetRuntimeTypeData &ndash; получить фактические данные переменной произвольного типа">rdsGetRuntimeTypeData</a></span>, не равно <span class="cpp">NULL</span>, значит, тип
+у входа есть. В этом случае выполнятся оператор <span class="cpp">switch(*s)</span>, анализирующий первый символ
+строки фактического типа входа.</p>
+
+<p>Если <span class="cpp">x</span> имеет тип <span class="cpp">double</span>, строка <span class="cpp">s</span> будет
+состоять из единственного символа &laquo;D&raquo;. В этом случае <span class="cpp">v</span> указывает на
+восьмибайтовую область, в которой хранится вещественное значение входа. Указатель <span class="cpp">v</span>
+приводится к типу <span class="cpp">double*</span>, и значение входа присваивается выходу блока
+<span class="cpp">val</span>. Аналогично, если <span class="cpp">x</span> имеет тип <span class="cpp">int</span>,
+<span class="cpp">s</span> будет содержать единственный символ &laquo;I&raquo;, и, после приведения типа
+указателя <span class="cpp">v</span> к <span class="cpp">int*</span>, четырехбайтовое целое значение
+входа будет присвоено выходу блока. Если же <span class="cpp">x</span> будет матрицей, строка <span class="cpp">s</span>
+будет состоять из символа &laquo;M&raquo; и типа элемента матрицы (например, для матрицы
+<span class="cpp">double</span> &ndash; &laquo;MD&raquo;, для матрицы строк &ndash;
+&laquo;MA&raquo;, для матрицы упоминавшихся ранее структур &laquo;<span class="rdsvar">TestComplex</span>&raquo; &ndash;
+&laquo;M{DD}&raquo;). В данной модели выходу <span class="cpp">val</span> в этом случае присваивается
+число элементов в матрице, равное произведению числа строк и числа столбцов, поэтому тип элементов матрицы
+анализировать не нужно &ndash; достаточно считать ее размеры. Для проверки матрицы на пустоту
+и получения ее размеров используются уже знакомые по прошлым примерам макросы
+<span class="cpp"><a href="RDS_ARRAYEXISTS.htm" title="А.5.15.3. Макрос RDS_ARRAYEXISTS &ndash; проверка наличия элементов в матрице/массиве">RDS_ARRAYEXISTS</a></span>, <span class="cpp"><a href="RDS_ARRAYROWS.htm" title="А.5.15.6. Макрос RDS_ARRAYROWS &ndash; число строк матрицы/массива">RDS_ARRAYROWS</a></span> и
+<span class="cpp"><a href="RDS_ARRAYCOLS.htm" title="А.5.15.1. Макрос RDS_ARRAYCOLS &ndash; число столбцов матрицы/массива">RDS_ARRAYCOLS</a></span>, только в этом случае в них подставляется не макроопределение
+для какой-нибудь статической переменной, а указатель на область данных входа (вспомогательная переменная
+<span class="cpp">v</span>), возвращенный функцией <span class="cpp"><a class="hidden" href="rdsGetRuntimeTypeData.htm" title="А.5.14.13. rdsGetRuntimeTypeData &ndash; получить фактические данные переменной произвольного типа">rdsGetRuntimeTypeData</a></span>.
+Область данных переменной произвольного типа устроена точно так же, как статическая переменная соответствующего
+фактического типа, поэтому эти макросы будут работать для нее так же, как и для обычной статической матрицы.</p>
+
+<p>На <a href="#pic4" title="Пример блока, обрабатывающего данные входа произвольного типа">рис.&nbsp;32</a>
+изображена схема, собранная для проверки работы созданной модели блока. В ней к входу блока
+&laquo;<span class="rdsvar">x</span>&raquo; подключены три связи: первая соединяет его с выходом библиотечного блока выбора варианта
+(его выход &ndash; целое число), вторая &ndash; с обычным полем ввода вещественного числа, третья
+&ndash; с блоком ввода матрицы. Две из трех связей заблокированы, чтобы работала только одна. К выходу
+&laquo;<span class="rdsvar">val</span>&raquo; подключен числовой индикатор, а к выходу &laquo;<span class="rdsvar">type</span>&raquo; &ndash;
+блок, отображающий строку.</p>
+
+<div class="pic"><div class="container" id="pic4">
+<img src="../img/TestVar1.png" width="751" height="166" alt="Пример блока, обрабатывающего данные входа произвольного типа" />
+<p id="light_pic4">Рис.&nbsp;32. Пример блока, обрабатывающего данные входа произвольного типа</p>
+</div></div>
+
+
+<p>В зависимости от того, какая из трех входных связей блока не заблокирована, фактический тип его входа
+&laquo;<span class="rdsvar">x</span>&raquo; будет либо целым, либо вещественным, либо матрицей вещественных чисел. На рисунке
+работает только связь, соединяющая наш блок с блоком ввода матрицы, поэтому на выход &laquo;<span class="rdsvar">type</span>&raquo;
+выдается строка &laquo;MD&raquo; (матрица <span class="cpp">double</span>), а на выход &laquo;<span class="rdsvar">val</span>&raquo; &ndash;
+число элементов матрицы &ndash; в данном случае, шесть. Если заблокировать эту связь, и разблокировать соединение
+с блоком выбора варианта, на выходе &laquo;<span class="rdsvar">type</span>&raquo; появится строка &laquo;I&raquo; (<span class="cpp">int</span>),
+если же разблокировать соединение с полем ввода &ndash; строка &laquo;D&raquo;
+(<span class="cpp">double</span>), а выход &laquo;<span class="rdsvar">val</span>&raquo; в обоих случаях будет равен поступившему
+на вход &laquo;<span class="rdsvar">x</span>&raquo; числу, независимо от его типа.</p>
+
+<p>Приведенный пример демонстрирует возможность получения данных из переменной произвольного типа.
+Рассмотрим другой пример, в котором модель блока будет присваивать переменной произвольного типа данные
+разных типов, то есть программно задавать фактический тип выхода блока. Пусть у блока будет целый вход
+&laquo;<span class="rdsvar">Type</span>&raquo; и выход &laquo;<span class="rdsvar">y</span>&raquo; произвольного типа. При нулевом значении
+&laquo;<span class="rdsvar">Type</span>&raquo; модель должна передать на выход целое число 1, при &laquo;<span class="rdsvar">Type</span>&raquo;, равном единице
+&ndash; вещественное число 2, а при любых других значениях &laquo;<span class="rdsvar">Type</span>&raquo; &ndash; сформировать на
+выходе матрицу вещественных чисел 2&times;2 и заполнить ее значениями 1, 2, 3 и 4. Блок должен иметь
+следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">Type</td>
+<td class="center">int</td>
+<td class="center">4</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">6</td>
+<td class="vcenter">y</td>
+<td class="center">Произвольный</td>
+<td class="center">8</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center"></td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Модель блока будет такой:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestVar2(<span class="kw">int</span> CallMode,
+                         <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                         <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define Type   (*((int *)(pStart+2)))</span>
+  <span class="preproc">#define py     ((void **)(pStart+6))</span>
+    <span class="rem">// Вспомогательные переменные</span>
+    <span class="kw">int</span> *i_ptr;    <span class="rem">// Указатель на данные для целого типа</span>
+    <span class="kw">double</span> *d_ptr; <span class="rem">// Указатель на данные для вещественного типа</span>
+    <span class="kw">void</span> *v_ptr;   <span class="rem">// Указатель на данные для матрицы</span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSIV}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">switch</span>(Type)
+            { <span class="kw">case</span> <span class="const">0</span>: <span class="rem">// Выдать целое число</span>
+                <span class="rem">// Установить целый тип выхода</span>
+                i_ptr=(<span class="kw">int</span>*)<span id="light_ref4"><a class="hidden" href="rdsSetRuntimeType.htm" title="А.5.14.19. rdsSetRuntimeType &ndash; установить фактический тип переменной произвольного типа">rdsSetRuntimeType</a></span>(py,<span class="str">"I"</span>);
+                <span class="rem">// Присвоить выходу значение</span>
+                <span class="kw">if</span>(i_ptr) *i_ptr=<span class="const">1</span>;
+                <span class="kw">break</span>;
+              <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Выдать вещественное число</span>
+                <span class="rem">// Установить вещественный тип выхода</span>
+                d_ptr=(<span class="kw">double</span>*)<a class="hidden" href="rdsSetRuntimeType.htm" title="А.5.14.19. rdsSetRuntimeType &ndash; установить фактический тип переменной произвольного типа">rdsSetRuntimeType</a>(py,<span class="str">"D"</span>);
+                <span class="rem">// Присвоить выходу значение</span>
+                <span class="kw">if</span>(d_ptr) *d_ptr=<span class="const">2.0</span>;
+                <span class="kw">break</span>;
+              <span class="kw">default</span>: <span class="rem">// Выдать матрицу</span>
+                <span class="rem">// Тип выхода – матрица double</span>
+                v_ptr=<a class="hidden" href="rdsSetRuntimeType.htm" title="А.5.14.19. rdsSetRuntimeType &ndash; установить фактический тип переменной произвольного типа">rdsSetRuntimeType</a>(py,<span class="str">"MD"</span>);
+                <span class="kw">if</span>(v_ptr)
+                  { <span class="kw">double</span> *array;
+                    <span class="rem">// Установить размер матрицы</span>
+                    <a class="hidden" href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a>(v_ptr,<span class="const">2</span>,<span class="const">2</span>,FALSE,NULL);
+                    <span class="rem">// Получить указатель на первый элемент</span>
+                    array=(<span class="kw">double</span>*)<a class="hidden" href="RDS_ARRAYDATA.htm" title="А.5.15.2. Макрос RDS_ARRAYDATA &ndash; указатель на первый элемент матрицы/массива">RDS_ARRAYDATA</a>(v_ptr);
+                    <span class="rem">// Заполнить матрицу числами 1,2,3,4</span>
+                    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;<span class="const">4</span>;i++)
+                      array[i]=i+<span class="const">1</span>;
+                  }
+            } <span class="rem">// Конец switch(Type)</span>
+          <span class="kw">break</span>;
+
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef py</span>
+  <span class="preproc">#undef Type</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>При вызове модели для выполнения такта расчета (параметр <span class="cpp">CallMode</span> равен
+<span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>) анализируется значение входа <span class="cpp">Type</span>. Если значение
+<span class="cpp">Type</span> равно 0, на выход блока необходимо выдать целое число. Для этого вызывается функция
+<span class="cpp"><a href="rdsSetRuntimeType.htm" title="А.5.14.19. rdsSetRuntimeType &ndash; установить фактический тип переменной произвольного типа">rdsSetRuntimeType</a></span>, присваивающая выходу произвольного типа y фактический тип <span class="cpp">int</span>.
+В первом параметре функции передается указатель на переменную произвольного типа (<span class="cpp">py</span>),
+во втором &ndash; строка типа, присваиваемая переменной (для типа <span class="cpp">int</span> передается строка
+&laquo;I&raquo;). Функция возвращает указатель на созданную область данных заданного типа, в которую,
+после приведения указателя к типу <span class="cpp">int*</span>, записывается число 1.</p>
+
+<p>Если значение <span class="cpp">Type</span> равно 1, на выход блока выдается вещественное число. Для
+этого в функцию <span class="cpp"><a class="hidden" href="rdsSetRuntimeType.htm" title="А.5.14.19. rdsSetRuntimeType &ndash; установить фактический тип переменной произвольного типа">rdsSetRuntimeType</a></span> передается строка типа &laquo;D&raquo;,
+соответствующая типу <span class="cpp">double</span>. Указатель, возвращенный функцией, приводится к типу
+<span class="cpp">double*</span> и используется для занесения в созданную область данных числа 2.0.</p>
+
+<p>При любом другом значении <span class="cpp">Type</span> для выхода блока устанавливается фактический тип
+&laquo;матрица <span class="cpp">double</span>&raquo;, для чего в функцию
+<span class="cpp"><a class="hidden" href="rdsSetRuntimeType.htm" title="А.5.14.19. rdsSetRuntimeType &ndash; установить фактический тип переменной произвольного типа">rdsSetRuntimeType</a></span> передается строка &laquo;MD&raquo;. Указатель, возвращенный
+этой функцией, передается в уже знакомую нам функцию
+<span class="cpp"><a href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a></span>
+(см. <a href="pm_2_5_3.htm" title="&sect;2.5.3. Доступ к матрицам и массивам">&sect;2.5.3</a>), которая устанавливает для созданной матрицы
+размер 2&times;2. Далее
+при помощи описывавшегося ранее макроса <span class="cpp"><a href="RDS_ARRAYDATA.htm" title="А.5.15.2. Макрос RDS_ARRAYDATA &ndash; указатель на первый элемент матрицы/массива">RDS_ARRAYDATA</a></span> указатель на первый элемент матрицы
+присваивается вспомогательной переменной <span class="cpp">array</span>. Первому элементу матрицы будет
+соответствовать значение <span class="cpp">array[0]</span>, второму &ndash;
+<span class="cpp">array[1]</span> и т.д. В матрице 2&times;2 содержится четыре элемента, поэтому
+далее в цикле четырем элементам <span class="cpp">array</span> присваиваются числа, на единицу
+большие их индексов, то есть 1, 2, 3 и 4.</p>
+
+<div class="picright"><div class="container" id="pic5">
+<img src="../img/TestVar2.png" width="373" height="79" alt="Пример блока, программно задающего фактический тип своего выхода" />
+<p id="light_pic5">Рис.&nbsp;33. Пример блока, программно задающего<br />фактический тип своего выхода</p>
+</div></div>
+
+
+<p>Для проверки работы этой модели можно собрать схему, изображенную
+на <a href="#pic5" title="Пример блока, программно задающего фактический тип своего выхода">рис.&nbsp;33</a>. Вход блока &laquo;<span class="rdsvar">Type</span>&raquo; связан с выходом
+стандартного библиотечного блока выбора варианта, а выход &laquo;<span class="rdsvar">y</span>&raquo; одновременно подан на входы
+числового индикатора и блока отображения матрицы. Выходы произвольного типа могут быть связаны с входами
+любого типа, поэтому такое соединение допустимо. Если в блоке выбора варианта будут выбраны пункты
+&laquo;int&raquo; или &laquo;double&raquo;, на его выходе, а, значит, и на входе
+&laquo;<span class="rdsvar">Type</span>&raquo; нашего блока, появится целое число 0 или 1 соответственно. При этом фактическим типом
+выхода &laquo;<span class="rdsvar">y</span>&raquo; станет <span class="cpp">int</span> или <span class="cpp">double</span>, и число
+с этого выхода будет передано по верхней ветви связи на индикатор. Нижняя ветвь связи не сработает, поскольку
+она соединена с входом типа &laquo;матрица <span class="cpp">double</span>&raquo;,
+а целое или вещественное число не может быть передано на вход такого типа. Если же будет выбран пункт
+&laquo;матрица&raquo;, вход &laquo;<span class="rdsvar">Type</span>&raquo; получит значение 2, в результате чего наш блок сформирует
+на своем выходе &laquo;<span class="rdsvar">y</span>&raquo; матрицу из четырех вещественных чисел, и она будет передана на вход
+блока отображения матриц по нижней ветви выходной связи. Верхняя ветвь связи не сработает, поскольку
+матрица вещественных чисел не может быть передана на вход числового индикатора.</p>
+
+<p>Приведенные примеры показывают, как создавать модели блоков, тип входов и выходов которых заранее не
+известен и может изменяться в процессе расчета. Хотя использование переменных произвольного типа и
+приводит к усложнению модели и некоторому замедлению расчета, блоки с такими переменными получаются универсальными,
+что, в некоторых случаях, может оказаться полезным.</p>
+
+<p>Следует, однако, помнить, что в тех случаях, когда для работы блока необходимы входы или выходы не
+известного заранее типа, но тип их будет определяться не в процессе расчета, а до него (например, при
+настройке блока на работу с определенными данными), вместо использования переменных произвольного типа лучше
+в нужный момент программно изменить тип входа или выхода в структуре переменных блока с помощью сервисных функций
+RDS. При этом переменная сразу окажется нужного типа и будет передаваться по связям значительно быстрее.
+Модель блока тоже упростится: не нужно будет выяснять фактический тип переменной в каждом такте расчета,
+достаточно просто запомнить его при вызове модели в момент изменения структуры переменных (режим
+<span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>). Разумеется изменять структуру переменных нужно до того,
+как к блоку подключены связи: если, например, вход блока имел тип <span class="cpp">double</span>,
+а модель сделала его матрицей, то связь, подключенная к этому блоку, не сможет работать и будет помечена
+как ошибочная.</p>
+
+<p>Примеры программного изменения структуры переменных блока приведены в
+<a href="pm_2_16_1.htm" title="&sect;2.16.1. Изменение структуры переменных блока">&sect;2.16.1</a>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_5_5.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_5_7.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_6">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

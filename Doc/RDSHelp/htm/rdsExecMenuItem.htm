@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.17.5. rdsExecMenuItem &ndash; имитировать выбор пункта меню</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_17">А.5.17. Системное меню и контекстное меню блока</a></p>
+<div class="level"><p>А.5.17.5. <span class="cpp">rdsExecMenuItem</span> &ndash; имитировать выбор пункта меню</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsEnableMenuItem.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsRegisterContextMenuItem.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsExecMenuItem">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.17. Системное меню и контекстное меню блока</h4>
+<h5>А.5.17.5. <span class="cpp">rdsExecMenuItem</span> &ndash; имитировать выбор пункта меню</h5>
+
+
+<p>Функция <span class="cpp">rdsExecMenuItem</span> имитирует выбор пункта меню блока
+пользователем. Модель блока при этом вызывается для реакции на событие
+<span class="cpp"><a href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a></span>.</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsExecMenuItem(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,    <span class="rem">// Идентификатор блока</span>
+    <span class="kw">int</span> MenuFunc,         <span class="rem">// Номер функции пункта меню</span>
+    <span class="kw">int</span> MenuData          <span class="rem">// Данные пункта меню</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_VBhII</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Block</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Уникальный идентификатор блока, для которого имитируется выбор пункта меню.</dd>
+
+  <dt><span class="cpp">MenuFunc</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Номер функции пункта меню &ndash; это число RDS копирует в поле
+  <span class="cpp">Function</span> структуры <span class="cpp"><a href="RDS_BFM_MENUFUNCTION.htm#ref1" title="Структура RDS_MENUFUNCDATA">RDS_MENUFUNCDATA</a></span> без какой-либо обработки.</dd>
+
+  <dt><span class="cpp">MenuData</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Данные пункта меню &ndash;это число RDS копирует в поле
+  <span class="cpp">MenuData</span> структуры <span class="cpp">RDS_MENUFUNCDATA</span> без какой-либо обработки.</dd>
+</dl>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция вызывает модель блока <span class="cpp">Block</span> для реакции на событие
+<span class="cpp">RDS_BFM_MENUFUNCTION</span>, как будто пользователь выбрал постоянный или временный пункт
+меню, с которым связана пара целых чисел (<span class="cpp">MenuFunc</span>,<span class="cpp">MenuData</span>).
+Модель вызванного блока не может отличить вызов из-за того, что пользователь действительно выбрал пункт меню,
+от вызова из-за функции <span class="cpp">rdsExecMenuItem</span>.</p>
+
+<p>Вызов модели блока всегда будет производиться в главном потоке RDS, даже если
+<span class="cpp">rdsExecMenuItem</span> была вызвана в потоке расчета (в этом случае вызов будет
+отложен до завершения текущего такта).</p>
+
+<p>Для успешной работы этой функции не обязательно, чтобы пункт меню, с которым связана пара чисел
+(<span class="cpp">MenuFunc</span>,<span class="cpp">MenuData</span>), существовал в действительности.
+Это позволяет модели блока, например, использовать <span class="cpp">rdsExecMenuItem</span> для вызова
+самой себя в главном потоке из потока расчета. Допустим, существует некая функция
+<span class="cpp">DoSomething()</span>, которую можно вызывать только в главном потоке RDS. Если ее
+нужно вызвать из реакции на такт расчета <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>, этот вызов можно организовать
+так (приведен только внутренний оператор <span class="cpp">switch</span>
+<a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функции модели блока</a>):</p>
+
+<pre class="cpp">  <span class="kw">switch</span>(CallMode)
+    { <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+        <span class="kw">if</span>(<i>какое-то условие</i>)
+          rdsExecMenuItem(BlockData-&gt;Block,<span class="const">10000</span>,<span class="const">0</span>);
+        <span class="kw">break</span>;
+      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a>:
+        <span class="kw">if</span>(((<a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a>)ExtParam)-&gt;Function==<span class="const">10000</span>)
+           DoSomething();
+        <span class="kw">break</span>;
+    }</pre>
+
+<p>В данном случае в такте расчета имитируется выбор пункта меню с номером функции 10000, а
+в реакции на этот пункт меню (которая всегда выполняется в главном потоке RDS) вызывается функция DoSomething().</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a></span>,
+<span class="cpp"><a href="RDS_BFM_MENUFUNCTION.htm#ref1" title="Структура RDS_MENUFUNCDATA">RDS_MENUFUNCDATA</a></span>,
+<span class="cpp"><a href="rdsctrlBlockMenuClick.htm" title="Б.3.4.2. rdsctrlBlockMenuClick &ndash; имитация выбора пункта меню блока">rdsctrlBlockMenuClick</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsEnableMenuItem.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsRegisterContextMenuItem.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsExecMenuItem">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.14.4. Отдельный расчет подсистемы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_14">&sect;2.14. Программное управление расчетом</a></p>
+<div class="level"><p>&sect;2.14.4. Отдельный расчет подсистемы</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_14_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_14_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_14_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_14_4_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.14. Программное управление расчетом</h3>
+<h4>&sect;2.14.4. Отдельный расчет подсистемы</h4>
+<p class="abstract">Рассматривается механизм временной остановки расчета всей схемы кроме одной единственной подсистемы. 
+                Приводится пример блока, переводящего родительскую подсистему в режим отдельного расчета для того, 
+                чтобы цепочка блоков в этой подсистеме не создавала паразитных задержек.</p>
+
+
+<p>Собирая схемы в RDS, нужно всегда помнить, что в
+<a href="pm_1_3.htm#ref3" title="Режим расчета">режиме расчета</a> каждый блок срабатывает за один такт, поэтому
+значение на выходе цепочки из <i>N</i> последовательно соединенных блоков установится только через
+<i>N</i> тактов, даже если это алгебраические блоки, то есть блоки, выходы которых теоретически должны
+были бы вычисляться без какой-либо задержки. Мы уже сталкивались с задержками, которые возникают из-за
+цепочек блоков, при обсуждении
+<a href="pm_2_14_2.htm#ref14" title="Установка начальных значений в блоке расчета баллистики">установки начальных значений</a>
+на входе блока расчета баллистики. В схемах с
+<a href="pm_2_6_1.htm#ref10" title="Блок управления динамическим расчетом (планировщик)">планировщиком вычислений</a>, который управляет динамической переменной времени
+&laquo;<span class="rdsvar">DynTime</span>&raquo;, это не так важно, поскольку в таких схемах основные вычисления производятся в
+моменты изменения времени, а в параметрах планировщика можно задать такое количество дополнительных тактов,
+за которое все цепочки алгебраических блоков успеют сработать. Однако, в логических схемах и схемах,
+работающих по тактам, зависимость времени установки значения от длины цепочки последовательно соединенных блоков
+может привести к временному появлению неверных значений на выходе некоторых блоков.</p>
+
+<p>Рассмотрим, например, схему на <a href="#pic1" title="Параллельные цепочки блоков разной длины">рис.&nbsp;105</a>.
+В ней значение A с поля ввода подается на две параллельные ветви: в одной блок
+&laquo;<span class="rdsvar">Sum1</span>&raquo; прибавляет к этому значению число 6, в другой &ndash; блоки
+&laquo;<span class="rdsvar">Sum2</span>&raquo;, &laquo;<span class="rdsvar">Sum3</span>&raquo; и &laquo;<span class="rdsvar">Sum4</span>&raquo; три раза последовательно прибавляют к
+нему число 2. Выходы обоих ветвей вычитаются. Все блоки в этой схеме взяты из библиотеки, и их модели запускаются
+при срабатывании любой из подключенных к входам связей.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/SignalChain1.png" width="461" height="205" alt="Параллельные цепочки блоков разной длины" />
+<p id="light_pic1">Рис.&nbsp;105. Параллельные цепочки блоков разной длины</p>
+</div></div>
+
+
+<p>С точки зрения математики, значение B на выходе блока вычитания &laquo;<span class="rdsvar">Diff1</span>&raquo; всегда должно быть
+нулевым, поскольку верхняя ветвь реализует формулу A+6, а нижняя &ndash; A+2+2+2. Однако, если
+рассмотреть работу этой схемы по тактам, можно заметить, что нулевое значение на выходе &laquo;<span class="rdsvar">Diff1</span>&raquo;
+установится не сразу. Допустим, в исходном состоянии A=0 и на выходах всех блоков тоже нулевые значения.
+Изменим значение A на 1 и посмотрим, что будет происходить в схеме.</p>
+
+<p>В первом после изменения A такте расчета запустятся модели блоков &laquo;<span class="rdsvar">Sum1</span>&raquo; и &laquo;<span class="rdsvar">Sum2</span>&raquo;,
+поскольку сработала связь, соединяющая их входы с полем ввода A. Таким образом, в конце первого такта на выходе
+блока &laquo;<span class="rdsvar">Sum1</span>&raquo; появится число 7, а на выходе &laquo;<span class="rdsvar">Sum2</span>&raquo; &ndash; число 3.</p>
+
+<p>В втором такте запустятся модели блоков &laquo;<span class="rdsvar">Diff1</span>&raquo; (сработала связь, соединяющая его с
+&laquo;<span class="rdsvar">Sum1</span>&raquo;) и &laquo;<span class="rdsvar">Sum3</span>&raquo; (из-за связи с &laquo;<span class="rdsvar">Sum2</span>&raquo;). На выходе
+&laquo;<span class="rdsvar">Sum3</span>&raquo; появится значение 5 (3+2), а на выходе &laquo;<span class="rdsvar">Diff1</span>&raquo; &ndash; значение 7 (7–0).
+Таким образом, из-за того, что верхняя ветвь сработала быстрее, на выходе схемы появилось ненулевое значение
+&ndash; блок &laquo;<span class="rdsvar">Sum4</span>&raquo; еще не успел сработать.</p>
+
+<p>В третьем такте запустится модель блока &laquo;<span class="rdsvar">Sum4</span>&raquo;, и на его выходе появится значение 7 (5+2).
+Модель блока &laquo;<span class="rdsvar">Diff1</span>&raquo; работать не будет, поэтому на его выходе останется значение 7.</p>
+
+<p>Наконец, в четвертом такте модель блока &laquo;<span class="rdsvar">Diff1</span>&raquo;, наконец, запустится из-за срабатывания
+связи, соединяющей его с &laquo;<span class="rdsvar">Sum4</span>&raquo;, и на его выходе установится нулевое (7–7) значение.</p>
+
+<p>В конце концов, когда все блоки схемы сработали, на ее выходе появилось правильное, нулевое,
+значение. Однако, в течение двух тактов расчета вместо нуля на выходе схемы находилось значение 7.
+Если бы к этой схеме была присоединена другая, это выброс мог бы повлиять на нее. Таким образом, при
+сборке схем нужно всегда иметь в виду, что правильные значения на выходах иногда устанавливаются не сразу,
+и принимать по этому поводу соответствующие меры (например, вводить сигналы готовности, привязанные
+к самой длинной цепочке, или задерживать работу блоков на некоторое количество тактов).</p>
+
+<p>В качестве одного из способов борьбы с задержками можно использовать встроенный в RDS
+механизм отдельного расчета <a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистемы</a>,
+позволяющий временно останавливать расчет всех подсистем схемы,
+кроме одной. Это позволит поместить цепочку блоков в подсистему и остановить расчет остальной схемы до
+тех пор, пока вся цепочка не сработает. Конечно, этот механизм можно применять и с другими целями,
+но в качестве примера рассмотрим именно такое его использование.</p>
+
+<p>Для включения и выключения отдельного расчета подсистемы используется сервисная функция
+<span class="cpp"><span id="light_ref1"><a href="rdsSetExclusiveCalc.htm" title="А.5.2.35. rdsSetExclusiveCalc &ndash; выделенный расчет подсистемы">rdsSetExclusiveCalc</a></span></span>:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsSetExclusiveCalc.htm" title="А.5.2.35. rdsSetExclusiveCalc &ndash; выделенный расчет подсистемы">rdsSetExclusiveCalc</a>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> system, <span class="rem">// Идентификатор подсистемы</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> on);           <span class="rem">// Включить (TRUE) или выключить (FALSE)</span></pre>
+
+<p>В функцию передается идентификатор подсистемы, для которой нужно включить или выключить отдельный
+расчет, и логическое значение, определяющее собственно включение или выключение. В случае успешного
+включения отдельного расчета функция возвращает <span class="cpp">TRUE</span>, при возникновении ошибок
+&ndash; <span class="cpp">FALSE</span>. Вызовы этих функций могут быть вложены: включив отдельный расчет
+подсистемы, можно потом включить отдельный расчет другой подсистемы, вложенной в нее. При выключении отдельного
+расчета второй подсистемы RDS вернется к отдельному расчету первой, пока он тоже не будет выключен.</p>
+
+<p>Отдельный расчет подсистемы можно включить, только если RDS находится в режиме расчета, в других
+режимах вызов этой функции будет проигнорирован. Следует также учитывать, что отдельный расчет включается
+не сразу, а только после того, как отработают все модели блоков, которые должны быть вызваны в текущем такте.
+Таким образом, он не может включиться в середине такта расчета &ndash; только после него или перед ним
+(для выполнения различных действий непосредственно перед тактом расчета предусмотрен специальный режим
+вызова модели <span class="cpp"><a href="RDS_BFM_PREMODEL.htm" title="А.2.4.10. RDS_BFM_PREMODEL &ndash; вызов модели перед тактом расчета">RDS_BFM_PREMODEL</a></span>, который рассмотрен в
+<a href="pm_2_14_5.htm" title="&sect;2.14.5. Вызов модели блока перед тактом расчета">&sect;2.14.5</a>).</p>
+
+<p>Прежде чем разбираться с самим механизмом отдельного расчета, сделаем один вспомогательный блок,
+который поможет нам наблюдать отставание или опережение срабатывания параллельных ветвей схемы. Этот блок
+должен будет ждать изменения входной вещественной переменной, и, после него, начать считать такты расчета, выдавая
+количество прошедших тактов на свой выход. Таким образом, мы сможем построить график зависимости значения на
+выходе схемы (например, выхода блока &laquo;<span class="rdsvar">Diff1</span>&raquo; на <a href="#pic1" title="Параллельные цепочки блоков разной длины">рис.&nbsp;105</a>)
+от номера такта расчета. Кроме того, блок должен останавливать расчет после заданного числа тактов (вручную мы
+не успеем его остановить &ndash; такты следуют друг за другом слишком быстро) и иметь вход разрешения работы,
+чтобы можно было отключить его на время начальных переходных процессов в схеме при первом запуске расчета.
+Зададим для блока следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+    <th>Назначение</th>
+    <th>Номер</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+<td>Стандартный сигнал запуска</td><td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+<td>Стандартный сигнал готовности</td><td class="center">1</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">Count</td>
+<td class="center">int</td>
+<td class="center">4</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+<td>Число тактов, прошедших с момента изменения входа &laquo;<span class="rdsvar">x</span>&raquo;</td><td class="center">2</td>
+</tr>
+<tr><td class="center">6</td>
+<td class="vcenter">Stop</td>
+<td class="center">int</td>
+<td class="center">4</td>
+<td class="center">Вход</td>
+<td></td>
+<td class="center">0</td>
+<td>Число тактов, после которого нужно остановить расчет (настроечный параметр)</td><td class="center">3</td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">Enabled</td>
+<td class="center">Логический</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+<td>Вход разрешения работы блока</td><td class="center">4</td>
+</tr>
+<tr><td class="center">11</td>
+<td class="vcenter">x</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+<td>Вход, изменение которого отслеживается</td><td class="center">5</td>
+</tr>
+<tr><td class="center">19</td>
+<td class="vcenter">xold</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+<td>Предыдущее значение входа &laquo;<span class="rdsvar">x</span>&raquo; для отслеживания его изменения</td><td class="center">6</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Модель блока будет иметь следующий вид:</p>
+
+<pre class="cpp">  <span class="rem">// Счетчик тактов</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+      <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> ChgCalcTickCount(<span class="kw">int</span> CallMode,
+                          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define Count   (*((int *)(pStart+2)))</span>
+  <span class="preproc">#define Stop    (*((int *)(pStart+6)))</span>
+  <span class="preproc">#define Enabled (*((char *)(pStart+10)))</span>
+  <span class="preproc">#define x       (*((double *)(pStart+11)))</span>
+  <span class="preproc">#define xold    (*((double *)(pStart+19)))</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSIILDD}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Запуск расчета</span>
+        <span class="kw">case</span> <span id="light_ref2"><a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a></span>:
+          Start=<span class="const">1</span>; <span class="rem">// Принудительный запуск модели в следующем такте</span>
+          <span class="kw">break</span>;
+
+        <span class="rem">// Один такт моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">if</span>(!Enabled) <span class="rem">// Работа блока не разрешена</span>
+            { xold=x; <span class="rem">// Запоминаем значение входа</span>
+              <span class="kw">break</span>;
+            }
+          <span class="rem">// Работа блока разрешена</span>
+          <span class="kw">if</span>(xold==x &amp;&amp; Count==<span class="const">0</span>)
+            <span class="kw">break</span>; <span class="rem">// Вход не изменился или счет не идет</span>
+          <span class="rem">// Изменился вход (x!=xold) или уже считаем (Count!=0)</span>
+          Count++; <span class="rem">// Увеличиваем число тактов</span>
+          <span class="kw">if</span>(Count&gt;Stop) <span class="rem">// Пора остановить расчет</span>
+            <span id="light_ref3"><a class="hidden" href="rdsStopCalc.htm" title="А.5.2.42. rdsStopCalc &ndash; остановка расчета">rdsStopCalc</a></span>();
+          Start=<span class="const">1</span>; <span class="rem">// Принудительный перезапуск модели</span>
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef xold</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Enabled</span>
+  <span class="preproc">#undef Stop</span>
+  <span class="preproc">#undef Count</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>При запуске расчета (режим <span class="cpp"><a href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a></span>) эта модель на всякий случай
+взводит сигнал <span class="cpp"><a href="um_1_4.htm#ref25" title="Сигнал запуска блока">Start</a></span>, чтобы запустить себя в первом же такте расчета.
+В такте расчета (<span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>) прежде всего проверяется состояние логического входа
+<span class="cpp">Enabled</span>, разрешающего работу блока. Если он имеет нулевое значение, значит,
+работа запрещена. В этом случае внутренней переменной <span class="cpp">xold</span> присваивается значение входа
+<span class="cpp">x</span> (таким образом отключенный блок будет игнорировать изменения входа, поскольку
+текущее значение входа всегда будет равно запомненному) и работа модели завершается. Если же
+работа блока разрешена, модель проверяет, нужно ли увеличить на единицу счетчик тактов
+<span class="cpp">Count</span>. Блок должен начать считать такты при изменении входа
+<span class="cpp">x</span>, а затем продолжать счет независимо от изменений этого входа, поэтому проверка
+состоит из двух частей: во-первых, значение <span class="cpp">x</span> сравнивается с запомненным
+<span class="cpp">xold</span> (если они отличаются, значит, вход изменился), и, во-вторых, значение
+<span class="cpp">Count</span> сравнивается с нулем (если <span class="cpp">Count!=0</span>,
+значит, счет уже начался, и его нужно продолжать). Если вход не изменился и значение
+<span class="cpp">Count</span> нулевое, модель завершается (она автоматически запустится снова при изменении
+<span class="cpp">Enabled</span> или <span class="cpp">x</span>, поскольку для этих переменных установлен флаг
+&laquo;<span class="menu"><a href="pm_1_5.htm#ref18" title="Флаг запуска у входа блока">пуск</a></span>&raquo;). В противном случае
+<span class="cpp">Count</span> увеличивается на 1 и сравнивается с параметром
+<span class="cpp">Stop</span>: как только <span class="cpp">Count</span> превысит
+<span class="cpp">Stop</span>, расчет будет остановлен функцией <span class="cpp"><a href="rdsStopCalc.htm" title="А.5.2.42. rdsStopCalc &ndash; остановка расчета">rdsStopCalc</a></span>. В
+самом конце взводится сигнал <span class="cpp">Start</span>, чтобы модель снова запустилась в следующем такте.
+Можно было бы просто установить для блока
+
+<a href="pm_1_4.htm#ref6" title="Запуск модели каждый такт">флаг &laquo;<span class="menu">запуск каждый такт</span>&raquo;</a>, но такое принудительное
+взведение <span class="cpp">Start</span> улучшает надежность модели &ndash; она будет работать независимо от
+того, установлен ли этот флаг в параметрах блока.</p>
+
+<p>Теперь можно собрать схему с двумя параллельными ветвями разной длины, подключенными к вычитающему блоку,
+и использовать созданный нами блок для построения графика зависимости выхода этого вычитающего блока
+от номера такта (<a href="#pic2" title="Схема сравнения скоростей срабатывания одиночного блока и цепочки блоков">рис.&nbsp;106</a>).</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/ExclCalc2.png" width="813" height="460" alt="Схема сравнения скоростей срабатывания одиночного блока и цепочки блоков" />
+<p id="light_pic2">Рис.&nbsp;106. Схема сравнения скоростей срабатывания одиночного блока и цепочки блоков</p>
+</div></div>
+
+
+<p>Верхняя ветвь схемы состоит из единственного блока &laquo;<span class="rdsvar">Kx+C</span>&raquo;, созданного нами
+в <a href="pm_2_7_4.htm#light_ref2" title="Пример блока y=Kx+C">&sect;2.7.4</a>. В нижнюю ветвь схемы включена подсистема,
+реализующая ту же самую формулу при помощи двух библиотечных блоков: блока умножения на константу и сумматора.
+Значения &laquo;<span class="rdsvar">x</span>&raquo;, &laquo;<span class="rdsvar">K</span>&raquo; и &laquo;<span class="rdsvar">C</span>&raquo; подаются в обе ветви с одних
+и тех же полей ввода, поэтому выходы обеих ветвей должны быть одинаковыми. Выходы блока и подсистемы поданы
+на блок вычитания, выход которого, в свою очередь, выведен на график. На вход времени графика
+&laquo;<span class="rdsvar">Time</span>&raquo; подан сигнал с выхода &laquo;<span class="rdsvar">Count</span>&raquo; нашего блока-счетчика тактов, при
+этом в параметрах графика указано, что значения времени он должен брать не из динамической переменной
+&laquo;<span class="rdsvar">DynTime</span>&raquo;, как он это делает по умолчанию, а со своего входа. Дополнительно, для улучшения
+внешнего вида графика, для него установлен тип линии &laquo;ступенька посередине&raquo; &ndash;
+процесс у нас дискретный, и кусочно-линейный график здесь ни к чему.</p>
+
+<p>С входом &laquo;<span class="rdsvar">Enabled</span>&raquo; блока-счетчика соединена кнопка &laquo;On&raquo;, к входу
+&laquo;<span class="rdsvar">Stop</span>&raquo; подключено поле ввода со значением 5, а к входу &laquo;<span class="rdsvar">x</span>&raquo; &ndash;
+связь от того же самого поля ввода, которое идет на вход обеих параллельных ветвей схемы. Таким образом,
+если запустить расчет, нажать кнопку &laquo;On&raquo;, а затем изменить значение поля ввода
+&laquo;x&raquo;, блок-счетчик начнет каждый такт увеличивать значение своего выхода
+&laquo;<span class="rdsvar">Count</span>&raquo; на 1. При этом будет строиться график разности выходов двух ветвей схемы в
+каждом такте расчета. Отработав 5 тактов, блок остановит расчет, и мы сможем на графике увидеть выбросы,
+возникшие из-за разного времени срабатывания двух ветвей.</p>
+
+<p>В данном случае мы видим выброс вверх длиной в один такт расчета. Из-за того, что верхняя ветвь состоит
+из одного блока, а нижняя &ndash; из двух, значение на выходе подсистемы запоздало на один такт, в
+течение которого вход &laquo;<span class="rdsvar">x1</span>&raquo; блока вычитания уже имел правильное значение 2, а вход
+&laquo;<span class="rdsvar">x2</span>&raquo; все еще оставался нулевым.</p>
+
+<p><span id="ref4">Попробуем</span>
+избавиться от этого выброса, <span id="light_ref4">заставив подсистему в нижней ветви считаться отдельно</span>. Как
+только сработает одна из входных связей подсистемы, мы будем останавливать расчет всей остальной схемы,
+возобновляя его только после срабатывания последнего блока в цепочке, то есть сумматора. В результате,
+с точки зрения остальной схемы, подсистема будет считаться за один такт, и задержки в двух ветвях окажутся
+одинаковыми.</p>
+
+<p>Нам потребуется создать блок с двумя входными сигналами &laquo;<span class="rdsvar">Lock</span>&raquo; и
+&laquo;<span class="rdsvar">Unlock</span>&raquo;, который по сигналу &laquo;<span class="rdsvar">Lock</span>&raquo; будет переводить
+<a href="pm_1_2.htm#ref7" title="Родительская подсистема">родительскую подсистему</a> в
+режим отдельного расчета, а по сигналу &laquo;<span class="rdsvar">Unlock</span>&raquo; &ndash; возобновлять нормальный режим работы.
+Подключив к сигналу &laquo;<span class="rdsvar">Lock</span>&raquo; сигналы с внешних входов подсистемы, а к сигналу
+&laquo;<span class="rdsvar">Unlock</span>&raquo; &ndash; выход сумматора, мы добьемся нужного результата. Как только на
+вход подсистемы поступит новое значение, сработает связь, ведущая к сигналу &laquo;<span class="rdsvar">Lock</span>&raquo;, и расчет
+всей остальной схемы остановится. Когда будет готово значение на выходе сумматора, сработает связь,
+ведущая к сигналу &laquo;<span class="rdsvar">Unlock</span>&raquo;, и расчет остальной схемы продолжится. Помимо двух сигнальных
+входов в этом блоке нам потребуется еще и логическая переменная состояния &laquo;<span class="rdsvar">Locked</span>&raquo; &ndash;
+она позволит игнорировать повторные сигналы &laquo;<span class="rdsvar">Lock</span>&raquo; при включенном отдельном расчете и повторы
+&laquo;<span class="rdsvar">Unlock</span>&raquo; при выключенном.</p>
+
+<p>Блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">Lock</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">3</td>
+<td class="vcenter">Unlock</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">4</td>
+<td class="vcenter">Locked</td>
+<td class="center">Логический</td>
+<td class="center">1</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Теперь можно написать модель блока:</p>
+
+<pre class="cpp">  <span class="rem">// Включение/выключение отдельного расчета</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> SetExclusiveCalc(<span class="kw">int</span> CallMode,
+          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { 
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define Lock   (*((char *)(pStart+2)))</span>
+  <span class="preproc">#define Unlock (*((char *)(pStart+3)))</span>
+  <span class="preproc">#define Locked (*((char *)(pStart+4)))</span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSSSL}"</span>)?
+              <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Такт расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">if</span>(Lock) <span class="rem">// Поступил сигнал включения отдельного расчета</span>
+            { <span class="kw">if</span>(Locked) <span class="rem">// Отдельный расчет уже включен</span>
+                { Lock=<span class="const">0</span>; <span class="rem">// Сбрасываем сигнал, завершаем модель</span>
+                  <span class="kw">break</span>;
+                }
+              <span class="rem">// Включаем отдельный расчет родительской подсистемы</span>
+              <span class="kw">if</span>(<a class="hidden" href="rdsSetExclusiveCalc.htm" title="А.5.2.35. rdsSetExclusiveCalc &ndash; выделенный расчет подсистемы">rdsSetExclusiveCalc</a>(BlockData-&gt;Parent,TRUE))
+                { <span class="rem">// Включить удалось</span>
+                  Lock=<span class="const">0</span>;   <span class="rem">// Сбрасываем сигнал</span>
+                  Locked=<span class="const">1</span>; <span class="rem">// Запоминаем факт включения</span>
+                }
+            }
+          <span class="kw">if</span>(Unlock) <span class="rem">// Поступил сигнал выключения</span>
+            { <span class="kw">if</span>(Locked) <span class="rem">// Отдельный расчет был включен - выключаем</span>
+                <a class="hidden" href="rdsSetExclusiveCalc.htm" title="А.5.2.35. rdsSetExclusiveCalc &ndash; выделенный расчет подсистемы">rdsSetExclusiveCalc</a>(BlockData-&gt;Parent,FALSE);
+              Locked=Lock=Unlock=<span class="const">0</span>; <span class="rem">// Сбрасываем сигналы и состояние</span>
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef Locked</span>
+  <span class="preproc">#undef Unlock</span>
+  <span class="preproc">#undef Lock</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Модель получилась достаточно простой. В такте расчета мы сначала проверяем, не пришел ли сигнал
+<span class="cpp">Lock</span>. Если он взведен, мы проверяем, не включен ли уже отдельный расчет родительской
+подсистемы (для запоминания факта включения мы используем логическую переменную состояния <span class="cpp"></span>),
+и, если он включен, мы сбрасываем сигнал <span class="cpp">Lock</span> и завершаем работу модели &ndash;
+повторные попытки включить режим отдельного расчета игнорируются блоком. Если же он не был включен, включаем его
+функцией <span class="cpp"><a class="hidden" href="rdsSetExclusiveCalc.htm" title="А.5.2.35. rdsSetExclusiveCalc &ndash; выделенный расчет подсистемы">rdsSetExclusiveCalc</a></span>, в которую передаем идентификатор родительской
+подсистемы блока <span class="cpp">BlockData-&gt;Parent</span>, сбрасываем <span class="cpp">Lock</span>
+и взводим переменную состояния <span class="cpp">Locked</span>.</p>
+
+<p>В случае поступления сигнала <span class="cpp">Unlock</span> мы выключаем отдельный расчет, если
+он был включен, и сбрасываем и поступивший сигнал, и переменную состояния <span class="cpp">Locked</span>.</p>
+
+<p>Изменим теперь схему на <a href="#pic2" title="Схема сравнения скоростей срабатывания одиночного блока и цепочки блоков">рис.&nbsp;106</a> так, чтобы
+подсистема в нижней ветви считалась с приостановкой расчета остальной схемы. Для этого включим в
+нее созданный нами блок отдельного расчета, подключим к его входу &laquo;<span class="rdsvar">Lock</span>&raquo; все входные связи
+подсистемы, а выход сумматора подадим на вход &laquo;<span class="rdsvar">Unlock</span>&raquo;
+(<a href="#pic3" title="Подключение блока для отдельного расчета подсистемы">рис.&nbsp;107</a>).
+В результате этого при срабатывании любой входной связи подсистемы сигнал &laquo;<span class="rdsvar">Lock</span>&raquo; взведется,
+и подсистема перейдет в режим отдельного расчета. Как только сумматор сработает и данные его выхода передадутся по
+связи наружу подсистемы, взведется сигнал &laquo;<span class="rdsvar">Unlock</span>&raquo;, и расчет остальной части схемы возобновится.</p>
+
+<div class="pic"><div class="container" id="pic3">
+<img src="../img/ExclCalc3.png" width="811" height="527" alt="Подключение блока для отдельного расчета подсистемы" />
+<p id="light_pic3">Рис.&nbsp;107. Подключение блока для отдельного расчета подсистемы</p>
+</div></div>
+
+
+<p>Если теперь запустить расчет, нажать кнопку &laquo;On&raquo; и изменить значение в поле ввода
+&laquo;<span class="rdsvar">x</span>&raquo;, можно будет увидеть, что на графике нет никаких выбросов: поскольку расчет всей
+схемы останавливался на время расчета подсистемы, получилось, что обе параллельных ветви схемы сработали
+одновременно.</p>
+
+<p>Важно помнить, что механизм отдельного расчета влияет только на блокировку вызовов моделей остальной
+схемы в режимах выполнения такта расчета (<span class="cpp"><a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>) и выполнения действий перед
+тактом расчета (<span class="cpp"><a class="hidden" href="RDS_BFM_PREMODEL.htm" title="А.2.4.10. RDS_BFM_PREMODEL &ndash; вызов модели перед тактом расчета">RDS_BFM_PREMODEL</a></span>, рассмотрен в
+<a href="pm_2_14_5.htm" title="&sect;2.14.5. Вызов модели блока перед тактом расчета">&sect;2.14.5</a>). Все остальные действия &ndash; реакции на мышь и клавиатуру,
+на изменение динамических переменных, на срабатывание таймеров, рисование и т.п. &ndash; модели остальной части
+схемы продолжают выполнять. Если, например, блок в подсистеме изменит какую-либо динамическую переменную и
+вызовет сервисную функцию <span class="cpp"><span id="light_ref5"><a href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a></span></span> для уведомления
+подписчиков этой переменной об изменениях, в режиме <span class="cpp"><a href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a></span> будут вызваны
+не только модели подсистемы, считающейся отдельно, но и модели блоков за ее пределами, несмотря на то,
+что расчет этой части схемы приостановлен. Как правило, это мало влияет на расчет, поскольку выходы этих блоков
+все равно не будут передаваться по связям, пока расчет остальной части схемы не будет возобновлен. Однако,
+если, по каким-либо причинам, нужно приостановить обработку и этих действий, об этом нужно позаботиться в
+программе модели.</p>
+
+<p>Допустим, что у нас есть модель блока, делающая что-то по таймеру и при изменении динамической переменной.
+В функции этой модели, очевидно, будет находиться оператор <span class="cpp">switch</span> следующего вида:</p>
+
+<pre class="cpp">  <span class="kw">switch</span>(CallMode)
+    { <span class="rem">// &hellip;</span>
+
+      <span class="rem">// Срабатывание таймера</span>
+      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a>:
+        <span class="rem">// &hellip; РЕАКЦИЯ НА ТАЙМЕР &hellip;</span>
+        <span class="kw">break</span>;
+
+      <span class="rem">// Изменение динамической переменной</span>
+      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a>:
+        <span class="rem">// &hellip; РЕАКЦИЯ НА ДИНАМИЧЕСКУЮ ПЕРЕМЕННУЮ &hellip;</span>
+        <span class="kw">break</span>;
+
+      <span class="rem">// Такт расчета</span>
+      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+        <span class="rem">// &hellip; ДЕЙСТВИЯ В ТАКТЕ РАСЧЕТА &hellip;</span>
+        <span class="kw">break</span>;
+    } <span class="rem">// switch</span></pre>
+
+<p>Для того, чтобы заблокировать эти две реакции на время приостановки расчета данного блока, нужно
+ввести в переменные этого блока пару логических переменных для фиксации произошедшего события (например,
+<span class="cpp">TimerOk</span> для таймера и <span class="cpp">DynVarOk</span> для изменения динамической
+переменной) с нулевыми начальными значениями, и изменить модель следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">switch</span>(CallMode)
+    { <span class="rem">// &hellip;</span>
+
+      <span class="rem">// Срабатывание таймера</span>
+      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a>:
+        TimerOk=<span class="const">1</span>;	<span class="rem">// Запоминаем факт срабатывания таймера</span>
+        Start=<span class="const">1</span>;		<span class="rem">// Запускаем модель в следующем такте</span>
+        <span class="kw">break</span>;
+
+      <span class="rem">// Изменение динамической переменной</span>
+      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a>:
+        DynVarOk=<span class="const">1</span>; <span class="rem">// Запоминаем факт изменения переменной</span>
+        Start=<span class="const">1</span>;    <span class="rem">// Запускаем модель в следующем такте</span>
+        <span class="kw">break</span>;
+
+      <span class="rem">// Такт расчета</span>
+      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+        <span class="kw">if</span>(TimerOk) <span class="rem">// Было срабатывание таймера</span>
+          { <span class="rem">// &hellip; РЕАКЦИЯ НА ТАЙМЕР &hellip;</span>
+            TimerOk=<span class="const">0</span>; <span class="rem">// Реакция выполнена, больше помнить не нужно</span>
+          }
+        <span class="kw">if</span>(DynVarOk) <span class="rem">// Было изменение переменной</span>
+          { <span class="rem">// &hellip; РЕАКЦИЯ НА ДИНАМИЧЕСКУЮ ПЕРЕМЕННУЮ &hellip;</span>
+            DynVarOk=<span class="const">0</span>; <span class="rem">// Реакция выполнена, больше помнить не нужно</span>
+          }
+        <span class="rem">// &hellip; ДЕЙСТВИЯ В ТАКТЕ РАСЧЕТА &hellip;</span>
+        <span class="kw">break</span>;
+    } <span class="rem">// switch</span></pre>
+
+<p>В этой модели при срабатывании таймера или изменении динамической переменной взводятся соответствующие
+логические переменные и, вместе с ними, флаг запуска <span class="cpp">Start</span>. Сами реакции на события
+при этом выполняются в реакции на такт расчета. В результате, если расчет блока будет приостановлен,
+реакция на таймер или динамическую переменную будет отложена до того момента, когда блок снова начнет
+участвовать в расчете и его модель будет запущена в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_14_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_14_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_14_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

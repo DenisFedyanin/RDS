@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_11">А.5.11. Разбор текста</a></p>
+<div class="level"><p>А.5.11.2. <span class="cpp">rdsGetTextWord</span> &ndash; извлечение слова из текста</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsFontTextToStruct.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsGetTextWordDyn.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsGetTextWord">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.11. Разбор текста</h4>
+<h5>А.5.11.2. <span class="cpp">rdsGetTextWord</span> &ndash; извлечение слова из текста</h5>
+
+
+<p>Функция <span class="cpp">rdsGetTextWord</span> считывает из переданной в параметрах строки
+очередное слово и возвращает указатель на это слово во внутреннем буфере RDS.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsGetTextWord(
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Start,         <span class="rem">// Начало текста</span>
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> *pNextWord,    <span class="rem">// Возврат – следующее слово</span>
+      <span class="kw">char</span> *pSym,          <span class="rem">// Вид слова</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> LowerCase       <span class="rem">// Перевести в нижний регистр</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_SSpSpCB</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Start</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на начало текста (<span class="cpp">char*</span>), из которого нужно извлечь слово.
+  Все пробелы и табуляции перед словом будут пропущены.</dd>
+
+  <dt><span class="cpp">pNextWord</span>&emsp;(<span class="cpp"><i>LPSTR*</i></span>)</dt>
+  <dd>Указатель на переменную типа <span class="cpp">char*</span>, в которую будет записан указатель на
+  начало следующего слова. Если вызывающей программе оно не нужно, в этом параметре можно
+  передать <span class="cpp">NULL</span>.</dd>
+
+  <dt><span id="ref1"><span class="cpp">pSym</span>&emsp;(<span class="cpp"><i>char*</i></span>)</span></dt>
+  <dd>Указатель на переменную типа <span class="cpp">char</span>, в которую будет записан
+  <span id="light_ref1">вид считанного слова</span>,
+  или <span class="cpp">NULL</span>, если вызывающей программе не нужен вид слова. От вида слова зависит его
+  предварительная обработка внутри функции, от него также может зависеть реакция на это слово вызвавшей функцию
+  программы. По указателю <span class="cpp">pSym</span> может быть записан один из следующих символов:<br />
+  <div class="tablecenter"><div class="tcont">
+  <table>
+    <tr>
+      <th><span class="cpp">*pSym</span> (код)</th>
+      <th>Значение</th>
+    </tr>
+    <tr>
+      <td>0</td>
+      <td>Считан конец текста, в нем больше нет слов. Функция при этом вернет пустую строку.</td>
+    </tr>
+    <tr>
+      <td>10 (&laquo;\n&raquo;)</td>
+      <td>Считан конец строки, следующее слово находится на следующей строке. Функция при этом вернет слово,
+      состоящее из единственного символа &laquo;\n&raquo;.</td>
+    </tr>
+    <tr>
+      <td>Двойная кавычка (&laquo;\"&raquo;)</td>
+      <td>Считанное слово на самом деле является строкой в двойных кавычках (возможно, с пробелами), в которой
+      непечатаемые символы заменены на их
+      <a href="rdsProcessText.htm#ref5" title="Преобразование текста в хранимую строку">символические обозначения</a>. Функция при этом вернет строку
+      без кавычек, в которой символические обозначения заменены на сами символы, в т.ч. и непечатаемые.</td>
+    </tr>
+    <tr>
+      <td>Другие коды</td>
+      <td>Считано слово, состоящее из слитно набранных печатаемых символов. Функция вернет это слово, а в
+      <span class="cpp">*pSym</span> будет записан первый символ этого слова.</td>
+    </tr>
+  </table>
+  </div></div>
+  </dd>
+
+  <dt><span class="cpp">LowerCase</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span> &ndash; считанное слово нужно перевести в нижний регистр (за
+  исключением считанных строк в кавычках &ndash; их регистр никогда не изменяется).
+  <span class="cpp">FALSE</span> &ndash; считанное слово возвращается как есть.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Указатель (<span class="cpp">char*</span>) на внутренний буфер RDS, в котором размещено считанное
+слово. Функция никогда не возвращает <span class="cpp">NULL</span> &ndash; даже если слова нет (текст
+закончился), она вернет указатель на буфер с пустой строкой.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Обычно эта функция используется для разбиения текста на слова (например, в процессе загрузки данных блока в
+<a href="pm_2_8_3.htm" title="&sect;2.8.3. Сохранение параметров в текстовом формате">текстовом формате</a>)
+с целью последующего анализа этих слов. Она извлекает из текста, указатель на который передан в параметре
+<span class="cpp">Start</span>, первое слово, записывает его во внутренний буфер, записывает в
+<span class="cpp">*pNextWord</span> указатель на начало следующего слова (этот указатель можно передать в
+параметре <span class="cpp">Start</span> при следующем вызове этой функции для чтения очередного слова), в
+<span class="cpp">*pSym</span> &ndash; тип считанного слова как указано выше, и возвращает указатель на внутренний
+буфер со считанным словом. Словом считается либо последовательность любых печатаемых символов, либо строка в
+двойных кавычках, разделителями слов &ndash; пробелы и табуляции. Код перевода строки
+&laquo;\n&raquo; считается отдельным словом из одного символа. Нулевой байт, завершающий текст, тоже
+считается отдельным словом (пустой строкой). Если в параметре <span class="cpp">LowerCase</span> передано
+<span class="cpp">TRUE</span>, считанное слово, если оно не является строкой в кавычках, будет переведено
+в нижний регистр.</p>
+
+<p>Функция отдельно обрабатывает знак продолжения &laquo;+&raquo;, используемый в текстовом формате схем
+RDS. Обнаружив его, она пропускает следующий за ним перевод строки и повторение знака продолжения, считая
+следующую строку текста продолжением текущей строки и не возвращая отдельно слово конца строки
+&laquo;\n&raquo;. Таким образом, например, текст</p>
+
+<pre class="cpp">  word1 word2 +
+  + word3 "word 4"</pre>
+
+<p class="noindent">будет считаться одной строкой, состоящей из четырех слов:
+&laquo;word1&raquo;, &laquo;word2&raquo;, &laquo;word3&raquo; и &laquo;word&nbsp;4&raquo;.</p>
+
+<p>Строка в кавычках считается одним словом, какой бы длинной она ни была и сколько бы пробелов внутри ни
+содержала. В приведенном выше примере &laquo;word&nbsp;4&raquo; будет считано функцией как одно слово,
+а не как два. Длинные строки тоже могут быть разбиты с помощью символов продолжения &laquo;+&raquo;,
+при этом функция автоматически соберет их вместе. Например, текст</p>
+
+<pre class="cpp">  word5 "abcd"+
+  +"efgh" word6</pre>
+
+<p class="noindent">будет разобран на три слова: &laquo;word5&raquo;,
+&laquo;abcdefgh&raquo; и &laquo;word6&raquo;.</p>
+
+<p>Следует помнить, что извлеченное из текста слово хранится во внутреннем буфере RDS только до тех
+пор, пока функция не будет вызвана в следующий раз, поэтому анализировать это слово нужно до следующего вызова
+<span class="cpp">rdsGetTextWord</span>. Если из текста нужно извлечь сразу несколько слов, можно
+воспользоваться похожей функцией <span class="cpp"><a href="rdsGetTextWordDyn.htm" title="А.5.11.3. rdsGetTextWordDyn &ndash; извлечение слова из текста">rdsGetTextWordDyn</a></span>, которая работает с текстом точно так
+же, как <span class="cpp">rdsGetTextWord</span>, и имеет те же самые параметры, но вместо того, чтобы
+возвращать указатель на слово во внутреннем буфере, создает и возвращает динамическую строку с этим словом.</p>
+
+<p class="apphdr">Пример</p>
+<p>Использование функции <span class="cpp">rdsGetTextWord</span> подробно рассматривается
+в <a href="pm_2_8_3.htm" title="&sect;2.8.3. Сохранение параметров в текстовом формате">&sect;2.8.3 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsGetTextWordDyn.htm" title="А.5.11.3. rdsGetTextWordDyn &ndash; извлечение слова из текста">rdsGetTextWordDyn</a></span>,
+<span class="cpp"><a href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsFontTextToStruct.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsGetTextWordDyn.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsGetTextWord">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

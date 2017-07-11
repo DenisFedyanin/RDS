@@ -1,0 +1,348 @@
+$BC55MODEL 0.0.0 2016.5.18.15.46.1 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$NOSHARE
+$VARS
+  signal name "Start" in run default 1
+  signal name "Ready" out default 0
+  double name "xmin" in menu run default "0"
+  double name "xmax" in menu run default "?"
+  double name "dx" in menu run default "10"
+  signal name "xdiap_chg" default 1
+  double name "ymin" in menu run default "0"
+  double name "ymax" in menu run default "?"
+  double name "dy" in menu run default "10"
+  signal name "ydiap_chg" default 1
+  double name "zmin" in menu run default "0"
+  double name "zmax" in menu run default "?"
+  double name "dz" in menu run default "10"
+  signal name "zdiap_chg" default 1
+  matrix double name "X" out menu default "[ ] ?"
+  matrix double name "Y" out menu default "[ ] ?"
+  matrix double name "Z" out menu default "[ ] ?"
+  matrix double oneindex name "A" in menu run default "[ ] 0"
+  signal name "ArrayChanged" default 1
+  matrix double oneindex name "A_old" default "[ ] 0"
+  matrix double name "Fx" out menu default "[ ] ?"
+  matrix double name "Fy" out menu default "[ ] ?"
+  matrix double name "Fz" out menu default "[ ] ?"
+  double name "old_xmin" default "?"
+  double name "old_xmax" default "?"
+  double name "old_dx" default "?"
+  double name "old_ymin" default "?"
+  double name "old_ymax" default "?"
+  double name "old_dy" default "?"
+  double name "old_zmin" default "?"
+  double name "old_zmax" default "?"
+  double name "old_dz" default "?"
+  matrix double name "XY" out menu default "[ ] ?"
+  matrix double name "XZ" out menu default "[ ] ?"
+  matrix double name "YZ" out menu default "[ ] ?"
+  double name "Xmax" out menu default "?"
+  double name "Ymax" out menu default "?"
+  double name "Zmax" out menu default "?"
+  double name "Fmax" out menu default "?"
+  matrix matrix double oneindex name "F" in menu run default "[ ] [ ] 0"
+  signal name "func_chg" default 1
+  matrix matrix double oneindex name "FS" default "[ ] [ ] 0"
+  signal name "Finished" out default 0
+  logical name "Working" default 0
+  int name "x_cnt" default 0
+  int name "y_cnt" default 0
+  int name "z_cnt" default 0
+  double name "absFmax" out default "?"
+  int name "xi" default 0
+  int name "yi" default 0
+  int name "zi" default 0
+  logical name "Complete" out menu default 0
+  double name "Progress" out menu default "0"
+  matrix logical oneindex name "Enabled" in menu run default "[ ] 1"
+  signal name "enabled_chg" default 1
+  logical name "_enabled" default 1
+  logical name "OutReady" default 0
+  double name "Xmax_f" out default "?"
+  double name "Ymax_f" out default "?"
+  double name "Zmax_f" out default "?"
+  double name "Fmax_f" out default "?"
+  int name "stage" out default 0
+  matrix double oneindex name "FVal" default "[ ] ?"
+  matrix double name "AllMax" out menu default "[ ] ?"
+  logical name "Error" out default 0
+  int name "FuncId" in run default -1
+  int name "OldFuncId" default -1
+  matrix double name "F0xy" out menu default "[ ] ?"
+  signal name "F0xy_ready" default 0
+  matrix double name "F0yz" out default "[ ] ?"
+  signal name "F0yz_ready" default 0
+  matrix double name "F0xz" out default "[ ] ?"
+  signal name "F0xz_ready" default 0
+$AUTO
+  "xmin","xdiap_chg"
+  "xmax","xdiap_chg"
+  "dx","xdiap_chg"
+  "ymin","ydiap_chg"
+  "ymax","ydiap_chg"
+  "dy","ydiap_chg"
+  "zmin","zdiap_chg"
+  "zmax","zdiap_chg"
+  "dz","zdiap_chg"
+  "X","OutReady"
+  "Y","OutReady"
+  "Z","OutReady"
+  "A","ArrayChanged"
+  "Fx","OutReady"
+  "Fy","OutReady"
+  "Fz","OutReady"
+  "XY","OutReady"
+  "XZ","OutReady"
+  "YZ","OutReady"
+  "Xmax","OutReady"
+  "Ymax","OutReady"
+  "Zmax","OutReady"
+  "Fmax","OutReady"
+  "F","func_chg"
+  "absFmax","OutReady"
+  "Enabled","enabled_chg"
+  "Xmax_f","OutReady"
+  "Ymax_f","OutReady"
+  "Zmax_f","OutReady"
+  "Fmax_f","OutReady"
+  "AllMax","OutReady"
+  "Error","OutReady"
+  "F0xy","F0xy_ready"
+  "F0yz","F0yz_ready"
+  "F0xz","F0xz_ready"
+$PARAM
+  int name "SetupFuncId" default "-1"
+  double name "setup_xmin" default "0"
+  double name "setup_xmax" default "100"
+  double name "setup_dx" default "10"
+  BOOL name "in_xdiap" default "TRUE"
+  BOOL name "in_dx" default "TRUE"
+  double name "setup_ymin" default "0"
+  double name "setup_ymax" default "100"
+  double name "setup_dy" default "10"
+  BOOL name "in_ydiap" default "TRUE"
+  BOOL name "in_dy" default "TRUE"
+  double name "setup_zmin" default "0"
+  double name "setup_zmax" default "100"
+  double name "setup_dz" default "10"
+  BOOL name "in_zdiap" default "TRUE"
+  BOOL name "in_dz" default "TRUE"
+  BOOL name "deep_search" default "FALSE"
+  BOOL name "search_by_df" default "TRUE"
+  double name "setup_df" default "0.00001"
+  double name "setup_dx_min" default "0.01"
+  double name "setup_dy_min" default "0.01"
+  double name "setup_dz_min" default "0.01"
+  BOOL name "setup_end_steps" default "TRUE"
+  int name "setup_df_cycles" default "10"
+  double name "setup_df_equal" default "0.01"
+  BOOL name "setup_no_plateau" default "FALSE"
+  BOOL name "setup_ds_X" default "FALSE"
+  BOOL name "setup_ds_Y" default "FALSE"
+  BOOL name "setup_ds_Z" default "FALSE"
+  BOOL name "setup_ds_XY" default "FALSE"
+  BOOL name "setup_ds_XZ" default "FALSE"
+  BOOL name "setup_ds_YZ" default "FALSE"
+  double name "setup_ds_edx" default "0.01"
+  double name "setup_ds_edy" default "0.01"
+  double name "setup_ds_edz" default "0.01"
+$LINKS
+  manual "$RDSINCLUDE$\RdsL57\L57ArgMax_XYZ.cpp"
+  manual "$RDSINCLUDE$\RdsL57\L57FuncXYZ.cpp"
+$CUSTOMERR
+|В одном из описаний функций обнаружена ошибка: видимо, текст функции написан не в синтаксисе языка C. Пожалуйста, проверьте все описания в настройках блока или откройте редактор модели и изучите ошибки, выданные компилятором.
+$ENDDECL
+$MODEL
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к 
+неработоспособности модели. */
+
+#define L57MS_MODEL
+#include <RdsL57/L57ArgMax_XYZ.cpp>
+#undef L57MS_MODEL
+$SETUP
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к 
+неработоспособности модели. */
+
+#define L57MS_SETUP
+#include <RdsL57/L57ArgMax_XYZ.cpp>
+#undef L57MS_SETUP
+$GLOBAL
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Неосторожное внесение изменений в реакции, описания и переменные
+самой модели может привести к ее неработоспособности. 
+
+Допускается изменение макросов L57_USECASE, L57_BAK и L57_FUNCIDEDIT,
+описанных ниже.
+*/
+// Следующий макрос должен быть определен, если функции вычисляются при помощи case,
+// а не при помощи if ... else if ...
+#define L57_USECASE
+
+// Нужно ли создавать резервную копию файла модели при настройке (TRUE или FALSE)
+#define L57_BAK FALSE
+
+// Может ли пользователь видеть/редактировать целый идентификатор функции (TRUE или FALSE)
+#define L57_FUNCIDEDIT TRUE
+//-----------------------------------------------------------------------
+
+
+
+
+//-----------------------------------------------------------------------
+// Не редактируемая часть модели
+//-----------------------------------------------------------------------
+#define L57_MODELVERSION 5
+
+#define L57MS_GLOBALS
+#include <RdsL57/L57ArgMax_XYZ.cpp>
+#undef L57MS_GLOBALS
+	
+// Функция вычисления - служебная (без перехвата исключений)
+double _SelectedFunc(int id,const TL57TextFuncArg &arguments)
+{ double f=0.0;
+  #define x (arguments.xval)
+  #define y (arguments.yval)
+  #define z (arguments.zval)
+  #define A (arguments.Params)
+  #define F (arguments.Functions)
+
+  #ifdef L57_USECASE
+  switch(id)
+    {
+
+  // ВНИМАНИЕ! Следующий комментарий - служебный, его нельзя изменять!
+  //L57_FUNCTIONS_CASES_BEGIN_MARKER ************************************
+/***** НАЧАЛО АВТОМАТИЧЕСКИ СФОРМИРОВАННОГО ТЕКСТА *****/
+// Вычисление функции: case
+case 0:
+  {
+    f=sin(x)+sin(3*y);
+  ; /* */
+  }
+  break;
+/***** КОНЕЦ АВТОМАТИЧЕСКИ СФОРМИРОВАННОГО ТЕКСТА  *****/
+  //L57_FUNCTIONS_CASES_END_MARKER **************************************
+  // ВНИМАНИЕ! Предыдущий комментарий - служебный, его нельзя изменять!
+
+    }
+  #else
+    #define L57VAR_IFCALC id
+
+  // ВНИМАНИЕ! Следующий комментарий - служебный, его нельзя изменять!
+  //L57_FUNCTIONS_IFS_BEGIN_MARKER ************************************
+/***** НАЧАЛО АВТОМАТИЧЕСКИ СФОРМИРОВАННОГО ТЕКСТА *****/
+// Вычисление функции: if, переменная L57VAR_IFCALC
+if(L57VAR_IFCALC==0)
+  {
+    f=sin(x)+sin(3*y);
+  ; /* */
+  }
+/***** КОНЕЦ АВТОМАТИЧЕСКИ СФОРМИРОВАННОГО ТЕКСТА  *****/
+  //L57_FUNCTIONS_IFS_END_MARKER **************************************
+  // ВНИМАНИЕ! Предыдущий комментарий - служебный, его нельзя изменять!
+
+    #undef L57VAR_IFCALC
+  #endif
+
+  return f;
+  #undef F
+  #undef x
+  #undef y
+  #undef z
+  #undef A
+}
+
+// Перечисление функций
+// ВНИМАНИЕ! Следующий комментарий - служебный, его нельзя изменять!
+//L57_FUNCTIONS_LIST_BEGIN_MARKER ************************************
+/***** НАЧАЛО АВТОМАТИЧЕСКИ СФОРМИРОВАННОГО ТЕКСТА *****/
+// Список функций
+#ifdef L57FUNC_LIST
+int L57FUNC_LIST(int num,int *pId,char **pName,char **pCode)
+{
+  static int Ids[]={0};
+  static char *Names[]={
+    "Функция"};
+  static char *Codes[]={
+    "f=sin(x)+sin(3*y);"};
+  if(num<0 || num>=1) return 0;
+  if(pId) *pId=Ids[num];
+  if(pName) *pName=Names[num];
+  if(pCode) *pCode=Codes[num];
+  return 1;
+}
+#endif
+/***** КОНЕЦ АВТОМАТИЧЕСКИ СФОРМИРОВАННОГО ТЕКСТА  *****/
+//L57_FUNCTIONS_LIST_END_MARKER **************************************
+// ВНИМАНИЕ! Предыдущий комментарий - служебный, его нельзя изменять!
+//-----------------------------------------------------------------------
+
+
+
+
+
+$CLASSEXT
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к 
+неработоспособности модели. */
+
+#define L57MS_AFTERCLASS
+#include <RdsL57/L57ArgMax_XYZ.cpp>
+#undef L57MS_AFTERCLASS
+
+$CLASSDEF
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к 
+неработоспособности модели. */
+
+#define L57MS_CLASS
+#include <RdsL57/L57ArgMax_XYZ.cpp>
+#undef L57MS_CLASS
+
+$START
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к 
+неработоспособности модели. */
+
+#define L57MS_START
+#include <RdsL57/L57ArgMax_XYZ.cpp>
+#undef L57MS_START
+$CALCMODE
+/* ВНИМАНИЕ! Эта модель не предназначена для редактирования пользователем.
+Все изменения в вычисляемых функциях должны вноситься через настройки
+блока. Внесение изменений в текст на этой вкладке редактора может привести к 
+неработоспособности модели. */
+
+#define L57MS_CALCMODE
+#include <RdsL57/L57ArgMax_XYZ.cpp>
+#undef L57MS_CALCMODE
+$HIDDEN
+&0
+*Функция
+|f=sin(x)+sin(3*y);
+$OPTIONS
+  tabs $GLOBAL
+  window pos 18 164 size 1214 837 hdiv 337 vdiv 356 fdiv 334 hidevar
+  svc 0 90 1 73 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 1
+  ignorewarnings 1
+  customerrmsg 1
+  autoreadonlyeditor 1
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

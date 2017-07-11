@@ -1,0 +1,47 @@
+$BC55MODEL 0.0.0 2016.10.11.11.16.2 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$VARS
+  signal name "Start" in menu run default 0
+  signal name "Ready" out menu default 0
+  matrix int name "TrueProjects" in menu default "[ ] 0"
+  matrix int name "ExtBids" in menu default "[ ] 0"
+  matrix int name "FullBids" out menu default "[ ] 0"
+$ENDDECL
+$MODEL
+int i, rows = 0;
+for ( i = 0 ; i < TrueProjects.Rows() ; i++ )
+  if ( TrueProjects[i][0] == 1 ) rows++;
+for ( i = 0 ; i < ExtBids.Rows() ; i++ )
+  if ( ExtBids[i][0] == 1 ) rows++;
+
+FullBids.Resize(rows, 2);
+int crow = 0;
+for ( i = 0 ; i < TrueProjects.Rows() ; i++ )
+  if ( TrueProjects[i][0] == 1 ) {
+    FullBids[crow][0] = TrueProjects[i][1];
+    FullBids[crow][1] = TrueProjects[i][2];
+    crow++;
+  }
+for ( i = 0 ; i < ExtBids.Rows() ; i++ )
+  if ( ExtBids[i][0] == 1 ) {
+    FullBids[crow][0] = ExtBids[i][1];
+    FullBids[crow][1] = ExtBids[i][2];
+    crow++;
+  }
+$OPTIONS
+  tabs $MODEL
+  window pos 39 39 size 989 470 hdiv 337 vdiv 171 fdiv 161
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 1
+  ignorewarnings 0
+  customerrmsg 0
+  autoreadonlyeditor 0
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

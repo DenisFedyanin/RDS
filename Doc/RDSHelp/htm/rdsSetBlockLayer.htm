@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.6.47. rdsSetBlockLayer &ndash; задать слой блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_6">А.5.6. Операции с блоками и связями</a></p>
+<div class="level"><p>А.5.6.47. <span class="cpp">rdsSetBlockLayer</span> &ndash; задать слой блока</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsSetBlockFlags.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsSetBlockModel.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsSetBlockLayer">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.6. Операции с блоками и связями</h4>
+<h5>А.5.6.47. <span class="cpp">rdsSetBlockLayer</span> &ndash; задать слой блока</h5>
+
+
+<p>Функция <span class="cpp">rdsSetBlockLayer</span> перемещает блок на
+<a href="um_2_12.htm" title="&sect;2.12.1. Использование слоев">слой</a>
+с указанным идентификатором.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsSetBlockLayer(
+      <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,    <span class="rem">// Блок</span>
+      <span class="kw">int</span> LayerId           <span class="rem">// Идентификатор слоя</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_BBhI</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Block</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор блока.</dd>
+
+  <dt><span class="cpp">LayerId</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Идентификатор слоя, на который нужно переместить блок.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p><span class="cpp">TRUE</span>, если блок перемещен на слой <span class="cpp">LayerId</span>,
+<span class="cpp">FALSE</span> в противном случае (блок уже на этом слое или такого слоя нет в подсистеме).</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция перемещает блок <span class="cpp">Block</span> на слой <span class="cpp">LayerId</span>. От того,
+на каком слое находится блок, зависит его перекрытие другими блоками &ndash; чем дальше слой блока находится от
+переднего плана в текущей выбранной
+<a href="um_2_12.htm#ref1" title="Конфигурации слоев">конфигурации слоев</a>, тем большее число блоков сможет перекрыть
+данный блок.</p>
+
+<p>Следует учитывать, что вызов <span class="cpp">rdsSetBlockLayer</span> не приводит к немедленной
+перерисовке <a href="um_2_3.htm" title="&sect;2.3. Элементы и меню окна подсистемы">окна подсистемы</a>. Обычно окно автоматически обновляется
+после завершения функции модели вызванного блока, поэтому если
+<span class="cpp">rdsSetBlockLayer</span> вызвана не из функции модели, окно подсистемы следует обновить вручную
+вызовом <span class="cpp"><a href="rdsRefreshBlockWindows.htm" title="А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна">rdsRefreshBlockWindows</a></span>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a></span>,
+<span class="cpp"><a href="rdsRefreshBlockWindows.htm" title="А.5.8.14. rdsRefreshBlockWindows &ndash; обновить немодальные окна">rdsRefreshBlockWindows</a></span>,
+<span class="cpp"><a href="rdsSetLayerPosition.htm" title="А.5.9.10. rdsSetLayerPosition &ndash; задать положение слоя в заданной конфигурации">rdsSetLayerPosition</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsSetBlockFlags.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsSetBlockModel.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsSetBlockLayer">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

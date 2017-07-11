@@ -1,0 +1,48 @@
+$BC55MODEL 0.0.0 2016.8.26.13.34.1 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$VARS
+  signal name "Start" in menu run default 0
+  signal name "Ready" out menu default 0
+  matrix int name "M" in menu default "[ ] 0"
+  matrix int name "Projects" out menu default "[ ] 0"
+  matrix int name "Owners" out menu default "[ ] 0"
+  int name "groupcnt" in menu default 3
+$ENDDECL
+$MODEL
+Projects.Resize(M.Rows(), 3+groupcnt);
+int projsize = 0;
+for( int i = 0 ; i < M.Rows() ; i++ ){
+  int j = 0, flag = 1;
+  while( j < projsize && flag == 1 ){
+    if( Projects[j][0] == M[i][1] && Projects[j][1] == M[i][2] ){
+      flag = 0;
+      Projects[j][3+Projects[j][2]] = M[i][0];
+      Projects[j][2]++;
+    }
+    j++;
+  }
+  if( flag == 1 ){
+    Projects[projsize][0] = M[i][1];
+    Projects[projsize][1] = M[i][2];
+    Projects[projsize][2] = 1;
+    Projects[projsize][3] = M[i][0];
+    projsize++;
+  }
+}
+$OPTIONS
+  tabs $MODEL
+  window pos 104 104 size 1216 591 hdiv 394 vdiv 231 fdiv 218
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 125 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 1
+  ignorewarnings 0
+  customerrmsg 0
+  autoreadonlyeditor 0
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.6.3. Создание и удаление динамической переменной</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_6">&sect;2.6. Динамические переменные</a></p>
+<div class="level"><p>&sect;2.6.3. Создание и удаление динамической переменной</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_6_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_6_4.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_6_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_6_3_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.6. Динамические переменные</h3>
+<h4>&sect;2.6.3. Создание и удаление динамической переменной</h4>
+<p class="abstract">Описываются сервисные функции создания и удаления динамических переменных. Приводится пример двух блоков,
+                организующих связь между разными частями схемы при помощи динамической переменной, создаваемой в корневой
+                подсистеме. В примере также рассматривается событие перехода в режим моделирования <span class="cpp"><a href="RDS_BFM_CALCMODE.htm" title="А.2.4.1. RDS_BFM_CALCMODE &ndash; переход из режима редактирования в режим моделирования">RDS_BFM_CALCMODE</a></span>
+                и событие запуска расчета <span class="cpp"><a href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a></span>.</p>
+
+
+<p>В описанном выше примере блок получал доступ к уже существующей переменной, которая была создана
+другим блоком. Теперь рассмотрим процедуры создания и удаления
+<a href="pm_1_6.htm#ref1" title="Динамическая переменная">динамических переменных</a>.</p>
+
+<p><span id="ref1">Динамическая</span>
+переменная обычно создается при помощи сервисной функции
+<span id="light_ref1" class="cpp"><a href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a></span>:</p>
+
+<pre class="cpp">  <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsCreateAndSubscribeDV(
+    <span class="kw">int</span> Block,      <span class="rem">// В каком блоке создать</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> VarName,  <span class="rem">// Имя переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> VarType,  <span class="rem">// Тип переменной</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Fixed,     <span class="rem">// Запретить удаление</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Init);    <span class="rem">// Начальное значение</span></pre>
+
+<p>Функция принимает следующие параметры:</p>
+
+<dl>
+  <dt><span class="cpp">Block</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Как и в уже описанной функции <span class="cpp"><a href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a></span> &ndash;
+  одна из трех констант <span class="cpp">RDS_DV*</span>, определяющая, в каком блоке создается переменная:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref2">RDS_DVSELF</span></span></td>
+          <td>в вызвавшем функцию блоке;</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref3">RDS_DVPARENT</span></span></td>
+          <td>в <a href="pm_1_2.htm#ref7" title="Родительская подсистема">родительской подсистеме</a>;</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref4">RDS_DVROOT</span></span></td>
+          <td>в <a href="pm_1_2.htm#ref5" title="Корневая подсистема">корневой подсистеме</a>.</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp">VarName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Имя создаваемой переменной.</dd>
+
+  <dt><span class="cpp">VarType</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd><a href="pm_1_5.htm#ref19" title="Строка типа переменных блока">Строка типа</a> создаваемой переменной (такая же, как и у статических переменных).</dd>
+
+  <dt><span class="cpp">Fixed</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd>Разрешить удаление переменной любому блоку (<span class="cpp">FALSE</span>) или только блоку,
+  создавшему переменную (<span class="cpp">TRUE</span>).</dd>
+
+  <dt><span class="cpp">Init</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Строка со значением переменной по умолчанию или <span class="cpp">NULL</span>, если
+  значение по умолчанию не важно.</dd>
+</dl>
+
+<p>Первые три параметра этой функции похожи на параметры функции <span class="cpp"><a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a></span>
+&ndash; они задают блок-владелец, имя и тип переменной, которую нужно создать. Параметр
+<span class="cpp">Fixed</span>, установленный в <span class="cpp">TRUE</span>, позволяет запретить удаление
+созданной переменной всем блокам, кроме создавшего, а через параметр <span class="cpp">Init</span> можно
+передать строку со
+<a href="um_1_4.htm#ref22" title="Значение переменной по умолчанию">значением переменной по умолчанию</a>
+в том же формате, который используется в
+<a href="pm_1_5.htm#pic2" title="Редактор переменных">окне редактирования</a>
+статических переменных. Если значение <span class="cpp">Init</span> будет равно <span class="cpp">NULL</span>,
+переменная получит стандартное значение (0, пустой массив, пустая строка и т.п. в зависимости от
+типа переменной). При создании переменной нельзя указать поиск по иерархии, как при подписке
+&ndash; переменная будет создана именно в том блоке, который указан константой в параметре
+<span class="cpp">Block</span>: в вызвавшем блоке (<span class="cpp">RDS_DVSELF</span>), в родительской подсистеме
+(<span class="cpp">RDS_DVPARENT</span>) или в корневой подсистеме (<span class="cpp">RDS_DVROOT</span>).
+Если в указанном блоке на данный момент нет динамической переменной с указанным именем, функция создаст в
+нем переменную указанного типа и автоматически подпишет на нее вызывавший блок. Если переменная успешно
+создана, функция <span class="cpp"><a class="hidden" href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a></span> возвращает указатель на структуру
+подписки, точно такой же, как и функция <span class="cpp"><a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a></span>. Если переменную
+создать не удалось (например, в указанном блоке уже есть переменная с указанным именем), функция вернет значение
+<span class="cpp">NULL</span>.</p>
+
+<p>Поскольку функция <span class="cpp"><a class="hidden" href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a></span> автоматически подписывает вызвавший блок
+на созданную динамическую переменную, обращение к созданной переменной производится таким же образом,
+как и при обычной подписке &ndash; через структуру <span class="cpp"><a href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a></span>, указатель на которую
+возвращает функция, а точнее, через ее поле <span class="cpp">Data</span>, указывающее на область данных
+динамической переменной. Как и модели блоков-подписчиков, модель блока, создавшего переменную, будет реагировать
+на события <span class="cpp"><a href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a></span>, и может, при необходимости, вызывать функцию
+<span class="cpp"><a href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a></span> для уведомления других блоков об изменении переменной.</p>
+
+<p><span id="ref5">Иногда</span>
+в старых текстах моделей блоков можно встретить создание динамических переменных при помощи устаревшей
+функции <span id="light_ref5" class="cpp"><a href="rdsCreateDynamicVar.htm" title="А.5.16.2. rdsCreateDynamicVar &ndash; создать динамическую переменную">rdsCreateDynamicVar</a></span>. Эта функция
+не подписывает создавший блок на созданную переменную, поэтому если модели блока необходимо сообщать
+подписчикам об изменении переменной и, в свою очередь, получать уведомление об изменениях, за вызовом этой
+функции должен следовать вызов <span class="cpp"><a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a></span>. Функция
+<span class="cpp"><a class="hidden" href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a></span> объединяет эти два вызова, поэтому ее
+использование предпочтительнее.</p>
+
+<p><span id="ref6">Для</span>
+удаления динамической переменной обычно используется сервисная функция
+<span id="light_ref6" class="cpp"><a href="rdsDeleteDVByLink.htm" title="А.5.16.3. rdsDeleteDVByLink &ndash; удалить динамическую переменную и прекратить подписку на нее">rdsDeleteDVByLink</a></span>, в которую передается указатель
+на структуру подписки на переменную, которую необходимо удалить. Эта функция не только удаляет переменную,
+но и прекращает подписку на нее для вызвавшего блока &ndash; после ее вызова структура подписки уничтожается,
+и указатель на нее, переданный в функцию, больше использовать нельзя. Если блоку необходимо удалить переменную,
+но, при этом, сохранить подписку на нее (чтобы позже получить доступ к переменной с тем же именем и типом,
+если ее создаст другой блок), следует воспользоваться функцией
+<span class="cpp"><span id="light_ref7"><a href="rdsDeleteDynamicVar.htm" title="А.5.16.4. rdsDeleteDynamicVar &ndash; удалить динамическую переменную">rdsDeleteDynamicVar</a></span></span>, в параметрах которой указывается блок,
+в котором нужно удалить переменную, и ее имя. Следует помнить, что если при создании переменной в параметре
+<span class="cpp">Fixed</span> было передано значение <span class="cpp">TRUE</span>, ее сможет удалить
+только тот блок, модель которого создала эту переменную.</p>
+
+<p><span id="light_ref8">Рассмотрим модели двух блоков</span>,
+позволяющих организовать передачу данных между разными участками схемы через динамическую переменную.
+Блок-передатчик с моделью <span class="cpp">TestTunnelIn</span> создаст в корневой подсистеме динамическую
+переменную типа <span class="cpp">double</span> и будет записывать в нее значение своего входа. Блок-приемник
+с моделью <span class="cpp">TestTunnelOut</span> (таких блоков может быть несколько в разных местах схемы)
+будет выдавать значение этой динамической переменной на свой выход. Таким образом, подав какое-нибудь значение
+на вход блока-передатчика, его можно будет снимать с выходов блоков-приемников, не соединяя эти блоки
+связями. Даже если приемники и передатчик находятся в разных подсистемах, удаленных друг от друга в иерархии,
+приемники смогут получать данные от передатчика, поскольку динамическая переменная, через которую они
+связаны, находится в корневой подсистеме и доступна всем блокам схемы. В блоках-приемниках и блоках-передатчиках
+необходимо предусмотреть возможность задания имени связывающей их переменной, чтобы можно было организовать несколько
+независимых групп из передатчика и приемников, каждая из которых будет работать со своей переменной,
+не мешая остальным. Чтобы не перегружать этот пример лишними функциями, связанными с организацией диалога
+с пользователем, имя динамической переменной для связи будет читаться из комментария блока,
+который пользователь может изменить в режиме редактирования на
+<a href="um_2_9_1.htm#pic4" title="Вкладка общие окна параметров простого блока">вкладке &laquo;<span class="menu">общие</span>&raquo;</a> окна параметров блока.
+Такой способ настройки параметров блоков не очень удобен для пользователя, поэтому при разработке моделей
+для практического применения следует включать в них
+<a href="pm_2_7_1.htm" title="&sect;2.7.1. Функция настройки блока и открытие модальных окон">функцию настройки</a>, позволяющую пользователю ввести параметры блока в
+отдельном окне в удобной для него форме (пример функции настройки приведен
+в <a href="pm_2_7_1.htm#light_ref7" title="Пример простейшего окна настройки блока">&sect;2.7.1</a>).</p>
+
+<p>Сначала создадим модель блока-передатчика. Помимо двух
+<a href="pm_1_5.htm#ref4" title="Обязательные сигналы простого блока">стандартных сигналов</a>, блок будет
+иметь единственный вещественный вход &laquo;<span class="rdsvar">x</span>&raquo;:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">x</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Как и для большинства уже описанных блоков, для этого блока желательно
+<a href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">отключить</a> запуск каждый такт и установить
+<a href="pm_1_5.htm#ref18" title="Флаг запуска у входа блока">флаг &laquo;<span class="menu">пуск</span>&raquo;</a> для входа &laquo;<span class="rdsvar">x</span>&raquo; и начальное значение
+1 для сигнала &laquo;<span class="rdsvar">Start</span>&raquo;, чтобы модель автоматически запускалась при каждом изменении &laquo;<span class="rdsvar">x</span>&raquo;
+и при первом запуске <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a>.</p>
+
+<p>Блок-передатчик должен создать динамическую переменную в корневой подсистеме и записывать в нее
+значения своего входа &laquo;<span class="rdsvar">x</span>&raquo;, причем имя создаваемой переменной необходимо считать из
+комментария блока. Пользователь может в любой момент остановить расчет, перейти в
+<a href="pm_1_3.htm#ref1" title="Режим редактирования">режим редактирования</a>
+и изменить комментарий, поэтому блок должен проверять, совпадает ли имя переменной, с которой он
+в данный момент работает, с текстом комментария блока. Если комментарий изменился, блок должен удалить старую
+динамическую переменную и создать новую, с именем, взятым из нового комментария. Поскольку пользователь может
+изменить комментарий блока только в режиме редактирования, можно производить проверку соответствия имени
+переменной комментарию при входе в режим моделирования (событие
+<span class="cpp"><span id="light_ref9"><a href="RDS_BFM_CALCMODE.htm" title="А.2.4.1. RDS_BFM_CALCMODE &ndash; переход из режима редактирования в режим моделирования">RDS_BFM_CALCMODE</a></span></span>) или при запуске расчета (событие
+<span class="cpp"><span id="light_ref10"><a href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a></span></span>). Кажется логичным вставить в модель реакцию на одно из
+этих событий, в которой имя динамической переменной будет сравниваться с комментарием блока, и, если
+они не совпадают, созданная переменная будет уничтожаться и вместо нее будет создаваться новая. Однако,
+в такой конструкции модели скрывается не совсем очевидная проблема, на которой следует остановиться подробнее.</p>
+
+<p>Допустим, в схеме находятся два блока-передатчика: &laquo;<span class="rdsvar">Block1</span>&raquo;, работающий с переменной
+&laquo;<span class="rdsvar">Var1</span>&raquo;, и &laquo;<span class="rdsvar">Block2</span>&raquo;, работающий с переменной
+&laquo;<span class="rdsvar">Var2</span>&raquo;. Эта схема некоторое время работала в режиме расчета, после чего пользователь
+перешел в режим редактирования и изменил комментарий блока &laquo;<span class="rdsvar">Block1</span>&raquo; на
+&laquo;Var2&raquo;, а блока &laquo;<span class="rdsvar">Block2</span>&raquo; &ndash; на &laquo;Var1&raquo;, то есть
+поменял переменные блоков местами. При запуске расчета сначала вызовется модель блока
+&laquo;<span class="rdsvar">Block1</span>&raquo;. Она сравнит имя переменной блока &laquo;<span class="rdsvar">Var1</span>&raquo; с новым текстом комментария
+&laquo;Var2&raquo; и обнаружит, что они не совпадают. Модель удалит переменную &laquo;<span class="rdsvar">Var1</span>&raquo; и
+попытается создать в корневой подсистеме переменную с именем &laquo;Var2&raquo;. Однако, это ей не удастся,
+поскольку переменная &laquo;<span class="rdsvar">Var2</span>&raquo; уже есть в корневой подсистеме &ndash; ее создала модель блока
+&laquo;<span class="rdsvar">Block2</span>&raquo;, которая еще не вызывалась и не знает о том, что ей тоже нужно удалить старую
+переменную и создать новую. Модель блока &laquo;<span class="rdsvar">Block1</span>&raquo; завершится, так и не создав новую
+переменную, после чего вызовется модель блока &laquo;<span class="rdsvar">Block2</span>&raquo;, которая сработает так, как
+и предполагалось &ndash; переменная &laquo;<span class="rdsvar">Var1</span>&raquo; уже удалена и ничто не помешает модели
+создать переменную с таким именем. В результате из двух блоков-передатчиков останется работоспособным
+только один &ndash; тот, модель которого была вызвана позже.</p>
+
+<p>У этой проблемы есть простое решение &ndash; необходимо разнести по времени моменты удаления старых
+переменных и создания новых. Когда блоки-передатчики начнут создавать новые переменные, все старые
+переменные всех блоков должны быть уже удалены, тогда они не помешают созданию новых с теми же именами.
+Этого можно добиться, удаляя переменные в реакции на переход в
+<a href="pm_1_3.htm#ref2" title="Режим моделирования">режим моделирования</a> и создавая новые в
+реакции на запуск расчета. Из режима редактирования невозможно попасть в режим расчета,
+минуя режим моделирования. Если пользователь нажмет кнопку
+&laquo;<span class="menu">запуск расчета</span>&raquo;, находясь в режиме редактирования, RDS все равно сначала перейдет в
+режим моделирования (при этом все модели блоков будут вызваны с параметром
+<span class="cpp"><a class="hidden" href="RDS_BFM_CALCMODE.htm" title="А.2.4.1. RDS_BFM_CALCMODE &ndash; переход из режима редактирования в режим моделирования">RDS_BFM_CALCMODE</a></span>), и только после этого запустит расчет
+(модели всех блоков будут вызваны с параметром <span class="cpp"><a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a></span>). В результате,
+на момент реакции модели на событие <span class="cpp"><a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a></span>, все старые переменные
+должны быть уже удалены в процессе реакции моделей всех блоков на событие <span class="cpp"><a class="hidden" href="RDS_BFM_CALCMODE.htm" title="А.2.4.1. RDS_BFM_CALCMODE &ndash; переход из режима редактирования в режим моделирования">RDS_BFM_CALCMODE</a></span>,
+которое произошло раньше.</p>
+
+<p>С учетом изложенного выше, модель блока-передатчика будет выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+       <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestTunnelIn(<span class="kw">int</span> CallMode,
+                                <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                                <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x       (*((double *)(pStart+2)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на структуру подписки</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> Link;
+    <span class="rem">// Вспомогательная переменная – структура описания блока</span>
+    <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a> Descr;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="rem">// Удалить созданную динамическую переменную</span>
+          rdsDeleteDVByLink(Link);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Переход в режим моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CALCMODE.htm" title="А.2.4.1. RDS_BFM_CALCMODE &ndash; переход из режима редактирования в режим моделирования">RDS_BFM_CALCMODE</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="kw">if</span>(Link!=NULL) <span class="rem">// Динамическая переменная была создана</span>
+            { <span class="rem">// Заполнить структуру описания блока</span>
+              Descr.servSize=<span class="kw">sizeof</span>(Descr);
+              <span id="light_ref11"><a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a></span>(BlockData-&gt;Block,&amp;Descr);
+              <span class="rem">// Сравнить имя переменной с текстом комментария</span>
+              <span class="kw">if</span>(strcmp(Link-&gt;VarName,Descr.BlockComment)!=<span class="const">0</span>)
+                { <span class="rem">// Имя переменной не совпадает с комментарием -</span>
+                  <span class="rem">// переменная будет удалена</span>
+                  <a class="hidden" href="rdsDeleteDVByLink.htm" title="А.5.16.3. rdsDeleteDVByLink &ndash; удалить динамическую переменную и прекратить подписку на нее">rdsDeleteDVByLink</a>(Link);
+                  <span class="rem">// Очистить запомненный указатель на структуру подписки</span>
+                  BlockData-&gt;BlockData=NULL;
+                }
+            }
+          <span class="kw">break</span>;
+
+        <span class="rem">// Запуск расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a>:
+          <span class="kw">if</span>(BlockData-&gt;BlockData!=NULL) <span class="rem">// Переменная была создана</span>
+            <span class="kw">break</span>;
+          <span class="rem">// Динамической переменной нет (не было или удалена</span>
+          <span class="rem">// в реакции на RDS_BFM_CALCMODE) - надо создать новую.</span>
+          <span class="rem">// Сначала надо получить комментарий блока</span>
+          Descr.servSize=<span class="kw">sizeof</span>(Descr);
+          <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(BlockData-&gt;Block,&amp;Descr);
+          <span class="kw">if</span>(*Descr.BlockComment==<span class="const">0</span>) <span class="rem">// Комментарий пуст</span>
+            <span class="kw">break</span>;
+          <span class="rem">// Комментарий блока – не пустая строка. Создаем переменную.</span>
+
+          Link=<a class="hidden" href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a>(<a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref5" title="RDS_DVROOT">RDS_DVROOT</a>,
+                                       Descr.BlockComment,
+                                       <span class="str">"D"</span>,
+                                       TRUE,
+                                       NULL);
+          <span class="rem">// Запомнить новый указатель на структуру подписки</span>
+          BlockData-&gt;BlockData=Link;
+          <span class="rem">// В конце реакции на запуск расчета нет оператора break,</span>
+          <span class="rem">// поэтому сразу после нее выполнится реакция на</span>
+          <span class="rem">// такт расчета (чтобы начальное значение входа</span>
+          <span class="rem">// записалось в динамическую переменную)</span>
+
+        <span class="rem">// Выполнение такта моделирования</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="rem">// Проверка существования переменной</span>
+          <span class="kw">if</span>(Link!=NULL &amp;&amp; Link-&gt;Data!=NULL)
+            { <span class="rem">// Переменная существует – привести указатель</span>
+              <span class="rem">// на область данных переменной к типу "double*"</span>
+              <span class="kw">double</span> *pV=(<span class="kw">double</span>*)Link-&gt;Data;
+              <span class="kw">if</span>(*pV!=x) <span class="rem">// Значение входа изменилось</span>
+                { <span class="rem">// Записать в динамическую переменную новое</span>
+                  <span class="rem">// значение входа</span>
+                  *pV=x;
+                  <span class="rem">// Уведомить всех подписчиков об изменении</span>
+                  <span class="rem">// переменной</span>
+                  <a class="hidden" href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a>(Link);
+                }
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Как и в <a href="pm_2_6_2.htm#light_ref1" title="Пример подписки на стандартную переменную DynTime">предыдущем примере</a>, в этой модели указатель на
+структуру подписки на созданную динамическую переменную будет запоминаться в поле структуры данных блока
+<span class="cpp">BlockData-&lt;BlockData</span>, предназначенном для хранения указателя на личную область
+данных блока. Однако, в этом блоке создание переменной и подписка на нее будет происходить не при
+инициализации блока, а при запуске расчета, поэтому эта модель не имеет реакции на событие инициализации
+<span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span>. RDS автоматически присваивает переменной
+<span class="cpp">BlockData-&gt;BlockData</span> значение <span class="cpp">NULL</span> при создании блока,
+что в данном случае будет означать, что динамическая переменная блока еще не создана.</p>
+
+<p>Несмотря на отсутствие в модели реакции на инициализацию блока, в ней есть реакция на событие очистки
+<span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span>, в которой созданная блоком динамическая переменная уничтожается при
+помощи функции <span class="cpp"><a href="rdsDeleteDVByLink.htm" title="А.5.16.3. rdsDeleteDVByLink &ndash; удалить динамическую переменную и прекратить подписку на нее">rdsDeleteDVByLink</a></span>. В эту функцию передается запомненный
+в <span class="cpp">BlockData-&gt;BlockData</span> указатель на структуру подписки на созданную переменную.
+Если переменная так и не была создана, этот указатель будет равен <span class="cpp">NULL</span>, и в
+этом случае функция <span class="cpp"><a class="hidden" href="rdsDeleteDVByLink.htm" title="А.5.16.3. rdsDeleteDVByLink &ndash; удалить динамическую переменную и прекратить подписку на нее">rdsDeleteDVByLink</a></span> не выполнит никаких действий.</p>
+
+<p>При переходе RDS в режим моделирования модели всех блоков вызываются с параметром
+<span class="cpp"><a class="hidden" href="RDS_BFM_CALCMODE.htm" title="А.2.4.1. RDS_BFM_CALCMODE &ndash; переход из режима редактирования в режим моделирования">RDS_BFM_CALCMODE</a></span>. По причинам, изложенным выше, именно в этот момент модель
+блока-передатчика должна сравнить текст комментария блока с именем созданной переменной и удалить переменную,
+если они не совпадают. Очевидно, что если блок до сих пор не создал динамическую переменную, эту проверку
+выполнять бессмысленно, поэтому сначала запомненный в
+<span class="cpp">BlockData-&gt;BlockData</span> указатель на структуру подписки присваивается
+вспомогательной переменной <span class="cpp">Link</span> и его значение сравнивается с
+<span class="cpp">NULL</span>. Все дальнейшие действия производятся только в том случае, если
+<span class="cpp">Link</span> не равно <span class="cpp">NULL</span>, то есть у блока на данный
+момент есть какая-то динамическая переменная.</p>
+
+<p>Текст комментария блока не содержится в структуре <span class="cpp"><a href="RDS_BLOCKDATA.htm#ref3" title="Структура RDS_BLOCKDATA">RDS_BLOCKDATA</a></span>, указатель на которую
+передается в модель блока в параметре <span class="cpp">BlockData</span>. Указатель на этот текст, как
+и многие другие параметры блока, можно получить только заполнив специальную структуру описания блока
+<span class="cpp"><a href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a></span> при помощи сервисной функции
+<span class="cpp"><a href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a></span>. В этой модели структура описания блока объявлена как
+вспомогательная переменная <span class="cpp">Descr</span> в самом начале функции модели. Для того,
+чтобы записать в эту структуру параметры данного блока, необходимо вызвать функцию <span class="cpp"><a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a></span>,
+передав ей идентификатор блока, описание которого нужно получить
+(<span class="cpp">BlockData-&gt;Block</span>), и указатель на структуру описания
+<span class="cpp">&amp;Descr</span>. Однако, сначала следует присвоить полю
+<span class="cpp">servSize</span> структуры <span class="cpp">Descr</span> размер этой структуры:</p>
+
+<pre class="cpp">  Descr.servSize=<span class="kw">sizeof</span>(Descr);</pre>
+
+<p>Такое присваивание необходимо выполнять перед вызовами большинства сервисных функций RDS, заполняющих
+какие-либо структуры &ndash; это позволяет избежать ошибок при работе со старыми библиотеками.
+По мере развития RDS в некоторые структуры добавлялись дополнительные поля, поэтому может случиться
+так, что какая-нибудь устаревшая библиотека вызовет сервисную функцию, передав ей структуру меньшего размера,
+в которой дополнительные поля еще не были предусмотрены. Если функция попытается обратиться к отсутствующим полям
+за пределами переданной ей структуры, это вызовет серьезные ошибки, поэтому любая сервисная функция сначала
+считывает значение поля <span class="cpp">servSize</span> переданной структуры и сравнивает его с
+ожидаемым размером этой структуры. Если переданное значение окажется меньше ожидаемого, сервисная функция не
+будет пытаться обращаться к полям структуры, находящимися за пределами <span class="cpp">servSize</span>.</p>
+
+<p>После того, как функция <span class="cpp"><a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a></span> заполнит структуру описания блока
+<span class="cpp">Descr</span>, указатель на текст комментария блока будет находиться в поле
+<span class="cpp">BlockComment</span> этой структуры. Комментарий блока представляет собой строку символов,
+завершенную нулевым байтом. Технически комментарий может состоять из множества строк, разделенных кодами перевода
+строки, но в данном примере мы считаем, что комментарий блока должен содержать единственную строку &ndash;
+имя переменной. Модель должна сравнить текст комментария с именем динамической переменной, с которой в данный
+момент работает блок, и удалить эту переменную, если они отличаются. Указатель на имя переменной находится в поле
+<span class="cpp">VarName</span> структуры подписки <span class="cpp"><a href="RDS_DYNVARLINK.htm#ref1" title="Структура RDS_DYNVARLINK">RDS_DYNVARLINK</a></span>, указатель
+на которую в данный момент хранится во вспомогательной переменной <span class="cpp">Link</span>.
+Для сравнения двух строк будет использоваться стандартная функция <span class="cpp">strcmp</span>, описанная в файле
+заголовка &laquo;<span class="file">string.h</span>&raquo;:</p>
+
+<pre class="cpp">  strcmp(Link-&gt;VarName,Descr.BlockComment)</pre>
+
+<p>Если эта функция вернет значение, отличное от нуля, значит, имя переменной не совпадает с комментарием блока.
+В этом случае вызывается сервисная функция <span class="cpp"><a class="hidden" href="rdsDeleteDVByLink.htm" title="А.5.16.3. rdsDeleteDVByLink &ndash; удалить динамическую переменную и прекратить подписку на нее">rdsDeleteDVByLink</a></span>, которая удалит переменную и
+прекратит подписку на нее, после чего переменной
+<span class="cpp">BlockData-&gt;BlockData</span>, в которой хранился указатель на структуру подписки, будет
+присвоено значение <span class="cpp">NULL</span>.</p>
+
+<p>При запуске расчета модель будет вызвана с параметром <span class="cpp"><a href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a></span>. К
+этому моменту все динамические переменные блоков-передатчиков, имена которых не совпадают с комментариями, должны
+быть уже удалены. Если на момент запуска расчета динамическая переменная существует (запомненный в
+<span class="cpp">BlockData-&gt;BlockData</span> указатель на структуру подписки не равен <span class="cpp">NULL</span>),
+значит, комментарий блока не изменялся, и никаких действий предпринимать не нужно &ndash; можно продолжать работать
+со старой переменной. В этом случае выполнение функции модели на этом прекращается. Если же указатель на структуру
+подписки нулевой, переменная либо еще не была создана, либо была удалена в реакции на включение режима моделирования
+из-за изменения комментария блока. В любом случае необходимо создать в корневой подсистеме переменную с
+именем, указанным в комментарии блока. Для доступа к комментарию используется описанная выше сервисная функция
+<span class="cpp"><a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a></span>, заполняющая вспомогательную структуру описания блока
+<span class="cpp">Descr</span>. Получив строку комментария, имеет смысл проверить, содержится ли в
+ней какой-нибудь текст. Для этого первый символ комментария (<span class="cpp">*Descr.BlockComment</span>)
+сравнивается с нулевым байтом, который завершает строку. Если первый же символ строки &ndash; нулевой,
+в строке ничего нет. Динамическая переменная должна иметь какое-нибудь имя, поэтому при пустой строке
+комментария модель завершается, не пытаясь создать переменную (для упрощения этого примера здесь не
+проверяется, является ли строка комментария блока допустимым именем переменной).</p>
+
+<p>Если динамической переменной нет, и комментарий блока не пустой, модель вызывает функцию
+<span class="cpp"><a href="rdsCreateAndSubscribeDV.htm" title="А.5.16.1. rdsCreateAndSubscribeDV &ndash; создать динамическую переменную и подписаться на нее">rdsCreateAndSubscribeDV</a></span>, передавая ей в качестве имени переменной строку комментария
+блока (<span class="cpp">Descr.BlockComment</span>). Эта функция создаст переменную типа <span class="cpp">double</span>
+(строка &laquo;D&raquo;) с указанным именем в корневой подсистеме (<span class="cpp"><a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref5" title="RDS_DVROOT">RDS_DVROOT</a></span>) и
+запретит ее удаление всем блокам кроме данного (значение параметра <span class="cpp">Fixed</span> равно
+<span class="cpp">TRUE</span>). Вместо строки значения по умолчанию передается <span class="cpp">NULL</span> &ndash;
+значение по умолчанию в данном случае не важно, переменной сразу же будет присвоено новое значение.
+Возвращаемый функцией указатель на структуру подписки на созданную переменную запоминается в
+<span class="cpp">BlockData-&gt;BlockData</span>.</p>
+
+<p>Следует обратить внимание на то, что, в отличие от всех остальных реакций, в конце реакции на запуск расчета
+отсутствует оператор <span class="cpp">break</span>. Все реакции в этой модели, как и
+во всех предыдущих примерах, оформлены в виде операторов <span class="cpp">case</span> с различными константами
+внутри оператора <span class="cpp">switch(CallMode)</span>. При вызове функции модели с параметром
+<span class="cpp">CallMode</span>, равным <span class="cpp"><a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a></span>, выполняются все
+операторы после &laquo;<span class="cpp">case RDS_BFM_STARTCALC</span>&raquo; до первого оператора <span class="cpp">break</span>
+или до конца оператора <span class="cpp">switch</span>. Отсутствие <span class="cpp">break</span> в
+конце реакции на запуск расчета приведет к тому, что сразу после нее выполнится часть программы, отвечающая за
+реакцию на такт расчета. Это сделано намеренно, чтобы при запуске расчета созданной динамической переменной
+было немедленно присвоено значение входа блока (именно этим и занимается функция модели в реакции
+на такт расчета).</p>
+
+<p>При запуске модели в режиме реакции на такт расчета (<span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>) во вспомогательную
+переменную <span class="cpp">Link</span> записывается запомненный указатель на структуру подписки из
+<span class="cpp">BlockData-&gt;BlockData</span>, после чего проверяется, существует ли динамическая переменная.
+Если структура подписки была создана (значение <span class="cpp">Link</span> не равно <span class="cpp">NULL</span>) и
+ее поле <span class="cpp">Data</span> указывает на какую-то область памяти
+(<span class="cpp">Link-&gt;Data!=NULL</span>), переменная существует, и в нее можно записывать значение
+входа блока. В этом случае указатель на область данных переменной <span class="cpp">Link-&gt;Data</span>
+приводится к типу <span class="cpp">double*</span> и присваивается вспомогательной переменной
+<span class="cpp">pV</span> &ndash; теперь для доступа к данным переменной можно использовать выражение
+&laquo;<span class="cpp">*pV</span>&raquo;. Если значение динамической переменной не равно значению входа блока <span class="cpp">x</span>,
+ей присваивается новое значение, после чего все блоки-приемники информируются об изменении значения переменной при
+помощи функции <span class="cpp"><a href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a></span>.</p>
+
+<p>Перейдем к созданию модели блока-приемника. Эта модель будет несколько проще &ndash; блоку-приемнику
+не нужно создавать и удалять динамическую переменную. Конечно, ему тоже придется следить за текстом
+комментария и подписываться на переменную заново при ее изменении, но, в отличие от передатчиков, которые могут
+мешать друг другу, пытаясь создать переменные с одинаковыми именами, приемники просто запрашивают подписку
+на необходимые им переменные и ждут, пока RDS не предоставит им доступ к этим переменным.</p>
+
+<p>Помимо двух стандартных сигналов, блок-приемник будет иметь единственный вещественный выход &laquo;<span class="rdsvar">y</span>&raquo;:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">y</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Этот блок не будет отрабатывать такты моделирования, поэтому у него следует отключить запуск каждый
+такт, чтобы он не тратил время процессора впустую. Передача данных из динамической переменной на выход
+блока будет осуществляться в реакции модели на изменение динамической переменной.</p>
+
+<p>Модель блока будет выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+       <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestTunnelOut(<span class="kw">int</span> CallMode,
+                                 <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                                 <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define y      (*((double *)(pStart+2)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на структуру подписки</span>
+    <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> Link;
+    <span class="rem">// Вспомогательная переменная – структура описания блока</span>
+    <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a> Descr;
+
+    <span class="kw">switch</span>(CallMode)
+     { <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="rem">// Прекратить подписку на переменную</span>
+          <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(Link);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Запуск расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="rem">// Получение описания блока (с комментарием)</span>
+          Descr.servSize=<span class="kw">sizeof</span>(Descr);
+          <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(BlockData-&gt;Block,&amp;Descr);
+          <span class="rem">// Проверка наличия комментария</span>
+          <span class="kw">if</span>(*Descr.BlockComment==<span class="const">0</span>) <span class="rem">// Пустая строка</span>
+            { <span class="rem">// Прекратить подписку на переменную</span>
+              <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(Link);
+              <span class="rem">// Очистить запомненный указатель на структуру подписки</span>
+              BlockData-&gt;BlockData=NULL;
+              <span class="kw">break</span>;
+            }
+          <span class="rem">// Если переменной нет (Link==NULL) или ее имя не</span>
+          <span class="rem">// соответствует комментарию блока (strcmp... !=0),</span>
+          <span class="rem">// нужно подписаться на новую переменную</span>
+          <span class="kw">if</span>(Link==NULL ||
+             strcmp(Link-&gt;VarName,Descr.BlockComment)!=<span class="const">0</span>)
+            { <span class="rem">// Прекратить подписку на старую переменную</span>
+              <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(Link);
+              <span class="rem">// Подписаться на новую</span>
+              Link=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(<a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref5" title="RDS_DVROOT">RDS_DVROOT</a>,
+                                            Descr.BlockComment,
+                                            <span class="str">"D"</span>,
+                                            FALSE);
+              <span class="rem">// Запомнить новый указатель на структуру подписки</span>
+              BlockData-&gt;BlockData=Link;
+            }
+          <span class="rem">// В конце реакции на запуск расчета нет оператора break,</span>
+          <span class="rem">// поэтому сразу после нее выполнится реакция на</span>
+          <span class="rem">// изменение динамической переменной (чтобы ее значение</span>
+          <span class="rem">// было немедленно передано на выход блока)</span>
+
+        <span class="rem">// Реакция на изменение динамической переменной</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a>:
+          <span class="rem">// Запомненный указатель на структуру подписки</span>
+          Link=(<a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a>)BlockData-&gt;BlockData;
+          <span class="rem">// Проверка существования переменной</span>
+          <span class="kw">if</span>(Link!=NULL &amp;&amp; Link-&gt;Data!=NULL)
+            { <span class="rem">// Присвоить выходу блока значение динамической</span>
+              <span class="rem">// переменной</span>
+              y=*(<span class="kw">double</span>*)Link-&gt;Data;
+              <span class="rem">// Взвести сигнал Ready, чтобы значение выхода</span>
+              <span class="rem">// было передано по связям</span>
+              Ready=<span class="const">1</span>;
+            }
+          <span class="kw">break</span>;
+      }
+
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой модели, как и в модели блока-передатчика, нет реакции на инициализацию блока. Чтобы можно
+было отслеживать изменение комментария блока пользователем, подписка на динамическую переменную для
+получения данных от блока-передатчика производится не при инициализации, а при реакции на запуск расчета,
+то есть заведомо после того, как пользователь мог изменить комментарий. Указатель на структуру подписки,
+так же, как и в предыдущих двух моделях, будет храниться в поле
+<span class="cpp">BlockData-&gt;BlockData</span>, которому RDS автоматически присваивает значение
+<span class="cpp">NULL</span> при создании блока (в данном случае это будет означать, что блок
+еще не подписывался на переменную). При вызове с параметром <span class="cpp"><a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span>
+модель прекращает подписку блока на динамическую переменную, вызывая функцию
+<span class="cpp"><a href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a></span>, в которую передается указатель на структуру подписки из
+<span class="cpp">BlockData-&gt;BlockData</span> (предварительно он приводится к типу
+<span class="cpp"><a href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a></span> и присваивается вспомогательной переменной <span class="cpp">Link</span>).</p>
+
+<p>При запуске расчета (вызов с параметром <span class="cpp"><a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a></span>) модель блока-приемника
+должна подписаться на динамическую переменную для связи с передатчиком, если она еще не подписана на нее,
+или если комментарий блока изменился. Запомненный в
+<span class="cpp">BlockData-&gt;BlockData</span> указатель на структуру подписки присваивается вспомогательной
+переменной <span class="cpp">Link</span>, после чего при помощи сервисной функции
+<span class="cpp"><a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a></span> заполняется структура описания блока <span class="cpp">Descr</span>,
+в поле <span class="cpp">BlockComment</span> которой эта функция записывает указатель на строку комментария блока
+(получение указателя на текст комментария было подробно описано выше, в пояснениях к модели блока-передатчика).
+Затем, модель проверяет, содержит ли комментарий блока какой-либо текст. Если комментарий пуст, модель не сможет
+продолжать работу &ndash; для подписки на динамическую переменную необходимо знать ее имя. Если первый
+символ строки комментария имеет код 0, значит, строка комментария пуста &ndash; в этом случае модель прекращает
+подписку на старую переменную при помощи функции <span class="cpp"><a href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a></span> и
+возвращает управление RDS (если в данный момент блок не был подписан ни на какую переменную,
+в функцию <span class="cpp"><a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a></span> вместо указателя на структуру подписки будет
+передано значение <span class="cpp">NULL</span>, и она завершится, на выполнив никаких действий).</p>
+
+<p>После того, как модель установила, что комментарий блока содержит какой-то текст, она может
+сравнить этот текст с именем переменной, на которую подписан блок. Если блок вообще не подписан на переменную
+(значение <span class="cpp">Link</span> равно <span class="cpp">NULL</span>) или имя переменной не совпадает
+с текстом комментария (строки <span class="cpp">Link-&gt;VarName</span> и
+<span class="cpp">Descr.BlockComment</span> не совпадают, проверка производится при помощи функции <span class="cpp">strcmp</span>),
+модель прекращает подписку на старую переменную, если она существовала, и подписывается на
+новую при помощи функции <span class="cpp"><a href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a></span>. Переменная типа
+<span class="cpp">double</span> (строка &laquo;D&raquo;) ищется в корневой подсистеме (константа
+<span class="cpp"><a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref5" title="RDS_DVROOT">RDS_DVROOT</a></span>) без поиска по иерархии (параметр
+<span class="cpp">Search</span> равен <span class="cpp">FALSE</span>), в качестве имени переменной передается
+строка комментария блока <span class="cpp">Descr.BlockComment</span>. Функция возвращает указатель на
+структуру подписки, который запоминается в <span class="cpp">BlockData-&gt;BlockData</span>
+для дальнейшей работы.</p>
+
+<p>Как и в модели блока-передатчика, в модели блока-приемника после реакции на запуск расчета отсутствует
+оператор <span class="cpp">break</span>. Из-за этого сразу после этой реакции будет выполнена часть
+программы модели, отвечающая за реакцию на изменение динамической переменной, что позволит немедленно передать
+данные переменной на выход блока, не дожидаясь уведомления от блока-передатчика.</p>
+
+<p>Каждый раз, когда модель блока-передатчика вызывает функцию <span class="cpp"><a class="hidden" href="rdsNotifyDynVarSubscribers.htm" title="А.5.16.6. rdsNotifyDynVarSubscribers &ndash; уведомить подписчиков об изменении переменной">rdsNotifyDynVarSubscribers</a></span>
+после изменения своей динамической переменной, модели блоков-приемников, подписанных на эту переменную,
+будут вызваны с параметром <span class="cpp"><a href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a></span>. Реагируя на это событие, модель
+присваивает выходу блока <span class="cpp">y</span> значение динамической переменной (для этого
+указатель на область данных переменной сначала приводится к типу
+&laquo;указатель на <span class="cpp">double</span>&raquo;) и взводит стандартный сигнал
+<span class="cpp">Ready</span>, что приведет к передаче данных выхода блока по связям в ближайшем
+такте расчета.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/DynVars_Tunnel.png" width="283" height="75" alt="Связь блоков через динамическую переменную" />
+<p id="light_pic1">Рис.&nbsp;41. Связь блоков через<br />динамическую переменную</p>
+</div></div>
+
+
+<p>Для проверки работы созданных моделей следует поместить в схему блок-приемник и блок-передатчик
+(они могут находиться в разных подсистемах) и соединить вход передатчика с полем ввода, а выход приемника
+&ndash; с индикатором
+(<a href="#pic1" title="Связь блоков через динамическую переменную">рис.&nbsp;41</a>). В комментарий обоих блоков следует ввести
+одну и ту же строку имени переменной (например, &laquo;Var1&raquo;). При запуске расчета значения,
+вводимые в поле ввода, подключенное к передатчику, должны отображаться на индикаторе, подключенном к приемнику.</p>
+
+
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_6_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_6_4.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_6_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

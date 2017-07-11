@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.7.3.3. Динамические переменные сложных типов</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_7">&sect;3.7. Принципы создания автокомпилируемых моделей блоков</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_7_3">&sect;3.7.3. Работа с динамическими переменными</a></p>
+<div class="level"><p>&sect;3.7.3.3. Динамические переменные сложных типов</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="um_3_7_3_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_7_4_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_3_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.7. Принципы создания автокомпилируемых моделей блоков</h3>
+<h4 class="off">&sect;3.7.3. Работа с динамическими переменными</h4>
+<h5>&sect;3.7.3.3. Динамические переменные сложных типов</h5>
+<p class="abstract">Рассматривается работа с динамическими переменными сложных типов &ndash; структурами, матрицами и т.п.</p>
+
+
+<p>В примерах в <a href="um_3_7_3_1.htm" title="&sect;3.7.3.1. Подключение к динамической переменной">&sect;3.7.3.1</a>
+и <a href="um_3_7_3_2.htm" title="&sect;3.7.3.2. Создание динамических переменных">&sect;3.7.3.2</a> модели блоков работали с простыми
+<a href="um_1_5.htm" title="&sect;1.5. Динамические переменные">динамическими переменными</a> вещественного типа <span class="cpp">double</span>.
+Динамическая переменная может быть любого типа, допустимого в RDS:
+<a href="um_1_4.htm#light_ref14" title="тип переменной: структура">структурой</a>,
+<a href="um_1_4.htm#light_ref11" title="тип переменной: матрица">матрицей</a>, матрицей структур и т.п. В автокомпилируемых моделях обращение к
+таким сложным переменным производится по стандартным для языка C правилам: индексы массивов записываются в
+квадратных скобках, имена полей структур отделяются от имен самих переменных точкой. Фактически, во
+фрагментах программ, вводимых пользователем в редактор модели, обращение к динамической переменной ничем не
+отличается от <a href="um_index.htm#light_htm:um_3_7_2" title="&sect;3.7.2. Работа со статическими переменными блока">обращения к статической</a>.</p>
+
+<p>В <a href="um_3_7_3_2.htm" title="&sect;3.7.3.2. Создание динамических переменных">&sect;3.7.3.2</a> были рассмотрены блоки, обеспечивающие схему значением
+температуры окружающей среды, которая передавалась через вещественную динамическую переменную
+&laquo;<span class="rdsvar">AmbientTemperature</span>&raquo;. Пусть блокам в этой схеме нужна не только температура среды, но и
+влажность и атмосферное давление. Можно было бы завести еще пару вещественных динамических переменных и
+записывать эти значения в них, но при этом в блоках, присваивающих значения переменным, потребовалось бы
+три вызова функции <span class="cpp"><a href="um_3_7_3_2.htm#ref1" title="Функция NotifySubscribers класса динамической переменной">NotifySubscribers</a></span>
+для уведомления остальных блоков об изменении значения &ndash; по одному вызову для каждой переменной.
+Вероятнее всего, все три этих значения будут изменяться одновременно, в момент считывания параметров
+окружающей среды или расчета динамики их изменения каким-либо блоком. Удобнее будет создать структуру,
+полями которой будут температура, влажность и давление, и динамическую переменную такого типа. Блок,
+вычисливший или получивший новые параметры окружающей среды, будет записывать их в поля структуры и делать
+единственный вызов <span class="cpp">NotifySubscribers</span>.</p>
+
+<p>Назовем структуру, в которой буду храниться параметры среды, &laquo;<span class="rdsvar">Ambience</span>&raquo;, а ее поля для
+температуры, влажности и давления &ndash; &laquo;<span class="rdsvar">Temperature</span>&raquo;, &laquo;<span class="rdsvar">Humidity</span>&raquo; и
+&laquo;<span class="rdsvar">Pressure</span>&raquo; соответственно. Для
+<a href="um_2_14.htm" title="&sect;2.14. Создание и изменение структур">добавления</a> в RDS этой структуры нужно выполнить
+следующие шаги:</p>
+
+<ul>
+  <li>в <a href="um_1_3.htm#ref1" title="Режим редактирования">режиме редактирования</a> (должна быть загружена какая-либо схема или создана
+  новая) выбрать пункт <a href="um_2_1.htm" title="&sect;2.1. Главное окно и главное меню">главного меню</a>
+  &laquo;<span class="menu">система | структуры</span>&raquo; &ndash; откроется
+  <a href="um_2_14.htm#pic1" title="Окно списка структур">окно</a>
+  со списком уже имеющихся в RDS структур;</li>
+
+  <li>ввести в окне редактирования имя типа структуры &laquo;<span class="rdsvar">Ambience</span>&raquo; и заполнить список полей
+  согласно <a href="#pic1" title="Структура Ambience в окне редактирования структуры">рис.&nbsp;394</a>;</li>
+
+  <li>закрыть окно редактирования структуры кнопкой &laquo;<span class="menu">OK</span>&raquo;.</li>
+</ul>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/AC_Struct_Ambience.png" width="600" height="286" alt="Структура Ambience в окне редактирования структуры" />
+<p id="light_pic1">Рис.&nbsp;394. Структура &laquo;<span class="rdsvar">Ambience</span>&raquo; в окне редактирования структуры</p>
+</div></div>
+
+
+<p>Как и в примере из <a href="um_3_7_3_2.htm" title="&sect;3.7.3.2. Создание динамических переменных">&sect;3.7.3.2</a>, создадим блоки с автокомпилируемыми моделями,
+одна из которых будет создавать динамическую структуру типа &laquo;<span class="rdsvar">Ambience</span>&raquo; и записывать в ее поля
+значения входов блока, а другая &ndash; считывать поля структуры и выдавать их на свои выходы. Динамическую
+переменную назовем точно так же, как и тип структуры &ndash; &laquo;<span class="rdsvar">Ambience</span>&raquo;.</p>
+
+<p>Начнем с блока, записывающего свои входы в динамическую переменную. У него будет три входа:
+&laquo;<span class="rdsvar">H</span>&raquo; &ndash; для влажности, &laquo;<span class="rdsvar">T</span>&raquo; &ndash; для температуры, и &laquo;<span class="rdsvar">P</span>&raquo; &ndash;
+для давления. Структура его переменных будет такой:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Start</td>
+    <td class="center">Сигнал</td>
+    <td class="center">Вход</td>
+    <td class="center">&checkmark;</td>
+    <td class="center">1</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Ready</td>
+    <td class="center">Сигнал</td>
+    <td class="center">Выход</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">H</td>
+    <td class="center">double</td>
+    <td class="center">Вход</td>
+    <td class="center">&checkmark;</td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">T</td>
+    <td class="center">double</td>
+    <td class="center">Вход</td>
+    <td class="center">&checkmark;</td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">P</td>
+    <td class="center">double</td>
+    <td class="center">Вход</td>
+    <td class="center">&checkmark;</td>
+    <td class="center">0</td>
+  </tr>
+
+</table>
+</div></div>
+
+<p>Модель блока будет запускаться при самом первом запуске расчета (у сигнала &laquo;<span class="rdsvar">Start</span>&raquo; единичное
+начальное значение) и при поступлении нового значения на входы &laquo;<span class="rdsvar">H</span>&raquo;, &laquo;<span class="rdsvar">T</span>&raquo; и
+&laquo;<span class="rdsvar">P</span>&raquo; (у них установлен флажок &laquo;<span class="menu">пуск</span>&raquo;). <a href="um_3_7_2_1.htm#light_ref6" title="Создание нового блока с моделью">Создадим</a>
+новый блок с автокомпилируемой моделью, зададим для него
+<a href="um_3_7_2_1.htm#pic2" title="Установка запуска по сигналу в окне параметров блока">запуск по сигналу</a> и введем в редакторе модели его
+структуру переменных. Чтобы наш блок создавал динамическую структуру, выполним следующие шаги:</p>
+
+<ul>
+  <li>на вкладке &laquo;<span class="menu">переменные</span>&raquo; левой панели редактора модели в нижней ее части
+  (см. <a href="um_3_6_3.htm#pic1" title="Список динамических переменных">рис.&nbsp;334</a>) нажмем кнопку со знаком &laquo;<span class="menu">+</span>&raquo;;</li>
+
+  <li>в открывшемся <a href="um_3_7_3_2.htm#pic1" title="Добавление создания переменной AmbientTemperature в блок">окне</a>
+  добавления динамической переменной установим флажок &laquo;<span class="menu">произвольная переменная</span>&raquo;;</li>
+
+  <li>в поле &laquo;<span class="menu">имя переменной в RDS</span>&raquo; выберем вариант &laquo;<span class="menu">фиксированное имя</span>&raquo;
+  и введем имя создаваемой переменной &ndash; &laquo;Ambience&raquo;;</li>
+
+  <li>при переходе в поле &laquo;<span class="menu">имя переменной в программе</span>&raquo; в нем появится то же самое имя,
+  его можно оставить без изменения (в программе для обращения к нашей переменной мы тоже будем использовать имя
+  <span class="cpp">Ambience</span>);</li>
+
+  <li>в выпадающем списке &laquo;<span class="menu">блок-владелец</span>&raquo; выберем &laquo;подсистема (RDS_DVPARENT)&raquo; &ndash;
+  мы создаем переменную в одной подсистеме с блоком;</li>
+
+  <li>в выпадающем списке &laquo;<span class="menu">действие</span>&raquo; выберем &laquo;создать&raquo;;</li>
+
+  <li>в выпадающем списке &laquo;<span class="menu">тип</span>&raquo; выберем &laquo;Ambience&raquo; &ndash; наша переменная будет
+  структурой этого типа (то, что имя типа структуры совпадает с именем переменной, не важно, имя типа структуры
+  RDS не используется в программе и, поэтому, не вызовет конфликта идентификаторов);</li>
+
+  <li>закроем окно добавления переменной кнопкой &laquo;<span class="menu">OK</span>&raquo;.</li>
+</ul>
+
+<p class="noindent">На вкладке &laquo;<span class="menu"><a href="um_3_3.htm#pic8" title="Окно редактора пустой модели">модель</a></span>&raquo; окна
+редактора введем следующий текст:</p>
+
+<pre class="cpp">  // Запись входов в поля структуры
+  Ambience.Temperature=T;
+  Ambience.Humidity=H;
+  Ambience.Pressure=P;
+  // Уведомление подписчиков об изменении данных
+  Ambience.<a class="hidden" href="um_3_7_3_2.htm#ref1" title="Функция NotifySubscribers класса динамической переменной">NotifySubscribers</a>();</pre>
+
+<p>Здесь мы по очереди записываем в поля структуры входы блока, соответствующие этим полям по смыслу &ndash;
+имя поля (например, <span class="cpp">Humidity</span>) отделяется от имени переменной (<span class="cpp">Ambience</span>)
+точкой. В последней строчке программы мы, как и в предыдущих примерах, вызываем у динамической переменной
+функцию-член <span class="cpp">NotifySubscribers</span>, которая уведомляет все блоки, подписавшиеся на эту
+переменную, о том, что мы записали в нее новые значения (при этом в моделях этих блоков вызывается
+<a href="ac_RDS_BFM_DYNVARCHANGE.htm" title="&sect;3.8.3.7. Изменение динамической переменной">реакция</a> на изменение динамической переменной).</p>
+
+<p>Теперь займемся блоком, который будет выдавать значения полей динамической структуры на выходы. Назовем
+выходы блока так же, как и поля структуры: &laquo;<span class="rdsvar">Temperature</span>&raquo; (температура),
+&laquo;<span class="rdsvar">Humidity</span>&raquo; (влажность) и &laquo;<span class="rdsvar">Pressure</span>&raquo; (давление):</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Start</td>
+    <td class="center">Сигнал</td>
+    <td class="center">Вход</td>
+    <td class="center">&checkmark;</td>
+    <td class="center">1</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Ready</td>
+    <td class="center">Сигнал</td>
+    <td class="center">Выход</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Temperature</td>
+    <td class="center">double</td>
+    <td class="center">Выход</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Humidity</td>
+    <td class="center">double</td>
+    <td class="center">Выход</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+  <tr>
+    <td class="vcenter">Pressure</td>
+    <td class="center">double</td>
+    <td class="center">Выход</td>
+    <td></td>
+    <td class="center">0</td>
+  </tr>
+
+</table>
+</div></div>
+
+<p>Создадим новый блок с автокомпилируемой моделью, зададим для него запуск по сигналу, введем в модель
+приведенную выше структуру переменных и добавим подписку на переменную &laquo;<span class="rdsvar">Ambience</span>&raquo;. Для этого:</p>
+
+<ul>
+  <li>на вкладке &laquo;<span class="menu">переменные</span>&raquo; левой панели редактора модели в нижней ее части нажмем кнопку со знаком
+  &laquo;<span class="menu">+</span>&raquo;;</li>
+
+  <li>в открывшемся окне добавления динамической переменной установим флажок &laquo;<span class="menu">произвольная переменная</span>&raquo;;</li>
+
+  <li>в поле &laquo;<span class="menu">имя переменной в RDS</span>&raquo; выберем вариант &laquo;<span class="menu">фиксированное имя</span>&raquo;
+  и введем имя переменной &laquo;Ambience&raquo;;</li>
+
+  <li>при переходе в поле &laquo;<span class="menu">имя переменной в программе</span>&raquo; в нем появится то же самое имя &ndash;
+  его можно оставить без изменения;</li>
+
+  <li>в выпадающем списке &laquo;<span class="menu">блок-владелец</span>&raquo; выберем &laquo;подсистема (RDS_DVPARENT)&raquo;,
+  чтобы поиск переменной начинался в родительской подсистеме блока;</li>
+
+  <li>в выпадающем списке &laquo;<span class="menu"></span>&raquo; выберем &laquo;найти и подписаться&raquo;, чтобы, если переменная
+  будет отсутствовать в родительской подсистеме, поиск продолжился вверх по иерархии;</li>
+
+  <li>в выпадающем списке &laquo;<span class="menu">тип</span>&raquo; выберем &laquo;Ambience&raquo; &ndash; мы подписываемся
+  на структуру такого типа;</li>
+
+  <li>закроем окно добавления переменной кнопкой &laquo;<span class="menu">OK</span>&raquo;.</li>
+</ul>
+
+<p>На вкладке &laquo;<span class="menu">модель</span>&raquo; редактора мы не будем ничего вводить &ndash; наша модель не выполняет
+вычислений в такте расчета. Вместо этого мы
+<a href="um_3_7_3_2.htm#ref2" title="Ввод реакции на изменение динамической переменной">добавим в нее реакцию</a> на изменение динамической переменной,
+в которую введем следующий текст программы:</p>
+
+<pre class="cpp">  // Запись полей структуры в выходы
+  Temperature=Ambience.Temperature;
+  Humidity=Ambience.Humidity;
+  Pressure=Ambience.Pressure;
+  Ready=1;  // Выходные связи должны сработать</pre>
+
+<p>В этой реакции мы переписываем значения из полей динамической переменной <span class="cpp">Ambience</span> в
+соответствующие этим полям выходы блока и взводим сигнал <span class="cpp">Ready</span>, чтобы выходные связи
+блока сработали в следующем такте расчета.</p>
+
+<p>Для проверки этих моделей соберем схему, изображенную
+на <a href="#pic2" title="Тестирование блоков, работающих с динамической структурой">рис.&nbsp;395</a>.
+В этой схеме слева расположен блок с моделью, записывающий входы в динамическую структуру, а справа &ndash; блок,
+подающий поля этой структуры на выходы. Запустив расчет и изменяя значения в полях ввода левого блока,
+можно увидеть, что значения на индикаторах правого блока изменяются синхронно.</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/AC_ambientstruct_test1.png" width="321" height="95" alt="Тестирование блоков, работающих с динамической структурой" />
+<p id="light_pic2">Рис.&nbsp;395. Тестирование блоков, работающих с динамической структурой</p>
+</div></div>
+
+
+<p>В рассмотренном примере у нас было три отдельных вещественных входа, которые мы записывали в поля структуры,
+и три отдельных вещественных выхода, на которые мы подавали эти же поля в другом блоке. Это позволило показать,
+как в тексте программы осуществляется обращение к отдельным полям сложной динамической переменой, но, в
+данном простом примере, такое решение не оптимально. Если бы мы сделали у левого блока вход типа
+&laquo;<span class="rdsvar">Ambience</span>&raquo;, а у правого &ndash; выход того же типа, в каждой из моделей можно было бы
+обойтись одним единственным оператором присваивания. Пусть вход левого блока называется &laquo;<span class="rdsvar">X</span>&raquo;, а
+выход правого &ndash; &laquo;<span class="rdsvar">Y</span>&raquo;, оба они &ndash; структуры типа &laquo;<span class="rdsvar">Ambience</span>&raquo;. В этом
+случае модель левого блока выглядела бы так:</p>
+
+<pre class="cpp">  // Копирование структуры-входа в динамическую структуру
+  Ambience=X;
+  // Уведомление подписчиков об изменении данных
+  Ambience.<a class="hidden" href="um_3_7_3_2.htm#ref1" title="Функция NotifySubscribers класса динамической переменной">NotifySubscribers</a>();</pre>
+
+<p>Модель правого блока содержала бы обратный оператор присваивания:</p>
+
+<pre class="cpp">  // Копирование динамической структуры в выход
+  Y=Ambience;
+  Ready=1;  // Выходные связи должны сработать</pre>
+
+<p>В объектах, создаваемых модулем автокомпиляции для доступа к статическим и динамическим переменным,
+переопределен оператор присваивания, поэтому приведенная выше запись допустима. В схеме с новой моделью поля
+ввода и индикаторы нужно было бы подключать уже не к отдельным входам и выходам, а к полям переменных
+&laquo;<span class="rdsvar">X</span>&raquo; и &laquo;<span class="rdsvar">Y</span>&raquo;
+(<a href="#pic3" title="Блоки, работающие с динамической структурой, входы и выходы которых &ndash; тоже структуры">рис.&nbsp;396</a>).</p>
+
+<div class="pic"><div class="container" id="pic3">
+<img src="../img/AC_ambientstruct_test2.png" width="355" height="95" alt="Блоки, работающие с динамической структурой, входы и выходы которых &ndash; тоже структуры" />
+<p id="light_pic3">Рис.&nbsp;396. Блоки, работающие с динамической структурой,<br />входы и выходы которых &ndash; тоже структуры</p>
+</div></div>
+
+
+<p>Работа с динамическими <a href="um_1_4.htm#light_ref12" title="тип переменной: массив">массивами</a>,
+<a href="um_1_4.htm#light_ref11" title="тип переменной: матрица">матрицами</a> и
+<a href="um_1_4.htm#light_ref10" title="тип переменной: строка">строками</a> производится аналогичным образом: все операторы, применяемые к
+статическим переменным этих типов, могут применяться и к динамическим. Например, если
+<span class="cpp">DynArray</span> &ndash; динамический массив, то к его <span class="cpp">i</span>-му элементу
+можно обратиться оператором &laquo;<span class="cpp">DynArray[i]</span>&raquo;. Функции
+<span class="cpp">NotifySubscribers</span>,
+<span class="cpp"><a href="um_3_7_3_1.htm#ref7" title="Функция GetLink класса динамической переменной">GetLink</a></span> и
+<span class="cpp"><a href="um_3_7_3_1.htm#ref8" title="Функция CheckLink класса динамической переменной">CheckLink</a></span>
+при этом всегда применяются к самой динамической переменной, а не к ее отдельным элементам: например, для
+динамического массива <span class="cpp">DynArray</span> нужно записывать
+<span class="cpp">DynArray.NotifySubscribers()</span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="um_3_7_3_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="um_3_7_4_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:um_3_7_3_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

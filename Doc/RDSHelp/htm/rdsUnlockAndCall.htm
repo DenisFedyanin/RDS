@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.3.4. rdsUnlockAndCall &ndash; вызвать функцию, сняв блокировку данных</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_3">А.5.3. Синхронизация потоков RDS</a></p>
+<div class="level"><p>А.5.3.4. <span class="cpp">rdsUnlockAndCall</span> &ndash; вызвать функцию, сняв блокировку данных</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsLockBlockData.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsUnlockBlockData.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsUnlockAndCall">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.3. Синхронизация потоков RDS</h4>
+<h5>А.5.3.4. <span class="cpp">rdsUnlockAndCall</span> &ndash; вызвать функцию, сняв блокировку данных</h5>
+
+
+<p>Функция <span class="cpp">rdsUnlockAndCall</span> вызывает пользовательскую функцию, указатель на которую
+передается в ее первом параметре, снимая на время ее работы блокировку данных. Эту функцию можно вызывать
+<span class="emph">только в главном потоке RDS</span>.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsUnlockAndCall(
+      RDS_IpV Func,    <span class="rem">// Функция пользователя</span>
+      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Param,    <span class="rem">// Параметр функции пользователя</span>
+      <span class="kw">int</span> *pResult     <span class="rem">// Результат возврата функции</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_BCb4pVI</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Func</span>&emsp;(<span class="cpp"><i>RDS_IpV</i></span>)</dt>
+  <dd>Указатель на пользовательскую функцию, которую нужно вызвать со снятой блокировкой данных.
+  Пользовательская функция должна иметь следующий вид:<br />
+  <pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции</i>(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> param);</pre>
+  Тип этого параметра <span class="cpp">RDS_IpV</span> описан в &laquo;<span class="file">RdsDef.h</span>&raquo; как указатель на такую функцию:<br />
+  <pre class="cpp">  <span class="kw">typedef</span> <span class="kw">int</span> (<a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> *RDS_IpV)(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a>);</pre>
+</dd>
+
+  <dt><span class="cpp">Param</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></i></span>)</dt>
+  <dd>Параметр типа <span class="cpp">void*</span>, передаваемый в пользовательскую функцию при вызове.</dd>
+
+  <dt><span class="cpp">pResult</span>&emsp;(<span class="cpp"><i>int*</i></span>)</dt>
+  <dd>Указатель на переменную, в которую будет записано целое значение, возвращенное пользовательской функцией.
+  Если это значение не нужно, может быть равен <span class="cpp">NULL</span>.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p><span class="cpp">TRUE</span>, если пользовательская функция выполнена, или <span class="cpp">FALSE</span>,
+если вызов не выполнен из-за того, что <span class="cpp">rdsUnlockAndCall</span> вызвана не в главном потоке,
+вместо указателя на функцию передано значение <span class="cpp">NULL</span> или в пользовательской функции
+возникли исключения.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Вызов <span class="cpp">rdsUnlockAndCall</span> обычно используется для выполнения каких-либо
+длительных действий, не затрагивающих данные блоков, в главном потоке RDS. Типичный пример &ndash;
+открытие модального окна в <a href="um_1_3.htm#ref3" title="Режим расчета">режиме расчета</a> из главного потока (например, в
+реакции блока на
+<a href="RDS_BFM_KEYDOWN.htm" title="А.2.6.5. RDS_BFM_KEYDOWN &ndash; нажатие клавиши">нажатие клавиши</a>
+или <a href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">кнопки мыши</a>), этот случай рассматривается
+в <a href="pm_1_8.htm" title="&sect;1.8. Открытие окон в модели блока">&sect;1.8 руководства программиста</a>. Поскольку при вызове модели блока данные всегда
+блокируются, открытие модального окна приведет к остановке потока расчета: пока окно на экране, функция
+модели блока не завершится, и RDS не разблокирует данные, поэтому как только поток расчета попытается
+тоже заблокировать их, он перейдет в состояние ожидания. Чтобы избежать этого, нужно создать функцию
+специального вида, которая будет открывать модальное окно, после чего передать указатель на эту функцию
+в параметре <span class="cpp">Func</span> вызова <span class="cpp">rdsUnlockAndCall</span>.</p>
+
+<p>При вызове <span class="cpp">rdsUnlockAndCall</span> RDS выполняет следующие действия:</p>
+
+<ol>
+  <li>Если вызвавший функцию поток &ndash; не главный поток RDS, функция немедленно возвращает
+  <span class="cpp">FALSE</span>.</li>
+  <li>Блокировка данных полностью снимается &ndash; как при вызове <span class="cpp"><a href="rdsUnlockBlockData.htm" title="А.5.3.5. rdsUnlockBlockData &ndash; выключение блокировки данных">rdsUnlockBlockData</a></span>,
+  но без учета внутреннего счетчика блокировок.</li>
+  <li>Вызывается функция, указатель на которую передан в параметре <span class="cpp">Func</span>, с параметром,
+  переданным в параметре <span class="cpp">Param</span>. Возвращенное функцией целое число запоминается.</li>
+  <li>Блокировка данных восстанавливается, причем вместе с ней восстанавливается значение внутреннего счетчика
+  блокировок функции <span class="cpp"><a href="rdsLockBlockData.htm" title="А.5.3.3. rdsLockBlockData &ndash; включение блокировки данных">rdsLockBlockData</a></span>.</li>
+  <li>Запомненный результат возврата вызванной функции записывается по указателю <span class="cpp">pResult</span>,
+  если этот указатель не равен <span class="cpp">NULL</span>.</li>
+</ol>
+
+<p class="noindent">Поскольку на время выполнения пользовательской функции блокировка снимается, любые
+обращения к данным блоков и вызовы сервисных функций RDS следует окружать вызовами
+<span class="cpp">rdsLockBlockData</span>/<span class="cpp">rdsUnlockBlockData</span>.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования <span class="cpp">rdsUnlockAndCall</span> рассматривается
+в <a href="pm_2_7_6.htm" title="&sect;2.7.6. Открытие модальных окон в режиме расчета">&sect;2.7.6 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsLockBlockData.htm" title="А.5.3.3. rdsLockBlockData &ndash; включение блокировки данных">rdsLockBlockData</a></span>,
+<span class="cpp"><a href="rdsUnlockBlockData.htm" title="А.5.3.5. rdsUnlockBlockData &ndash; выключение блокировки данных">rdsUnlockBlockData</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsLockBlockData.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsUnlockBlockData.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsUnlockAndCall">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

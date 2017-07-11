@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.16.2. Добавление и удаление блоков и связей</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_16">&sect;2.16. Программное изменение схемы</a></p>
+<div class="level"><p>&sect;2.16.2. Добавление и удаление блоков и связей</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_16_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_16_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_16_2_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.16. Программное изменение схемы</h3>
+<h4>&sect;2.16.2. Добавление и удаление блоков и связей</h4>
+<p class="abstract">Рассматриваются функции для программного добавления в схему новых блоков и связей и для их удаления. 
+                Приводится пример блока, который по двум текстовым файлам, содержащим список блоков и соединений между ними, 
+                создает в подсистеме новый фрагмент схемы.</p>
+
+
+<p>Сервисные функции RDS позволяют моделям блоков как создавать в схеме новые блоки и
+<a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связи</a>, так и удалять их. Таким образом, можно создавать схемы,
+которые будут модифицировать сами себя. На практике это применяется довольно редко &ndash; в основном,
+для автоматического создания схем по каким-либо данным, созданным сторонними программами.</p>
+
+<p>Рассмотрим следующий пример: допустим, у нас есть два текстовых файла, в одном из которых перечислены блоки
+с их координатами, а в другом &ndash; соединения между переменными этих блоков. Создадим модель блока, который,
+используя информацию из этих файлов, добавит в подсистему новые блоки и соединит их связями. Этот блок также будет
+уметь удалять все добавленные им в схему блоки и связи по запросу пользователя.</p>
+
+<p><span id="ref1">Сначала</span>
+определимся с форматом текстовых файлов. Будем использовать <span id="light_ref1">формат CSV</span> &ndash;
+comma separated values (&laquo;значения, разделенные запятой&raquo;). Это очень простой формат,
+в нем на каждой строчке текстового файла перечисляются какие-либо значения, разделенные запятыми. Он
+часто используется в разных программах, и в RDS есть вспомогательный объект для его
+автоматического разбора.</p>
+
+<p>Строки файла со списком блоков будут иметь следующий вид:</p>
+
+<pre class="cpp">  <i>имя_блока</i>, <i>x</i>, <i>y</i></pre>
+
+<p class="noindent">где <i>x</i> и <i>y</i> &ndash; координаты
+<a href="um_2_9_1.htm#ref12" title="Точка привязки блока">точки привязки</a> блока (для блоков с
+<a href="pm_1_4.htm#light_ref4" title="Векторная картинка блока">векторной картинкой</a> &ndash; начало координат этой картинки, для остальных
+&ndash; верхний левый угол описывающего прямоугольника). Например, строчка
+&laquo;Block1, 10, 50&raquo; означает добавление в подсистему блока с именем
+&laquo;<span class="rdsvar">Block1</span>&raquo; и координатами (10, 50). Здесь указывается только имя добавляемого блока, и
+нет никакой информации о том, что это за блок. Для простоты мы будем добавлять в схему одинаковые блоки из
+какого-либо файла. Имя файла с описанием блока нужно будет задавать в настройках нашего изменяющего схему блока.</p>
+
+<p><span id="light_ref2">В строках файла со списком связей</span> будут указываться имена соединяемых блоков и переменных:</p>
+
+<pre class="cpp">  <i>имя_блока_1</i>, <i>имя_переменной_1</i>, <i>имя_блока_2</i>, <i>имя_переменной_2</i></pre>
+
+<p>Например, строка &laquo;Block1, x, Block2, y&raquo; описывает связь, соединяющую переменную
+&laquo;<span class="rdsvar">x</span>&raquo; блока &laquo;<span class="rdsvar">Block1</span>&raquo; с переменной &laquo;<span class="rdsvar">y</span>&raquo; блока
+&laquo;<span class="rdsvar">Block2</span>&raquo;. Чтобы не усложнять пример, мы будем соединять блоки прямыми связями, проходящими через
+их геометрические центры. При этом мы будем начинать и заканчивать связь не в самом геометрическом центре,
+а на границе блока
+(<a href="#pic1" title="Соединение блоков прямой связью">рис.&nbsp;118</a>),
+иначе схема будет выглядеть неряшливо.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/PM_BlockConnCoords.png" width="316" height="225" alt="Соединение блоков прямой связью" />
+<p id="light_pic1">Рис.&nbsp;118. Соединение блоков прямой связью</p>
+</div></div>
+
+
+<p><span id="ref3">Для</span>
+того, чтобы вычислить координаты точек начала и конца связи, зная координаты центров блоков и их размеры,
+нам придется написать вспомогательную функцию. <span id="light_ref3">Вычисления внутри этой функции</span>
+будут достаточно простыми, тем не менее, мы рассмотрим их подробно (те, кто считает эти вычисления элементарными,
+могут пропустить несколько следующих абзацев).</p>
+
+<p>Допустим, (<i>x</i><sub>1</sub>, <i>y</i><sub>1</sub>) &ndash; координаты центра блока, описывающий прямоугольник которого
+имеет ширину <i>w</i> и высоту <i>h</i>. Линия связи будет идти от этого блока в направлении точки
+(<i>x</i><sub>2</sub>, <i>y</i><sub>2</sub>) &ndash; это координаты центра второго блока, но сейчас нам это
+не важно. Необходимо найти координаты точки (<i>x</i><sub>T</sub>, <i>y</i><sub>T</sub>), в которой отрезок
+(<i>x</i><sub>1</sub>, <i>y</i><sub>1</sub>)&ndash;(<i>x</i><sub>2</sub>, <i>y</i><sub>2</sub>) пересекает границу нашего блока.</p>
+
+<p>В зависимости от того, как точка (<i>x</i><sub>2</sub>, <i>y</i><sub>2</sub>) расположена относительно
+(<i>x</i><sub>1</sub>, <i>y</i><sub>1</sub>), отрезок пересечет одну из четырех сторон прямоугольника блока.
+Очевидно, что если <i>x</i><sub>2</sub> больше <i>x</i><sub>1</sub>, то есть
+(<i>x</i><sub>2</sub>, <i>y</i><sub>2</sub>) находится правее (<i>x</i><sub>1</sub>, <i>y</i><sub>1</sub>), то
+отрезок не может пересекать левую сторону прямоугольника &ndash; он уходит вправо. Аналогично, если
+<i>x</i><sub>2</sub> меньше <i>x</i><sub>1</sub>, отрезок не может пересекать правую сторону. Таким образом,
+сравнив <i>x</i><sub>2</sub> и <i>x</i><sub>1</sub>, мы можем сразу выбросить из рассмотрения одну из двух
+вертикальных сторон и не искать пересечения с ней отрезка, соединяющего
+(<i>x</i><sub>1</sub>, <i>y</i><sub>1</sub>) и (<i>x</i><sub>2</sub>, <i>y</i><sub>2</sub>). Обозначим горизонтальную
+координату оставшейся вертикальной стороны через <i>x</i><sub>В</sub>
+(<i>x</i><sub>В</sub> = <i>x</i><sub>1</sub> &plusmn; <i>w</i>/2).</p>
+
+<p>Точно так же мы можем выбросить из рассмотрения и одну из горизонтальных сторон: если отрезок уходит вверх
+(<i>y</i><sub>2</sub> меньше <i>y</i><sub>1</sub>, не забываем о том, что вертикальная ось оконных координат
+перевернута), он не пересечет нижнюю сторону прямоугольника блока, если же он уходит вниз
+(<i>y</i><sub>2</sub> больше <i>y</i><sub>1</sub>), можно не искать его пересечение с верхней стороной.
+Таким образом, из двух горизонтальных сторон мы будем проверять только одну &ndash; обозначим ее вертикальную
+координату через <i>y</i><sub>Г</sub> (<i>y</i><sub>Г</sub> = <i>y</i><sub>1</sub> &plusmn; <i>h</i>/2).</p>
+
+<p>Теперь нам нужно определить, с какой из двух оставшихся сторон прямоугольника (одной вертикальной
+<i>x</i>=<i>x</i><sub>В</sub> и одной горизонтальной <i>y</i>=<i>y</i><sub>Г</sub>) пересекается наш отрезок,
+и найти точку этого пересечения (<i>x</i><sub>T</sub>, <i>y</i><sub>T</sub>).
+На <a href="#pic1" title="Соединение блоков прямой связью">рис.&nbsp;118</a> отрезок пересекает вертикальную сторону, однако,
+если бы точка (<i>x</i><sub>2</sub>, <i>y</i><sub>2</sub>) находилась выше, он мог бы пересечь горизонтальную,
+или обе сразу, если бы прошел через угол прямоугольника. Проще всего определить пересечение отрезка с
+обеими прямыми <i>x</i>=<i>x</i><sub>В</sub> и <i>y</i>=<i>y</i><sub>Г</sub>, и выбрать из двух полученных
+точек ближайшую к центру блока, то есть к точке (<i>x</i><sub>1</sub>, <i>y</i><sub>1</sub>) &ndash; она
+и будет точкой пересечения отрезка со стороной прямоугольника.</p>
+
+<p>Прямая, проходящая через точки (<i>x</i><sub>1</sub>, <i>y</i><sub>1</sub>) и
+(<i>x</i><sub>2</sub>, <i>y</i><sub>2</sub>), описывается следующими параметрическими уравнениями:</p>
+
+<p class="center"><img class="formula" src="../img/Form_conn_1.png" width="220" height="83" alt="x=x1+t*(x2-x1), y=y1+t*(y2-y1)" />,</p>
+
+<p class="noindent">где <i>t</i> &ndash; параметр. Подстановка нулевого значения <i>t</i> в эти уравнения
+дает точку (<i>x</i><sub>1</sub>, <i>y</i><sub>1</sub>), подстановка <i>t</i>=1 &ndash; точку
+(<i>x</i><sub>2</sub>, <i>y</i><sub>2</sub>). Чем ближе значение <i>t</i> к нулю, тем ближе точка прямой будет
+к центру прямоугольника. Таким образом, если мы найдем точки пересечения отрезка с горизонтальной и вертикальной
+прямыми, нам будет нужна та из них, параметр <i>t</i> которой будет меньше.</p>
+
+<p>Найдем параметр <i>t</i><sub>В</sub> точки пересечения отрезка
+(<i>x</i><sub>1</sub>, <i>y</i><sub>1</sub>)&ndash;(<i>x</i><sub>2</sub>, <i>y</i><sub>2</sub>)
+с вертикальной прямой <i>x</i>=<i>x</i><sub>В</sub>. В этой точке</p>
+
+<p class="center"><img class="formula" src="../img/Form_conn_2.png" width="231" height="33" alt="xB=x1+tB*(x2-x1)" />,</p>
+
+<p class="noindent">то есть</p>
+
+<p class="center"><img class="formula" src="../img/Form_conn_3.png" width="133" height="64" alt="tB=(xB-x1)/(x2-x1)" />.</p>
+
+<p>Аналогично, параметр <i>t</i><sub>Г</sub> точки пересечения отрезка с горизонтальной прямой
+<i>y</i>=<i>y</i><sub>Г</sub> будет равен</p>
+
+<p class="center"><img class="formula" src="../img/Form_conn_4.png" width="138" height="64" alt="tG=(yG-y1)/(y2-y1)" />.</p>
+
+<p>Интересующая нас точка пересечения (<i>x</i><sub>Т</sub>, <i>y</i><sub>Т</sub>) будет иметь меньший из
+этих двух параметров:</p>
+
+<p class="center"><img class="formula" src="../img/Form_conn_5.png" width="179" height="32" alt="tT=min(tB,tG)" />,</p>
+
+<p class="noindent">и ее координаты будут вычисляться по уже приведенным выше уравнениям:</p>
+
+<p class="center"><img class="formula" src="../img/Form_conn_6.png" width="243" height="81" alt="xT=x1+tT*(x2-x1), yT=y1+tT*(y2-y1)" /></p>
+
+<p>Отдельно нужно рассмотреть случаи, когда <i>x</i><sub>1</sub>=<i>x</i><sub>2</sub> (строго
+горизонтальный отрезок) и <i>y</i><sub>1</sub>=<i>y</i><sub>2</sub> (строго вертикальный отрезок). В обоих
+этих случаях отрезок будет параллелен одной из двух прямых, и точка пересечения с ней не будет существовать (знаменатель
+в выражении для вычисления соответствующего <i>t</i> обращается в 0). При этом нам нужно просто взять в
+качестве (<i>x</i><sub>Т</sub>, <i>y</i><sub>Т</sub>) точку пересечения с другой прямой &ndash;
+стороны перпендикулярны, поэтому эта точка гарантированно существует.</p>
+
+<p><span id="ref4">Наша</span>
+вспомогательная функция будет выглядеть так:</p>
+
+<pre class="cpp">  <span class="rem">// "Обрезание" отрезка по прямоугольнику</span>
+  <span class="kw">void</span> <span id="light_ref4">ClipLineByRect</span>(
+      <span class="kw">int</span> x1,<span class="kw">int</span> y1,   <span class="rem">// Центр прямоугольника</span>
+      <span class="kw">int</span> w,<span class="kw">int</span> h,     <span class="rem">// Размеры прямоугольника</span>
+      <span class="kw">int</span> x2,<span class="kw">int</span> y2,   <span class="rem">// Конец отрезка</span>
+      <span class="kw">int</span> *px,<span class="kw">int</span> *py) <span class="rem">// Координаты точки на границе</span>
+  { <span class="kw">int</span> xv,yg,xres,yres;
+    <span class="kw">double</span> tv,tg,t;
+    <span class="kw">int</span> status=<span class="const">0</span>; <span class="rem">// Наличие точек пересечения</span>
+
+    <span class="kw">if</span>(x2!=x1) <span class="rem">// Отрезок не строго вертикален</span>
+      { <span class="kw">if</span>(x2&gt;x1) <span class="rem">// Отрезок уходит вправо</span>
+          xv=x1+w/<span class="const">2</span>;
+        <span class="kw">else</span> <span class="rem">// Отрезок уходит влево</span>
+          xv=x1-w/<span class="const">2</span>;
+        <span class="rem">// Параметр точки пересечения с вертикальной прямой</span>
+        tv=((<span class="kw">double</span>)(xv-x1))/((<span class="kw">double</span>)(x2-x1));
+        status=<span class="const">1</span>; <span class="rem">// Есть точка пересечения с вертикалью</span>
+      }
+
+    <span class="kw">if</span>(y2!=y1) <span class="rem">// Отрезок не строго горизонтален</span>
+      { <span class="kw">if</span>(y2&gt;y1) <span class="rem">// Отрезок уходит вниз</span>
+          yg=y1+h/<span class="const">2</span>;
+        <span class="kw">else</span> <span class="rem">// Отрезок уходит вверх</span>
+          yg=y1-h/<span class="const">2</span>;
+        <span class="rem">// Параметр точки пересечения с горизонтальной прямой</span>
+        tg=((<span class="kw">double</span>)(yg-y1))/((<span class="kw">double</span>)(y2-y1));
+        status+=<span class="const">10</span>; <span class="rem">// Есть пересечение с горизонталью</span>
+      }
+
+    <span class="kw">switch</span>(status)
+      { <span class="kw">case</span> <span class="const">0</span>:  <span class="rem">// Ошибка: (x1,y1)==(x2,y2)</span>
+          *px=x1; *py=y1; <span class="kw">return</span>;
+        <span class="kw">case</span> <span class="const">1</span>:  <span class="rem">// Строго горизонтальный отрезок</span>
+          t=tv; <span class="kw">break</span>;
+        <span class="kw">case</span> <span class="const">10</span>: <span class="rem">// Строго вертикальный отрезок</span>
+          t=tg; <span class="kw">break</span>;
+        <span class="kw">default</span>: <span class="rem">// Диагональный отрезок</span>
+         t=(tv&lt;tg)?tv:tg;
+      }
+    <span class="rem">// Вычисление координат по параметру t</span>
+    *px=x1+t*(x2-x1);
+    *py=y1+t*(y2-y1);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Названия параметров этой функции соответствуют
+<a href="#pic1" title="Соединение блоков прямой связью">рис.&nbsp;118</a>, через указатели
+<span class="cpp">px</span> и <span class="cpp">p</span>y она возвращает координаты точки
+(<i>x</i><sub>Т</sub>, <i>y</i><sub>Т</sub>). Внутри функции выполняются описанные выше вычисления.
+Для отдельного рассмотрения горизонтальных и вертикальных отрезков в ней вводится вспомогательная переменная
+<span class="cpp">status</span> с нулевым начальным значением. Если отрезок не вертикальный, переменной присваивается
+значение 1, если он не горизонтальный, к ней прибавляется 10. Таким образом, строго горизонтальному отрезку
+соответствует значение 1, строго вертикальному &ndash; 10, диагональному (ни горизонтальному, ни вертикальному) &ndash;
+11. Нулевое значение <span class="cpp">status</span> укажет на совпадение точек
+(<i>x</i><sub>1</sub>, <i>y</i><sub>1</sub>) и (<i>x</i><sub>2</sub>, <i>y</i><sub>2</sub>) &ndash;
+в этом случае отрезок вырождается в точку, и определить координаты (<i>x</i><sub>Т</sub>, <i>y</i><sub>Т</sub>)
+невозможно. При этом функция возвращает координаты точки
+(<i>x</i><sub>1</sub>, <i>y</i><sub>1</sub>) &ndash; связь будет начинаться в геометрическом центре блока, но
+для такого вырожденного случая это уже не важно.</p>
+
+<p>Теперь займемся самим блоком. Для работы ему нужны имена трех файлов: файла со списком блоков, файла
+со списком связей и файла с описанием блока, копии которого мы будем вставлять по координатам из списка блоков.
+В качестве файла с описанием блока можно использовать любой блок, сохраненный из RDS в отдельный файл
+(обычно такие файлы имеют расширение &laquo;<span class="file">blk</span>&raquo;). Все эти три имени мы будем хранить
+в значениях по умолчанию статических переменных блока
+(см. <a href="pm_2_7_4.htm" title="&sect;2.7.4. Хранение настроечных параметров в переменных блока">&sect;2.7.4</a>). В
+<a href="pm_2_12_6.htm" title="&sect;2.12.6. Добавление пунктов в контекстное меню блока">контекстном меню</a> блока будет два дополнительных пункта: один
+для добавления в подсистему блоков и связей из файла, другой &ndash; для удаления добавленного. Чтобы блок
+мог удалить добавленные им объекты, мы предусмотрим в его
+<a href="pm_1_4.htm#ref8" title="Личная область данных блока">личной области данных</a> список блоков и связей, который будем заполнять
+по мере их добавления (в RDS есть специальный вспомогательный объект для хранения таких списков).</p>
+
+<p>Личную область данных блока мы, как обычно, оформим в виде класса:</p>
+
+<pre class="cpp">  <span class="rem">// Личная область данных блока</span>
+  <span class="kw">class</span> TLoadGraphData
+  { <span class="kw">public</span>:
+      <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> List; <span class="rem">// Объект-список добавленных блоков и связей</span>
+
+      <span class="rem">// Функция добавления блоков по списку из файла</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> LoadBlocks(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> thisblock,<span class="kw">char</span> *blockfile,
+                      <span class="kw">char</span> *blocklist);
+      <span class="rem">// Функция добавления связей по списку из файла</span>
+      <span class="kw">void</span> LoadConnections(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> thisblock,<span class="kw">char</span> *connlist);
+      <span class="rem">// Функция удаления добавленного</span>
+      <span class="kw">void</span> DeleteByList(<span class="kw">void</span>);
+
+      <span class="rem">// Функция настройки (в нее передаются номера статических</span>
+      <span class="rem">// переменных, в которых хранятся параметры блока)</span>
+      <span class="kw">int</span> Setup(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,<span class="kw">int</span> BlockFileVar,
+                <span class="kw">int</span> BlockLstVar,<span class="kw">int</span> ConnLstVar);
+
+      <span class="rem">// Конструктор класса</span>
+      TLoadGraphData(<span class="kw">void</span>){List=NULL;};
+      <span class="rem">// Деструктор класса</span>
+      ~TLoadGraphData(){<span id="light_ref5"><a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>(List);};
+  };
+  <span class="rem">//=========================================</span></pre>
+
+<p>В поле <span class="cpp">List</span> этого класса будет храниться идентификатор вспомогательного объекта со
+списком добавленных блоков и связей. Модель блока будет заполнять этот список в процессе работы, и просматривать его
+при удалении добавленного по команде пользователя. В конструкторе класса мы присваиваем этому полю значение
+<span class="cpp">NULL</span> (объект не создан), а в деструкторе &ndash; удаляем объект сервисной функцией
+<span class="cpp"><a href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span> (ее можно безопасно вызывать и для нулевых идентификаторов).</p>
+
+<p>Основные действия, выполняемые блоком, реализованы в трех функциях-членах класса. Функция
+<span class="cpp">LoadBlocks</span> добавляет в
+<a href="pm_1_2.htm#ref7" title="Родительская подсистема">родительскую подсистему</a> нашего блока новые блоки по списку, функция
+<span class="cpp">LoadConnections</span> создает между ними связи, а функция
+<span class="cpp">DeleteByList</span> удаляет добавленные блоки и связи по команде пользователя. Для настройки
+параметров блока, а именно ввода трех имен файлов, в класс включена функция <span class="cpp">Setup</span>,
+в нее будет передаваться идентификатор блока, параметры которого настраиваются, и номера
+<a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статических переменных</a> этого блока, в которых хранятся имена файлов.</p>
+
+<p>В процессе чтения файлов со списками блоков и связей могут возникнуть различные ошибки: отсутствие
+файла с указанным именем, ссылка на несуществующий блок в списке связей и т.п. Об этих ошибках нужно сообщать
+пользователю, причем желательно указывать не только описание ошибки, но и место ее возникновения, то есть
+имя файла и номер строки в нем. Напишем для этого отдельную функцию, которая будет формировать текст
+сообщения об ошибке и показывать его пользователю (имя файла, номер строки и описание ошибки будут передаваться в
+ее параметрах):</p>
+
+<pre class="cpp">  <span class="rem">// Вывод сообщения об ошибке в файле</span>
+  <span class="kw">void</span> FileErrorMessage(<span class="kw">int</span> line,      <span class="rem">// Номер строки или 0</span>
+                        <span class="kw">char</span> *file,    <span class="rem">// Имя файла или NULL</span>
+                        <span class="kw">char</span> *message) <span class="rem">// Описание ошибки</span>
+  { <span class="kw">char</span> *msg=NULL; <span class="rem">// Здесь будет формироваться текст</span>
+
+    <span class="kw">if</span>(message) <span class="rem">// Есть текст описания</span>
+      <span id="light_ref6"><a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a></span>(&amp;msg,message,FALSE); <span class="rem">// Копируем в msg</span>
+    <span class="kw">if</span>(file) <span class="rem">// Есть имя файла</span>
+      { <span class="rem">// Добавляем к динамической строке msg</span>
+        <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;msg,<span class="str">"\nФайл: "</span>,FALSE);
+        <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;msg,file,FALSE);
+      }
+    <span class="kw">if</span>(line&gt;<span class="const">0</span>) <span class="rem">// Есть номер строки</span>
+      { <span class="kw">char</span> buf[<span class="const">80</span>]; <span class="rem">// Преобразуем в текст и добавляем к msg</span>
+        sprintf(buf,<span class="str">"\nСтрока: %d"</span>,line);
+        <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;msg,buf,FALSE);
+      }
+    <span class="rem">// Выводим сообщение пользователю</span>
+    <span id="light_ref7"><a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a></span>(msg,<span class="str">"Ошибка"</span>,<a class="hidden" href="rdsMessageBox.htm#light_ref7" title="MB_OK">MB_OK</a>|<a class="hidden" href="rdsMessageBox.htm#light_ref5" title="MB_ICONWARNING">MB_ICONWARNING</a>);
+    <span class="rem">// Освобождаем динамическую строку msg</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(msg);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции во вспомогательной переменной <span class="cpp"></span> формируется динамическая строка с
+полным текстом сообщения об ошибке, состоящая из текста описания этой ошибки, имени файла, в котором она
+возникла, и номера строки в этом файле. Затем полученный текст демонстрируется пользователю при помощи функции
+<span class="cpp"><a href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a></span>, после чего строка <span class="cpp">msg</span> освобождается. Для постепенного
+добавления строк к тексту здесь используется функция <span class="cpp"><a href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a></span>.</p>
+
+<p>Теперь, прежде чем переходить в сложным функциям, напишем функцию настройки параметров
+<span class="cpp">Setup</span> &ndash; она будет достаточно простой:</p>
+
+<pre class="cpp">  <span class="rem">// Функция настройки параметров блока</span>
+  <span class="kw">int</span> TLoadGraphData::Setup(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block, <span class="rem">// Идентификатор блока</span>
+    <span class="kw">int</span> BlockFileVar,  <span class="rem">// Номер переменной с файлом блока</span>
+    <span class="kw">int</span> BlockLstVar,   <span class="rem">// Номер переменной со списком блоков</span>
+    <span class="kw">int</span> ConnLstVar)    <span class="rem">// Номер переменной со списком связей</span>
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window; <span class="rem">// Идентификатор вспомогательного объекта</span>
+    BOOL ok;            <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="kw">char</span> *defval;
+
+    <span class="rem">// Создаем окно</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Добавление блоков"</span>);
+
+    <span class="rem">//----- Файл с описанием блока -----</span>
+    <span class="rem">// Значение по умолчанию переменной с номером BlockFileVar</span>
+    defval=<span id="light_ref8"><a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a></span>(Block,BlockFileVar,NULL);
+    <span class="rem">// Поле ввода с возможностью выбора файла</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">1</span>,<span id="light_ref9"><a class="hidden" href="app_a_fields.htm#light_ref15" title="RDS_FORMCTRL_OPENDIALOG">RDS_FORMCTRL_OPENDIALOG</a></span>,
+        <span class="str">"Добавляемый блок:"</span>,<span class="const">300</span>);
+    <span class="rem">// Фильтр имен файлов для поля</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<span id="light_ref10"><a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a></span>,
+        <span class="str">"Файлы блоков (*.blk)|*.blk\nВсе файлы|*.*"</span>);
+    <span class="rem">// Значение поля ввода</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,defval);
+    <span class="rem">// Динамическая строка defval больше не нужна</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(defval);
+
+    <span class="rem">// Список блоков</span>
+    defval=<a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a>(Block,BlockLstVar,NULL);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<a class="hidden" href="app_a_fields.htm#light_ref15" title="RDS_FORMCTRL_OPENDIALOG">RDS_FORMCTRL_OPENDIALOG</a>,
+        <span class="str">"Список блоков:"</span>,<span class="const">300</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a>,
+        <span class="str">"Текстовые файлы (*.txt)|*.txt\nВсе файлы|*.*"</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,defval);
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(defval);
+
+    <span class="rem">// Список связей</span>
+    defval=<a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a>(Block,ConnLstVar,NULL);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">3</span>,<a class="hidden" href="app_a_fields.htm#light_ref15" title="RDS_FORMCTRL_OPENDIALOG">RDS_FORMCTRL_OPENDIALOG</a>,
+        <span class="str">"Список связей:"</span>,<span class="const">300</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a>,
+        <span class="str">"Текстовые файлы (*.txt)|*.txt\nВсе файлы|*.*"</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,defval);
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(defval);
+
+    <span class="rem">// Открытие окна</span>
+    ok=<span id="light_ref11"><a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Запись значений в переменных блока</span>
+        defval=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <span id="light_ref12"><a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a></span>(Block,BlockFileVar,defval);
+        defval=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(Block,BlockLstVar,defval);
+        defval=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(Block,ConnLstVar,defval);
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="kw">return</span> ok?<span class="const">1</span>:<span class="const">0</span>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p><span id="ref13">В</span>
+этой функции для ввода имен файлов используются поля с возможностью выбора файла (тип
+<span class="cpp"><a href="app_a_fields.htm#light_ref15" title="RDS_FORMCTRL_OPENDIALOG">RDS_FORMCTRL_OPENDIALOG</a></span>). Внешне они идентичны уже использовавшимся ранее полям
+<span class="cpp"><a href="app_a_fields.htm#light_ref19" title="RDS_FORMCTRL_SAVEDIALOG">RDS_FORMCTRL_SAVEDIALOG</a></span> (см. <a href="pm_2_13_6.htm#ref24" title="Пример вызова диалога сохранения файла из окна настроек">&sect;2.13.6</a>),
+но вместо стандартного диалога сохранения файла при нажатии на кнопку рядом с таким полем вызывается
+стандартный диалог открытия. Поля для выбора файлов автоматически заменяют
+стандартные пути принятыми в RDS <a href="rdsGetFullFilePath.htm#ref1" title="Символические обозначения стандартных путей">сокращениями</a>: например, в окне
+на <a href="#pic2" title="Окно настроек блока создания блоков и связей">рис.&nbsp;119</a> в качестве добавляемого блока выбран стандартный блок
+умножения на константу (&laquo;<span class="file">K.blk</span>&raquo;) с закладки &laquo;Алгебра&raquo;
+<a href="um_2_16_3.htm" title="&sect;2.16.3. Особенности редактирования панели блоков">панели блоков</a>, при
+этом вместо полного пути к папке панели блоков подставлено стандартное сокращение
+&laquo;<span id="light_ref13">$PANEL$</span>&raquo;. Таким образом, при
+переносе схемы на другую машину, где папка панели блоков может размещаться в другом месте, никакой корректировки
+путей не потребуется. Файлы списка блоков и списка связей на рисунке не имеют путей &ndash;
+это значит, что они находятся в одной папке с загруженной схемой.</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/AddBlocksSetup.png" width="483" height="171" alt="Окно настроек блока создания блоков и связей" />
+<p id="light_pic2">Рис.&nbsp;119. Окно настроек блока создания блоков и связей</p>
+</div></div>
+
+
+<p>Теперь можно приступать к написанию основных функций блока. Начнем с функции создания блоков
+<span class="cpp">LoadBlocks</span>, в параметрах которой передаются идентификатор нашего блока
+(<span class="cpp">thisblock</span>), имя файла с описанием добавляемого блока (<span class="cpp">blockfile</span>)
+и имя файла списка добавляемых блоков (<span class="cpp">blocklist</span>). Функция будет возвращать
+<span class="cpp">TRUE</span>, если в родительскую подсистему блока
+<span class="cpp">thisblock</span> удалось добавить блоки из списка, и <span class="cpp">FALSE</span> в противном случае.</p>
+
+<pre class="cpp">  <span class="rem">// Создание блоков по списку</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> TLoadGraphData::LoadBlocks(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> thisblock, <span class="rem">// Идентификатор этого блока</span>
+    <span class="kw">char</span> *blockfile,       <span class="rem">// Файл добавляемого блока</span>
+    <span class="kw">char</span> *blocklist)       <span class="rem">// Файл списка блоков</span>
+  { <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block=NULL;
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> csv;
+    <span id="light_ref14"><a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a></span> descr;
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok=TRUE;
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Modified=FALSE; <span class="rem">// Флаг внесения изменений в схему</span>
+    <span class="kw">int</span> line=<span class="const">0</span>;          <span class="rem">// Номер строки в списке блоков</span>
+
+    <span class="kw">if</span>(List) <span class="rem">// Уже есть список объектов – очишаем его</span>
+      <span id="light_ref15"><a class="hidden" href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a></span>(List,<span id="light_ref16"><a class="hidden" href="RDS_HBCL_CLEAR.htm" title="А.5.24.8. Команда RDS_HBCL_CLEAR &ndash; очистка списка">RDS_HBCL_CLEAR</a></span>);
+    <span class="kw">else</span> <span class="rem">// Списка нет – создаем новый (пустой)</span>
+      { List=<span id="light_ref17"><a class="hidden" href="rdsBCLCreateList.htm" title="А.5.24.1. rdsBCLCreateList &ndash; создать объект для хранения списка блоков и связей">rdsBCLCreateList</a></span>(NULL,<span class="const">0</span>,FALSE);
+        <span class="rem">// Включаем автоматическое обнуление удаленных блоков и связей</span>
+        <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(List,<span id="light_ref18"><a class="hidden" href="RDS_HBCL_AUTODELETE.htm" title="А.5.24.5. Команда RDS_HBCL_AUTODELETE &ndash; отслеживание удаления блоков и связей">RDS_HBCL_AUTODELETE</a></span>,<span class="const">0</span>,<span class="const">1</span>);
+      }
+
+    <span class="rem">// Получаем описание нашего блока (нужны его родитель и имя)</span>
+    descr.servSize=<span class="kw">sizeof</span>(descr);
+    <span id="light_ref19"><a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a></span>(thisblock,&amp;descr);
+
+    <span class="rem">// Создаем объект для разбора формата CSV</span>
+    csv=<span id="light_ref20"><a class="hidden" href="rdsCSVCreate.htm" title="А.5.32.1. rdsCSVCreate &ndash; создать объект для работы с текстом в формате CSV">rdsCSVCreate</a></span>();
+
+    <span class="rem">// Открываем файл со списком блоков для чтения в csv</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(csv,<span id="light_ref21"><a class="hidden" href="RDS_CSV_OPENFILEREAD.htm" title="А.5.32.14. Команда RDS_CSV_OPENFILEREAD &ndash; открыть файл для чтения">RDS_CSV_OPENFILEREAD</a></span>,<span class="const">0</span>,blocklist);
+
+    <span class="rem">// Проверяем, открылся ли файл</span>
+    <span class="kw">if</span>(!<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(csv,<span id="light_ref22"><a class="hidden" href="RDS_CSV_FILEISOPEN.htm" title="А.5.32.8. Команда RDS_CSV_FILEISOPEN &ndash; проверка успешности открытия файла для чтения или записи">RDS_CSV_FILEISOPEN</a></span>,<span class="const">0</span>))
+      { FileErrorMessage(<span class="const">0</span>,blocklist,
+            <span class="str">"Невозможно открыть список блоков"</span>);
+        <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(csv);
+        <span class="kw">return</span> FALSE;
+      }
+
+    <span class="rem">// Читаем строки файла в цикле</span>
+    <span class="kw">for</span>(;;)
+      { <span class="kw">char</span> *name;
+        <span class="kw">int</span> x,y;
+        <span class="rem">// Читаем очередную строку из файла в строку объекта 0</span>
+        <span class="kw">if</span>(!<span id="light_ref23"><a class="hidden" href="rdsCommandObjectEx.htm" title="А.5.22.3. rdsCommandObjectEx &ndash; команда объекту">rdsCommandObjectEx</a></span>(csv,<span id="light_ref24"><a class="hidden" href="RDS_CSV_STRFROMFILE.htm" title="А.5.32.18. Команда RDS_CSV_STRFROMFILE &ndash; считать строку из файла">RDS_CSV_STRFROMFILE</a></span>,<span class="const">0</span>,NULL))
+          <span class="kw">break</span>; <span class="rem">// Строки в файле кончились</span>
+        line++;
+        name=<span id="light_ref25"><a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a></span>(csv,<span class="const">0</span>,<span class="const">0</span>); <span class="rem">// Имя блока (элемент 0)</span>
+        <span class="kw">if</span>(*name==<span class="const">0</span>) <span class="rem">// Имя блока пустое</span>
+          { FileErrorMessage(line,blocklist,<span class="str">"Пустое имя блока"</span>);
+            ok=FALSE;
+            <span class="kw">break</span>;
+          }
+        <span class="rem">// Читаем из объекта координаты блока (элементы 1 и 2)</span>
+        x=atoi(<a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a>(csv,<span class="const">0</span>,<span class="const">1</span>));
+        y=atoi(<a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a>(csv,<span class="const">0</span>,<span class="const">2</span>));
+        <span class="rem">// Если имя блока, который нужно добавить, совпадает с именем</span>
+        <span class="rem">// нашего блока – переименовываем наш</span>
+        <span class="kw">if</span>(strcmp(name,descr.BlockName)==<span class="const">0</span>)
+          { <span class="rem">// Имена совпали – подбираем новое для нашего</span>
+            <span class="kw">char</span> *newname=<span id="light_ref26"><a class="hidden" href="rdsMakeUniqueBlockName.htm" title="А.5.6.39. rdsMakeUniqueBlockName &ndash; создать уникальное имя блока">rdsMakeUniqueBlockName</a></span>(
+                              descr.Parent,descr.BlockName);
+           <span class="rem">// Переименовываем наш блок и получаем его новое описание</span>
+            <span id="light_ref27"><a class="hidden" href="rdsRenameBlock.htm" title="А.5.6.42. rdsRenameBlock &ndash; переименовать блок">rdsRenameBlock</a></span>(thisblock,newname,&amp;descr);
+            <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(newname); <span class="rem">// Освобождаем строку имени</span>
+            Modified=TRUE;
+          }
+
+        <span class="kw">if</span>(block==NULL) <span class="rem">// Добавляем самый первый блок (из файла)</span>
+          block=<span id="light_ref28"><a class="hidden" href="rdsCreateBlockFromFile.htm" title="А.5.6.6. rdsCreateBlockFromFile &ndash; загрузить блок из файла">rdsCreateBlockFromFile</a></span>(blockfile,descr.Parent,x,y,NULL);
+        <span class="kw">else</span> <span class="rem">// Уже добавляли блок раньше – копируем добавленный</span>
+          block=<span id="light_ref29"><a class="hidden" href="rdsDuplicateBlock.htm" title="А.5.6.10. rdsDuplicateBlock &ndash; сделать копию блока">rdsDuplicateBlock</a></span>(block,descr.Parent,x,y,NULL);
+        <span class="kw">if</span>(block==NULL) <span class="rem">// Ошибка при добавлении блока</span>
+          { FileErrorMessage(line,blocklist,
+                <span class="str">"Не удалось добавить блок"</span>);
+            ok=FALSE;
+            <span class="kw">break</span>;
+          }
+        Modified=TRUE; <span class="rem">// Схема изменилась</span>
+        <span class="rem">// Заносим добавленный блок в список List</span>
+        <span id="light_ref30"><a class="hidden" href="rdsBCLAddBlock.htm" title="А.5.24.2. rdsBCLAddBlock &ndash; добавление блока в список">rdsBCLAddBlock</a></span>(List,block,FALSE);
+        <span class="rem">// Даем добавленному блоку имя, считанное из списка</span>
+        <span class="kw">if</span>(!<a class="hidden" href="rdsRenameBlock.htm" title="А.5.6.42. rdsRenameBlock &ndash; переименовать блок">rdsRenameBlock</a>(block,name,NULL))
+          { FileErrorMessage(line,blocklist,<span class="str">"Повтор имени блока"</span>);
+            ok=FALSE;
+            <span class="kw">break</span>;
+          }
+      } <span class="rem">// for(;;)</span>
+
+    <span class="rem">// Удаляем объект csv (файл закроется автоматически)</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(csv);
+    <span class="kw">if</span>(Modified) <span class="rem">// Добавлены блоки</span>
+      <span id="light_ref31"><a class="hidden" href="rdsSetModifiedFlag.htm" title="А.5.2.36. rdsSetModifiedFlag &ndash; установка флага наличия изменений в схеме">rdsSetModifiedFlag</a></span>(TRUE);
+    <span class="kw">return</span> ok;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Прежде всего нам нужно очистить список добавленных блоков и связей, если он уже создан (мы
+будем заполнять его заново) или создать его, если его еще нет. Если в поле <span class="cpp">List</span>
+находится ненулевой идентификатор, значит, мы уже создали список, и нужно очистить его, передав ему команду
+<span class="cpp"><a href="RDS_HBCL_CLEAR.htm" title="А.5.24.8. Команда RDS_HBCL_CLEAR &ndash; очистка списка">RDS_HBCL_CLEAR</a></span>. Если же значение <span class="cpp">List</span> нулевое, список создается
+при помощи сервисной функции <span class="cpp"><a href="rdsBCLCreateList.htm" title="А.5.24.1. rdsBCLCreateList &ndash; создать объект для хранения списка блоков и связей">rdsBCLCreateList</a></span>. Эта функция может создавать как пустой
+список, так и список, уже заполненный блоками и связями какой-либо подсистемы:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsBCLCreateList.htm" title="А.5.24.1. rdsBCLCreateList &ndash; создать объект для хранения списка блоков и связей">rdsBCLCreateList</a>(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> sys, <span class="rem">// Добавить блоки и связи подсистемы sys</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> mask,      <span class="rem">// Маска типов блоков и связей</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Recursive); <span class="rem">// Добавлять из вложенных подсистем</span></pre>
+
+<p>Нам нужен именно пустой список, поэтому в первом параметре вместо идентификатора подсистемы мы передаем
+<span class="cpp">NULL</span>. При этом остальные параметры, определяющие, какие именно блоки добавляются
+в список, могут быть любыми &ndash; в данном случае мы передаем 0 и <span class="cpp">FALSE</span>.</p>
+
+<p>Далее для переданного в параметрах функции идентификатора нашего блока <span class="cpp">thisblock</span> вызывается
+функция <span class="cpp"><a href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a></span>, которая заполняет описанием этого блока структуру <span class="cpp">descr</span>.
+В этой структуре нас будет, прежде всего, интересовать идентификатор родительской подсистемы нашего блока &ndash;
+именно в нее мы будем добавлять новые блоки. Нам также понадобится имя блока: поскольку имена двух блоков в
+подсистеме не могут быть одинаковыми, при обнаружении такого же имени в списке блоков нам придется как-нибудь
+переименовать наш блок.</p>
+
+<p>Теперь можно начинать читать файл со списком блоков.
+<a href="#ref1" title="Пример использования формата CSV">Мы уже решили</a>, что этот список будет
+текстом в формате CSV, где первым значением в каждой строке будет имя блока, вторым &ndash;
+горизонтальная координата, третьим &ndash; вертикальная. Для работы с таким текстовым файлом мы
+будем использовать специальный объект RDS, создаваемый функцией <span class="cpp"><a href="rdsCSVCreate.htm" title="А.5.32.1. rdsCSVCreate &ndash; создать объект для работы с текстом в формате CSV">rdsCSVCreate</a></span>.
+Идентификатор этого объекта присваивается переменной <span class="cpp">csv</span>. После создания мы
+сообщаем объекту, что файл с именем <span class="cpp">blocklist</span> необходимо открыть для чтения
+&ndash; для объекта <span class="cpp">csv</span> вызывается функция <span class="cpp"><a href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a></span>
+с константой <span class="cpp"><a href="RDS_CSV_OPENFILEREAD.htm" title="А.5.32.14. Команда RDS_CSV_OPENFILEREAD &ndash; открыть файл для чтения">RDS_CSV_OPENFILEREAD</a></span>. Имя файла передается в объект в том виде,
+в котором оно записано в настройках блока, то есть у него может не быть полного пути, а
+стандартные пути могут быть заменены <a href="rdsGetFullFilePath.htm#ref1" title="Символические обозначения стандартных путей">специальными сокращениями</a> RDS.
+Объект самостоятельно добавит к имени файла путь к загруженной схеме, если в этом имени путь вообще не указан,
+и заменит сокращения на настоящие пути к стандартным папкам.</p>
+
+<p>Функция <span class="cpp"><a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a></span>, которая используется для передачи строк всем вспомогательным
+объектам RDS, не возвращает никаких значений, поэтому, вызвав ее, мы не можем быть уверены, что файл
+успешно открыт. Для проверки мы вызываем для объекта функцию <span class="cpp"><a href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a></span> с константой
+<span class="cpp"><a href="RDS_CSV_FILEISOPEN.htm" title="А.5.32.8. Команда RDS_CSV_FILEISOPEN &ndash; проверка успешности открытия файла для чтения или записи">RDS_CSV_FILEISOPEN</a></span> &ndash; если при открытии файла произошла какая-либо ошибка (например,
+файла с таким именем не существует), она вернет нулевое значение. В этом случае мы выводим пользователю сообщение
+об ошибке с указанием имени файла, используя для этого написанную ранее функцию
+<span class="cpp">FileErrorMessage</span>, удаляем созданный объект, и возвращаем <span class="cpp">FALSE</span>:
+добавление блоков не удалось.</p>
+
+<p>Объект, создаваемый функцией <span class="cpp"><a class="hidden" href="rdsCSVCreate.htm" title="А.5.32.1. rdsCSVCreate &ndash; создать объект для работы с текстом в формате CSV">rdsCSVCreate</a></span>, позволяет работать с данными в
+формате CSV как с матрицей строк, обращаясь к каждому значению по номеру строки и номеру элемента в этой строке. В
+принципе, мы можем сразу считать в объект весь файл, а потом в цикле по строкам получать у объекта имя каждого
+блока и его координаты. Однако, поскольку мы добавляем блоки последовательно, нам нет нужды считывать в
+память сразу все строки файла &ndash; список блоков может оказаться достаточно длинным, и файл займет много
+место в памяти. Гораздо лучше считывать из файла по одной строке за раз, и, считав эту строку, тут же
+добавлять в подсистему новый блок. После этого считанная строка будет уже не нужна, и на ее место можно будет
+загрузить новую. Так мы и поступим &ndash; будем каждый раз считывать из файла одну строку и записывать ее
+в объект под номером 0.</p>
+
+<p>Для чтения строк файла мы используем &laquo;бесконечный&raquo; цикл <span class="cpp">for(;;)</span> &ndash;
+мы принудительно прервем его когда весь файл будет прочитан. В этом цикле для чтения очередной строки в
+объект мы вызываем для этого объекта функцию <span class="cpp"><a href="rdsCommandObjectEx.htm" title="А.5.22.3. rdsCommandObjectEx &ndash; команда объекту">rdsCommandObjectEx</a></span>, передавая ей константу
+<span class="cpp"><a href="RDS_CSV_STRFROMFILE.htm" title="А.5.32.18. Команда RDS_CSV_STRFROMFILE &ndash; считать строку из файла">RDS_CSV_STRFROMFILE</a></span> и целое значение 0 (мы считываем строку из файла в нулевую
+строку внутренней памяти объекта). Если эта функция вернет нулевое значение, значит, строки в файле кончились,
+и мы прерываем цикл оператором <span class="cpp">break</span>. В противном случае строка из файла считана успешно,
+и мы увеличиваем счетчик считанных строк <span class="cpp">line</span> на единицу &ndash;
+номер строки нам понадобится для вывода сообщений об ошибках.</p>
+
+<p>Теперь мы можем получить у объекта три значения, которые должны находиться в считанной строке. Для чтения
+строк из объекта используется функция <span class="cpp"><a href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a></span>, в которую передается идентификатор
+объекта (<span class="cpp">csv</span>), номер строки (в нашем случае &ndash; 0, поскольку мы каждый
+раз считываем строку из файла в нулевую строку объекта) и номер элемента в строке. Функция возвращает указатель
+на строку, представляющую запрошенное значение и находящуюся во внутренней памяти объекта, поэтому после получения
+эти строки не нужно освобождать при помощи <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>. Однако, следует помнить, что
+возвращенный функцией указатель ссылается на значение только до тех пор, пока оно не изменится. После этого
+указатель на значение нужно получать заново. В нашем случае мы не меняем нулевую строку объекта <span class="cpp">csv</span>
+до конца тела цикла, поэтому, получив указатель на значение в нулевой строке объекта, мы можем не заботиться о
+его правильности.</p>
+
+<p>Самое первое значение (то есть значение с нулевым индексом) в считанной строке &ndash; это имя блока,
+мы получаем указатель на него вызовом <span class="cpp"><a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a>(csv,0,0)</span> и запоминаем его
+в переменной <span class="cpp">name</span>. Функция <span class="cpp"><a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a></span> устроена так, что
+она всегда возвращает указатель на строку, даже если мы попытаемся считать из объекта элемент, которого в
+нем нет. В случае каких-либо ошибок функция вернет указатель на пустую строку (то есть на нулевой байт), поэтому ее
+результат можно использовать в вызовах функций обработки строк без каких-либо дополнительных проверок. В
+данном случае мы проверяем полученное имя блока на пустоту: сравниваем первый символ строки (<span class="cpp">*name</span>)
+с нулем. Имя блока не может быть пустым &ndash; в этом случае мы выводим сообщение об ошибке, прерываем цикл
+чтения файла и записываем <span class="cpp">FALSE</span> в переменную <span class="cpp">ok</span> &ndash;
+функция вернет это значение, указывая на то, что чтение списка блоков не удалось.</p>
+
+<p><span id="ref32">Если</span>
+имя блока не пустое, мы считываем элементы строки с индексами 1 и 2 в целые переменные
+<span class="cpp">x</span> и <span class="cpp">y</span>, предварительно преобразовав их в целые
+числа функцией <span class="cpp" id="light_ref32">atoi</span> &ndash; это координаты блока,
+который мы должны добавить в подсистему. Но прежде мы должны проверить, не совпадает ли имя добавляемого
+блока <span class="cpp">name</span> с именем нашего блока, которое запомнено в поле
+<span class="cpp">BlockName</span> структуры <span class="cpp">descr</span>. Если они совпадают (функция
+<span class="cpp">strcmp</span> возвращает 0), мы переименуем наш блок: имя блока из списка изменять
+нельзя (на него будут ссылки из списка связей), а как называется блок, выполняющий добавление блоков в
+подсистему, на самом деле, не важно.</p>
+
+<p>Для того, чтобы переименовать блок мы, прежде всего, должны подобрать ему новое имя, которое не будет
+совпадать ни с одним из имен блоков, уже присутствующих в подсистеме. В RDS для этого предусмотрена
+специальная функция <span class="cpp"><a href="rdsMakeUniqueBlockName.htm" title="А.5.6.39. rdsMakeUniqueBlockName &ndash; создать уникальное имя блока">rdsMakeUniqueBlockName</a></span>. В параметрах этой функции передается
+идентификатор подсистемы, внутри которой нужно подобрать уникальное имя блока, и исходное имя, на
+базе которого подбирается новое. Функция разбивает это исходное имя на буквенную и цифровую части, а
+затем меняет цифровую часть так, чтобы имя стало уникальным в подсистеме. Например, если в подсистеме есть блоки
+с именами &laquo;<span class="rdsvar">Block1</span>&raquo;, &laquo;<span class="rdsvar">Block2</span>&raquo; и &laquo;<span class="rdsvar">Block3</span>&raquo;, при вызове этой
+функции с исходным именем &laquo;<span class="rdsvar">Block1</span>&raquo; она вернет имя &laquo;<span class="rdsvar">Block4</span>&raquo;. Если же вызвать
+ее с исходным именем &laquo;<span class="rdsvar">Block100</span>&raquo;, она вернет это имя, не изменив его, поскольку оно и так
+не совпадает ни с одним из имен блоков. Возвращаемое функцией имя представляет собой динамически отведенную строку,
+поэтому после использования ее необходимо освободить при помощи <span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p>В данном случае мы подбираем новое имя для нашего блока на основе его же собственного старого имени.
+Сформированное функцией <span class="cpp"><a class="hidden" href="rdsMakeUniqueBlockName.htm" title="А.5.6.39. rdsMakeUniqueBlockName &ndash; создать уникальное имя блока">rdsMakeUniqueBlockName</a></span> новое имя записывается в
+переменную <span class="cpp">newname</span> и используется в вызове функции
+<span class="cpp"><a href="rdsRenameBlock.htm" title="А.5.6.42. rdsRenameBlock &ndash; переименовать блок">rdsRenameBlock</a></span>, которая переименовывает блок и записывает его новое описание в
+структуру <span class="cpp">descr</span> (нам важно все время хранить в этой структуре актуальное описание блока,
+поскольку она постоянно используется при проверке совпадения имен). Результат выполнения функции можно не
+проверять, поскольку, подобрав уникальное имя, мы гарантировали успешность переименования. После вызова
+<span class="cpp"><a class="hidden" href="rdsRenameBlock.htm" title="А.5.6.42. rdsRenameBlock &ndash; переименовать блок">rdsRenameBlock</a></span> строка в переменной <span class="cpp">newname</span> нам уже не нужна
+(новое имя блока теперь можно получить через структуру <span class="cpp">descr</span>),
+и мы освобождаем эту динамическую строку функцией <span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p>Теперь можно создавать в подсистеме новый блок. Чтобы каждый раз не загружать блок из файла
+<span class="cpp">blockfile</span>, мы сделаем это только один раз и запомним идентификатор загруженного блока,
+а затем будем просто копировать этот блок снова и снова. В начале функции мы ввели дополнительную переменную
+<span class="cpp">block</span> и присвоили ей <span class="cpp">NULL</span> &ndash; в ней мы будем хранить
+идентификатор загруженного блока. Если эта переменная сохранила нулевое значение, значит, мы еще не добавили
+в подсистему ни одного блока. В этом случае мы вызываем функцию создания блока из файла
+<span class="cpp"><a href="rdsCreateBlockFromFile.htm" title="А.5.6.6. rdsCreateBlockFromFile &ndash; загрузить блок из файла">rdsCreateBlockFromFile</a></span>, в которую передаем имя файла с описанием блока
+(<span class="cpp">blockfile</span>), подсистему, в которой его нужно создать (<span class="cpp">descr.Parent</span>,
+родительская подсистема нашего блока) и координаты, по которым он должен располагаться (<span class="cpp">x</span>
+и <span class="cpp">y</span>). В последнем параметре функции передается указатель на структуру, которая
+заполняется описанием загруженного блока, но нам это описание не нужно, поэтому мы передаем <span class="cpp">NULL</span>.
+Функция возвращает идентификатор добавленного блока или <span class="cpp">NULL</span> в случае ошибки,
+этот идентификатор записывается в переменную <span class="cpp">block</span>.</p>
+
+<p>Если же идентификатор в переменной <span class="cpp">block</span> не равен <span class="cpp">NULL</span>,
+значит, мы уже вызывали <span class="cpp"><a class="hidden" href="rdsCreateBlockFromFile.htm" title="А.5.6.6. rdsCreateBlockFromFile &ndash; загрузить блок из файла">rdsCreateBlockFromFile</a></span> по крайней мере один раз.
+В этом случае мы делаем копию блока <span class="cpp">block</span> функцией
+<span class="cpp"><a href="rdsDuplicateBlock.htm" title="А.5.6.10. rdsDuplicateBlock &ndash; сделать копию блока">rdsDuplicateBlock</a></span>: в нее передается идентификатор копируемого блока
+(<span class="cpp">block</span>), подсистема, в которую вставляется копия (<span class="cpp">descr.Parent</span>)
+и координаты копии (<span class="cpp">x</span> и <span class="cpp">y</span>). В последнем параметре этой функции
+тоже можно передать указатель на структуру, которая будет заполнена описанием созданной копии, но мы опять
+передаем <span class="cpp">NULL</span>. Идентификатор созданной копии блока, который возвращает функция,
+мы записываем в ту же самую переменную <span class="cpp">block</span>.</p>
+
+<p>Теперь, независимо от того, каким именно образом мы создали в подсистеме новый блок, в переменной
+<span class="cpp">block</span> содержится его идентификатор. Если вместо идентификатора там окажется
+<span class="cpp">NULL</span>, это будет означать, что при создании блока произошла ошибка. В этом случае
+мы выводим пользователю сообщение об этом с указанием имени файла и номера строки в нем, заносим
+<span class="cpp">FALSE</span> в <span class="cpp">ok</span> (возникла ошибка) и прерываем цикл.
+Если же создание нового блока выполнено успешно, мы присваиваем переменной
+<span class="cpp">Modified</span> значение <span class="cpp">TRUE</span> (схема изменена) и заносим добавленный
+блок <span class="cpp">block</span> в список <span class="cpp">List</span> функцией
+rdsBCLAddBlock. В последнем параметре этой функции мы передаем
+<span class="cpp">FALSE</span>, поскольку нам не нужно проверять, есть ли уже добавляемый блок в списке:
+при работе нашей функции не может возникнуть ситуации, в которой мы два раза добавим в список один и
+тот же блок.</p>
+
+<p>Теперь осталось только дать блоку имя <span class="cpp">name</span>: функции
+<span class="cpp"><a class="hidden" href="rdsCreateBlockFromFile.htm" title="А.5.6.6. rdsCreateBlockFromFile &ndash; загрузить блок из файла">rdsCreateBlockFromFile</a></span> и <span class="cpp"><a class="hidden" href="rdsDuplicateBlock.htm" title="А.5.6.10. rdsDuplicateBlock &ndash; сделать копию блока">rdsDuplicateBlock</a></span>
+автоматически обеспечивают создаваемый блок уникальным именем, но принудительно указать это имя в
+них нельзя. Для переименования блока мы снова вызываем
+<span class="cpp"><a class="hidden" href="rdsRenameBlock.htm" title="А.5.6.42. rdsRenameBlock &ndash; переименовать блок">rdsRenameBlock</a></span>, но нам необходимо проверить результат ее выполнения: может
+оказаться, что блок с именем <span class="cpp">name</span> уже есть в подсистеме. В этом случае мы выводим
+пользователю сообщение об ошибке и прерываем цикл &ndash; дальнейшее добавление блоков бессмысленно, пользователь
+должен поправить имена в списках блоков и связей или стереть лишние блоки в подсистеме.</p>
+
+<p>На этом тело цикла чтения файла завершается. Перечисленные выше действия будут выполняться до тех
+пор, пока строки в файле не закончатся или не пока возникнет ошибка. После завершения цикла мы
+удаляем вспомогательный объект <span class="cpp">csv</span> (открытый для чтения файл при этом
+автоматически закроется), взводим в RDS флаг наличия изменений в схеме, если мы добавили
+в нее блоки, вызовом <span class="cpp"><a href="rdsSetModifiedFlag.htm" title="А.5.2.36. rdsSetModifiedFlag &ndash; установка флага наличия изменений в схеме">rdsSetModifiedFlag</a></span> и возвращаем значение <span class="cpp">ok</span>.
+Таким образом, если в подсистему были добавлены все блоки из списка, функция вернет
+<span class="cpp">TRUE</span>, если при добавлении возникли ошибки &ndash; <span class="cpp">FALSE</span>.</p>
+
+<p>Функция создания связей <span class="cpp">LoadConnections</span> тоже будет разбирать файл формата CSV,
+поэтому она будет в целом похожа на <span class="cpp">LoadBlocks</span>. В нее будет передаваться идентификатор нашего
+блока <span class="cpp">thisblock</span> и имя файла со списком связей <span class="cpp">connlist</span>:</p>
+
+<pre class="cpp">  <span class="rem">// Функция создания связей по списку</span>
+  <span class="kw">void</span> TLoadGraphData::LoadConnections(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> thisblock, <span class="rem">// Идентификатор этого блока</span>
+    <span class="kw">char</span> *connlist)        <span class="rem">// Файл списка связей</span>
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> csv;
+    <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a> descr;
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok=TRUE;
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Modified=FALSE;
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> editor=NULL;
+    <span id="light_ref33"><a class="hidden" href="RDS_BLOCKDIMENSIONS.htm#ref1" title="Структура RDS_BLOCKDIMENSIONS">RDS_BLOCKDIMENSIONS</a></span> dim1,dim2;
+    <span class="kw">int</span> line=<span class="const">0</span>; <span class="rem">// Счетчик считанных строк</span>
+
+    <span class="rem">// Заполнение поля размера служебных структур</span>
+    dim1.servSize=<span class="kw">sizeof</span>(dim1);
+    dim2.servSize=<span class="kw">sizeof</span>(dim2);
+
+    <span class="rem">// Получаем описание нашего блока (нужен его родитель)</span>
+    descr.servSize=<span class="kw">sizeof</span>(descr);
+    <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(thisblock,&amp;descr);
+
+    <span class="rem">// Создаем объект для разбора формата CSV</span>
+    csv=rdsCSVCreate();
+
+    <span class="rem">// Открываем файл со списком связей для чтения в csv</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(csv,<a class="hidden" href="RDS_CSV_OPENFILEREAD.htm" title="А.5.32.14. Команда RDS_CSV_OPENFILEREAD &ndash; открыть файл для чтения">RDS_CSV_OPENFILEREAD</a>,<span class="const">0</span>,connlist);
+
+    <span class="rem">// Проверяем, открылся ли файл</span>
+    <span class="kw">if</span>(!<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(csv,<a class="hidden" href="RDS_CSV_FILEISOPEN.htm" title="А.5.32.8. Команда RDS_CSV_FILEISOPEN &ndash; проверка успешности открытия файла для чтения или записи">RDS_CSV_FILEISOPEN</a>,<span class="const">0</span>))
+      { FileErrorMessage(<span class="const">0</span>,connlist,
+            <span class="str">"Невозможно открыть список связей"</span>);
+        <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(csv);
+        <span class="kw">return</span>;
+      }
+
+    <span class="rem">// Читаем строки файла в цикле</span>
+    <span class="kw">for</span>(;;)
+      { <span class="kw">char</span> *name1,*name2,*var1,*var2;
+        <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block1,block2;
+        <span class="kw">int</span> xc1,xc2,yc1,yc2,pnum1,pnum2,x1,y1,x2,y2;
+        <span id="light_ref34"><a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></span> conn;
+        <span class="rem">// Читаем очередную строку из файла в строку объекта 0</span>
+        <span class="kw">if</span>(!<a class="hidden" href="rdsCommandObjectEx.htm" title="А.5.22.3. rdsCommandObjectEx &ndash; команда объекту">rdsCommandObjectEx</a>(csv,<a class="hidden" href="RDS_CSV_STRFROMFILE.htm" title="А.5.32.18. Команда RDS_CSV_STRFROMFILE &ndash; считать строку из файла">RDS_CSV_STRFROMFILE</a>,<span class="const">0</span>,NULL))
+          <span class="kw">break</span>;
+        line++;
+        <span class="rem">// Считываем из строки имена соединяемых блоков и переменных</span>
+        name1=<a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a>(csv,<span class="const">0</span>,<span class="const">0</span>); <span class="rem">// Имя блока 1</span>
+        var1=<a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a>(csv,<span class="const">0</span>,<span class="const">1</span>);  <span class="rem">// Имя переменной 1</span>
+        name2=<a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a>(csv,<span class="const">0</span>,<span class="const">2</span>); <span class="rem">// Имя блока 2</span>
+        var2=<a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a>(csv,<span class="const">0</span>,<span class="const">3</span>);  <span class="rem">// Имя переменной 2</span>
+        <span class="kw">if</span>(*name1==<span class="const">0</span> || *name2==<span class="const">0</span> || *var1==<span class="const">0</span> || *var2==<span class="const">0</span>)
+          { FileErrorMessage(line,connlist,
+                <span class="str">"Мало данных в строке связи"</span>);
+            <span class="kw">break</span>;
+          }
+        <span class="rem">// Ищем в подсистеме блоки с указанными именами</span>
+        block1=<span id="light_ref35"><a class="hidden" href="rdsGetChildBlockByName.htm" title="А.5.6.21. rdsGetChildBlockByName &ndash; блок подсистемы по имени">rdsGetChildBlockByName</a></span>(descr.Parent,name1,NULL);
+        block2=<a class="hidden" href="rdsGetChildBlockByName.htm" title="А.5.6.21. rdsGetChildBlockByName &ndash; блок подсистемы по имени">rdsGetChildBlockByName</a>(descr.Parent,name2,NULL);
+        <span class="kw">if</span>(block1==NULL || block2==NULL) <span class="rem">// Какого-то нет</span>
+          { FileErrorMessage(line,connlist,
+                <span class="str">"Не найден один из блоков"</span>);
+            <span class="kw">break</span>;
+          }
+        <span class="rem">// Получаем координаты и размеры блоков</span>
+        <span id="light_ref36"><a class="hidden" href="rdsGetBlockDimensions.htm" title="А.5.6.17. rdsGetBlockDimensions &ndash; получить размеры и положение блока (устаревшая)">rdsGetBlockDimensions</a></span>(block1,&amp;dim1,FALSE);
+        <a class="hidden" href="rdsGetBlockDimensions.htm" title="А.5.6.17. rdsGetBlockDimensions &ndash; получить размеры и положение блока (устаревшая)">rdsGetBlockDimensions</a>(block2,&amp;dim2,FALSE);
+        <span class="rem">// Вычисляем координаты центров блоков</span>
+        xc1=dim1.Left+dim1.Width/<span class="const">2</span>;
+        yc1=dim1.Top+dim1.Height/<span class="const">2</span>;
+        xc2=dim2.Left+dim2.Width/<span class="const">2</span>;
+        yc2=dim2.Top+dim2.Height/<span class="const">2</span>;
+        <span class="rem">// "Обрезаем" прямую по границам первого блока</span>
+        <a class="hidden" href="#ref4" title="Функция ClipLineByRect">ClipLineByRect</a>(xc1,yc1,dim1.Width,dim1.Height,xc2,yc2,
+          &amp;x1,&amp;y1);
+        <span class="rem">// "Обрезаем" прямую по границам второго блока</span>
+        <a class="hidden" href="#ref4" title="Функция ClipLineByRect">ClipLineByRect</a>(xc2,yc2,dim2.Width,dim2.Height,xc1,yc1,
+          &amp;x2,&amp;y2);
+        <span class="rem">// Создаем или очищаем объект для редактирования связи</span>
+        <span class="kw">if</span>(editor==NULL) <span class="rem">// Нужно создать</span>
+          editor=<span id="light_ref37"><a class="hidden" href="rdsCECreateEditor.htm" title="А.5.23.1. rdsCECreateEditor &ndash; создать объект-редактор связи/шины">rdsCECreateEditor</a></span>();
+        <span class="kw">else</span> <span class="rem">// Очищаем ранее созданный</span>
+          <a class="hidden" href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a>(editor,<span id="light_ref38"><a class="hidden" href="RDS_HCE_RESET.htm" title="А.5.23.10. Команда RDS_HCE_RESET &ndash; очистка вспомогательного объекта">RDS_HCE_RESET</a></span>);
+        <span class="rem">// Добавляем в объект editor две точки</span>
+        pnum1=<span id="light_ref39"><a class="hidden" href="rdsCEAddBlockPoint.htm" title="А.5.23.3. rdsCEAddBlockPoint &ndash; добавление точки соединения с блоком">rdsCEAddBlockPoint</a></span>(editor,block1,var1,
+                  x1-dim1.BlockX,y1-dim1.BlockY,FALSE);
+        pnum2=<a class="hidden" href="rdsCEAddBlockPoint.htm" title="А.5.23.3. rdsCEAddBlockPoint &ndash; добавление точки соединения с блоком">rdsCEAddBlockPoint</a>(editor,block2,var2,
+                  x2-dim2.BlockX,y2-dim2.BlockY,FALSE);
+        <span class="rem">// Добавляем соединяющую их линию</span>
+        <span id="light_ref40"><a class="hidden" href="rdsCEAddLine.htm" title="А.5.23.7. rdsCEAddLine &ndash; добавление отрезка прямой">rdsCEAddLine</a></span>(editor,pnum1,pnum2);
+        <span class="rem">// Создаем по данным объекта editor новую связь</span>
+        conn=<span id="light_ref41"><a class="hidden" href="rdsCECreateConnBus.htm" title="А.5.23.8. rdsCECreateConnBus &ndash; создание связи или шины по данным объекта">rdsCECreateConnBus</a></span>(editor,descr.Parent,
+                 <span id="light_ref42"><a class="hidden" href="RDS_CONNDESCRIPTION.htm#light_ref6" title="RDS_CTCONNECTION">RDS_CTCONNECTION</a></span>,NULL);
+        <span class="kw">if</span>(conn!=NULL) <span class="rem">// Создание связи удалось</span>
+          { Modified=TRUE;
+            <span class="rem">// Добавляем связь в список</span>
+            <span id="light_ref43"><a class="hidden" href="rdsBCLAddConn.htm" title="А.5.24.3. rdsBCLAddConn &ndash; добавление связи или шины в список">rdsBCLAddConn</a></span>(List,conn,FALSE);
+          }
+        <span class="kw">else</span> <span class="rem">// Ошибка при создании связи</span>
+          { FileErrorMessage(line,connlist,
+                <span class="str">"Не удалось создать связь"</span>);
+            <span class="kw">break</span>;
+          }
+      } <span class="rem">// for(;;)</span>
+
+    <span class="rem">// Удаляем объект csv (файл закроется автоматически)</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(csv);
+    <span class="rem">// Удаляем объект-редактор</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(editor);
+    <span class="kw">if</span>(Modified) <span class="rem">// Добавлены связи</span>
+      <a class="hidden" href="rdsSetModifiedFlag.htm" title="А.5.2.36. rdsSetModifiedFlag &ndash; установка флага наличия изменений в схеме">rdsSetModifiedFlag</a>(TRUE);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции, как и в предыдущей, мы используем для чтения файла объект, создаваемый вызовом
+<span class="cpp"><a class="hidden" href="rdsCSVCreate.htm" title="А.5.32.1. rdsCSVCreate &ndash; создать объект для работы с текстом в формате CSV">rdsCSVCreate</a></span>, поэтому их начала практически совпадают. Точно так же, как и в
+<span class="cpp">LoadBlocks</span>, мы в цикле считываем очередную строку файла в нулевую строку объекта,
+но после этого выполняются совершенно другие действия: теперь мы должны создать связи между блоками, которые,
+на данный момент, уже должны находиться в подсистеме (<span class="cpp">LoadConnections</span> мы
+будем вызывать после того, как <span class="cpp">LoadBlocks</span> успешно завершилась).</p>
+
+<p>В списке связей каждая строка содержит <a href="#light_ref2" title="Формат CSV для списка связей">четыре значения</a>: две пары
+&laquo;имя блока, имя переменной&raquo;. Мы сразу считываем имена соединяемых блоков в
+<span class="cpp">name1</span> и <span class="cpp">name2</span>, а имена переменных в этих блоках &ndash;
+в <span class="cpp">var1</span> и <span class="cpp">var2</span>. Затем мы проверяем все эти четыре строки
+на пустоту: если хотя бы одна из них пуста, мы выводим сообщение об ошибке и прерываем цикл: ни имена блоков,
+ни имена переменных пустыми быть не могут.</p>
+
+<p>Затем мы ищем идентификаторы обоих соединяемых блоков в родительской подсистеме нашего блока и
+присваиваем их переменным <span class="cpp">block1</span> и <span class="cpp">block2</span>. Для этого используется
+функция <span class="cpp"><a href="rdsGetChildBlockByName.htm" title="А.5.6.21. rdsGetChildBlockByName &ndash; блок подсистемы по имени">rdsGetChildBlockByName</a></span>: она позволяет найти в подсистеме блок по его имени.
+Если вместо одного из идентификаторов функция вернет <span class="cpp">NULL</span>, значит, такого
+блока в подсистеме нет &ndash; мы выводим сообщение об ошибке и прерываем цикл. Если же оба
+блока найдены, мы при помощи функции <span class="cpp"><a href="rdsGetBlockDimensions.htm" title="А.5.6.17. rdsGetBlockDimensions &ndash; получить размеры и положение блока (устаревшая)">rdsGetBlockDimensions</a></span> заполняем структуры
+<span class="cpp">dim1</span> и <span class="cpp">dim2</span> их геометрическими размерами. Размеры
+блоков нам нужны для вычисления координат точек создаваемой между ними связи
+(см. <a href="#pic1" title="Соединение блоков прямой связью">рис.&nbsp;118</a>). Затем мы вычисляем координаты геометрических
+центров блоков (<span class="cpp">xc1</span>, <span class="cpp">yc1</span>) и
+(<span class="cpp">xc2</span>, <span class="cpp">yc2</span>) &ndash; отрезок связи, который мы создаем,
+будет лежать на прямой, соединяющей эти точки. Чтобы определить точки пересечения этой прямой с границами
+описывающего прямоугольника блока, мы вызываем написанную ранее вспомогательную функцию
+<span class="cpp"><a href="#ref4" title="Функция ClipLineByRect">ClipLineByRect</a></span>. В результате двух ее вызовов в переменных <span class="cpp">x1</span> и
+<span class="cpp">y1</span> окажутся координаты точки пересечения прямой с границами первого блока, в
+<span class="cpp">x2</span> и <span class="cpp">y2</span> &ndash; с границами второго. Эти точки будут
+началом и концом нашей связи.</p>
+
+<p>Связь в RDS &ndash; сложная конструкция, она может состоять из множества точек и линий, как
+прямых, так и кривых, поэтому, в отличие от блока, ее нельзя создать одним вызовом. Для создания
+новых и изменения существующих связей в RDS предусмотрен специальный вспомогательный объект: сначала
+в него записываются координаты и параметры точек связей и указываются номера точек, соединенных линиями,
+а затем по данным этого объекта в подсистеме создается настоящая связь. Такой объект создается сервисной
+функцией <span class="cpp"><a href="rdsCECreateEditor.htm" title="А.5.23.1. rdsCECreateEditor &ndash; создать объект-редактор связи/шины">rdsCECreateEditor</a></span>. В данном случае в функции введена переменная
+<span class="cpp">editor</span> с нулевым начальным значением для хранения идентификатора такого объекта-редактора
+связи. Если в <span class="cpp">editor</span> находится значение <span class="cpp">NULL</span>, значит,
+сейчас мы будем добавлять в подсистему самую первую связь из списка. В этом случае мы создаем новый объект
+вызовом <span class="cpp"><a class="hidden" href="rdsCECreateEditor.htm" title="А.5.23.1. rdsCECreateEditor &ndash; создать объект-редактор связи/шины">rdsCECreateEditor</a></span>. Если же в <span class="cpp">editor</span> уже хранится
+какой-то идентификатор, значит, объект уже был создан ранее в цикле, и мы просто очищаем его, вызвав для него
+функцию <span class="cpp"><a href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a></span> с константой <span class="cpp"><a href="RDS_HCE_RESET.htm" title="А.5.23.10. Команда RDS_HCE_RESET &ndash; очистка вспомогательного объекта">RDS_HCE_RESET</a></span>.</p>
+
+<p>Теперь мы должны заполнить объект <span class="cpp">editor</span> точками связи и соединяющей их линией.
+Обе точки будут точками соединения связи с блоком, поэтому для их добавления мы вызываем функцию
+<span class="cpp"><a href="rdsCEAddBlockPoint.htm" title="А.5.23.3. rdsCEAddBlockPoint &ndash; добавление точки соединения с блоком">rdsCEAddBlockPoint</a></span>:</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsCEAddBlockPoint.htm" title="А.5.23.3. rdsCEAddBlockPoint &ndash; добавление точки соединения с блоком">rdsCEAddBlockPoint</a>(
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> editor, <span class="rem">// Объект-редактор связи</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block,  <span class="rem">// Блок, с которым связана точка</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> var,          <span class="rem">// Имя переменной в блоке</span>
+    <span class="kw">int</span> x,<span class="kw">int</span> y,        <span class="rem">// Координаты относительно блока</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> displayname);  <span class="rem">// Показывать ли имя переменной у точки</span></pre>
+
+<p>При вызове этой функции координаты точки <span class="cpp">x</span> и <span class="cpp">y</span> указываются не
+относительно верхнего левого угла рабочего поля подсистемы, как обычно, а относительно
+<a href="um_2_9_1.htm#ref12" title="Точка привязки блока">точки привязки</a> блока, с которым эта точка соединяет связь. Координаты точек
+привязки обоих блоков находятся в полях <span class="cpp">BlockX</span> и <span class="cpp">BlockY</span> структур
+с их размерами <span class="cpp">dim1</span> и <span class="cpp">dim2</span>, поэтому в вызове
+<span class="cpp"><a class="hidden" href="rdsCEAddBlockPoint.htm" title="А.5.23.3. rdsCEAddBlockPoint &ndash; добавление точки соединения с блоком">rdsCEAddBlockPoint</a></span> для первой точки мы используем не ее абсолютные координаты
+<span class="cpp">x1</span> и <span class="cpp">y1</span>, а <span class="cpp">x1-dim1.BlockX</span> и
+<span class="cpp">y1-dim1.BlockY</span>. Точно так же вычисляются относительные координаты второй точки.
+Функция <span class="cpp"><a class="hidden" href="rdsCEAddBlockPoint.htm" title="А.5.23.3. rdsCEAddBlockPoint &ndash; добавление точки соединения с блоком">rdsCEAddBlockPoint</a></span> возвращает внутренний номер добавленной точки
+в объекте-редакторе, эти номера запоминаются в переменных <span class="cpp">pnum1</span> и
+<span class="cpp">pnum2</span>, они потребуются нам при добавлении в объект линии, соединяющей эти точки.</p>
+
+<p>В данном случае мы добавляем только точки соединения связи с блоком, поэтому нам достаточно функции
+<span class="cpp"><a class="hidden" href="rdsCEAddBlockPoint.htm" title="А.5.23.3. rdsCEAddBlockPoint &ndash; добавление точки соединения с блоком">rdsCEAddBlockPoint</a></span>. Если бы мы захотели добавить в связь промежуточные точки,
+нам потребовалась бы функция <span class="cpp"><a href="rdsCEAddInternalPoint.htm" title="А.5.23.6. rdsCEAddInternalPoint &ndash; добавление промежуточной точки">rdsCEAddInternalPoint</a></span>, точки связи с шиной &ndash;
+<span class="cpp"><a href="rdsCEAddBusPoint.htm" title="А.5.23.4. rdsCEAddBusPoint &ndash; добавление точки соединения с шиной">rdsCEAddBusPoint</a></span>. Общий принцип добавления точек остается тем же: в
+параметрах функций передаются параметры точек, функции возвращают внутренние номера, под которыми эти
+точки добавлены в объект. Порядок добавления точек не важен &ndash; главное, при создании линий,
+соединяющих точки, указать правильные пары номеров этих точек.</p>
+
+<p>Точки добавлены в объект, теперь нужно добавить в него соединяющую их линию. Поскольку мы решили,
+что связи у нас будут прямые, мы вызываем функцию <span class="cpp"><a href="rdsCEAddLine.htm" title="А.5.23.7. rdsCEAddLine &ndash; добавление отрезка прямой">rdsCEAddLine</a></span>, в которую передаем внутренние
+номера соединяемых точек <span class="cpp">pnum1</span> и <span class="cpp">pnum2</span>. Если бы мы
+вместо прямой линии захотели бы добавить кривую Безье, нужно было бы вызвать
+<span class="cpp"><a href="rdsCEAddBezier.htm" title="А.5.23.2. rdsCEAddBezier &ndash; добавление кривой Безье">rdsCEAddBezier</a></span> и указать, кроме номеров соединяемых точек, еще и координаты касательных
+кривой (см. <a href="pm_2_13_4.htm#pic2" title="Координаты кривой Безье">рис.&nbsp;88</a>). Функция
+<span class="cpp"><a class="hidden" href="rdsCEAddLine.htm" title="А.5.23.7. rdsCEAddLine &ndash; добавление отрезка прямой">rdsCEAddLine</a></span> (как и <span class="cpp"><a class="hidden" href="rdsCEAddBezier.htm" title="А.5.23.2. rdsCEAddBezier &ndash; добавление кривой Безье">rdsCEAddBezier</a></span>) возвращает
+внутренний номер добавленной линии, но, в данном случае, он нам не нужен, и мы
+не присваиваем его никакой переменной.</p>
+
+<p>Теперь объект <span class="cpp">editor</span> полностью описывает связь, которую нам нужно создать.
+Для создания по этому описанию связи в подсистеме вызывается функция <span class="cpp"><a href="rdsCECreateConnBus.htm" title="А.5.23.8. rdsCECreateConnBus &ndash; создание связи или шины по данным объекта">rdsCECreateConnBus</a></span>:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsCECreateConnBus.htm" title="А.5.23.8. rdsCECreateConnBus &ndash; создание связи или шины по данным объекта">rdsCECreateConnBus</a>(
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> editor, <span class="rem">// Объект-редактор связи</span>
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> parent, <span class="rem">// Подсистема, в которой создается связь</span>
+    <span class="kw">int</span> type,           <span class="rem">// Связь или шина (константа RDS_CT*)</span>
+    <span class="kw">int</span> *perror);       <span class="rem">// Возвращаемый код ошибки</span></pre>
+
+<p>В первом параметре функции передается идентификатор объекта, по данным которого нужно создать связь,
+во втором &ndash; идентификатор подсистемы, в которой эта связь создается. Эта функция может создавать как
+связи, так и <a href="um_2_8.htm" title="&sect;2.8. Использование шин">шины</a>, поэтому в ее третьем параметре передается
+тип создаваемого объекта: <span class="cpp"><a href="RDS_CONNDESCRIPTION.htm#light_ref6" title="RDS_CTCONNECTION">RDS_CTCONNECTION</a></span> для связи,
+<span class="cpp"><a href="RDS_CONNDESCRIPTION.htm#light_ref7" title="RDS_CTBUS">RDS_CTBUS</a></span> &ndash; для шины. В четвертом параметре можно передать указатель на
+целую переменную, в которую функция запишет код ошибки, но здесь нам это не нужно &ndash; мы передаем
+<span class="cpp">NULL</span>. Функция возвращает идентификатор созданной связи или <span class="cpp">NULL</span> при
+ошибке, мы записываем это значение в переменную <span class="cpp">conn</span>. Если <span class="cpp">conn</span> не
+равно <span class="cpp">NULL</span>, значит, связь создана успешно, и мы добавляем ее в список
+<span class="cpp">List</span> (он был создан в функции <span class="cpp">LoadBlocks</span>) вызовом
+<span class="cpp"><a href="rdsBCLAddConn.htm" title="А.5.24.3. rdsBCLAddConn &ndash; добавление связи или шины в список">rdsBCLAddConn</a></span>, в противном случае мы выводим сообщение пользователю
+и прерываем цикл.</p>
+
+<p>Цикл <span class="cpp">for(;;)</span> завершится тогда, когда в списке связей закончатся строки,
+или при возникновении какой-либо ошибки. После его завершения мы удаляем вспомогательные объекты
+<span class="cpp">csv</span> и <span class="cpp">editor</span> и взводим флаг наличия изменений в
+схеме, если в подсистему была добавлена хотя бы одна связь. После этого функция завершается.</p>
+
+<p>Функция удаления добавленных объектов <span class="cpp">DeleteByList</span> будет работать с полем
+класса <span class="cpp">List</span>, в котором после вызова
+<span class="cpp">LoadBlocks</span> и <span class="cpp">LoadConnections</span> должен находиться идентификатор
+объекта со списком добавленных ими блоков и связей.</p>
+
+<pre class="cpp">  <span class="rem">// Удаление добавленных блоков и связей</span>
+  <span class="kw">void</span> TLoadGraphData::DeleteByList(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> *conns;
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> *blocks;
+    <span class="kw">int</span> count;
+
+    <span class="kw">if</span>(List==NULL) <span class="rem">// Списка нет</span>
+      <span class="kw">return</span>;
+
+    <span class="rem">// Отключаем автоматическое обнуление удаляемых объектов</span>
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(List,<a class="hidden" href="RDS_HBCL_AUTODELETE.htm" title="А.5.24.5. Команда RDS_HBCL_AUTODELETE &ndash; отслеживание удаления блоков и связей">RDS_HBCL_AUTODELETE</a>,<span class="const">0</span>,<span class="const">0</span>);
+
+    <span class="rem">// Получаем указатель на массив идентификаторов связей и его размер</span>
+    conns=(<a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a>*)<span id="light_ref44"><a class="hidden" href="rdsGetObjectArray.htm" title="А.5.22.5. rdsGetObjectArray &ndash; получить массив из объекта">rdsGetObjectArray</a></span>(List,<span id="light_ref45"><a class="hidden" href="RDS_HBCL_CONNARRAY.htm" title="А.5.24.9. Команда RDS_HBCL_CONNARRAY &ndash; получение массива связей/шин">RDS_HBCL_CONNARRAY</a></span>,
+                        <span class="const">0</span>,&amp;count);
+    <span class="rem">// Удаляем все связи из этого массива</span>
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;count;i++)
+      <span id="light_ref46"><a class="hidden" href="rdsDeleteConnection.htm" title="А.5.6.9. rdsDeleteConnection &ndash; удаление связи или шины">rdsDeleteConnection</a></span>(conns[i]);
+
+    <span class="rem">// Получаем указатель на массив идентификаторов блоков и его размер</span>
+    blocks=(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a>*)<a class="hidden" href="rdsGetObjectArray.htm" title="А.5.22.5. rdsGetObjectArray &ndash; получить массив из объекта">rdsGetObjectArray</a>(List,<span id="light_ref47"><a class="hidden" href="RDS_HBCL_BLOCKARRAY.htm" title="А.5.24.6. Команда RDS_HBCL_BLOCKARRAY &ndash; получение массива блоков">RDS_HBCL_BLOCKARRAY</a></span>,
+                         <span class="const">0</span>,&amp;count);
+    <span class="rem">// Удаляем все связи из этого массива</span>
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;count;i++)
+      <span id="light_ref48"><a class="hidden" href="rdsDeleteBlock.htm" title="А.5.6.8. rdsDeleteBlock &ndash; удаление блока">rdsDeleteBlock</a></span>(blocks[i]);
+
+    <span class="rem">// Удаляем объект-список и обнуляем List</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(List);
+    List=NULL;
+    <span class="rem">// Взводим флаг измененности схемы</span>
+    <a class="hidden" href="rdsSetModifiedFlag.htm" title="А.5.2.36. rdsSetModifiedFlag &ndash; установка флага наличия изменений в схеме">rdsSetModifiedFlag</a>(TRUE);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Прежде чем мы начнем удалять блоки и связи, нам лучше отключить в списке автоматическое
+обнуление удаляемых объектов. Мы включили его при создании списка в функции <span class="cpp">LoadBlocks</span>,
+и теперь при удалении любого блока и связи, находящегося в этом списке, RDS автоматически будет заменять
+в этом списке его идентификатор на <span class="cpp">NULL</span>. Включение этой функции гарантирует нам,
+что мы не попытаемся удалить блок или связь, которые уже удалены пользователем, поскольку RDS
+обнулит в списке их идентификаторы без нашего участия. Но теперь это обнуление нам не нужно: мы
+сами будем удалять все блоки и связи, находящиеся в списке, и пользователь не сможет вмешаться в этот
+процесс. В принципе, можно и не отключать автоматическое обнуление, просто в этом случае при
+удалении каждого блока или связи RDS будет искать их идентификаторы в списке, чтобы обнулить их,
+что приведет к замедлению работы.</p>
+
+<p>Сначала мы удалим все связи. Для этого мы получим указатель на внутренний массив объекта,
+в котором содержатся идентификаторы связей, при помощи функции <span class="cpp"><a href="rdsGetObjectArray.htm" title="А.5.22.5. rdsGetObjectArray &ndash; получить массив из объекта">rdsGetObjectArray</a></span>:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsGetObjectArray.htm" title="А.5.22.5. rdsGetObjectArray &ndash; получить массив из объекта">rdsGetObjectArray</a>(
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> Object, <span class="rem">// Идентификаор объекта</span>
+    <span class="kw">int</span> ObjOp,          <span class="rem">// Тип массива</span>
+    <span class="kw">int</span> OpParam,        <span class="rem">// Дополнительный параметр</span>
+    <span class="kw">int</span> *pSize);        <span class="rem">// Возвращаемый размер массива</span></pre>
+
+<p>Объект-список позволяет получить доступ к массиву блоков (тип
+<span class="cpp"><a href="RDS_HBCL_BLOCKARRAY.htm" title="А.5.24.6. Команда RDS_HBCL_BLOCKARRAY &ndash; получение массива блоков">RDS_HBCL_BLOCKARRAY</a></span>) и массиву связей (тип <span class="cpp"><a href="RDS_HBCL_CONNARRAY.htm" title="А.5.24.9. Команда RDS_HBCL_CONNARRAY &ndash; получение массива связей/шин">RDS_HBCL_CONNARRAY</a></span>),
+дополнительный параметр, который можно передать в функции, в этом объекте не используется. Нам нужен массив
+связей, поэтому мы используем константу <span class="cpp"><a class="hidden" href="RDS_HBCL_CONNARRAY.htm" title="А.5.24.9. Команда RDS_HBCL_CONNARRAY &ndash; получение массива связей/шин">RDS_HBCL_CONNARRAY</a></span>, и приводим указатель,
+возвращенный функцией, к типу <span class="cpp"><a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a>*</span>
+(&laquo;массив идентификаторов типа <span class="cpp"><a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></span>&raquo;) и записываем его в
+переменную <span class="cpp">conns</span>. Размер массива записывается в целую переменную <span class="cpp">count</span>.
+Далее мы в цикле вызываем для каждого элемента массива функцию удаления связи
+<span class="cpp"><a href="rdsDeleteConnection.htm" title="А.5.6.9. rdsDeleteConnection &ndash; удаление связи или шины">rdsDeleteConnection</a></span>. Эту функцию можно безопасно вызывать для нулевых идентификаторов,
+поэтому если в массиве встретятся элементы, обнуленные RDS из-за удаления соответствующих связей
+пользователем, ничего страшного не случится.</p>
+
+<p>После удаления связей мы точно таким же образом удаляем все блоки, идентификаторы которых находятся
+в списке. Указатель на массив идентификаторов мы записываем в переменную <span class="cpp">blocks</span>,
+а затем в цикле вызываем для каждого элемента этого массива функцию удаления блока <span class="cpp"><a href="rdsDeleteBlock.htm" title="А.5.6.8. rdsDeleteBlock &ndash; удаление блока">rdsDeleteBlock</a></span>.
+После этого мы удаляем список <span class="cpp">List</span> (он нам больше не нужен) и взводим флаг
+наличия изменений в схеме функцией <span class="cpp"><a href="rdsSetModifiedFlag.htm" title="А.5.2.36. rdsSetModifiedFlag &ndash; установка флага наличия изменений в схеме">rdsSetModifiedFlag</a></span>.</p>
+
+<p>Все функции класса <span class="cpp">TLoadGraphData</span> написаны, осталось написать модель блока,
+который будет их вызывать. Блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+    <th>Назначение</th>
+    <th>Номер</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+<td>Стандартный сигнал запуска (здесь не используется)</td><td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+<td>Стандартный сигнал готовности (здесь не используется)</td><td class="center">1</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">BlockFile</td>
+<td class="center">Строка</td>
+<td class="center">4</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center"></td>
+<td>Имя файла с описанием добавляемого блока</td><td class="center">2</td>
+</tr>
+<tr><td class="center">6</td>
+<td class="vcenter">BlockList</td>
+<td class="center">Строка</td>
+<td class="center">4</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center"></td>
+<td>Имя файла списка блоков</td><td class="center">3</td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">ConnList</td>
+<td class="center">Строка</td>
+<td class="center">4</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center"></td>
+<td>Имя файла списка связей</td><td class="center">4</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Модель блока будет иметь следующий вид:</p>
+
+<pre class="cpp">  <span class="rem">// Добавление в схему блоков и связей</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> LoadGraph(<span class="kw">int</span> CallMode,
+          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Приведение указателя на личную область данных к правильному типу</span>
+  TLoadGraphData *data=(TLoadGraphData*)(BlockData-&gt;BlockData);
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart    ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start     (*((char *)(pStart)))     </span><span class="rem">// 0</span>
+  <span class="preproc">#define Ready     (*((char *)(pStart+1)))   </span><span class="rem">// 1</span>
+  <span class="preproc">#define BlockFile (*((char **)(pStart+2)))  </span><span class="rem">// 2</span>
+  <span class="preproc">#define BlockList (*((char **)(pStart+6)))  </span><span class="rem">// 3</span>
+  <span class="preproc">#define ConnList  (*((char **)(pStart+10))) </span><span class="rem">// 4</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация модели</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          BlockData-&gt;BlockData=<span class="kw">new</span> TLoadGraphData();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSAAA}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Настройка параметров блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="kw">return</span> data-&gt;Setup(BlockData-&gt;Block,
+                                <span class="const">2</span>,  <span class="rem">// BlockFile</span>
+                                <span class="const">3</span>,  <span class="rem">// BlockList</span>
+                                <span class="const">4</span>); <span class="rem">// ConnList</span>
+
+        <span class="rem">// Вызов контекстного меню блока</span>
+        <span class="kw">case</span> <span id="light_ref49"><a class="hidden" href="RDS_BFM_CONTEXTPOPUP.htm" title="А.2.6.2. RDS_BFM_CONTEXTPOPUP &ndash; вызов контекстного меню блока">RDS_BFM_CONTEXTPOPUP</a></span>:
+          <span id="light_ref50"><a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a></span>(
+              <span class="str">"Добавить блоки и связи"</span>,<span class="const">0</span>,<span class="const">1</span>,<span class="const">0</span>);
+          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(
+              <span class="str">"Удалить добавленное"</span>,
+               data-&gt;List==NULL?<span id="light_ref51"><a class="hidden" href="rdsChangeMenuItem.htm#light_ref2" title="RDS_MENU_DISABLED">RDS_MENU_DISABLED</a></span>:<span class="const">0</span>,<span class="const">2</span>,<span class="const">0</span>);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Выбор пункта в контекстном меню</span>
+        <span class="kw">case</span> <span id="light_ref52"><a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a></span>:
+          <span class="kw">switch</span>(((<span id="light_ref53"><a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a></span>)ExtParam)-&gt;Function)
+            { <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Добавить блоки и связи</span>
+                <span class="rem">// Подготовка к серьезным изменениям</span>
+                <span id="light_ref54"><a class="hidden" href="rdsSetSystemUpdate.htm" title="А.5.2.38. rdsSetSystemUpdate &ndash; разрешить/запретить обновление вспомогательных данных">rdsSetSystemUpdate</a></span>(FALSE);
+                <span class="kw">if</span>(data-&gt;LoadBlocks(BlockData-&gt;Block,
+                                    BlockFile,BlockList))
+                  data-&gt;LoadConnections(BlockData-&gt;Block,ConnList);
+                <span class="rem">// Серьезные изменения завершены</span>
+                <a class="hidden" href="rdsSetSystemUpdate.htm" title="А.5.2.38. rdsSetSystemUpdate &ndash; разрешить/запретить обновление вспомогательных данных">rdsSetSystemUpdate</a>(TRUE);
+                <span class="kw">break</span>;
+              <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Удалить добавленное</span>
+                <span class="rem">// Подготовка к серьезным изменениям</span>
+                <a class="hidden" href="rdsSetSystemUpdate.htm" title="А.5.2.38. rdsSetSystemUpdate &ndash; разрешить/запретить обновление вспомогательных данных">rdsSetSystemUpdate</a>(FALSE);
+                data-&gt;DeleteByList();
+                <span class="rem">// Серьезные изменения завершены</span>
+                <a class="hidden" href="rdsSetSystemUpdate.htm" title="А.5.2.38. rdsSetSystemUpdate &ndash; разрешить/запретить обновление вспомогательных данных">rdsSetSystemUpdate</a>(TRUE);
+                <span class="kw">break</span>;
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef ConnList</span>
+  <span class="preproc">#undef BlockList</span>
+  <span class="preproc">#undef BlockFile</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Реакции на события <span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span>, <span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span> и
+<span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> в этой модели похожи на все ранее рассмотренные реакции моделей,
+в которых личная область данных представляет собой объект какого-либо класса. В реакции на событие
+<span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span> вызывается функция класса <span class="cpp">Setup</span>, в которую
+передаются номера переменных, в которых хранятся параметры блока. Остальные реакции нужно рассмотреть
+подробнее.</p>
+
+<p>При открытии контекстного меню блока (реакция <span class="cpp"><a href="RDS_BFM_CONTEXTPOPUP.htm" title="А.2.6.2. RDS_BFM_CONTEXTPOPUP &ndash; вызов контекстного меню блока">RDS_BFM_CONTEXTPOPUP</a></span>) блок добавляет
+в него два пункта: &laquo;Добавить блоки и связи&raquo; с идентификатором 1 и
+&laquo;Удалить добавленное&raquo; с идентификатором 2, причем последний пункт будет разрешенным только
+в том случае, если поле <span class="cpp">List</span> класса личной области данных блока не будет равно
+<span class="cpp">NULL</span>, то есть если есть список добавленных блоков и связей.</p>
+
+<p>При выборе пользователем одного из добавленных пунктов меню модель вызовется в режиме
+<span class="cpp"><a href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a></span>. Если идентификатор выбранного пункта &ndash; 1, нужно
+добавить в подсистему блоки и связи из файлов, указанных в настроечных параметрах блока. Для этого нужно
+последовательно вызвать функции <span class="cpp">LoadBlocks</span> и
+<span class="cpp">LoadConnections</span> класса личной области данных. Однако, перед их
+вызовом лучше всего проинформировать RDS о том, что сейчас модель будет производить изменения
+в схеме. Дело в том, что добавление и удаление блоков и связей, а также изменение их параметров,
+приводит к изменениям во многих служебных, автоматически поддерживаемых RDS структурах, необходимых
+для работы схемы. Если в схему вносятся крупные изменения, например, добавляется и удаляется множество
+блоков и связей, целесообразно вносить изменения в эти структуры не после каждого небольшого изменения,
+а после завершения всех изменений. Перед добавлением блоков и связей лучше всего заблокировать изменения в
+служебных структурах RDS вызовом функции <span class="cpp"><a href="rdsSetSystemUpdate.htm" title="А.5.2.38. rdsSetSystemUpdate &ndash; разрешить/запретить обновление вспомогательных данных">rdsSetSystemUpdate</a></span> с параметром
+<span class="cpp">FALSE</span>. Это не обязательно, но в противном случае RDS будет обновлять свои
+структуры после добавления каждого блока и каждой связи, что приведет к существенному замедлению работы.
+При блокировке изменений функцией <span class="cpp"><a class="hidden" href="rdsSetSystemUpdate.htm" title="А.5.2.38. rdsSetSystemUpdate &ndash; разрешить/запретить обновление вспомогательных данных">rdsSetSystemUpdate</a></span> крайне важно помнить,
+что после каждого ее вызова с параметром <span class="cpp">FALSE</span> обязательно должен следовать вызов
+с параметром <span class="cpp">TRUE</span>, иначе RDS не сможет работать правильно.</p>
+
+<p>Заблокировав изменения в служебных структурах RDS, мы вызываем функцию <span class="cpp">LoadBlocks</span>,
+передавая ей идентификатор нашего блока <span class="cpp">BlockData-&gt;Block</span>, имя файла с
+описанием блока из переменной <span class="cpp">BlockFile</span> и имя списка блоков из переменной
+<span class="cpp">BlockList</span>. Если функция вернет <span class="cpp">TRUE</span> (блоки добавлены успешно), мы
+вызовем <span class="cpp">LoadConnections</span>, передав ей идентификатор блока и имя списка связей
+из переменной <span class="cpp">ConnList</span>. После этого мы снова разрешаем обновление служебных структур
+RDS вызовом <span class="cpp"><a class="hidden" href="rdsSetSystemUpdate.htm" title="А.5.2.38. rdsSetSystemUpdate &ndash; разрешить/запретить обновление вспомогательных данных">rdsSetSystemUpdate</a>(TRUE)</span>.</p>
+
+<p>Если идентификатор выбранного пункта меню &ndash; 2, мы блокируем обновление служебных структур,
+удаляем добавленные блоки и связи вызовом написанной нами функции <span class="cpp">DeleteByList</span>, а
+затем снова разрешаем обновление служебных структур.</p>
+
+<p>Теперь можно протестировать созданную модель. Подключим ее к блоку &ndash; назовем его, например,
+&laquo;<span class="rdsvar">Block1</span>&raquo;
+(<a href="#pic3_0" title="Программное добавление блоков и связей: схема перед (а) и после (б) добавления">рис.&nbsp;120&nbsp;а</a>) &ndash; и
+создадим текстовый файл &laquo;<span class="file">blocklist.txt</span>&raquo; со списком
+блоков следующего вида:</p>
+
+<pre class="cpp">  Block1, 50,  100
+  Block2, 100, 100
+  Block3, 200, 200
+  Block4, 100, 200
+  Block5, 200, 100
+  Block6, 200, 25</pre>
+
+<p>Нам также потребуется текстовый файл &laquo;<span class="file">connlist.txt</span>&raquo; со списком связей:</p>
+
+<pre class="cpp">  Block1, x, Block2, y
+  Block2, y, Block3, x
+  Block2, x, Block4, y
+  Block5, y, Block4, x
+  Block6, x, Block5, x</pre>
+
+<div class="pic"><div class="container" id="pic3">
+<div class="multi" id="pic3_0"><img src="../img/AddBlocks1.png" width="275" height="366" alt="Программное добавление блоков и связей: схема перед (а) и после (б) добавления 1" /><p id="light_pic3_0">(а)</p></div><div class="multi" id="pic3_1"><img src="../img/AddBlocks2.png" width="275" height="366" alt="Программное добавление блоков и связей: схема перед (а) и после (б) добавления 2" /><p id="light_pic3_1">(б)</p></div><p id="light_pic3">Рис.&nbsp;120. Программное добавление блоков и связей: схема перед (а) и после (б) добавления</p>
+</div></div>
+
+
+<p>Теперь, если настроить блок, как показано на на <a href="#pic2" title="Окно настроек блока создания блоков и связей">рис.&nbsp;119</a>, и выбрать
+в контекстном меню блока пункт &laquo;<span class="menu">Добавить блоки и связи</span>&raquo;, подсистема с этим блоком примет вид,
+показанный на <a href="#pic3_1" title="Программное добавление блоков и связей: схема перед (а) и после (б) добавления">рис.&nbsp;120&nbsp;б</a>. Можно заметить, что созданный нами блок
+был автоматически переименован в &laquo;<span class="rdsvar">Block7</span>&raquo;, поскольку имена, начиная с
+&laquo;<span class="rdsvar">Block1</span>&raquo; и заканчивая &laquo;<span class="rdsvar">Block6</span>&raquo;, встретились в списке блоков, и
+ему пришлось переименовываться, чтобы добавить их в подсистему. Связи между блоками, как мы и планировали,
+начинаются и заканчиваются на их границах.</p>
+<p>Если теперь выбрать в меню блока пункт &laquo;<span class="menu">Удалить добавленное</span>&raquo;, все добавленные блоки и
+связи будут удалены.</p>
+
+<p>В этом примере мы создавали простые связи, состоящие из единственного отрезка прямой. Объект для
+редактирования связи, создаваемый функцией <span class="cpp"><a href="rdsCECreateEditor.htm" title="А.5.23.1. rdsCECreateEditor &ndash; создать объект-редактор связи/шины">rdsCECreateEditor</a></span>, позволяет создавать и более
+сложные связи &ndash; разветвленные, состоящие из множества точек и линий, включая кривые Безье.</p>
+
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_16_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_16_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

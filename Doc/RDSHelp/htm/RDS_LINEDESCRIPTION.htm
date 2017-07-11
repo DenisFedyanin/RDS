@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.4.12. RDS_LINEDESCRIPTION &ndash; описание отрезка внутри связи или шины</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_4">А.4. Структуры RDS</a></p>
+<div class="level"><p>А.4.12. <span class="cpp">RDS_LINEDESCRIPTION</span> &ndash; описание отрезка внутри связи или шины</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_FUNCPROVIDERLINK.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_PANDESCRIPTION.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_LINEDESCRIPTION">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.4. Структуры RDS</h3>
+<h4>А.4.12. <span class="cpp">RDS_LINEDESCRIPTION</span> &ndash; описание отрезка внутри связи или шины</h4>
+
+
+<p><span id="ref1">Структура</span> <span id="ref2"><span class="cpp">RDS_LINEDESCRIPTION</span></span>
+используется для получения описания отдельного отрезка, соединяющего пару точек 
+<a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связи</a> или <a href="um_2_8.htm" title="&sect;2.8. Использование шин">шины</a>
+в ее геометрическом изображении. Эта структура заполняется сервисными функциями
+<span class="cpp"><a href="rdsGetLineDescription.htm" title="А.5.6.30. rdsGetLineDescription &ndash; получить описание отрезка связи">rdsGetLineDescription</a></span> и <span class="cpp"><a href="rdsFindNextConnectedLine.htm" title="А.5.6.14. rdsFindNextConnectedLine &ndash; найти отрезок связи, соединенный с точкой">rdsFindNextConnectedLine</a></span>.
+Пример ее использования приведен в <a href="pm_2_13_4.htm" title="&sect;2.13.4. Пример использования функций блоков для поиска пути в графе">&sect;2.13.4 руководства программиста</a>.</p>
+
+<p>Структура используется только для получения описания отрезка, изменить параметры этого отрезка с ее помощью
+нельзя. Для изменения параметров существующих связей или шин и создания новых используется вспомогательный объект,
+создаваемый функцией <span class="cpp"><a href="rdsCECreateEditor.htm" title="А.5.23.1. rdsCECreateEditor &ndash; создать объект-редактор связи/шины">rdsCECreateEditor</a></span>.</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span> {
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;       <span class="rem">// Размер этой структуры в байтах</span>
+    <span class="kw">int</span> LineType;         <span class="rem">// Тип отрезка (RDS_LN*)</span>
+    <span class="kw">int</span> nPoint1,nPoint2;  <span class="rem">// Номера соединяемых точек</span>
+    <span class="kw">int</span> x1,y1;            <span class="rem">// Абсолютные координаты точки nPoint1</span>
+    <span class="kw">int</span> x2,y2;            <span class="rem">// Абсолютные координаты точки nPoint2</span>
+    <span class="kw">int</span> dx1,dy1;          <span class="rem">// Смещения управляющей точки для nPoint1</span>
+    <span class="kw">int</span> dx2,dy2;          <span class="rem">// Смещения управляющей точки для nPoint2</span>
+    <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> Owner;    <span class="rem">// Связь-владелец отрезка</span>
+  } <span id="light_ref1">RDS_LINEDESCRIPTION</span>;
+  <span class="kw">typedef</span> RDS_LINEDESCRIPTION *<span id="light_ref2">RDS_PLINEDESCRIPTION</span>;</pre>
+
+<p class="apphdr"><span id="ref3">Поля</span> структуры</p>
+
+<dl>
+  <dt><span class="cpp">servSize</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</dt>
+  <dd>Размер этой структуры в байтах. Перед вызовом любой сервисной функции, работающей с этой структурой,
+  полю <span class="cpp">servSize</span> необходимо присвоить значение <span class="cpp">sizeof(RDS_LINEDESCRIPTION)</span>.</dd>
+
+  <dt><span class="cpp">LineType</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Тип отрезка: отрезок прямой или <span id="light_ref3">кривая Безье</span> В этом поле может находиться одна
+  из двух констант:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref4">RDS_LNLINE</span></span></td>
+          <td>Отрезок прямой.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref5">RDS_LNBEZIER</span></span></td>
+          <td>Кривая Безье.</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp">nPoint1</span>,&nbsp;<span class="cpp">nPoint2</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Порядковые номера соединяемых отрезком точек связи или шины. Обращение к точкам всегда идет по их
+  номеру, общее число точек можно получить через поле <span class="cpp">NumPoints</span> структуры
+  <span class="cpp"><a href="RDS_CONNDESCRIPTION.htm#ref1" title="Структура RDS_CONNDESCRIPTION">RDS_CONNDESCRIPTION</a></span>.</dd>
+
+  <dt><span class="cpp">x1</span>,&nbsp;<span class="cpp">y1</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Горизонтальная (<span class="cpp">x1</span>) и вертикальная (<span class="cpp">y1</span>) координаты
+  точки связи с номером <span class="cpp">nPoint1</span>. В отличие от структуры описания точки
+  <span class="cpp"><a href="RDS_POINTDESCRIPTION.htm#ref1" title="Структура RDS_POINTDESCRIPTION">RDS_POINTDESCRIPTION</a></span>, в этой структуре всегда указываются абсолютные координаты
+  точки на рабочем поле подсистемы в масштабе 100%.</dd>
+
+  <dt><span class="cpp">x2</span>,&nbsp;<span class="cpp">y2</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Горизонтальная (<span class="cpp">x2</span>) и вертикальная (<span class="cpp">y2</span>) координаты точки
+  связи с номером <span class="cpp">nPoint2</span>. В отличие от структуры описания точки
+  <span class="cpp">RDS_POINTDESCRIPTION</span>, в этой структуре всегда указываются абсолютные координаты
+  точки на рабочем поле подсистемы в масштабе 100%.</dd>
+
+  <dt><span class="cpp">dx1</span>,&nbsp;<span class="cpp">dy1</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Горизонтальное (<span class="cpp">dx1</span>) и вертикальное (<span class="cpp">dy1</span>) смещение
+  управляющей точки (точки касательной) для точки связи с номером <span class="cpp">nPoint1</span>. Эти поля
+  используются только для кривых Безье, то есть если <span class="cpp">LineType==RDS_LNBEZIER</span>.</dd>
+
+  <dt><span class="cpp">dx2</span>,&nbsp;<span class="cpp">dy2</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Горизонтальное (<span class="cpp">dx2</span>) и вертикальное (<span class="cpp">dy2</span>) смещение
+  управляющей точки (точки касательной) для точки связи с номером <span class="cpp">nPoint2</span>. Эти поля
+  используются только для кривых Безье, то есть если <span class="cpp">LineType==RDS_LNBEZIER</span>.</dd>
+
+  <dt><span class="cpp">Owner</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор связи или шины, которой принадлежит данный отрезок.</dd>
+
+</dl>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsGetLineDescription.htm" title="А.5.6.30. rdsGetLineDescription &ndash; получить описание отрезка связи">rdsGetLineDescription</a></span>,
+<span class="cpp"><a href="rdsFindNextConnectedLine.htm" title="А.5.6.14. rdsFindNextConnectedLine &ndash; найти отрезок связи, соединенный с точкой">rdsFindNextConnectedLine</a></span>,
+<span class="cpp"><a href="RDS_CONNDESCRIPTION.htm#ref1" title="Структура RDS_CONNDESCRIPTION">RDS_CONNDESCRIPTION</a></span>,
+<span class="cpp"><a href="rdsGetConnDescription.htm" title="А.5.6.23. rdsGetConnDescription &ndash; получить описание связи">rdsGetConnDescription</a></span>,
+<span class="cpp"><a href="rdsCECreateEditor.htm" title="А.5.23.1. rdsCECreateEditor &ndash; создать объект-редактор связи/шины">rdsCECreateEditor</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_FUNCPROVIDERLINK.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_PANDESCRIPTION.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_LINEDESCRIPTION">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

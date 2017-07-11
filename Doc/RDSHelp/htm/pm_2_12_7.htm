@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.12.7. Добавление пунктов в системное меню RDS</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_12">&sect;2.12. Реакция блоков на действия пользователя</a></p>
+<div class="level"><p>&sect;2.12.7. Добавление пунктов в системное меню RDS</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_12_6.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_8.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_7">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_12_7_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.12. Реакция блоков на действия пользователя</h3>
+<h4>&sect;2.12.7. Добавление пунктов в системное меню RDS</h4>
+<p class="abstract">Описывается возможность добавления моделями блоков собственных пунктов в меню &laquo;<span class="menu">система</span>&raquo;.
+                Рассматривается пример блока, открывающего окно своей подсистемы при выборе пункта системного меню или при
+                нажатии связанной с этим пунктом &laquo;горячей клавиши&raquo;.</p>
+
+
+<p>Контекстное меню блока, дополнение которого описано в
+<a href="pm_2_12_6.htm" title="&sect;2.12.6. Добавление пунктов в контекстное меню блока">&sect;2.12.6</a>, может быть вызвано, только если
+<a href="um_2_3.htm" title="&sect;2.3. Элементы и меню окна подсистемы">окно подсистемы</a>
+с этим блоком открыто и сам блок видим в этом окне. Если модели блока необходимо вынести какие-либо
+функции на уровень всей системы, чтобы пользователь мог вызвать их независимо от состояния окон подсистем,
+ей следует добавить пункт в
+системное меню. Добавляемые моделями блоков пункты размещаются в меню
+&laquo;<span class="menu">система | дополнительно</span>&raquo;
+<a href="um_2_1.htm" title="&sect;2.1. Главное окно и главное меню">главного окна</a> RDS. С каждым из этих пунктов может
+быть связано вызывающее его сочетание клавиш, что позволяет использовать дополнение системного меню
+RDS для реализации &laquo;глобальной&raquo; реакции блока на клавиатуру: обычная
+<a href="pm_2_12_4.htm" title="&sect;2.12.4. Реакция блоков на клавиатуру">реакция блока на нажатие клавиш</a> возможна только в
+режимах <a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a> и <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a>
+(при этом окно подсистемы с блоком обязательно должно находиться на переднем плане), а реакция на нажатие
+сочетания клавиш, связанного с пунктом системного меню, не зависит ни от режима RDS, ни от
+расположения окна подсистемы, в которой находится добавивший этот пункт блок.</p>
+
+<p>Пункты системного меню, в отличие от пунктов контекстного, не могут быть временными. Их,
+как правило, немного (слишком большое число пунктов в меню неудобно для пользователя, кроме того, площадь
+экрана ограничена), поэтому о занимаемом ими объеме памяти можно не беспокоиться. Они создаются сервисной функцией
+<span class="cpp"><span id="light_ref1"><a href="rdsRegisterMenuItem.htm" title="А.5.17.8. rdsRegisterMenuItem &ndash; создать пункт системного меню RDS">rdsRegisterMenuItem</a></span></span> и существуют либо до тех пор, пока модель блока не
+удалит их, либо пока модель не будет отключена от блока (например, при удалении самого блока из схемы). Как
+и в случае постоянных пунктов контекстного меню, модель может в любой момент изменить название пункта
+системного меню и его внешний вид, а также связанное с ним сочетание клавиш.</p>
+
+<p>Рассмотрим для примера блок, который добавляет в системное меню RDS пункт, выбор которого
+открывает окно подсистемы, в которой этот блок находится. Причем сделаем название этого пункта
+меню и его сочетание клавиш настраиваемыми. Такие блоки, размещенные в важных подсистемах,
+позволят пользователю быстро открывать их через меню или с клавиатуры, не тратя время на их поиск
+в схеме, чтобы открыть их двойным щелчком, как обычно.</p>
+
+<p>Начнем написание модели блока с класса
+<a href="pm_1_4.htm#ref8" title="Личная область данных блока">личной области данных</a> &ndash; он понадобится нам для
+хранения идентификатора созданного пункта меню, а также настроечных параметров: названия
+пункта и сочетания клавиш, связанного с ним.</p>
+
+<pre class="cpp">  <span class="rem">// Класс личной области данных блока</span>
+  <span class="kw">class</span> TOpenSysWinData
+  { <span class="kw">public</span>:
+      <span id="light_ref2"><a class="hidden" href="app_ids.htm#light_ref4" title="Идентификатор пункта меню">RDS_MENUITEM</a></span> MenuItem; <span class="rem">// Идентификатор созданного пункта меню</span>
+      <span class="rem">// Настроечные параметры</span>
+      <span class="kw">char</span> *Caption;         <span class="rem">// Название пункта</span>
+      <span class="kw">int</span> Key;               <span class="rem">// Клавиша (или 0,если ее нет)</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> KeyShifts;       <span class="rem">// Состояние Ctrl, Alt и Shift</span>
+
+      <span class="rem">// Создание пункта меню с заданными параметрами или</span>
+      <span class="rem">// изменение параметров уже созданного пункта</span>
+      <span class="kw">void</span> RegisterMenuItem(<span class="kw">void</span>);
+
+      <span class="kw">int</span> Setup(<span class="kw">void</span>);    <span class="rem">// Открыть окно настройки</span>
+      <span class="kw">void</span> SaveBin(<span class="kw">void</span>); <span class="rem">// Сохранить параметры</span>
+      <span class="kw">int</span> LoadBin(<span class="kw">void</span>);  <span class="rem">// Загрузить параметры</span>
+
+      <span class="rem">// Конструктор класса</span>
+      TOpenSysWinData(<span class="kw">void</span>)
+        { Caption=NULL;
+          Key=<span class="const">0</span>; KeyShifts=<span class="const">0</span>;
+          MenuItem=NULL;
+        };
+      <span class="rem">// Деструктор класса</span>
+      ~TOpenSysWinData()
+        { <span class="rem">// Освободить память, занятую строкой Caption</span>
+          <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(Caption);
+          <span class="rem">// Удалить пункт меню</span>
+          <span id="light_ref3"><a class="hidden" href="rdsUnregisterMenuItem.htm" title="А.5.17.10. rdsUnregisterMenuItem &ndash; удалить постоянный пункт меню">rdsUnregisterMenuItem</a></span>(MenuItem);
+        };
+  };
+  <span class="rem">//=========================================</span></pre>
+
+<p>Для хранения идентификатора пункта меню, который мы будем создавать, предназначено поле
+<span class="cpp">MenuItem</span>. Оно имеет уже знакомый нам по работе с контекстным меню тип
+<span class="cpp"><a href="app_ids.htm#light_ref4" title="Идентификатор пункта меню">RDS_MENUITEM</a></span> &ndash; в RDS для работы с постоянными пунктами контекстного
+и системного меню используются одни и те же функции и типы данных. В остальных полях класса хранятся
+настроечные параметры блока: строка названия пункта меню <span class="cpp">Caption</span> (память под
+нее мы будем отводить динамически при помощи сервисных функций RDS), код
+&laquo;горячей клавиши&raquo; пункта меню <span class="cpp">Key</span> и флаги
+<span class="cpp">KeyShifts</span>, описывающие состояние клавиш-модификаторов
+<span class="keys">Ctrl</span>, <span class="keys">Alt</span> и <span class="keys">Shift</span> для этой клавиши.</p>
+
+<p>В классе также описано несколько функций-членов, которые мы рассмотрим позднее, конструктор
+и деструктор. В конструкторе всем полям класса присваиваются начальные значения, а в деструкторе освобождается
+динамическая память, занятая строкой <span class="cpp">Caption</span>, и удаляется созданный пункт меню.
+При удалении мы не проверяем, была ли на самом деле отведена память под строку и был ли создан пункт меню:
+все сервисные функции RDS, удаляющие какие-либо объекты и освобождающие память, допускают передачу значения
+<span class="cpp">NULL</span> вместо указателей или идентификаторов, в этом случае никаких действий
+не производится.</p>
+
+<p>Из всех функций-членов класса для нас интереснее всего функция <span class="cpp">RegisterMenuItem</span>,
+предназначенная для создания пункта системного меню с заданными параметрами или изменения параметров этого пункта,
+если он уже создан:</p>
+
+<pre class="cpp">  <span class="rem">// Создание или модификация пункта меню</span>
+  <span class="kw">void</span> TOpenSysWinData::RegisterMenuItem(<span class="kw">void</span>)
+  { <span class="rem">// Вспомогательная переменная для заголовка пункта меню:</span>
+    <span class="rem">// если Caption==NULL, пункт получит заголовок "Открыть окно"</span>
+    <span class="kw">char</span> *text=Caption?Caption:<span class="str">"Открыть окно"</span>;
+    <span class="rem">// Флаги пункта меню: если клавиша определена (Key!=0),</span>
+    <span class="rem">// пункт будет иметь "горячую клавишу"</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> options=Key?<span id="light_ref4"><a class="hidden" href="rdsChangeMenuItem.htm#light_ref6" title="RDS_MENU_SHORTCUT">RDS_MENU_SHORTCUT</a></span>:<span class="const">0</span>;
+
+    <span class="kw">if</span>(MenuItem) <span class="rem">// Пункт уже есть - изменяем</span>
+      <span id="light_ref5"><a class="hidden" href="rdsChangeMenuItem.htm" title="А.5.17.3. rdsChangeMenuItem &ndash; изменить параметры пункта меню">rdsChangeMenuItem</a></span>(MenuItem,text,options,Key,KeyShifts,<span class="const">0</span>,<span class="const">0</span>);
+    <span class="kw">else</span> <span class="rem">// Пункта еще нет - создаем</span>
+      MenuItem=<a class="hidden" href="rdsRegisterMenuItem.htm" title="А.5.17.8. rdsRegisterMenuItem &ndash; создать пункт системного меню RDS">rdsRegisterMenuItem</a>(text,options,Key,KeyShifts,<span class="const">0</span>,<span class="const">0</span>);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Поскольку <span class="cpp">Caption</span> у нас исходно имеет значение <span class="cpp">NULL</span>, а
+показывать пользователю пункт меню без названия нехорошо, в функции вводится вспомогательная переменная
+<span class="cpp">text</span>, которая будет равна <span class="cpp">Caption</span>, если значение последней не
+<span class="cpp">NULL</span>, или ссылаться на строку &laquo;Открыть окно&raquo; в противном случае.
+Это значение будет передано в сервисную функцию в качестве названия пункта, таким образом, пункт
+не останется без названия в любом случае.</p>
+
+<p>Другая вспомогательная переменная, <span class="cpp">options</span>, содержит битовые флаги пункта меню.
+Кроме уже знакомых нам по работе с контекстными меню флагов
+<span class="cpp"><a href="rdsChangeMenuItem.htm#light_ref3" title="RDS_MENU_CHECKED">RDS_MENU_CHECKED</a></span>, <span class="cpp"><a href="rdsChangeMenuItem.htm#light_ref2" title="RDS_MENU_DISABLED">RDS_MENU_DISABLED</a></span> и <span class="cpp"><a href="rdsChangeMenuItem.htm#light_ref5" title="RDS_MENU_HIDDEN">RDS_MENU_HIDDEN</a></span>,
+для пунктов системного меню могут использоваться еще два дополнительных флага:</p>
+
+<ul>
+  <li><span class="cpp"><a href="rdsChangeMenuItem.htm#light_ref6" title="RDS_MENU_SHORTCUT">RDS_MENU_SHORTCUT</a></span> &ndash; если флаг установлен, пункт меню будет иметь
+  &laquo;горячую клавишу&raquo;;</li>
+  <li><span class="cpp"><span id="light_ref6"><a href="rdsChangeMenuItem.htm#light_ref7" title="RDS_MENU_UNIQUECAPTION">RDS_MENU_UNIQUECAPTION</a></span></span> &ndash; если флаг установлен, RDS
+  не будет создавать этот пункт меню, если в меню уже есть пункт с точно таким же названием.</li>
+</ul>
+
+<p class="noindent">Нас интересует только флаг <span class="cpp"><a class="hidden" href="rdsChangeMenuItem.htm#light_ref6" title="RDS_MENU_SHORTCUT">RDS_MENU_SHORTCUT</a></span>: если значение
+поля <span class="cpp">Key</span> не нулевое, значит, клавиша для пункта меню определена, и этот флаг
+должен быть указан. В противном случае никакие флаги для пункта меню нам не нужны, и переменная
+<span class="cpp">options</span> получает значение 0.</p>
+
+<p>Напишем теперь функции записи и загрузки параметров блока. Чтобы не усложнять модель блока, будем,
+как и в примере из <a href="pm_2_12_4.htm#ref10" title="Пример записи данных блока в двоичном формате с тегами">&sect;2.12.4</a>, использовать двоичный формат и теговую
+запись. Функция записи параметров будет иметь следующий вид:</p>
+
+<pre class="cpp">  <span class="rem">// Запись параметров блока</span>
+  <span class="kw">void</span> TOpenSysWinData::SaveBin(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref12" title="Однобайтовая переменная">BYTE</a> tag; <span class="rem">// Переменная для байта тега</span>
+    <span class="kw">int</span> len=Caption?strlen(Caption):<span class="const">0</span>;  <span class="rem">// Длина строки Caption</span>
+
+    tag=<span class="const">1</span>; <span class="rem">// Тег 1 – название пункта меню</span>
+    <span id="light_ref7"><a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a></span>(&amp;tag,<span class="kw">sizeof</span>(tag));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;len,<span class="kw">sizeof</span>(len));	<span class="rem">// Длина строки</span>
+    <span class="kw">if</span>(len)	<span class="rem">// При ненулевой длине – запись самой строки</span>
+      <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(Caption,len);
+
+    tag=<span class="const">2</span>; <span class="rem">// Тег 2 – "горячая клавиша"</span>
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;Key,<span class="kw">sizeof</span>(Key));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;KeyShifts,<span class="kw">sizeof</span>(KeyShifts));
+
+    tag=<span class="const">0</span>;;	<span class="rem">// Тег 0 – конец данных</span>
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag));
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Как и в упомянутом выше примере, в этой функции используются однобайтовые теги, указывающие на формат и
+тип следующих за ними данных. За тегом 1 следует четырехбайтовая целая длина строки (она записывается
+во вспомогательную переменную <span class="cpp">len</span> в начале функции) и, если длина не нулевая,
+<span class="cpp">len</span> байтов самой строки. За тегом 2 следуют два числа, содержащих код
+&laquo;горячей клавиши&raquo; и ее флаги. Тег 0 указывает на конец данных блока.</p>
+
+<p>Функция загрузки считывает байт тега, а затем, в зависимости от его значения, загружает
+данные в те или иные поля класса:</p>
+
+<pre class="cpp">  <span class="rem">// Загрузка параметров блока</span>
+  <span class="kw">int</span> TOpenSysWinData::LoadBin(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref12" title="Однобайтовая переменная">BYTE</a> tag; <span class="rem">// Переменная для байта тега</span>
+    <span class="kw">int</span> len;
+
+    <span class="rem">// Прежде всего, освобождаем память, которую занимало старое</span>
+    <span class="rem">// название пункта меню – сейчас загрузится новое</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(Caption);
+    Caption=NULL;
+
+    <span class="kw">for</span>(;;)
+      { <span class="kw">if</span>(!<span id="light_ref8"><a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a></span>(&amp;tag,<span class="kw">sizeof</span>(tag)))
+          <span class="kw">break</span>; <span class="rem">// Тег не считан – данные неожиданно кончились</span>
+        <span class="kw">switch</span>(tag)
+          { <span class="kw">case</span> <span class="const">0</span>: <span class="rem">// Конец данных</span>
+              RegisterMenuItem(); <span class="rem">// Создаем или изменяем пункт меню</span>
+              <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+            <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Название пункта</span>
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;len,<span class="kw">sizeof</span>(len)); <span class="rem">// Читаем длину</span>
+              <span class="kw">if</span>(len) <span class="rem">// Длина ненулевая – читаем len байтов строки</span>
+                { <span class="rem">// Отводим место с учетом нуля в конце строки</span>
+                  Caption=(<span class="kw">char</span>*)<span id="light_ref9"><a class="hidden" href="rdsAllocate.htm" title="А.5.4.2. rdsAllocate &ndash; динамическое отведение области памяти">rdsAllocate</a></span>(len+<span class="const">1</span>);
+                  <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(Caption,len); <span class="rem">// Читаем строку</span>
+                  Caption[len]=<span class="const">0</span>;	<span class="rem">// Дописываем нулевой байт в конец</span>
+                }
+              <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Данные "горячей клавиши"</span>
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;Key,<span class="kw">sizeof</span>(Key));
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;KeyShifts,<span class="kw">sizeof</span>(KeyShifts));
+              <span class="kw">break</span>;
+            <span class="kw">default</span>: <span class="rem">// Тег не опознан – ошибка</span>
+              <span class="kw">return</span> <span id="light_ref10">RDS_BFR_ERROR</span>;
+          }
+      }
+    <span class="rem">// Вышли из цикла из-за неожиданного конца данных блока - ошибка</span>
+    <span class="kw">return</span> RDS_BFR_ERROR;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции следует обратить внимание на специфику работы со строкой <span class="cpp">Caption</span>. В
+самом начале функции, перед тем, как начнут читаться какие-либо данные, текущее содержимое строки
+уничтожается, и полю класса <span class="cpp">Caption</span> присваивается значение
+<span class="cpp">NULL</span>. В процессе чтения данных блока должно загрузиться новое название пункта
+меню, поэтому старое нам больше не нужно. При считывании тега 1 сразу за ним в переменную
+<span class="cpp">len</span> считывается длина строки названия, и, если она не нулевая, функцией
+<span class="cpp"><a href="rdsAllocate.htm" title="А.5.4.2. rdsAllocate &ndash; динамическое отведение области памяти">rdsAllocate</a></span> отводится память под <span class="cpp">len+1</span> символов (еще один байт
+нужен для завершающего строку нуля). После этого символы строки считываются в отведенный буфер и
+в его конец записывается нулевой байт, которым должна оканчиваться каждая строка.</p>
+
+<p>Второй важный момент в функции &ndash; действия при считывании нулевого тега, отмечающего конец данных блока.
+При этом вызывается функция <span class="cpp">RegisterMenuItem</span>, уже написанная нами раньше, которая,
+на основе считанного названия и кода &laquo;горячей клавиши&raquo;, создает пункт системного меню
+или изменяет его параметры, если он уже был создан ранее. Если эту функцию не вызвать, то параметры
+будут загружены во внутренние поля класса, но никак не отразятся на внешнем виде пункта в системном меню.</p>
+
+<p>Теперь напишем функцию настройки, которая позволит пользователю задать параметры блока,
+которые мы уже научились сохранять и загружать:</p>
+
+<pre class="cpp">  <span class="rem">// Настройка параметров блока</span>
+  <span class="kw">int</span> TOpenSysWinData::Setup(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window; <span class="rem">// Идентификатор объекта-окна</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;            <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="rem">// Создание окна</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Открытие окна"</span>);
+    <span class="rem">// Поле ввода для строки названия</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">1</span>,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,
+        <span class="str">"Текст пункта меню:"</span>,<span class="const">200</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Caption);
+    <span class="rem">// Поле ввода для "горячей клавиши"</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<span id="light_ref11"><a class="hidden" href="app_a_fields.htm#light_ref10" title="RDS_FORMCTRL_HOTKEY">RDS_FORMCTRL_HOTKEY</a></span>,<span class="str">"Клавиша:"</span>,<span class="const">150</span>);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Key);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">2</span>,<span id="light_ref12"><a class="hidden" href="RDS_FORMVAL_HKSHIFTS.htm" title="А.5.28.16. Команда RDS_FORMVAL_HKSHIFTS &ndash; состояние Ctrl, Alt и Shift в поле ввода кода клавиши">RDS_FORMVAL_HKSHIFTS</a></span>,KeyShifts);
+    <span class="rem">// Открытие окна</span>
+    ok=<span id="light_ref13"><a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Нажата кнопка OK – запись параметров в блок</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(Caption); <span class="rem">// Уничтожение старой строки</span>
+        <span class="rem">// Создание динамической копии введенной строки</span>
+        Caption=<span id="light_ref14"><a class="hidden" href="rdsDynStrCopy.htm" title="А.5.4.7. rdsDynStrCopy &ndash; создание динамической копии строки">rdsDynStrCopy</a></span>(<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">1</span>,
+            <a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>));
+        <span class="rem">// Чтение параметров клавиши</span>
+        Key=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        KeyShifts=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_HKSHIFTS.htm" title="А.5.28.16. Команда RDS_FORMVAL_HKSHIFTS &ndash; состояние Ctrl, Alt и Shift в поле ввода кода клавиши">RDS_FORMVAL_HKSHIFTS</a>);
+        <span class="rem">// Создание пункта меню на основе изменившихся параметров</span>
+        RegisterMenuItem();
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="rem">// Возвращаемое значение</span>
+    <span class="kw">return</span> ok?<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции используется уже многократно описанный способ создания окна при помощи вспомогательного
+объекта RDS. Опять следует обратить внимание на присваивание нового значения заголовку меню:
+сначала старое содержимое <span class="cpp">Caption</span> уничтожается, затем строка, введенная пользователем
+в окне, копируется из внутреннего буфера объекта (указатель на который возвращает функция
+<span id="ref15">Наконец</span>, напишем
+<span id="light_ref15">функцию модели</span>, которая будет создавать и удалять объект описанного нами
+класса и вызывать его функции:</p>
+
+<pre class="cpp">  <span class="rem">// Блок, открывающий окно родительской подсистемы</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> OpenSysWin(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Указатель на личную область данных блока,приведенный к</span>
+    <span class="rem">// правильному типу</span>
+    TOpenSysWinData *data=(TOpenSysWinData*)(BlockData-&gt;BlockData);
+    <span class="kw">switch</span>(CallMode)
+      { <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>: <span class="rem">// Инициализация</span>
+          BlockData-&gt;BlockData=data=<span class="kw">new</span> TOpenSysWinData();
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>: <span class="rem">// Очистка</span>
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>: <span class="rem">// Настройка</span>
+          <span class="kw">return</span> data-&gt;Setup();
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVEBIN.htm" title="А.2.5.6. RDS_BFM_SAVEBIN &ndash; запись данных блока в двоичном формате">RDS_BFM_SAVEBIN</a>: <span class="rem">// Сохранение параметров</span>
+          data-&gt;SaveBin();
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADBIN.htm" title="А.2.5.4. RDS_BFM_LOADBIN &ndash; загрузка данных блока в двоичном формате">RDS_BFM_LOADBIN</a>: <span class="rem">// Загрузка параметров</span>
+          <span class="kw">return</span> data-&gt;LoadBin();
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a>:<span class="rem">// Выбор пункта меню</span>
+          <span id="light_ref16"><a class="hidden" href="rdsOpenSystemWindow.htm" title="А.5.8.12. rdsOpenSystemWindow &ndash; открыть окно подсистемы">rdsOpenSystemWindow</a></span>(BlockData-&gt;Parent);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Поскольку практически все действия мы, как обычно, вынесли в функции-члены класса, сама функция модели
+получилась довольно простой. Тем более, что блок не работает со
+<a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статическими переменными</a>, поэтому в тексте функции нет ни
+<a href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока">макроопределений</a> для них, ни
+<a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">проверки</a>
+допустимости их типа. Единственное действие, для которого мы не стали писать отдельную функцию &ndash;
+это реакция на выбор пункта меню <span class="cpp"><a href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a></span>. У нашего блока есть единственный
+пункт меню, поэтому никакой проверки не производится: при выборе пункта сразу вызывается функция
+<span class="cpp"><a href="rdsOpenSystemWindow.htm" title="А.5.8.12. rdsOpenSystemWindow &ndash; открыть окно подсистемы">rdsOpenSystemWindow</a></span>, открывающая окно подсистемы (в нашем случае &ndash;
+родительской подсистемы этого блока, поскольку в ее параметрах в качестве идентификатора подсистемы передан
+<span class="cpp">BlockData-&gt;Parent</span>).</p>
+
+<p>Нужно отметить, что при выборе пунктов и системного, и контекстного меню вызывается одна и та же реакция
+<span class="cpp"><a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a></span>. В связи с этим пары чисел, связанные 
+с пунктами контекстного меню,
+не должны совпадать с парами чисел пунктов системного, иначе модель не сможет отличить их.</p>
+
+<p>Для проверки работы написанной модели создадим в разных подсистемах блоки с этой моделью и
+зададим в их настройках разные названия пунктов меню и разные
+&laquo;горячие клавиши&raquo;. Например, поместим один такой блок в корневую подсистему, зададим для него
+название пункта &laquo;Открыть главное&raquo; и сочетание клавиш <span class="keys">Ctrl</span>&nbsp;+&nbsp;<span class="keys">F1</span>. В подсистему
+&laquo;<span class="rdsvar">Sys3</span>&raquo; (создадим ее , если такой подсистемы в схеме еще нет) поместим другой блок,
+и зададим в его настройках название пункта &laquo;Открыть Sys3&raquo; и сочетание клавиш
+<span class="keys">Ctrl</span>&nbsp;+&nbsp;<span class="keys">F2</span>. Теперь, если открыть меню &laquo;<span class="menu">система</span>&raquo; главного окна
+RDS (<a href="#pic1" title="Дополнительные пункты системного меню">рис.&nbsp;83</a>),
+в нем можно будет увидеть пункт &laquo;<span class="menu">дополнительно</span>&raquo; с двумя подпунктами (их порядок зависит
+от названий: добавленные пункты системного меню всегда упорядочиваются по алфавиту).</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/SysMenu.png" width="963" height="515" alt="Дополнительные пункты системного меню" />
+<p id="light_pic1">Рис.&nbsp;83. Дополнительные пункты системного меню</p>
+</div></div>
+
+
+<p>Теперь, если пользователь выберет пункт &laquo;<span class="menu">открыть главное</span>&raquo; или нажмет <span class="keys">Ctrl</span>&nbsp;+&nbsp;<span class="keys">F1</span>,
+окно корневой подсистемы откроется (если оно было закрыто) и переместится на передний план. При выборе пункта
+&laquo;<span class="menu">открыть Sys3</span>&raquo; или нажатии <span class="keys">Ctrl</span>&nbsp;+&nbsp;<span class="keys">F2</span> на передний план переместится окно подсистемы
+&laquo;<span class="rdsvar">Sys3</span>&raquo;. При этом не важно, в каком режиме находится RDS в данный момент, и какое
+окно находится на переднем плане.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_12_6.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_8.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_7">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

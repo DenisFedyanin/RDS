@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.1. Программы моделей и DLL</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p>&sect;2.1. Программы моделей и DLL</p>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_1_8.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_2.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2>Глава 2. Создание моделей блоков</h2>
+<p class="abstract">В главе подробно разбираются различные аспекты написания моделей блоков, реакции на системные события, вызов сервисных функций RDS. Приводятся примеры исходных текстов моделей на языке C++ с подробным описанием работы этих моделей.</p>
+<h3>&sect;2.1. Программы моделей и DLL</h3>
+<p class="abstract">Описывается общий принцип размещения моделей в динамически подключаемых библиотеках (DLL) и способ компиляции примеров моделей, рассматриваемых в этой главе.</p>
+
+
+<p><span id="light_ref1">Модель</span> блока в
+RDS &ndash; это экспортированная из динамически подключаемой библиотеки (DLL) функция с определенным
+набором параметров.
+<span id="ref2">В</span>
+<span id="ref3">одной</span> библиотеке может находится несколько моделей, поэтому некоторые действия,
+общие
+для всех моделей (инициализация,
+<a href="pm_2_13_1.htm" title="&sect;2.13.1. Общие принципы вызова функций блоков">регистрация функций блоков</a>
+и т.п.), часто выносятся в
+<a href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков">главную функцию DLL</a>
+(обычно она называется
+<span id="light_ref2" class="cpp">DllEntryPoint</span> или
+<span id="light_ref3" class="cpp">DllMain</span>, но может иметь и другое имя).
+<span id="ref4">RDS</span> всегда загружает DLL с моделями блоков динамически, при помощи функции Windows API
+<span id="light_ref4" class="cpp">LoadLibrary</span>, и всегда выгружает их перед загрузкой новой схемы, даже если в новой
+схеме используются те же самые модели.
+<span id="ref5">Все</span>
+примеры, приведенные ниже, написаны на C или C++ и рассчитаны на
+Borland C++ Builder 5/6 или бесплатный консольный компилятор
+<span id="light_ref5">Borland C++ 5.5</span>. Для того, чтобы консольный компилятор
+создал именно DLL, а не обычный исполняемый файл (EXE), который он формирует по умолчанию, можно использовать
+следующие параметры командной строки, в которые нужно подставить пути к папкам и компилируемым файлам, как показано
+ниже:</p>
+
+<dl>
+  <dt><b>для bcc32</b></dt>
+  <dd><span class="cpp">-I"<i>папки_заголовков</i>" -O2 -Vx -Ve -X- -a8 -k- -vi -tWD -tWM -c -q "<i>файл_C</i>"</span></dd>
+  <dt><b>для ilink32</b></dt>
+  <dd><span class="cpp">-L"<i>папки_библиотек</i>" -D"" -aa -Tpd -x -Gn -Gi -q c0d32.obj "<i>файл_OBJ</i>" , "<i>файл_DLL</i>" , , import32.lib cw32mt.lib</span></dd>
+</dl>
+
+<p>В командной строке компилятора bcc32 вместо слова &laquo;<i>папки_заголовков</i>&raquo; следует
+подставить полные пути ко
+всем папкам, в которых находятся заголовочные файлы с описаниями констант и функций стандартных библиотек C (обычно
+они входят в состав компилятора), а также путь к папке &laquo;<span class="file">\Include</span>&raquo; из состава RDS, а вместо
+&laquo;<i>файл_C</i>&raquo; &ndash; путь к файлу исходного текста программы. В командной строке редактора связей
+ilink32 вместо слова &laquo;<i>папки_библиотек</i>&raquo; следует подставить путь к стандартным библиотекам компилятора,
+вместо &laquo;<i>файл_OBJ</i>&raquo; &ndash; путь к объектному файлу, сформированному компилятором, и вместо
+&laquo;<i>файл_DLL</i>&raquo; &ndash; путь к библиотеке DLL, которую должен создать редактор связей. Например,
+если Borland C++ 5.5 установлен в папку &laquo;<span class="file">C:\Prog\bcpp55</span>&raquo;,
+RDS &ndash; в папку &laquo;<span class="file">C:\RDS</span>&raquo;, а исходный текст программы находится в файле
+&laquo;<span class="file">C:\Work\model.cpp</span>&raquo;, команды для вызова компилятора и редактора связей будут выглядеть так
+(цветом выделены подставленные пути):</p>
+
+<pre class="cpp">  C:\Prog\bcpp55\bin\bcc32
+  -I"<span class="changes">C:\Prog\bcpp55\include;C:\Prog\bcpp55\include\sys</span>" -I"<span class="changes">C:\RDS\include</span>"
+  -O2 -Vx -Ve -X- -a8 -k- -vi -tWD -tWM -c -q <span class="changes">C:\Work\model.cpp</span>
+</pre>
+
+<pre class="cpp">  C:\Prog\bcpp55\bin\ilink32
+  -c -L"<span class="changes">C:\Prog\bcpp55\lib</span>" -D"" -aa -Tpd -x -Gn -Gi -q
+  c0d32.obj <span class="changes">C:\Work\model.obj</span> , <span class="changes">C:\Work\model.dll</span> , , import32.lib cw32mt.lib
+</pre>
+
+<p class="noindent">При этом созданная в результате компиляции библиотека будет размещаться в файле
+&laquo;<span class="file">C:\Work\model.dll</span>&raquo;.</p>
+
+<p>Для рассматриваемых примеров можно использовать и другие компиляторы. В частности, модели блоков RDS успешно
+компилировались при помощи
+Open Watcom C++ 1.4,
+Digital Mars C++ v846,
+gcc 3.4.2 и
+MS Visual C toolkit
+(все эти компиляторы бесплатны и могут быть загружены с web-сайтов их производителей). Разумеется, для каждого
+компилятора нужно подобрать параметры командной строки, которые укажут ему на необходимость создать именно DLL,
+а не исполняемый exe-файл, указать пути к папкам с файлами заголовков RDS, перечислить необходимые для
+компиляции библиотеки и т.д. Эта информация содержится в описании каждого компилятора. Можно также посмотреть
+подходящие для этих компиляторов параметры, установив в RDS соответствующий интересующему компилятору
+<a href="um_index.htm#light_htm:um_3" title="Глава 3. Использование стандартных модулей автокомпиляции">стандартный модуль автокомпиляции</a> и изучив его настройки по умолчанию.</p>
+
+<p>Многие модели блоков в этом руководстве написаны с использованием классов, поэтому для их сборки нужен именно
+компилятор C++. Тем не менее, при желании, модели блоков можно писать и на &laquo;чистом&raquo; C: обмен
+данными между RDS и моделью блока осуществляется только через структуры и функции обратного вызова, при этом
+классы и прочие расширения C++ не используются.</p>
+
+<p>Можно писать модели блоков и на других языках, если, конечно, используемый компилятор поддерживает создание
+DLL и работу с функциями Windows API. Как правило, если компилятор позволяет обращаться к функциям API, он также
+позволит обратиться к сервисным функциям RDS &ndash; они имеют похожие типы вызова, описанные
+далее.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_1_8.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_2.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

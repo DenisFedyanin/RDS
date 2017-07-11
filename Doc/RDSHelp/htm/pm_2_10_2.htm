@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.10.2. Оптимизация рисования</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_10">&sect;2.10. Программное рисование внешнего вида блока</a></p>
+<div class="level"><p>&sect;2.10.2. Оптимизация рисования</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_10_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_10_3.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_10_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_10_2_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.10. Программное рисование внешнего вида блока</h3>
+<h4>&sect;2.10.2. Оптимизация рисования</h4>
+<p class="abstract">Рассматриваются различные способы ускорения программного рисования внешнего вида блоков. Два из
+                этих способов используются для улучшения работы графика из примера, описанного в
+                <a href="pm_2_10_1.htm" title="&sect;2.10.1. Рисование изображения блока в окне подсистемы">&sect;2.10.1</a>.</p>
+
+
+<p><a href="pm_2_10_1.htm" title="&sect;2.10.1. Рисование изображения блока в окне подсистемы">Программное рисование</a> внешнего вида блока &ndash;
+одна из самых затратных по времени функций. В режимах
+<a href="pm_1_3.htm#ref1" title="Режим редактирования">редактирования</a>
+и <a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a> это не так страшно &ndash; в них перерисовка окон
+подсистемы производится достаточно редко: при изменении их размера, при закрытии других окон, которые
+ранее перекрывали окно подсистемы и т.п. В режиме
+<a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a> же окна обновляются по таймеру с заданной частотой, поэтому
+задержки в функции обновления становятся критичными, особенно если блоков в окне много и внутреннее время
+работающей системы должно быть синхронизировано с реальным. Хотя в RDS предприняты некоторые меры по
+уменьшению задержек (например, при включенном в настройках
+<a href="um_2_18.htm#ref23" title="Автоподстройка частоты обновления окон">адаптивном алгоритме обновления окон</a>, частота обновления
+автоматически снижается, если доля задержек от рисования блоков подсистемы превысит заданное значение),
+разработчику модели блока следует писать функции рисования так, чтобы они работали как можно быстрее.
+При этом он может пользоваться некоторыми сервисными возможностями RDS, позволяющими не перерисовывать
+изображение блока, если в этом нет необходимости.</p>
+
+<p><span id="ref1">Самый</span>
+простой способ избежать ненужных обновлений окна &ndash; это информирование RDS
+о том, что в блоке ничего не изменилось. Каждый раз перед вызовом функции модели блока RDS взводит
+битовый флаг <span id="light_ref1" class="cpp"><a href="RDS_BLOCKDATA.htm#light_ref8" title="RDS_NEEDSDLLREDRAW">RDS_NEEDSDLLREDRAW</a></span> в поле
+<span class="cpp">Flags</span> структуры <span class="cpp"><a href="RDS_BLOCKDATA.htm#ref3" title="Структура RDS_BLOCKDATA">RDS_BLOCKDATA</a></span> (указатель на нее передается
+в функцию модели при каждом ее вызове,
+см. <a href="pm_2_3.htm#ref2" title="RDS_BLOCKDATA">&sect;2.3</a>). Если в результате работы функции модели не произошло
+никаких изменений, которые должны быть отражены на внешнем виде блока, функция может сбросить этот флаг,
+сообщив тем самым, что изображение данного конкретного блока обновлять не надо. Когда сработает таймер обновления
+окна подсистемы, RDS проверит состояние этого флага у каждого блока, изображение которого рисуется программно,
+и, если у всех блоков этот флаг окажется сброшен, и других изменений в подсистеме не было, обновление окна
+производиться не будет. Если же модель не сбросит этот флаг (сообщая тем самым о наличии изменений во
+внешнем виде блока, или просто потому что работа с этим флагом не заложена в модель программистом), все содержимое
+окна будет перерисовано. Следует отметить, что эффективность этого метода борьбы с задержками не очень высока &ndash;
+для его работы необходимо, чтобы все блоки подсистемы работали с флагом <span class="cpp"><a class="hidden" href="RDS_BLOCKDATA.htm#light_ref8" title="RDS_NEEDSDLLREDRAW">RDS_NEEDSDLLREDRAW</a></span>.
+Достаточно хотя бы одного блока, модель которого не сбрасывает этот флаг, чтобы окно подсистемы обновлялось
+постоянно.</p>
+
+<p>Другой способ уменьшить время, которое RDS будет тратить на обновление окна &ndash; это оптимизация самой
+модели блока. Из функции рисования, входящей в модель, необходимо вынести как можно больше операций,
+выполнять которые при каждом рисовании нет необходимости. Если посмотреть на функцию рисования из
+примера в <a href="pm_2_10_1.htm#ref30" title="Функция рисования (Draw) в примере модели графика">&sect;2.10.1</a>, можно заметить, что в ней каждый раз заново вычисляются
+координаты области графика <span class="cpp">Gr_x1</span>, <span class="cpp">Gr_x2</span>,
+<span class="cpp">Gr_y1</span> и <span class="cpp">Gr_y2</span>, которые зависят от размера блока, выбранного
+в его настройках шрифта и текущего масштаба окна подсистемы. Поскольку эти вычисления связаны с преобразованием
+вещественных чисел в строки и определением размеров этих строк, выведенных на экран текущим шрифтом,
+неплохо было бы выполнять их только при изменении масштаба или шрифта. Для этого координаты области графика
+нужно сделать полями класса <span class="cpp">TSimplePlotData</span> и ввести в него еще одно дополнительное
+поле для отслеживания изменений масштаба. Таким образом, изменения, которые необходимо внести в описание класса,
+выглядят так (выделены <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">//=========================================</span>
+  <span class="rem">// Простой график – личная область данных</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">class</span> TSimplePlotData
+  { <span class="kw">private</span>:
+    <span class="changes">  <span class="rem">// Запомненные координаты поля графика          </span></span>
+    <span class="changes">  <span class="kw">int</span> Gr_x1,Gr_x2,Gr_y1,Gr_y2;                    </span>
+    <span class="changes">  <span class="rem">// Масштаб окна на момент последнего рисования  </span></span>
+    <span class="changes">  <span class="kw">double</span> OldZoom;                                 </span>
+      <span class="rem">// Настроечные параметры графика (цвета, шаг и т.п.)</span>
+      <span class="kw">double</span> TimeStep;   <span class="rem">// Шаг записи отсчетов</span>
+      <span class="rem">// &hellip;</span>
+      <span class="rem">// &hellip; далее без изменений &hellip;</span></pre>
+
+<p>В вещественное поле <span class="cpp">OldZoom</span> при рисовании графика будет записываться текущий
+масштаб окна подсистемы. Если при очередном вызове функции <span class="cpp">Draw</span> значение переданного
+в нее масштабного коэффициента <span class="cpp">DrawData-&gt;DoubleZoom</span> не совпадет со значением
+<span class="cpp">OldZoom</span>, значит, с момента последнего рисования масштаб окна подсистемы изменился,
+и координаты <span class="cpp">Gr_x1</span>, <span class="cpp">Gr_x2</span>,
+<span class="cpp">Gr_y1</span> и <span class="cpp">Gr_y2</span> нужно вычислить заново. При изменении
+параметров шрифта, которое тоже должно приводить к пересчету координат поля графика, будем записывать в
+<span class="cpp">OldZoom</span> значение &minus;1. Поскольку масштаб окна не может быть отрицательным,
+это значение никогда не будет совпадать с <span class="cpp">DrawData-&gt;DoubleZoom</span>, поэтому координаты
+будут вычислены заново при следующем вызове <span class="cpp">Draw</span>. Шрифт чисел на осях графика
+может измениться только в двух случаях: при задании нового шрифта пользователем в окне настроек или при
+загрузке параметров блока. Таким образом, присваивание <span class="cpp">OldZoom=-1</span> должно выполняться
+вместе с вызовами функций <span class="cpp">Setup</span> и <span class="cpp">LoadText</span>. Кроме того,
+его нужно выполнить в конструкторе класса, чтобы при самом первом вызове <span class="cpp">Draw</span> координаты
+тоже вычислялись, а также при изменении размеров блока, поскольку размеры рабочего поля при этом
+тоже должны изменяться.</p>
+
+<p>Чтобы оградить себя от возможных ошибок в программировании, мы внесли поле <span class="cpp">OldZoom</span> в
+закрытую (<span class="cpp">private</span>) область класса. Но нам нужно иметь возможность сбрасывать запомненное
+значение масштаба из функции модели, присваивая <span class="cpp">OldZoom</span> значение &minus;1. Для
+этого мы добавим в открытую область класса (<span class="cpp">public</span>) функцию
+<span class="cpp">ResetCoords</span>, которая будет этим заниматься:</p>
+
+<pre class="cpp"><span class="rem">//=========================================</span>
+<span class="rem">// Простой график – личная область данных</span>
+<span class="rem">//=========================================</span>
+<span class="kw">class</span> TSimplePlotData
+{ <span class="kw">private</span>:
+    <span class="rem">// &hellip;</span>
+  <span class="kw">public</span>:
+  <span class="changes">  <span class="rem">// Функция сброса запомненного масштаба последнего рисования  </span></span>
+  <span class="changes">  <span class="kw">void</span> ResetCoords(<span class="kw">void</span>){OldZoom=-<span class="const">1.0</span>;};                        </span>
+    <span class="rem">// Функция отведения массивов отсчетов</span>
+    <span class="kw">void</span> AllocateArrays(<span class="kw">void</span>);
+    <span class="rem">// &hellip;</span>
+    <span class="rem">// &hellip; далее без изменений &hellip;</span></pre>
+
+<p>В функции рисования мы будем сравнивать текущий масштаб с запомненным, поэтому, вероятно, следует
+сделать небольшое замечание относительно сравнения вещественных чисел. Обычно, если эти числа являются
+результатом каких-либо вычислений, их сравнение производится с заданной точностью. Например, если
+необходимо сравнить результат какой-либо вещественной функции <span class="cpp">f(x)</span> с нулем,
+обычно пишут следующий оператор: &laquo;<span class="cpp">if(fabs(f(x))&lt;DELTA)?&hellip;</span>&raquo;,
+где <span class="cpp">DELTA</span> &ndash; заданная погрешность. В нашем случае мы сравниваем вещественный
+масштабный коэффициент с его же прежним значением, которое не является результатом вычислений &ndash;
+это просто запомненное значение той же самой переменной. Таким образом, для отслеживания изменений переменной
+мы можем использовать оператор точного сравнения &laquo;<span class="cpp">==</span>&raquo;.</p>
+
+<p>Внесем изменения в указанные выше функции класса. Начнем с конструктора:</p>
+
+<pre class="cpp">  <span class="rem">// Конструктор класса личной области данных графика</span>
+  TSimplePlotData::TSimplePlotData(<span class="kw">void</span>)
+  {<span class="changes"> <span class="rem">// Инициализация OldZoom: значение -1 приведет к принудительному </span></span>
+   <span class="changes"> <span class="rem">// вычислению Gr_x1,Gr_x2,Gr_y1 и Gr_y2 в ближайшем вызове       </span></span>
+   <span class="changes"> <span class="rem">// функции Draw                                                  </span></span>
+   <span class="changes"> OldZoom=-<span class="const">1.0</span>;                                                    </span>
+    <span class="rem">// Присвоение начальных значений параметрам</span>
+    TimeStep=<span class="const">0</span>.<span class="const">1</span>;   <span class="rem">// Шаг записи</span>
+    BorderColor=<span class="const">0</span>;  <span class="rem">// Цвет рамки вокруг блока</span>
+    <span class="rem">// &hellip;</span>
+    <span class="rem">// &hellip; далее без изменений &hellip;</span></pre>
+
+<p>Изменения в функции модели блока выглядят так:</p>
+
+<pre class="cpp">        <span class="rem">// &hellip;</span>
+        <span class="rem">// Функция настройки параметров</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+        <span class="changes">  data-&gt;ResetCoords(); <span class="rem">// Сброс запомненных значений  </span></span>
+          <span class="kw">return</span> data-&gt;Setup();
+
+        <span class="rem">// Загрузка параметров в текстовом формате</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a>:
+          data-&gt;LoadText((<span class="kw">char</span>*)ExtParam);
+        <span class="changes">  data-&gt;ResetCoords(); <span class="rem">// Сброс запомненных значений  </span></span>
+          <span class="kw">break</span>;
+
+<div class="changes">        <span class="rem">// Изменение размеров блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_RESIZE.htm" title="А.2.7.6. RDS_BFM_RESIZE &ndash; размер блока изменен пользователем">RDS_BFM_RESIZE</a>:
+          data-&gt;ResetCoords(); <span class="rem">// Сброс запомненных значений</span>
+          <span class="kw">break</span>;</div>
+        <span class="rem">// &hellip;</span></pre>
+
+<p>В реакциях модели на загрузку параметров блока и вызов окна настройки (то есть в реакциях, которые
+могут привести к изменению параметров шрифта и, следовательно, размеров поля графика) добавлен сброс
+запомненного масштаба. Технически, при вызове функции настройки пересчитывать координаты имеет смысл только
+тогда, когда пользователь закрыл окно кнопкой &laquo;<span class="menu">OK</span>&raquo;, подтвердив изменения. Но, на самом деле,
+можно присваивать <span class="cpp">OldZoom</span> значение &minus;1 при любом вызове функции настройки,
+поскольку в этом случае, если пользователь закрыл окно кнопкой &laquo;<span class="menu">Отмена</span>&raquo;, вычисление координат
+выполнится всего один лишний раз &ndash; ни RDS, ни, тем более, пользователь этого не заметят.</p>
+
+<p>В модель также добавлена новая реакция на изменение размеров блока <span class="cpp"><a href="RDS_BFM_RESIZE.htm" title="А.2.7.6. RDS_BFM_RESIZE &ndash; размер блока изменен пользователем">RDS_BFM_RESIZE</a></span>,
+в которой тоже сбрасывается запомненный масштаб.</p>
+
+<p>Теперь нужно сделать вычисление координат <span class="cpp">Gr_x1</span>, <span class="cpp">Gr_x2</span>,
+<span class="cpp">Gr_y1</span> и <span class="cpp">Gr_y2</span> в функции
+<span class="cpp"><a href="pm_2_10_1.htm#ref30" title="Функция рисования (Draw) в примере модели графика">Draw</a></span> условным &ndash; оно должно
+производиться только при неравенстве OldZoom и масштаба окна <span class="cpp">DrawData-&gt;DoubleZoom</span>.
+Кроме того, после вычисления необходимо запоминать новое значение масштаба в
+<span class="cpp">OldZoom</span>, чтобы заблокировать вычисления координат до его изменения. С этими
+изменениями функция будет выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Рисование внешнего вида блока</span>
+  <span class="kw">void</span> TSimplePlotData::Draw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> DrawData)
+  { <span class="rem">// Вспомогательные переменные</span>
+  <span class="changes">  <span class="rem">// int Gr_x1,Gr_x2,Gr_y1,Gr_y2; - эти переменные стали полями класса</span></span>
+    <span class="kw">int</span> x1,y1,x2,y2,textheight,w1,w2;
+    <span class="kw">char</span> buf[<span class="const">80</span>];
+
+    <span class="rem">// Рамка графика</span>
+    <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,<span class="const">1</span>,BorderColor,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+    <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,FillColor);
+    <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(DrawData-&gt;Left,DrawData-&gt;Top,
+                   DrawData-&gt;Left+DrawData-&gt;Width,
+                   DrawData-&gt;Top+DrawData-&gt;Height);
+
+    <span class="rem">// Необходимо вычислить координаты поля графика относительно</span>
+    <span class="rem">// верхнего левого угла блока</span>
+
+    <span class="rem">// Установка параметров шрифта с учетом масштаба</span>
+    <a class="hidden" href="rdsXGSetFontByParStr.htm" title="А.5.18.23. rdsXGSetFontByParStr &ndash; установить шрифт по структуре описания">rdsXGSetFontByParStr</a>(&amp;Font,DrawData-&gt;DoubleZoom);
+    <span class="changes"><span class="kw">if</span>(DrawData-&gt;DoubleZoom!=OldZoom) <span class="rem">// Масштаб изменен </span></span>
+      <span class="changes">{</span> <span class="rem">// Зазор сверху – половина высоты цифры + 1 точка</span>
+        <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(<span class="str">"0"</span>,NULL,&amp;textheight);
+        Gr_y1=textheight/<span class="const">2</span>+<span class="const">1</span>;
+        <span class="rem">// Зазор снизу – полная высота цифры + 1 точка</span>
+        Gr_y2=DrawData-&gt;Height-textheight-<span class="const">1</span>;
+        <span class="rem">// Зазор слева – ширина самого длинного числа вертикальной</span>
+        <span class="rem">// оси или половина ширины Xmin</span>
+        sprintf(buf,<span class="str">" %.*lf "</span>,YNumDecimal,Ymin);
+        <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(buf,&amp;w1,NULL);	<span class="rem">// Ширина Ymin</span>
+        sprintf(buf,<span class="str">" %.*lf "</span>,YNumDecimal,Ymax);
+        <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(buf,&amp;w2,NULL);	<span class="rem">// Ширина Ymax</span>
+        <span class="kw">if</span>(w2&gt;w1) w1=w2;
+        sprintf(buf,<span class="str">" %.*lf "</span>,XNumDecimal,Xmin);
+        <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(buf,&amp;w2,NULL);	<span class="rem">// Ширина Xmin</span>
+        w2/=<span class="const">2</span>;
+        <span class="kw">if</span>(w2&gt;w1) w1=w2;
+        Gr_x1=w1;
+        <span class="rem">// Зазор справа – половина ширины Xmax</span>
+        sprintf(buf,<span class="str">" %.*lf "</span>,XNumDecimal,Xmax);
+        <a class="hidden" href="rdsXGGetTextSize.htm" title="А.5.18.10. rdsXGGetTextSize &ndash; получить размеры строки текста">rdsXGGetTextSize</a>(buf,&amp;w2,NULL);	<span class="rem">// Ширина Xmax</span>
+        w2/=<span class="const">2</span>;
+        Gr_x2=DrawData-&gt;Width-w2;
+
+      <span class="changes">  <span class="rem">// Запоминание нового масштаба         </span></span>
+      <span class="changes">  OldZoom=DrawData-&gt;DoubleZoom;         </span>
+      <span class="changes">} <span class="rem">// if(DrawData-&gt;DoubleZoom!=OldZoom)  </span></span>
+
+    <span class="rem">// Абсолютные (на рабочем поле) координаты поля графика</span>
+    x1=DrawData-&gt;Left+Gr_x1;
+    x2=DrawData-&gt;Left+Gr_x2;
+    y1=DrawData-&gt;Top+Gr_y1;
+    y2=DrawData-&gt;Top+Gr_y2;
+    <span class="rem">// &hellip;</span>
+    <span class="rem">// &hellip; далее без изменений &hellip;</span></pre>
+
+<p>Фактически, в функцию внесено всего три изменения. Во-первых, координаты
+<span class="cpp">Gr_x1</span>, <span class="cpp">Gr_x2</span>, <span class="cpp">Gr_y1</span> и
+<span class="cpp">Gr_y2</span> больше не являются локальными переменными функции, теперь они стали полями класса
+<span class="cpp">TSimplePlotData</span>. Во-вторых, весь блок вычисления этих координат помещен внутрь условного
+оператора, который выполняется, только если запомненное значение масштаба отличается от текущего. И, в-третьих,
+после вычисления координат текущее значение масштаба запоминается в поле <span class="cpp">OldZoom</span>,
+чтобы не повторять эти вычисления, пока масштаб не изменится.</p>
+
+<p>Если измерить скорости работы старой и новой функций рисования, можно заметить, что прирост скорости
+получается крайне незначительным &ndash; время выполнения старой функции больше времени выполнения новой всего
+на пару процентов. По сравнению с рисованием чисел на осях
+(на <a href="pm_2_10_1.htm#pic4" title="Простой график в процессе работы">рис.&nbsp;61</a> изображается десять чисел) и построением самого
+графика, вычисления размеров для четырех чисел и одной дополнительной строки, вынесенные в условный
+оператор, занимают не так много времени. Однако, для более сложных блоков с большим количеством вычислений,
+связанных с рисованием, выполнение этих вычислений только при изменениях параметров блока или масштаба
+окна может дать лучший результат, тем более, что модифицировать подобным образом функцию рисования не
+так сложно.</p>
+
+<p>Еще один способ повысить скорость работы функции рисования применяется довольно редко: если в окне
+подсистемы видна только часть блока, можно не рисовать его невидимые фрагменты. Это требует довольно существенного
+усложнения функции рисования, поэтому такой метод обычно применяют только для очень больших блоков,
+имеющих размер, существенно больший, чем видимая в окне часть рабочего поля подсистемы, и отображающих много
+слабо связанных между собой элементов. Например, он хорошо работает для блоков, показывающих внутри
+своего изображения различные географические карты или схемы. Координаты области рабочего поля,
+видимой в данный момент, передаются в модель блока в поле
+<span class="cpp">VisibleRect</span> структуры <span class="cpp"><a href="RDS_BFM_DRAW.htm#ref1" title="Структура RDS_DRAWDATA">RDS_DRAWDATA</a></span>. Это поле имеет тип
+<span class="cpp"><a href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a>*</span>, то есть указатель на стандартную структуру Windows,
+описывающую прямоугольник. Если координаты какого-либо элемента изображения блока, который нужно нарисовать,
+не попадают в этот прямоугольник, элемент можно не рисовать целиком. Мы не будем приводить здесь
+пример блока с такого рода оптимизациями. Для рассмотренного блока-графика они не дадут прироста скорости
+(и даже, может быть, замедлят работу за счет большого количества дополнительных проверок), а блоки, в
+которых это имело бы смысл, слишком сложны сами по себе, чтобы использовать их в качестве примера.</p>
+
+<p>Достаточно часто изображение блока состоит из неподвижной постоянной части (рамки, шкал,
+элементов оформления) и каких-либо элементов, изменяющихся и двигающихся в процессе работы блока (стрелок,
+индикаторов, линий и т.п.). Типичный пример такого блока &ndash; рассмотренный выше график, в котором
+в процессе работы схемы постепенно рисуется только сама линия графика, а рамка, числа на осях и сетка
+остаются неизменными. Было бы логично перерисовывать неподвижные части изображения только тогда,
+когда нужно обновить все окно, а в процессе расчета (при обновлении окон по таймеру) рисовать только
+изменившиеся элементы. Разумеется, это возможно только в том случае, если блоки не перемещаются по рабочему
+полю подсистемы, иначе у них просто не будет неподвижных частей &ndash; каждый раз все изображение
+блока нужно будет рисовать на новом месте. Кроме того, блоки в окне подсистемы не должны перекрываться
+и накладываться один на другой, иначе перекрытый блок может испортить изображение блока слоем выше,
+если нарисует что-нибудь на его фиксированной части.</p>
+
+<p>RDS поддерживает специальный режим обновления окна подсистемы (он независимо
+включается для каждого окна), в котором модели блока сообщается,
+должна ли она нарисовать изображение блока полностью, или может отобразить только изменения, произошедшие
+с момента последнего рисования. За этот режим отвечает флаг
+&laquo;<span class="menu">в системе только неподвижные не перекрывающиеся блоки</span>&raquo; на вкладке &laquo;<span class="menu">общие</span>&raquo;
+окна параметров подсистемы
+(<a href="#pic1" title="Вкладка общие окна параметров подсистемы">рис.&nbsp;62</a>).
+Если этот флаг включен, RDS в режиме расчета будет по-разному рисовать содержимое окна подсистемы,
+в зависимости от того, из-за чего возникла необходимость в этом рисовании. Если окно необходимо перерисовать
+из-за того, что оно было скрыто за другим окном, изменило размер, пользователь изменил что-либо
+в <a href="um_2_12.htm" title="&sect;2.12.1. Использование слоев">редакторе слоев</a> и т.п., все содержимое окна (связи, блоки,
+сетка, обои окна) будут нарисованы полностью, при этом поле
+<span class="cpp">FullDraw</span> структуры <span class="cpp"><a class="hidden" href="RDS_BFM_DRAW.htm#ref1" title="Структура RDS_DRAWDATA">RDS_DRAWDATA</a></span>, указатель на
+которую передается в модель блока при рисовании его внешнего вида, будет иметь значение
+<span class="cpp">TRUE</span>. Если же окно должно быть перерисовано из-за срабатывания таймера обновления
+(при этом изображение, нарисованное в прошлый раз, не было ничем перекрыто), RDS будет рисовать только
+блоки, причем поле <span class="cpp">FullDraw</span> вышеупомянутой структуры будет иметь значение
+<span class="cpp">FALSE</span>.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/SelfDraw_DrawOpt.png" width="534" height="405" alt="Вкладка общие окна параметров подсистемы" />
+<p id="light_pic1">Рис.&nbsp;62. Вкладка &laquo;<span class="menu">общие</span>&raquo;окна параметров подсистемы</p>
+</div></div>
+
+
+<p>Таким образом, чтобы воспользоваться преимуществами, предоставляемыми этим режимом рисования, модель блока
+должна анализировать поле <span class="cpp">FullDraw</span>. Если его значение &ndash;
+<span class="cpp">TRUE</span>, модель должна нарисовать изображение блока полностью. Если же оно &ndash;
+<span class="cpp">FALSE</span>, модель может &laquo;дорисовать&raquo; на изображении блока изменения,
+произошедшие с момента последнего рисования. Выигрыш в скорости при этом будет весьма значительным, ведь
+чем меньше изменений произошло с момента последнего рисования, тем меньше придется рисовать модели.
+Если изменений вообще не было, модель завершится немедленно, не потратив процессорного времени зря.</p>
+
+<p>Разумеется, как было указано выше, этот режим не годится для подсистем, блоки которых перемещаются внутри
+окна или накладываются друг на друга. Его включение в таких подсистемах приведет к появлению
+&laquo;хвостов&raquo; за движущимися блоками и другим искажениям изображения.</p>
+
+<p>Ускорим этим методом рисование рассмотренного выше графика. Для этого, прежде всего, необходимо запоминать
+последнюю построенную точку, чтобы при очередном рисовании продолжать линию графика начиная с нее. Кроме того,
+нужно ввести в функцию рисования анализ поля <span class="cpp">FullDraw</span> переданной структуры
+<span class="cpp"><a class="hidden" href="RDS_BFM_DRAW.htm#ref1" title="Структура RDS_DRAWDATA">RDS_DRAWDATA</a></span>. Чтобы не загромождать уже написанную функцию рисования
+<span class="cpp">Draw</span>, которая и так получилась достаточно длинной, мы не будем кардинально
+переделывать ее &ndash; она будет вызываться тогда, когда нужно нарисовать блок полностью. В дополнение
+к ней мы напишем новую функцию <span class="cpp">DrawFast</span>, которая будет дорисовывать изменившиеся части
+блока. Изменения, которые нужно внести в описаний класса блока, выглядят так:</p>
+
+<pre class="cpp">  <span class="rem">//=========================================</span>
+  <span class="rem">// Простой график – личная область данных</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">class</span> TSimplePlotData
+  { <span class="kw">private</span>:
+      <span class="rem">// Запомненные координаты поля графика</span>
+      <span class="kw">int</span> Gr_x1,Gr_x2,Gr_y1,Gr_y2;
+      <span class="rem">// Масштаб окна на момент последнего рисования</span>
+      <span class="kw">double</span> OldZoom;
+    <span class="changes">  <span class="rem">// Индекс последнего нарисованного отсчета  </span></span>
+    <span class="changes">  <span class="kw">int</span> LastDrawnIndex;                         </span>
+      <span class="rem">// Настроечные параметры графика (цвета, шаг и т.п.)</span>
+      <span class="kw">double</span> TimeStep;  <span class="rem">// Шаг записи отсчетов</span>
+
+      <span class="rem">// &hellip;</span>
+
+      <span class="kw">void</span> LoadText(<span class="kw">char</span> *text); <span class="rem">// Функция загрузки параметров</span>
+      <span class="kw">void</span> Draw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> DrawData); <span class="rem">// Функция рисования</span>
+    <span class="changes">  <span class="rem">// Функция быстрого рисования                </span></span>
+    <span class="changes">  <span class="kw">void</span> DrawFast(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> DrawData);       </span>
+      <span class="rem">// &hellip;</span>
+      <span class="rem">// &hellip; далее без изменений &hellip;</span></pre>
+
+<p>В поле <span class="cpp">LastDrawnIndex</span> будет храниться индекс последнего отсчета в массивах
+<span class="cpp">Times</span> и <span class="cpp">Values</span>, нарисованного функциями
+<span class="cpp">Draw</span> или <span class="cpp">DrawFast</span>. Функция
+<span class="cpp">Draw</span> должна, как и раньше, рисовать линию графика с начала массивов до индекса
+<span class="cpp">NextIndex-1</span>, после чего она должна занести значение <span class="cpp">NextIndex-1</span>
+в поле <span class="cpp">LastDrawnIndex</span> (это будет единственным изменением, которое нужно сделать в
+<span class="cpp">Draw</span>). Функция <span class="cpp">DrawFast</span> должна будет нарисовать отсчеты с
+<span class="cpp">LastDrawnIndex+1</span> по <span class="cpp">NextIndex-1</span>, и тоже занести
+<span class="cpp">NextIndex-1</span> в <span class="cpp">LastDrawnIndex</span>. Таким образом, при каждом вызове
+<span class="cpp">DrawFast</span> она будет дорисовывать участок графика до последнего запомненного отсчета. В
+конструкторе класса желательно присвоить полю <span class="cpp">LastDrawnIndex</span> начальное значение,
+сигнализирующее об отсутствии уже нарисованной части графика (будем использовать для этого значение &ndash;1):</p>
+
+<pre class="cpp">  <span class="rem">// Конструктор класса личной области данных графика</span>
+  TSimplePlotData::TSimplePlotData(<span class="kw">void</span>)
+  { <span class="rem">// Инициализация OldZoom: значение -1 приведет к принудительному</span>
+    <span class="rem">// вычислению Gr_x1,Gr_x2,Gr_y1 и Gr_y2 в ближайшем вызове</span>
+    <span class="rem">// функции Draw</span>
+    OldZoom=-<span class="const">1.0</span>;
+  <span class="changes">  <span class="rem">// Инициализация LastDrawnIndex  </span></span>
+  <span class="changes">  LastDrawnIndex=-<span class="const">1</span>;               </span>
+    <span class="rem">// Присвоение начальных значений параметрам</span>
+    TimeStep=<span class="const">0</span>.<span class="const">1</span>;   <span class="rem">// Шаг записи</span>
+    BorderColor=<span class="const">0</span>;  <span class="rem">// Цвет рамки вокруг блока</span>
+    <span class="rem">// &hellip;</span>
+    <span class="rem">// &hellip; далее без изменений &hellip;</span></pre>
+
+<p>Казалось бы, присваивать начальное значение <span class="cpp">LastDrawnIndex</span> в конструкторе класса
+не обязательно: при самом первом рисовании RDS потребует от модели нарисовать изображение блока полностью,
+таким образом, модель должна будет вызвать функцию <span class="cpp">Draw</span>, которая и установит значение
+этого поля. Однако, если внимательно посмотреть на текст функции <span class="cpp">Draw</span>, можно
+заметить, что в некоторых случаях она завершается, не построив график (например, если массивы отсчетов пусты).
+Проще инициализировать поле <span class="cpp">LastDrawnIndex</span> в конструкторе, чем следить за его
+правильной установкой во всех случаях завершения функции <span class="cpp">Draw</span>. Кроме того,
+оставлять важные поля класса без значений по умолчанию в программировании обычно считается
+дурным тоном.</p>
+
+<p>Добавим в функцию <span class="cpp">Draw</span> установку поля
+класса <span class="cpp">LastDrawnIndex</span> после рисования:</p>
+
+<pre class="cpp">  <span class="rem">// Рисование внешнего вида блока</span>
+  <span class="kw">void</span> TSimplePlotData::Draw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> DrawData)
+  { <span class="rem">// Вспомогательные переменные</span>
+
+    <span class="rem">// &hellip;</span>
+
+        <span class="rem">// Строим ломанную линию по отсчетам из массивов</span>
+        <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;NextIndex;i++)
+          { <span class="rem">// Преобразуем вещественные отсчеты в целочисленные</span>
+            <span class="rem">// координаты на рабочем поле</span>
+            <span class="kw">int</span> ix=x1+(Times[i]-Xmin)*(x2-x1)/(Xmax-Xmin),
+                iy=y2-(Values[i]-Ymin)*(y2-y1)/(Ymax-Ymin);
+            <span class="kw">if</span>(i) <span class="rem">// Не первая точка – строим линию от предыдущей</span>
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(ix,iy);
+            <span class="kw">else</span> <span class="rem">// Первая точка графика – делаем ее текущей</span>
+              <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(ix,iy);
+          }
+      <span class="changes">  <span class="rem">// Запоминаем последний нарисованный отсчет  </span></span>
+      <span class="changes">  LastDrawnIndex=NextIndex-<span class="const">1</span>;                  </span>
+        <span class="rem">// Отмена отсечения</span>
+        <a class="hidden" href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a>(NULL);
+      }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Теперь осталось написать функцию <span class="cpp">DrawFast</span> и обеспечить ее вызов вместо
+<span class="cpp">Draw</span>, если модель блока вызвана RDS для рисования изменений.
+Вынесем эту проверку внутрь функции <span class="cpp">DrawFast</span>: она сама будет анализировать поле
+<span class="cpp">FullDraw</span> в переданной ей структуре и вызывать <span class="cpp">Draw</span>, если
+значение поля истинно. В самой функции модели просто заменим вызов <span class="cpp">Draw</span> на
+вызов <span class="cpp">DrawFast</span>:</p>
+
+<pre class="cpp">        <span class="rem">// Рисование внешнего вида блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a>:
+        <span class="changes">  <span class="rem">// data-&gt;Draw((</span><a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA"><span class="rem">RDS_PDRAWDATA</span></a><span class="rem">)ExtParam);   </span></span>
+        <span class="changes">  data-&gt;DrawFast((<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a>)ExtParam);  </span>
+          <span class="kw">break</span>;</pre>
+
+<p>Наконец, напишем функцию <span class="cpp">DrawFast</span>:</p>
+
+<pre class="cpp">  <span class="rem">// Рисование изменений</span>
+  <span class="kw">void</span> TSimplePlotData::DrawFast(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> DrawData)
+  { <span class="kw">int</span> x1,y1,x2,y2;
+
+    <span class="rem">// Если RDS требует полного рисования, или полное рисование</span>
+    <span class="rem">// еще не проводилось, вызывается старая функция Draw</span>
+    <span class="kw">if</span>(DrawData-&gt;FullDraw || DrawData-&gt;DoubleZoom!=OldZoom)
+      { Draw(DrawData);
+        <span class="kw">return</span>;
+      }
+
+    <span class="rem">// Вычисление абсолютных координат поля графика</span>
+    x1=DrawData-&gt;Left+Gr_x1;
+    x2=DrawData-&gt;Left+Gr_x2;
+    y1=DrawData-&gt;Top+Gr_y1;
+    y2=DrawData-&gt;Top+Gr_y2;
+
+    <span class="kw">if</span>(x1&gt;=x2 || y1&gt;=y2) <span class="rem">// Негде рисовать</span>
+      <span class="kw">return</span>;
+
+    <span class="rem">// Если массивы не пустые – рисовать график, начиная</span>
+    <span class="rem">// с последней уже нарисованной точки</span>
+    <span class="kw">if</span>(Count)
+      { <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> r;
+        <span class="rem">// Установить область отсечения рисования по полю графика</span>
+        r.left=x1+<span class="const">1</span>;
+        r.top=y1+<span class="const">1</span>;
+        r.right=x2-<span class="const">1</span>;
+        r.bottom=y2-<span class="const">1</span>;
+        <a class="hidden" href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a>(&amp;r);
+
+        <span class="rem">// Установить сплошной стиль линии, заданный для</span>
+        <span class="rem">// графика цвет и толщину линии с учетом масштаба</span>
+        <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,
+          LineWidth*DrawData-&gt;DoubleZoom,
+          LineColor,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+
+        <span class="rem">// Проверка допустимости LastDrawnIndex – на всякий случай</span>
+        <span class="kw">if</span>(LastDrawnIndex&lt;<span class="const">0</span>) LastDrawnIndex=<span class="const">0</span>;
+
+        <span class="rem">// Строим ломанную линию по отсчетам из массивов,</span>
+        <span class="rem">// начиная с LastDrawIndex</span>
+        <span class="kw">for</span>(<span class="kw">int</span> i=LastDrawnIndex;i&lt;NextIndex;i++)
+          { <span class="kw">int</span> ix=x1+(Times[i]-Xmin)*(x2-x1)/(Xmax-Xmin),
+                iy=y2-(Values[i]-Ymin)*(y2-y1)/(Ymax-Ymin);
+            <span class="kw">if</span>(i!=LastDrawnIndex) <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(ix,iy);
+            <span class="kw">else</span> <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(ix,iy);
+          }
+
+        <span class="rem">// Запоминаем последний нарисованный отсчет</span>
+        LastDrawnIndex=NextIndex-<span class="const">1</span>;
+
+        <span class="rem">// Отмена отсечения</span>
+        <a class="hidden" href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a>(NULL);
+      }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Прежде всего функция выполняет проверку: требуется ли нарисовать изображение блока
+полностью, или можно ограничиться только отображением изменений. Если
+<span class="cpp">DrawData-&gt;FullDraw</span> имеет значение <span class="cpp">TRUE</span>, то есть
+требуется полное рисование, вызывается старая функция <span class="cpp">Draw</span>, и работа функции
+<span class="cpp">DrawFast</span> на этом завершается. То же самое происходит и в случае
+несоответствия масштаба на в момент предыдущего рисования (<span class="cpp">OldZoom</span>) текущему масштабу
+(<span class="cpp">DrawData-&gt;DoubleZoom</span>). В противном случае, точно так же, как и в
+<span class="cpp">Draw</span>, вычисляются абсолютные координаты поля графика
+<span class="cpp">x1</span>, <span class="cpp">y1</span>, <span class="cpp">x2</span> и <span class="cpp">y2</span>,
+после чего размеры поля проверяются на допустимость. Если с размерами все в порядке и в массивах есть отсчеты
+(значение <span class="cpp">Count</span> не равно нулю), устанавливается область отсечения и стиль линии
+для рисования графика. Этот фрагмент функции в точности соответствует аналогичному в <span class="cpp">Draw</span>,
+а дальше уже начинаются различия.</p>
+
+<p>Если в функции <span class="cpp">Draw</span> рисование линии графика начиналось с нулевого индекса в
+массиве отсчетов, в этой функции начинать нужно с индекса <span class="cpp">LastDrawIndex</span>, поскольку
+вплоть до этого индекса линия уже нарисована прошлыми вызовами функций. В случае, если
+<span class="cpp">LastDrawIndex</span> имеет отрицательное значение (в конструкторе мы присвоили ему &minus;1),
+ему принудительно присваивается 0, чтобы рисование графика началось с самого первого отсчета. Далее следует цикл
+рисования, отличающийся от соответствующего цикла в <span class="cpp">Draw</span> только тем, что
+в качестве начального индекса везде используется не 0, а <span class="cpp">LastDrawIndex</span>. После цикла в
+<span class="cpp">LastDrawIndex</span> записывается индекс последнего нарисованного отсчета, отключается
+область отсечения и функция завершается.</p>
+
+<p>Изменения, внесенные в модель графика, позволяют ускорить его рисование в несколько раз, особенно в
+схемах, работающих синхронно с реальным временем, в которых обновление окон идет постоянно. При
+этом следует помнить о недопустимости перекрытия изображений блоков в этом режиме, в противном случае можно будет
+наблюдать эффект, подобный изображенному
+на <a href="#pic2" title="Искажения изображения у перекрывающихся блоков">рис.&nbsp;63</a>.</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/SelfDraw_DrawOptErr.png" width="478" height="295" alt="Искажения изображения у перекрывающихся блоков" />
+<p id="light_pic2">Рис.&nbsp;63. Искажения изображения у перекрывающихся блоков</p>
+</div></div>
+
+
+<p>На рисунке видно, что линия графика блока, лежащего ниже, рисуется поверх изображения блока,
+лежащего выше, хотя она должна быть скрыта под ним. В таких случаях нужно отключать ускоренный режим
+рисования в окне параметров подсистемы (см. <a href="#pic1" title="Вкладка общие окна параметров подсистемы">рис.&nbsp;62</a>).
+Вносить какие-либо изменения в модели блоков не нужно: RDS в этом случае будет каждый раз
+вызывать модель с требованием полного рисования изображения блока, что в ней должно быть предусмотрено в любом
+случае. В рассмотренном примере при каждом рисовании графика просто будет вызываться функция <span class="cpp">Draw</span>,
+поскольку поле <span class="cpp">FullDraw</span> структуры
+<span class="cpp"><a class="hidden" href="RDS_BFM_DRAW.htm#ref1" title="Структура RDS_DRAWDATA">RDS_DRAWDATA</a></span> никогда не будет иметь значение <span class="cpp">FALSE</span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_10_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_10_3.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_10_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

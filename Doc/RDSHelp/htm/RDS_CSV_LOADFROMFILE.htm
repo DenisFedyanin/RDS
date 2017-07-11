@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.32.12. Команда RDS_CSV_LOADFROMFILE &ndash; загрузить текст из файла</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_32">А.5.32. Вспомогательный объект для работы с форматом CSV</a></p>
+<div class="level"><p>А.5.32.12. Команда <span class="cpp">RDS_CSV_LOADFROMFILE</span> &ndash; загрузить текст из файла</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_CSV_LINECOUNT.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_CSV_MAXCOLUMNS.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_CSV_LOADFROMFILE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.32. Вспомогательный объект для работы с форматом CSV</h4>
+<h5>А.5.32.12. Команда <span class="cpp">RDS_CSV_LOADFROMFILE</span> &ndash; загрузить текст из файла</h5>
+
+
+<p>Команда <span class="cpp">RDS_CSV_LOADFROMFILE</span> загружает в указанный
+<a href="rdsCSVCreate.htm" title="А.5.32.1. rdsCSVCreate &ndash; создать объект для работы с текстом в формате CSV">объект</a> текст из файла с указанным именем.</p>
+
+<p class="apphdr">Вызов команды</p>
+
+<pre class="cpp">  <span class="kw">char</span> *sFileName= &hellip;  <span class="rem">// Имя файла</span>
+  <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(Csv,RDS_CSV_LOADFROMFILE,<span class="const">0</span>,sFileName);</pre>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Csv</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a></i></span>)</dt>
+  <dd>Идентификатор вспомогательного объекта для работы с CSV, ранее созданного функцией
+  <span class="cpp"><a href="rdsCSVCreate.htm" title="А.5.32.1. rdsCSVCreate &ndash; создать объект для работы с текстом в формате CSV">rdsCSVCreate</a></span>.</dd>
+
+  <dt><span class="cpp">sFileName</span>&emsp;(<span class="cpp"><i>char*</i></span>)</dt>
+  <dd>Указатель на строку с именем файла, из которого нужно загрузить текст. Имя файла может содержать
+  <a href="rdsGetFullFilePath.htm#ref1" title="Символические обозначения стандартных путей">символические обозначения</a> стандартных папок RDS. Если в имени
+  файла нет пути, он будет считаться находящимся в одной папке с загруженной схемой.</dd>
+</dl>
+
+<p class="apphdr">Примечания</p>
+<p>Эта команда загружает в объект <span class="cpp">Csv</span> весь текст из файла <span class="cpp">sFileName</span>
+и разбирает его на отдельные строки и элементы. После этого к элементам текста можно обращаться при помощи функции
+<span class="cpp"><a href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a></span>. Для получения общего числа строк в загруженном тексте следует использовать команду
+<span class="cpp"><a href="RDS_CSV_LINECOUNT.htm" title="А.5.32.11. Команда RDS_CSV_LINECOUNT &ndash; число строк в тексте">RDS_CSV_LINECOUNT</a></span>, для получения общего (максимального) числа элементов в строках
+&ndash; команду <span class="cpp"><a href="RDS_CSV_MAXCOLUMNS.htm" title="А.5.32.13. Команда RDS_CSV_MAXCOLUMNS &ndash; число элементов в самой длинной строке">RDS_CSV_MAXCOLUMNS</a></span>.</p>
+
+<p>В команде <span class="cpp">RDS_CSV_LOADFROMFILE</span> не предусмотрен возврат результата операции,
+поэтому для того, чтобы узнать, удалось ли загрузить текст из файла, следует выполнить команду
+<span class="cpp"><a href="RDS_CSV_FILEERROR.htm" title="А.5.32.7. Команда RDS_CSV_FILEERROR &ndash; проверка ошибки в последней операции с файлом">RDS_CSV_FILEERROR</a></span>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsCSVCreate.htm" title="А.5.32.1. rdsCSVCreate &ndash; создать объект для работы с текстом в формате CSV">rdsCSVCreate</a></span>,
+<span class="cpp"><a href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a></span>,
+<span class="cpp"><a href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a></span>,
+<span class="cpp"><a href="RDS_CSV_LINECOUNT.htm" title="А.5.32.11. Команда RDS_CSV_LINECOUNT &ndash; число строк в тексте">RDS_CSV_LINECOUNT</a></span>,
+<span class="cpp"><a href="RDS_CSV_MAXCOLUMNS.htm" title="А.5.32.13. Команда RDS_CSV_MAXCOLUMNS &ndash; число элементов в самой длинной строке">RDS_CSV_MAXCOLUMNS</a></span>,
+<span class="cpp"><a href="RDS_CSV_FILEERROR.htm" title="А.5.32.7. Команда RDS_CSV_FILEERROR &ndash; проверка ошибки в последней операции с файлом">RDS_CSV_FILEERROR</a></span>,
+<span class="cpp"><a href="RDS_CSV_TEXT.htm" title="А.5.32.20. Команда RDS_CSV_TEXT &ndash; весь текст объекта">RDS_CSV_TEXT</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_CSV_LINECOUNT.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_CSV_MAXCOLUMNS.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_CSV_LOADFROMFILE">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

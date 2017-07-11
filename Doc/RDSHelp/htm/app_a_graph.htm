@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.18.1. Применимость графических функций</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_18">А.5.18. Графические функции</a></p>
+<div class="level"><p>А.5.18.1. Применимость графических функций</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsUnregisterMenuItem.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsXGArc.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:app_a_graph">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4>А.5.18. Графические функции</h4>
+<p class="abstract">Описываются функции, позволяющие программно рисовать изображение блока в окне подсистемы (<a href="pm_index.htm#light_htm:pm_2_10" title="&sect;2.10. Программное рисование внешнего вида блока">&sect;2.10</a>) и строить различные изображения на специальных панелях вспомогательного объекта создания окон (<a href="pm_2_7_3.htm" title="&sect;2.7.3. Расширенные возможности функции обратного вызова">&sect;2.7.3 руководства программиста</a>).</p>
+<h5>А.5.18.1. Применимость графических функций</h5>
+
+
+<p>Графические функции RDS могут вызываться только из
+<a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функция модели блока</a> и только в том случае,
+если модель в данный момент может что-либо рисовать. Фактически, есть всего две ситуации,
+в которых можно использовать графические функции:</p>
+
+<ul>
+  <li>при программном рисовании внешнего вида блока в реакциях его модели на события
+  <span class="cpp"><a href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a></span> и <span class="cpp"><a href="RDS_BFM_DRAWADDITIONAL.htm" title="А.2.6.4. RDS_BFM_DRAWADDITIONAL &ndash; дополнительное рисование">RDS_BFM_DRAWADDITIONAL</a></span>;</li>
+  <li>при рисовании произвольных изображений на специальных панелях в модальных окнах, открываемых функцией
+  <span class="cpp"><a href="rdsFORMShowModalServ.htm" title="А.5.28.7. rdsFORMShowModalServ &ndash; открыть окно с расширенной функцией обратного вызова">rdsFORMShowModalServ</a></span>.</li>
+</ul>
+
+<p class="noindent">Во всех остальных случаях вызовы графических функций игнорируются RDS. Программное рисование внешнего
+вида блока подробно рассматривается в
+<a href="pm_index.htm#light_htm:pm_2_10" title="&sect;2.10. Программное рисование внешнего вида блока">&sect;2.10</a>, рисование на панелях модальных окон &ndash;
+в <a href="pm_2_7_3.htm" title="&sect;2.7.3. Расширенные возможности функции обратного вызова">&sect;2.7.3 руководства программиста</a>.</p>
+
+<p><span id="ref1">Во</span>
+всех перечисленных выше случаях в функцию модели тем или иным способом передается контекст устройства Windows
+(device context, <span id="light_ref1" class="cpp">HDC</span>), на котором необходимо нарисовать изображение, поэтому
+вместо графических функций RDS всегда можно использовать обычные графические функции Windows API.
+Функции RDS могут быть полезны тем, что они</p>
+
+<ul>
+  <li>несколько упрощают выбор линий и заливки геометрических фигур;</li>
+  <li>дают доступ к рисованию стандартных иконок RDS (<span class="cpp"><a href="rdsXGDrawStdIcon.htm" title="А.5.18.5. rdsXGDrawStdIcon &ndash; рисование стандартной иконки">rdsXGDrawStdIcon</a></span>)
+  и картинки блока (<span class="cpp"><a href="rdsXGDrawBlockPicture.htm" title="А.5.18.4. rdsXGDrawBlockPicture &ndash; рисование картинки блока">rdsXGDrawBlockPicture</a></span>);</li>
+  <li>в них не нужно указывать контекст устройства &ndash; RDS самостоятельно
+  определяет, где рисовать изображение.</li>
+</ul>
+
+<p class="noindent">Вызовы графических функций RDS, графических функций Windows API и
+любых других функций можно совмещать в одной программе.</p>
+
+<p>Во всех графических функциях RDS, как и во всех функциях Windows, координаты задаются в
+точках экрана, горизонтальная ось направлена слева направо, вертикальная &ndash; сверху вниз.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsUnregisterMenuItem.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsXGArc.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:app_a_graph">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

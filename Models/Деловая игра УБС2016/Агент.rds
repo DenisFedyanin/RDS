@@ -1,0 +1,4874 @@
+EXPSYSTXT
+version 1 rev 0 4016.10.17.17.39.2
+
+pictures
+ begin
+  picture id 0
+   begin
+    rect from 0 0 size 29 29 solid scalewidth color 0 fill 16777215
+    rect from 2 2 size 15 15 solid scalewidth color 0
+    line from 7 2 to 7 17 solid color 0
+    line from 12 2 to 12 17 solid color 0
+    line from 2 7 to 17 7 solid color 0
+    line from 2 12 to 17 12 solid color 0
+    line from 17 10 to 26 10 solid scalewidth color 0 arrow 5 2 to
+    textblock from 2 19 size 26 9 text "dbl" font "Arial" height 9 color 0
+   end
+  picture id 1
+   begin
+    rect from 0 0 size 29 29 solid scalewidth color 0 fill 16777215
+    rect from 12 2 size 15 15 solid scalewidth color 0
+    line from 17 2 to 17 17 solid color 0
+    line from 22 2 to 22 17 solid color 0
+    line from 12 7 to 27 7 solid color 0
+    line from 12 12 to 27 12 solid color 0
+    line from 3 10 to 12 10 solid scalewidth color 0 arrow 5 2 to
+    textblock from 2 19 size 26 9 text "dbl" font "Arial" height 9 color 0
+   end
+  picture id 2
+   begin
+    rect from 0 0 size 29 29 solid scalewidth color 0 fill 16777215
+    line from 7 15 to 21 15 solid width 3 scalewidth color 0
+    line from 14 22 to 14 8 solid width 3 scalewidth color 0
+   end
+  picture id 3
+   begin
+    rect from 0 0 size 29 29 solid scalewidth color 0 fill 16777215
+    line from 7 15 to 21 15 solid width 3 scalewidth color 0
+   end
+  picture id 4
+   begin
+    rect from 0 0 size 29 29 solid scalewidth color 0 fill 16777215
+    line from 22 11 to 6 18 solid scalewidth color 0
+    line from 22 11 to 26 2 solid scalewidth color 0
+    line from 6 18 to 3 27 solid scalewidth color 0
+    rect from 20 9 size 4 4 solid scalewidth color 0
+    rect from 4 16 size 4 4 solid scalewidth color 0
+   end
+  picture id 5
+   begin
+    rect from 0 0 size 29 29 solid scalewidth color 0 fill 16777215
+    rect from 2 2 size 18 15 solid scalewidth color 8421504 fill 12632256
+    line from 20 10 to 28 10 solid scalewidth color 8421504 arrow 5 2 to
+    textblock from 2 19 size 26 9 text "dbl" font "Arial" height 9 color 0
+    polyline points 13 solid width 2 scalewidth color 0 shape 3 10 4 7 5 5 7 4 9 5 10 7 11 10 12 12 +
+     + 13 14 15 15 17 14 18 12 19 10 end
+   end
+ end
+
+styles
+ begin
+  style name "Стандартная связь" solid scalewidth color 0 arrow 10 2 dotsize 5 default conn all types
+  style name "Стандартная шина" solid width 5 scalewidth color 0 arrow 10 5 dotsize 0 default bus
+ end
+
+system name "Sys1"
+ begin
+  layers
+   begin
+    layer id 1 name "Игра"
+    layer id 2 name "Соединение с сервером"
+    layer id 3 name "Интерфейс"
+    config name "Основная" current layers =1 *3 *2 end
+   end
+  editor
+   begin
+    window pos 84 154 size 1154 768 open title "Агент" printbar 592 2 layerbar 141 2 zoombar 452 2 displaybar 654 2 calcbar 11 2 status
+    field size 2000 2000
+    grid size 5 5 snap color 16711680
+    crosscolor 16711680
+    blocknames spacing 7 font "Arial" height 9 color 0
+    varnames font "Arial" height 8
+   end
+  print
+   begin
+   end
+  content
+   begin
+    dllblock name "Block5" id 408
+     begin
+      pos 550 180
+      layer id 1
+      options sizeable
+      vars
+       begin
+        signal name "Start" in menu run default 0
+        signal name "Ready" out menu default 0
+       end
+      layout rect 90 80 fill 16777215 line 0 text "Сцены" font "Arial" height 13 color 0 right up
+     end
+    dllblock name "DEdit1" id 225
+     begin
+      pos 250 140
+      layer id 3
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run hide default 0
+        signal name "Ready" out hide default 0
+        double name "v" in run hide default "0"
+        double name "edit" out menu hide default "0"
+       end
+      dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh mouse setup "Настройка" auto
+      dlldata text
+       value prec 0 font "Arial" height 15 color 0 set 0 initial 0
+       frame border 0 fill 16777215
+       caption text "Номер игрока" font "Arial" height 15 charset 1 color 0
+      enddlldata
+      rect 125 19
+     end
+    dllblock name "DblNet1" id 228
+     begin
+      pos 65 145
+      layer id 2
+      name hidden
+      vars
+       begin
+        signal name "Start" in run default 1
+        signal name "Ready" out default 0
+        double name "x" in menu run default "0"
+        double name "y" out menu default "0"
+        logical name "Enabled" in menu run default 1
+       end
+      layout rect 30 30 fill 16777215 line 0 text "NET\r\ndbl" font "Arial" height 10 color 0 width 1 scalewidth
+      dll file "$DLL$\\Common.dll" func "DoubleNetConn" hint setup "" auto
+      dlldata text
+       host "" port -1 channel "Client" delay -1 udp 0
+      enddlldata
+     end
+    dllblock name "SigNet1" id 229
+     begin
+      pos 245 50
+      layer id 2
+      name hidden
+      vars
+       begin
+        signal name "Start" in run default 0
+        signal name "Ready" out default 0
+        signal name "x" in menu run default 0
+        signal name "y" out menu default 0
+        logical name "Enabled" in menu default 1
+       end
+      layout rect 30 30 fill 8454143 line 0 text "NET\r\nsig" font "Arial" height 10 color 0 width 1 scalewidth
+      dll file "$DLL$\\Common.dll" func "DoubleNetConn" hint setup "" auto
+      dlldata text
+       host "" port -1 channel "ServerSig" delay -1 udp 0
+      enddlldata
+     end
+    dllblock name "DEdit2" id 242
+     begin
+      pos 150 365
+      layer id 3
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run hide default 0
+        signal name "Ready" out hide default 0
+        double name "v" in run hide default "0"
+        double name "edit" out menu hide default "0"
+       end
+      dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh mouse setup "Настройка" auto
+      dlldata text
+       value prec 0 font "Arial" height 15 color 0 set 0 initial 0
+       frame border 0 fill 16777215
+       caption text "Период" font "Arial" height 15 charset 1 color 0
+      enddlldata
+      rect 100 19
+     end
+    dllblock name "DblNet2" id 244
+     begin
+      pos 65 345
+      layer id 1
+      name hidden
+      vars
+       begin
+        signal name "Start" in run default 1
+        signal name "Ready" out default 0
+        double name "x" in menu run default "0"
+        double name "y" out menu default "0"
+        logical name "Enabled" in menu run default 1
+       end
+      layout rect 30 30 fill 16777215 line 0 text "NET\r\ndbl" font "Arial" height 10 color 0 width 1 scalewidth
+      dll file "$DLL$\\Common.dll" func "DoubleNetConn" hint setup "" auto
+      dlldata text
+       host "" port -1 channel "Period" delay -1 udp 0
+      enddlldata
+     end
+    dllblock name "Button2" id 262
+     begin
+      pos 65 50
+      layer id 3
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run default 0
+        signal name "Ready" out default 0
+        signal name "Click" out menu hide default 0
+        logical name "Down" out menu default 0
+        logical name "Enabled" in menu default 1
+        signal name "Press" in menu run default 0
+        signal name "Release" in menu run default 0
+       end
+      dll file "$DLL$\\Common.dll" func "PushButton" draw mouse key setup "Настройка" auto
+      dlldata text
+       mode 2 flags 3 border 0 text "Подключиться" mainfont font "Arial" height 15 charset rus color 0 init 0 1
+      enddlldata
+      rect 125 30
+     end
+    dllblock name "Block4" id 307
+     begin
+      pos 135 145
+      layer id 3
+      vars
+       begin
+        signal name "Start" in menu run default 0
+        signal name "Ready" out menu default 0
+        int name "mynum" in menu default 0
+        int name "newnum" in menu run default 0
+        logical name "turnon" in menu default 0
+        int name "num" out menu default 0
+        logical name "btnVisible" out menu default 1
+       end
+      auto
+       begin
+       end
+      dll file "Вспомогательные\\новыйНомерИгрока.dll" func "rdsbcppBlockEntryPoint"
+      autocomp file "$DLL$\\Common.dll" func "SearchComp" model "Вспомогательные\\новыйНомерИгрока.mdl" alt "C:\\RDS\\A_Projects\\Деловая игра УБС2016\\Вспомогательные\\новыйНомерИгрока.mdl\nC:\\RDS\\A_Projects\\Деловая игра УБС2016\\Агент.rds"
+     end
+    dllblock name "MDNet1" id 314
+     begin
+      pos 65 215
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run default 1
+        signal name "Ready" out default 0
+        matrix double oneindex name "X" in menu run default "[ ] 0"
+        matrix double oneindex name "Y" out menu default "[ ] 0"
+        logical name "Enabled" in menu run default 1
+       end
+      layout rect 30 30 fill 16777215 line 0 text "NET\r\nARR" font "Arial" height 10 color 0 width 1 scalewidth
+      dll file "$DLL$\\Common.dll" func "DoubleNetConn" hint setup "" auto
+      dlldata text
+       host "" port -1 channel "ClientBase" delay -1 udp 0
+      enddlldata
+     end
+    system name "Sys3" id 324
+     begin
+      pos 135 215
+      layer id 1
+      options sizeable
+      vars
+       begin
+        int name "player" in menu default 0
+        matrix int name "M" in menu default "[ ] 0"
+        matrix int name "plRows" out menu default "[ ] 0"
+       end
+      layout rect 155 45 fill 16777215 line 0 text "Подсистема выделения \r\nпроектов игрока" font "Arial" height 13 color 0
+      layers
+       begin
+        layer id 1 name "Слой 1"
+        config name "Основная" current layers =1 end
+       end
+      editor
+       begin
+        window pos 562 207 size 640 720 printbar 592 2 layerbar 141 2 zoombar 452 2 displaybar 654 2 calcbar 11 2 status
+        field size 2000 2000
+        grid size 5 5 snap color 16711680
+        crosscolor 16711680
+        blocknames spacing 7 font "Arial" height 9 color 0
+        varnames font "Arial" height 8
+       end
+      print
+       begin
+       end
+      content
+       begin
+        dllblock name "MatEx1" id 278
+         begin
+          pos 245 65
+          layer id 1
+          options sizeable
+          vars
+           begin
+            signal name "Start" in run default 1
+            signal name "Ready" out default 0
+            matrix double name "X" in menu run default "[ ] 0"
+            int name "R1" in menu run default 2
+            int name "R2" in menu run default 3
+            int name "NR" in menu run default 2
+            int name "C1" in menu run default 2
+            int name "C2" in menu run default 3
+            int name "NC" in menu run default 2
+            logical name "OK" out default 1
+            logical name "Error" out default 0
+            matrix double name "Y" out menu default "[ ] 0"
+            int name "Flags" default 81
+            int name "Rows" out default 0
+            int name "Cols" out default 0
+           end
+          layout rect 30 30 fill 16777215 line 0 text "MAT\r\nEX" font "Arial" height 10 color 0 width 1 scalewidth
+          dll file "$DLL$\\Common.dll" func "MatCutDouble" hint setup "" auto
+         end
+        input name "player" id 279
+         begin
+          pos 15 100
+          layer id 1
+          options sizeable
+          vars
+           begin
+            int name "player" out menu default 0
+           end
+          layout rect 95 20 fill 16777215 line 0 text "номер игрока" font "Arial" height 10 color 0
+         end
+        input name "M" id 280
+         begin
+          pos 15 35
+          layer id 1
+          options sizeable
+          vars
+           begin
+            matrix int name "M" out menu default "[ ] 0"
+           end
+          layout rect 95 20 fill 12632256 line 0 text "Все проекты" font "Arial" height 10 color 0
+         end
+        dllblock name "Block1" id 281
+         begin
+          pos 155 70
+          layer id 1
+          vars
+           begin
+            signal name "Start" in menu run default 0
+            signal name "Ready" out menu default 0
+            int name "player" in menu default 0
+            matrix int name "M" in menu run default "[ ] 0"
+            int name "startrow" out menu default 0
+            int name "endrow" out menu default 0
+           end
+          auto
+           begin
+           end
+          dll file "Вспомогательные\\выделениеСтрокИгрока.dll" func "rdsbcppBlockEntryPoint"
+          autocomp file "$DLL$\\Common.dll" func "SearchComp" model "Вспомогательные\\выделениеСтрокИгрока.mdl" alt "C:\\RDS\\A_Projects\\Деловая игра УБС2016\\Вспомогательные\\выделениеСтрокИгрока.mdl\nC:\\RDS\\A_Projects\\Деловая игра УБС2016\\Агент.rds"
+         end
+        output name "plRows" id 286
+         begin
+          pos 365 65
+          layer id 1
+          options sizeable
+          vars
+           begin
+            matrix int name "plRows" in menu default "[ ] 0"
+           end
+          layout rect 120 30 fill 12632256 line 0 text "Проекты игрока" font "Arial" height 10 color 0
+         end
+        conn id 282
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "player" var "player" out pos 85 20 cname right down
+            id 1 block "Block1" var "player" in pos 0 25 cname left up
+           end
+          lines
+           begin
+            line 0 1
+           end
+         end
+        conn id 284
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "Block1" var "startrow" out pos 30 5 cname right up
+            id 1 block "MatEx1" var "R1" in pos 0 10 cname left up
+           end
+          lines
+           begin
+            line 0 1
+           end
+         end
+        conn id 285
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "Block1" var "endrow" out pos 30 15 cname right up
+            id 1 block "MatEx1" var "R2" in pos 0 20 cname left up
+           end
+          lines
+           begin
+            line 0 1
+           end
+         end
+        conn id 287
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "MatEx1" var "Y" out pos 30 15 cname right up
+            id 1 block "plRows" var "plRows" in pos 0 15 cname left up
+           end
+          lines
+           begin
+            line 0 1
+           end
+         end
+        conn id 297
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "M" var "M" out pos 95 15 cname right up
+            id 1 pos 255 50
+            id 2 block "MatEx1" var "X" in pos 10 0 cname right up
+            id 3 pos 125 50
+            id 4 block "Block1" var "M" in pos 0 10 cname left up
+           end
+          lines
+           begin
+            line 1 2
+            line 0 3
+            line 3 1
+            line 4 3
+           end
+         end
+       end
+      end
+    dllblock name "MatEx1" id 327
+     begin
+      pos 315 215
+      layer id 1
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run default 1
+        signal name "Ready" out default 0
+        matrix double name "X" in menu run default "[ ] 0"
+        int name "R1" in menu run default 2
+        int name "R2" in menu run default 3
+        int name "NR" in menu run default 2
+        int name "C1" in menu run default 2
+        int name "C2" in menu run default 3
+        int name "NC" in menu run default 2
+        logical name "OK" out default 1
+        logical name "Error" out default 0
+        matrix double name "Y" out menu default "[ ] 0"
+        int name "Flags" default 80
+        int name "Rows" out default 0
+        int name "Cols" out default 0
+       end
+      layout rect 30 30 fill 16777215 line 0 text "MAT\r\nEX" font "Arial" height 10 color 0 width 1 scalewidth
+      dll file "$DLL$\\Common.dll" func "MatCutDouble" hint setup "" auto
+     end
+    system name "Stages" id 332
+     begin
+      pos 585 205
+      layer id 1
+      layers
+       begin
+        layer id 1 name "Слой 1"
+        config name "Основная" current layers =1 end
+       end
+      editor
+       begin
+        window pos 474 31 size 640 746 open printbar 592 2 layerbar 141 2 zoombar 452 2 displaybar 654 2 calcbar 11 2 status
+        field size 2000 2000
+        grid size 5 5 snap color 16711680
+        crosscolor 16711680
+        blocknames spacing 7 font "Arial" height 9 color 0
+        varnames font "Arial" height 8
+       end
+      print
+       begin
+       end
+      content
+       begin
+        dllblock name "Block1" id 351
+         begin
+          pos 400 5
+          layer id 1
+          options sizeable
+          vars
+           begin
+            signal name "Start" in menu run default 0
+            signal name "Ready" out menu default 0
+           end
+          layout rect 105 60 fill 16777215 line 0 text "Шаблон сцены" font "Arial" height 13 color 0 right up
+         end
+        system name "CommonStage" id 331
+         begin
+          pos 435 30
+          layer id 1
+          vars
+           begin
+            int name "Stage" in menu default 0
+            int name "Gamer" in menu default 0
+            int name "Group" in menu default 0
+            matrix double name "prevActions" in menu default "[ ] 0"
+            signal name "open" in menu default 0
+            signal name "close" in menu default 0
+           end
+          layers
+           begin
+            layer id 1 name "Слой 1"
+            config name "Основная" current layers =1 end
+           end
+          editor
+           begin
+            window maximized pos 0 0 size 0 0 printbar 592 2 layerbar 141 2 zoombar 452 2 displaybar 654 2 calcbar 11 2 status
+            field size 2000 2000
+            grid size 5 5 snap color 16711680
+            crosscolor 16711680
+            blocknames spacing 7 font "Arial" height 9 color 0
+            varnames font "Arial" height 8
+           end
+          print
+           begin
+           end
+          content
+           begin
+            dllblock name "WindowOp1" id 330
+             begin
+              pos 305 330
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                int name "X" in menu run default 0
+                int name "Y" in menu run default 0
+                int name "Width" in menu run default 0
+                int name "Height" in menu run default 0
+                logical name "Max" in menu run default 0
+                signal name "chg" default 0
+                signal name "Open" in menu run default 0
+                signal name "Close" in menu run default 0
+               end
+              auto
+               begin
+                var "X" ctrl "chg"
+                var "Y" ctrl "chg"
+                var "Width" ctrl "chg"
+                var "Height" ctrl "chg"
+                var "Max" ctrl "chg"
+               end
+              layout rect 30 30 fill 16777215 line 0 text "Win" font "Arial" height 13 color 0
+              dll file "$DLL$\\Common.dll" func "WindowOperation" setup "" auto
+              dlldata text
+               mode 2
+              enddlldata
+             end
+            dllblock name "Button1" id 335
+             begin
+              pos 365 335
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                signal name "Click" out menu hide default 0
+                logical name "Down" out menu default 0
+                logical name "Enabled" in menu default 1
+                signal name "Press" in menu run default 0
+                signal name "Release" in menu run default 0
+               end
+              dll file "$DLL$\\Common.dll" func "PushButton" draw mouse key setup "Настройка" auto
+              dlldata text
+               mode 2 flags 3 border 0 text "Maximize" mainfont font "Arial" height 15 charset rus color 0 init 1 1
+              enddlldata
+              rect 80 25
+             end
+            input name "Stage" id 340
+             begin
+              pos 45 145
+              layer id 1
+              options sizeable
+              vars
+               begin
+                int name "Stage" out menu default 0
+               end
+              layout rect 95 20 fill 16777215 line 0 text "Номер сцены" font "Arial" height 10 color 0
+             end
+            dllblock name "DDisplay1" id 341
+             begin
+              pos 10 15
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in menu run hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 0 initial
+               frame border 0 fill 12632256
+               caption text "Этап" font "Arial" height 15 charset 1 color 0
+              enddlldata
+              rect 75 19
+             end
+            input name "Gamer" id 343
+             begin
+              pos 45 180
+              layer id 1
+              options sizeable
+              vars
+               begin
+                int name "Gamer" out menu default 0
+               end
+              layout rect 95 20 fill 16777215 line 0 text "Номер игрока" font "Arial" height 10 color 0
+             end
+            input name "Group" id 344
+             begin
+              pos 45 215
+              layer id 1
+              options sizeable
+              vars
+               begin
+                int name "Group" out menu default 0
+               end
+              layout rect 95 20 fill 16777215 line 0 text "Номер группы" font "Arial" height 10 color 0
+             end
+            dllblock name "DDisplay2" id 345
+             begin
+              pos 165 40
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in menu run hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 0 initial
+               frame border 0 fill 12632256
+               caption text "Группа" font "Arial" height 15 charset 1 color 0
+              enddlldata
+              rect 75 19
+             end
+            dllblock name "DDisplay3" id 346
+             begin
+              pos 165 15
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in menu run hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 0 initial
+               frame border 0 fill 12632256
+               caption text "Игрок" font "Arial" height 15 charset 1 color 0
+              enddlldata
+              rect 75 19
+             end
+            input name "prevActions" id 349
+             begin
+              pos 20 255
+              layer id 1
+              options sizeable
+              vars
+               begin
+                matrix double name "prevActions" out menu default "[ ] 0"
+               end
+              layout rect 120 20 fill 12632256 line 0 text "Предыдущие действия" font "Arial" height 10 color 0
+             end
+            dllblock name "DEdit1" id 350
+             begin
+              pos 84 15
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in run hide default "0"
+                double name "edit" out menu hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh mouse setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 20 initial 20
+               frame border 0 fill 12632256
+               caption text "из" font "Arial" height 15 charset 1 color 0
+              enddlldata
+              rect 50 19
+             end
+            input name "open" id 593
+             begin
+              pos 40 320
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "open" out menu default 0
+               end
+              layout rect 125 20 fill 8454143 line 0 text "Сигнал открытия (вход)" font "Arial" height 10 color 0
+             end
+            input name "close" id 594
+             begin
+              pos 40 350
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "close" out menu default 0
+               end
+              layout rect 125 20 fill 8454143 line 0 text "Сигнал закрытия (вход)" font "Arial" height 10 color 0
+             end
+            conn id 336
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Button1" var "Down" out pos 20 0 cname right up
+                id 1 block "WindowOp1" var "Max" in pos 30 10 cname right up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 337
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "open" var "open" out pos 125 10 cname right up
+                id 1 block "WindowOp1" var "Open" in pos 0 10 cname left up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 339
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "close" var "close" out pos 125 15 cname right up
+                id 1 block "WindowOp1" var "Close" in pos 0 25 cname left up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 342
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Stage" var "Stage" out pos 55 0 cname right up
+                id 1 block "DDisplay1" var "v" in pos 50 19 cname right down hidden
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 347
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Gamer" var "Gamer" out pos 45 0 cname right up
+                id 1 block "DDisplay3" var "v" in pos 45 19 cname right down hidden
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 348
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Group" var "Group" out pos 75 0 cname right up
+                id 1 block "DDisplay2" var "v" in pos 35 19 cname right down hidden
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+           end
+          end
+        system name "CommonStage1" id 364
+         begin
+          pos 60 260
+          layer id 1
+          vars
+           begin
+            int name "Group" in menu default 0
+            matrix int name "PlayerBids" out menu default "[ ] 0"
+            signal name "open" in menu default 0
+            signal name "close" in menu default 0
+            signal name "nextscreen" out menu default 0
+           end
+          layers
+           begin
+            layer id 1 name "Слой 1"
+            config name "Основная" current layers =1 end
+           end
+          editor
+           begin
+            window maximized pos 0 0 size 1300 800 printbar 592 2 layerbar 141 2 zoombar 452 2 displaybar 654 2 calcbar 11 2 status
+            field size 2000 2000
+            grid size 5 5 snap color 16711680
+            crosscolor 16711680
+            blocknames spacing 7 font "Arial" height 9 color 0
+            varnames font "Arial" height 8
+           end
+          print
+           begin
+           end
+          content
+           begin
+            dllblock name "Block3" id 470
+             begin
+              pos 150 5
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "Start" in menu run default 0
+                signal name "Ready" out menu default 0
+               end
+              layout rect 665 520 fill 16777215 line 0 text "Принятие решения" font "Arial" height 13 color 0 right up
+             end
+            dllblock name "WindowOp1" id 352
+             begin
+              pos 150 565
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                int name "X" in menu run default 0
+                int name "Y" in menu run default 0
+                int name "Width" in menu run default 0
+                int name "Height" in menu run default 0
+                logical name "Max" in menu run default 0
+                signal name "chg" default 0
+                signal name "Open" in menu run default 0
+                signal name "Close" in menu run default 0
+               end
+              auto
+               begin
+                var "X" ctrl "chg"
+                var "Y" ctrl "chg"
+                var "Width" ctrl "chg"
+                var "Height" ctrl "chg"
+                var "Max" ctrl "chg"
+               end
+              layout rect 30 30 fill 16777215 line 0 text "Win" font "Arial" height 13 color 0
+              dll file "$DLL$\\Common.dll" func "WindowOperation" setup "" auto
+              dlldata text
+               mode 0
+              enddlldata
+             end
+            dllblock name "Button1" id 354
+             begin
+              pos 210 585
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                signal name "Click" out menu hide default 0
+                logical name "Down" out menu default 0
+                logical name "Enabled" in menu default 1
+                signal name "Press" in menu run default 0
+                signal name "Release" in menu run default 0
+               end
+              dll file "$DLL$\\Common.dll" func "PushButton" draw mouse key setup "Настройка" auto
+              dlldata text
+               mode 2 flags 3 border 0 text "Maximize" mainfont font "Arial" height 15 charset rus color 0 init 1 1
+              enddlldata
+              rect 80 25
+             end
+            dllblock name "DDisplay1" id 357
+             begin
+              pos 170 15
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in menu run hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 0 initial
+               frame border 0 fill 12632256
+               caption text "Период" font "Arial" height 15 charset 1 color 0
+              enddlldata
+              rect 75 19
+             end
+            input name "Group" id 359
+             begin
+              pos 45 215
+              layer id 1
+              options sizeable
+              vars
+               begin
+                int name "Group" out menu default 0
+               end
+              layout rect 95 20 fill 16777215 line 0 text "Номер группы" font "Arial" height 10 color 0
+             end
+            dllblock name "DDisplay2" id 360
+             begin
+              pos 325 40
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in menu run hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 0 initial
+               frame border 0 fill 12632256
+               caption text "Группа" font "Arial" height 15 charset 1 color 0
+              enddlldata
+              rect 75 19
+             end
+            dllblock name "DDisplay3" id 361
+             begin
+              pos 325 15
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in menu run hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 0 initial
+               frame border 0 fill 12632256
+               caption text "Игрок" font "Arial" height 15 charset 1 color 0
+              enddlldata
+              rect 75 19
+             end
+            dllblock name "DEdit1" id 363
+             begin
+              pos 244 15
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in run hide default "0"
+                double name "edit" out menu hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh mouse setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 20 initial 20
+               frame border 0 fill 12632256
+               caption text "из" font "Arial" height 15 charset 1 color 0
+              enddlldata
+              rect 50 19
+             end
+            dllblock name "Выбор проектов агентом1" id 471
+             begin
+              pos 235 135
+              layer id 1
+              name pos 282 388
+              options sizeable
+              vars
+               begin
+                signal name "Start" in menu run default 0
+                signal name "Ready" out menu default 0
+               end
+              layout rect 565 375 fill 8454016 line 0 text "Выберите Вашу заявку по проектам" font "Arial" height 19 color 0 right up
+             end
+            dllblock name "Button2" id 472
+             begin
+              pos 550 465
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                signal name "Click" out menu hide default 0
+                logical name "Down" out menu default 0
+                logical name "Enabled" in menu default 1
+                signal name "Press" in menu run default 0
+                signal name "Release" in menu run default 0
+               end
+              dll file "$DLL$\\Common.dll" func "PushButton" draw mouse key setup "Настройка" auto
+              dlldata text
+               mode 0 flags 1 border 0 llcolor 16777215 ldcolor 13160660 dlcolor 8421504 ddcolor 4210752 fcolor 12308991 text "Подать заявку по проектам" mainfont font "Arial" height 15 charset rus color 0 init 0 1
+              enddlldata
+              rect 230 30
+             end
+            dllblock name "Block4" id 473
+             begin
+              pos 850 245
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "Start" in menu run default 0
+                signal name "Ready" out menu default 0
+               end
+              layout rect 140 60 fill 8421631 line 0 text "Заявка игрока\r\nне должна содержать\r\nнулевых параметров" font "Arial" height 13 color 0
+             end
+            dllblock name "Block6" id 483
+             begin
+              pos 830 135
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "Start" in menu run default 0
+                signal name "Ready" out menu default 0
+               end
+              layout rect 135 40 fill 8421631 line 0 text "Спец блок матрицы:\r\nпринимает матрицы" font "Arial" height 13 color 0
+             end
+            dllblock name "Block8" id 492
+             begin
+              pos 530 175
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "Start" in menu run default 0
+                signal name "Ready" out menu default 0
+               end
+              layout rect 250 120 fill 16777215 line 0 text "Заявки на основе\r\nистинных проектов" font "Arial" height 16 color 0 right up
+             end
+            dllblock name "MDEdit3" id 482
+             begin
+              pos 645 220
+              layer id 1
+              name hidden
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                matrix double name "M" out menu hide default "[ ] 0"
+                matrix double name "GraphMark" in menu run default "[ ] 0"
+                matrix double oneindex name "EDbl" in menu run default "[ ] 0"
+                matrix int oneindex name "EInt" in menu run default "[ ] 0"
+                matrix double name "MInput" in default "[ ] 0"
+                signal name "MInputSet" in run default 0
+               end
+              picture id 0 end
+              dll file "$DLL$\\Common.dll" func "MatEdit" mouse setup "Открыть" auto
+              blob 0 0 1
+               440300000005000000000000000000F03F0000000000000040000000000000004000000000000000400000000000000040000000000000F03F0000000000002440000000000000004000000000000024
+               400000000000000040000000000000F03F0000000000001040000000000000004000000000000010400000000000000040
+              endblob
+              dlldata text
+               window 663 218 612 326 horz "50" filename "" winhdr 1 "Заявки на основе истинных проектов"
+               grid col 113 dec 0 open setmod
+               export label "" file ""
+               expfam label "" file ""
+               bitmap file "" color 255 horz 0 16 "0" "1" vert 0 16 "0" "1"
+               graph row autox "0.1" autoy "0.1" legend 50 xfix
+               title text "" param font "Arial" height -13 charset 1 color 0
+               layout back 16777215 frame 0 border 16777215 0
+               axisx
+               begin
+               title text "" param font "Arial" height -13 charset 1 color 0
+               scale min "0" max "1" step "1" numbers dec 0 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+               lines show color 0 style dot
+               zero show color 0 style solid
+               end
+               axisy
+               begin
+               title text "" param font "Arial" height -13 charset 1 color 0
+               scale min "0" max "1" step "1" numbers dec 0 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+               lines show color 0 style dot
+               zero show color 0 style solid
+               end
+               curblob
+               colhdr 1 "Выбор\r\nЗаявка Эфф.\r\nЗаявка Затр.\r\nЭффект истинный\r\nЗатраты истинные\r\n"
+               csv 44 34 0
+               extmark horz 5 1 0 vert 5 1 0 type 1 5 0
+              enddlldata
+             end
+            system name "Sys4" id 481
+             begin
+              pos 440 225
+              layer id 1
+              vars
+               begin
+                matrix int name "trueproj" in menu default "[ ] 0"
+                matrix int name "bidsproj" out menu default "[ ] 0"
+               end
+              layers
+               begin
+                layer id 1 name "Слой 1"
+                config name "Основная" current layers =1 end
+               end
+              editor
+               begin
+                window pos 640 180 size 640 720 printbar 592 2 layerbar 141 2 zoombar 452 2 displaybar 654 2 calcbar 11 2 status
+                field size 2000 2000
+                grid size 5 5 snap color 16711680
+                crosscolor 16711680
+                blocknames spacing 7 font "Arial" height 9 color 0
+                varnames font "Arial" height 8
+               end
+              print
+               begin
+               end
+              content
+               begin
+                input name "trueproj" id 475
+                 begin
+                  pos 5 210
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    matrix int name "trueproj" out menu default "[ ] 0"
+                   end
+                  layout rect 160 20 fill 12632256 line 0 text "Истинные проекты (вход)" font "Arial" height 10 color 0
+                 end
+                dllblock name "MatDim1" id 476
+                 begin
+                  pos 225 90
+                  layer id 1
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X" in menu run default "[ ] 0"
+                    int name "Rows" out menu default 0
+                    int name "Cols" out menu default 0
+                    logical name "Empty" out menu default 1
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nDIM" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatDimDouble" setup "" auto
+                 end
+                dllblock name "MatJoin1" id 477
+                 begin
+                  pos 270 205
+                  layer id 1
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "A" in menu run default "[ ] 0"
+                    matrix double name "B" in menu run default "[ ] 0"
+                    matrix double name "Y" out menu default "[ ] 0"
+                    logical name "OK" out default 1
+                    logical name "Error" out default 0
+                    int name "Rows" out default 0
+                    int name "Cols" out default 0
+                    int name "Flags" default 0
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nA|B" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatJoinDouble" hint setup "" auto
+                 end
+                dllblock name "MatConst2" id 478
+                 begin
+                  pos 380 130
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    int name "Rows" in menu run default 2
+                    int name "Cols" in menu run default 1
+                    double name "Val" in menu run default "1"
+                    matrix double name "Y" out menu default "[ ] 0"
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nC" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatConstDouble" hint setup "" auto
+                 end
+                dllblock name "MatJoin2" id 479
+                 begin
+                  pos 380 205
+                  layer id 1
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "A" in menu run default "[ ] 0"
+                    matrix double name "B" in menu run default "[ ] 0"
+                    matrix double name "Y" out menu default "[ ] 0"
+                    logical name "OK" out default 1
+                    logical name "Error" out default 0
+                    int name "Rows" out default 0
+                    int name "Cols" out default 0
+                    int name "Flags" default 1
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nA|B" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatJoinDouble" hint setup "" auto
+                 end
+                output name "bidsproj" id 480
+                 begin
+                  pos 475 210
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    matrix int name "bidsproj" in menu default "[ ] 0"
+                   end
+                  layout rect 120 20 fill 12632256 line 0 text "Проекты-заявки (выход)" font "Arial" height 10 color 0
+                 end
+                conn id 423
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "MatDim1" var "Rows" out pos 30 15 cname right up
+                    id 1 pos 390 105
+                    id 2 block "MatConst2" var "Rows" in pos 10 0 cname right up
+                   end
+                  lines
+                   begin
+                    line 1 2
+                    line 0 1
+                   end
+                 end
+                conn id 425
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "trueproj" var "trueproj" out pos 155 10 cname right up
+                    id 1 block "MatJoin1" var "A" in pos 0 15 cname left up
+                    id 2 pos 195 220
+                    id 3 block "MatDim1" var "X" in pos 0 15 cname left up
+                    id 4 pos 195 105
+                    id 5 pos 195 150
+                    id 6 pos 285 150
+                    id 7 block "MatJoin1" var "B" in pos 15 0 cname right up
+                   end
+                  lines
+                   begin
+                    line 0 2
+                    line 2 1
+                    line 3 4
+                    line 4 5
+                    line 5 2
+                    line 6 7
+                    line 6 5
+                   end
+                 end
+                conn id 429
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "MatJoin1" var "Y" out pos 30 15 cname right up
+                    id 1 block "MatJoin2" var "A" in pos 0 15 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 430
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "MatConst2" var "Y" out pos 15 30 cname right down
+                    id 1 block "MatJoin2" var "B" in pos 15 0 cname right up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 432
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "MatJoin2" var "Y" out pos 30 15 cname right up
+                    id 1 block "bidsproj" var "bidsproj" in pos 0 10 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+               end
+              end
+            dllblock name "Block7" id 485
+             begin
+              pos 600 395
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "Start" in menu run default 0
+                signal name "Ready" out menu default 0
+                matrix int name "TrueProjects" in menu default "[ ] 0"
+                matrix int name "ExtBids" in menu default "[ ] 0"
+                matrix int name "FullBids" out menu default "[ ] 0"
+               end
+              auto
+               begin
+               end
+              layout rect 170 65 fill 12632256 line 0 text "Выбранные заявки" font "Arial" height 16 color 0 right up
+              dll file "Вспомогательные\\выборЗаявок.dll" func "rdsbcppBlockEntryPoint" cycle
+              autocomp file "$DLL$\\Common.dll" func "SearchComp" model "Вспомогательные\\выборЗаявок.mdl" alt "C:\\RDS\\A_Projects\\Деловая игра УБС2016\\Вспомогательные\\выборЗаявок.mdl\nC:\\RDS\\A_Projects\\Деловая игра УБС2016\\Агент.rds"
+             end
+            dllblock name "Button3" id 474
+             begin
+              pos 610 265
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                signal name "Click" out menu hide default 0
+                logical name "Down" out menu default 0
+                logical name "Enabled" in menu default 1
+                signal name "Press" in menu run default 0
+                signal name "Release" in menu run default 0
+               end
+              dll file "$DLL$\\Common.dll" func "PushButton" draw mouse key setup "Настройка" auto
+              dlldata text
+               mode 0 flags 3 border 0 text "Истинные параметры" mainfont font "Arial" height 15 charset rus color 0 init 0 1
+              enddlldata
+              rect 165 25
+             end
+            dllblock name "Block9" id 493
+             begin
+              pos 530 300
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "Start" in menu run default 0
+                signal name "Ready" out menu default 0
+               end
+              layout rect 250 80 fill 16777215 line 0 text "Дополнительные заявки" font "Arial" height 16 color 0 right up
+             end
+            dllblock name "MDEdit1" id 484
+             begin
+              pos 645 335
+              layer id 1
+              name hidden
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                matrix double name "M" out menu hide default "[ ] 0"
+               end
+              picture id 0 end
+              dll file "$DLL$\\Common.dll" func "MatEdit" mouse setup "Открыть" auto
+              blob 0 0 1
+               440100000003000000000000000000F03F00000000000014400000000000000040
+              endblob
+              dlldata text
+               window 212 151 565 480 horz "50" filename "" winhdr 1 "Ввод заявок"
+               grid col 64 dec 0 open setmod
+               export label "" file ""
+               expfam label "" file ""
+               bitmap file "" color 255 horz 0 16 "0" "1" vert 0 16 "0" "1"
+               graph row autox "0.1" autoy "0.1" legend 50 xfix
+               title text "Ввод заявок" param font "Arial" height -13 charset 1 color 0
+               layout back 16777215 frame 0 border 16777215 0
+               axisx
+               begin
+               title text "" param font "Arial" height -13 charset 1 color 0
+               scale min "0" max "1" step "1" numbers dec 0 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+               lines show color 0 style dot
+               zero show color 0 style solid
+               end
+               axisy
+               begin
+               title text "" param font "Arial" height -13 charset 1 color 0
+               scale min "0" max "1" step "1" numbers dec 0 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+               lines show color 0 style dot
+               zero show color 0 style solid
+               end
+               curblob
+               colhdr 1 "выбор\r\nЭффект\r\nЗатраты\r\n"
+               csv 44 34 0
+              enddlldata
+             end
+            port name "In" id 494
+             begin
+              pos 10 10
+              layer id 1
+             end
+            dllblock name "MatIns1" id 496
+             begin
+              pos 855 540
+              layer id 1
+              vars
+               begin
+                signal name "Start" in run default 1
+                signal name "Ready" out default 0
+                matrix double name "X" in menu run default "[ ] 0"
+                double name "Val" in menu run default "0"
+                int name "R" in menu run default 0
+                int name "NR" in menu run default 1
+                int name "C" in menu run default 0
+                int name "NC" in menu run default 1
+                int name "Rows" out default 0
+                int name "Cols" out default 0
+                matrix double name "Y" out menu default "[ ] 0"
+                int name "Flags" default 2
+               end
+              layout rect 30 30 fill 16777215 line 0 text "MAT\r\nINS" font "Arial" height 10 color 0 width 1 scalewidth
+              dll file "$DLL$\\Common.dll" func "MatInsDouble" hint setup "" auto
+             end
+            dllblock name "SigNet2" id 497
+             begin
+              pos 955 500
+              layer id 1
+              name hidden
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                signal name "x" in menu run default 0
+                signal name "y" out menu default 0
+                logical name "Enabled" in menu default 1
+               end
+              layout rect 30 30 fill 8454143 line 0 text "NET\r\nsig" font "Arial" height 10 color 0 width 1 scalewidth
+              dll file "$DLL$\\Common.dll" func "DoubleNetConn" hint setup "" auto
+              dlldata text
+               host "" port -1 channel "BidsSignal" delay -1 udp 0
+              enddlldata
+             end
+            dllblock name "MDNet5" id 498
+             begin
+              pos 955 530
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in menu run default 0
+                signal name "Ready" out menu default 0
+                matrix double oneindex name "X" in menu default "[ ] 0"
+                matrix double oneindex name "Y" out menu default "[ ] 0"
+                logical name "Enabled" in menu default 1
+               end
+              layout rect 30 30 fill 16777215 line 0 text "NET\r\nARR" font "Arial" height 10 color 0 width 1 scalewidth
+              dll file "$DLL$\\Common.dll" func "DoubleNetConn" hint setup "" auto
+              dlldata text
+               host "" port -1 channel "Bids" delay -1 udp 0
+              enddlldata
+             end
+            output name "PlayerBids" id 502
+             begin
+              pos 875 590
+              layer id 1
+              options sizeable
+              vars
+               begin
+                matrix int name "PlayerBids" in menu default "[ ] 0"
+               end
+              layout rect 140 20 fill 12632256 line 0 text "Заявки игрока (выход)" font "Arial" height 10 color 0
+             end
+            dllblock name "Выбор проектов агентом2" id 509
+             begin
+              pos 465 70
+              layer id 1
+              name pos 167 68
+              options sizeable
+              vars
+               begin
+                signal name "Start" in menu run default 0
+                signal name "Ready" out menu default 0
+               end
+              layout rect 335 55 fill 16777215 line 0 text "Истинные параметры проектов\r\n(известны только Вам)" font "Arial" height 19 color 0 right
+             end
+            dllblock name "MDDisplay3" id 510
+             begin
+              pos 470 85
+              layer id 1
+              name hidden
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                matrix double name "M" in menu run hide default "[ ] 0"
+               end
+              picture id 1 end
+              dll file "$DLL$\\Common.dll" func "MatDisplay" mouse setup "Открыть" auto
+              dlldata text
+               window 209 153 636 480 horz "53.254438" filename ""
+               grid col 84 dec 1 open
+               export label "" file ""
+               expfam label "" file ""
+               bitmap file "" color 255 horz 0 16 "0" "1" vert 0 16 "0" "1"
+               graph row autox "0.1" autoy "0.1" legend 50 xfix
+               title text "" param font "Arial" height -13 charset 1 color 0
+               layout back 16777215 frame 0 border 16777215 0
+               axisx
+               begin
+               title text "" param font "Arial" height -13 charset 1 color 0
+               scale min "0" max "1" step "1" numbers dec 1 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+               lines show color 0 style dot
+               zero show color 0 style solid
+               end
+               axisy
+               begin
+               title text "" param font "Arial" height -13 charset 1 color 0
+               scale min "0" max "1" step "1" numbers dec 1 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+               lines show color 0 style dot
+               zero show color 0 style solid
+               end
+               line color 0 width 1 style 0 index 0
+               csv 44 34 0
+              enddlldata
+             end
+            input name "open" id 519
+             begin
+              pos 0 550
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "open" out menu default 0
+               end
+              layout rect 125 20 fill 8454143 line 0 text "Сигнал открытия (вход)" font "Arial" height 10 color 0
+             end
+            input name "close" id 520
+             begin
+              pos 0 580
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "close" out menu default 0
+               end
+              layout rect 125 20 fill 8454143 line 0 text "Сигнал закрытия (вход)" font "Arial" height 10 color 0
+             end
+            output name "nextscreen" id 586
+             begin
+              pos 630 640
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "nextscreen" in menu default 0
+               end
+              layout rect 185 20 fill 8454143 line 0 text "Сигнал след. экрана (выход)" font "Arial" height 10 color 0
+             end
+            dllblock name "MDDisplay1" id 588
+             begin
+              pos 690 420
+              layer id 1
+              name hidden
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                matrix double name "M" in menu run hide default "[ ] 0"
+                matrix double name "GraphMark" in menu run default "[ ] 0"
+                matrix double oneindex name "EDbl" in menu run default "[ ] 0"
+                matrix int oneindex name "EInt" in menu run default "[ ] 0"
+               end
+              picture id 1 end
+              dll file "$DLL$\\Common.dll" func "MatDisplay" mouse setup "Открыть" auto
+              dlldata text
+               window 209 153 636 480 horz "53.254438" filename ""
+               grid col 84 dec 1 open
+               export label "" file ""
+               expfam label "" file ""
+               bitmap file "" color 255 horz 0 16 "0" "1" vert 0 16 "0" "1"
+               graph row autox "0.1" autoy "0.1" legend 50 xfix
+               title text "" param font "Arial" height -13 charset 1 color 0
+               layout back 16777215 frame 0 border 16777215 0
+               axisx
+               begin
+               title text "" param font "Arial" height -13 charset 1 color 0
+               scale min "0" max "1" step "1" numbers dec 1 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+               lines show color 0 style dot
+               zero show color 0 style solid
+               end
+               axisy
+               begin
+               title text "" param font "Arial" height -13 charset 1 color 0
+               scale min "0" max "1" step "1" numbers dec 1 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+               lines show color 0 style dot
+               zero show color 0 style solid
+               end
+               line color 0 width 1 style 0 index 0
+               csv 44 34 0
+               extmark horz 5 1 0 vert 5 1 0 type 1 5 0
+              enddlldata
+             end
+            dllblock name "DEdit2" id 595
+             begin
+              pos 0 640
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in run hide default "0"
+                double name "edit" out menu hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh mouse setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 800 initial 800
+               frame border 0 fill 16777215
+               caption text "Высота" font "Arial" height 15 charset 1 color 0
+               input l inc 1 updown arrwidth 13
+              enddlldata
+              rect 120 19
+             end
+            dllblock name "DEdit3" id 596
+             begin
+              pos 0 615
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in run hide default "0"
+                double name "edit" out menu hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh mouse setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 1300 initial 1300
+               frame border 0 fill 16777215
+               caption text "Ширина" font "Arial" height 15 charset 1 color 0
+               input l inc 1 updown arrwidth 13
+              enddlldata
+              rect 120 19
+             end
+            dllblock name "DDisplay4" id 623
+             begin
+              pos 465 15
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in menu run hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 0 initial
+               frame border 0 fill 12632256
+               caption text "Бюджет центра" font "Arial" height 15 charset 1 color 0
+              enddlldata
+              rect 160 19
+             end
+            conn id 336
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Button1" var "Down" out pos 20 0 cname right up
+                id 1 block "WindowOp1" var "Max" in pos 30 20 cname right up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 342
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 bus "Шина1" var "Stage" out pos 20 70 cname right up
+                id 1 block "DDisplay1" var "v" in pos 50 19 cname right down hidden
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 347
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 bus "Шина1" var "PlayerNum" out pos 20 100 cname right up
+                id 1 block "DDisplay3" var "v" in pos 45 19 cname right down hidden
+                id 2 pos 145 150
+                id 3 pos 485 560
+                id 4 block "MatIns1" var "Val" in pos 0 20 cname left up
+               end
+              lines
+               begin
+                line 0 2
+                line 2 1
+                line 2 3
+                line 3 4
+               end
+             end
+            conn id 348
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Group" var "Group" out pos 75 0 cname right up
+                id 1 block "DDisplay2" var "v" in pos 35 19 cname right down hidden
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 462
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "close" var "close" out pos 45 20 cname right down
+                id 1 block "WindowOp1" var "Close" in pos 0 20 cname left up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 486
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Block4" var "Ready" out pos 80 0 cname right up
+                id 1 block "Выбор проектов агентом1" var "Start" in pos 565 170 cname right up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 487
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Block6" var "Ready" out pos 50 0 cname right up
+                id 1 block "Block8" var "Start" in pos 250 20 cname right up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 488
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "open" var "open" out pos 85 20 cname right down
+                id 1 block "WindowOp1" var "Open" in pos 0 5 cname left up
+                id 2 pos 130 570
+                id 3 pos 160 535
+                id 4 pos 830 355
+                id 5 pos 825 235
+                id 6 block "MDEdit3" var "MInputSet" in pos 29 15 cname right up
+               end
+              lines
+               begin
+                line 0 2
+                line 2 1
+                line 2 3
+                line 3 4
+                line 4 5
+                line 5 6
+               end
+             end
+            conn id 489
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Sys4" var "bidsproj" out pos 30 15 cname right up
+                id 1 block "MDEdit3" var "MInput" in pos 0 20 cname left up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 490
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "MDEdit3" var "M" out pos 0 25 cname left up hidden
+                id 1 block "Block7" var "TrueProjects" in pos 0 5 cname left up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 491
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "MDEdit1" var "M" out pos 0 25 cname left up hidden
+                id 1 block "Block7" var "ExtBids" in pos 170 5 cname right up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            bus name "Шина1" id 495
+             begin
+              vars
+               begin
+                int name "Stage"
+                matrix int name "TrueProjects"
+                int name "PlayerNum"
+                int name "Budget"
+               end
+              layer id 1
+              style name "Стандартная шина" dotsize 0
+              points
+               begin
+                id 0 block "In" pos 10 20 cname right down
+                id 1 pos 20 145
+                id 2 pos 20 205
+               end
+              lines
+               begin
+                line 0 1
+                line 1 2
+               end
+             end
+            conn id 499
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "MatIns1" var "Y" out pos 30 15 cname right up
+                id 1 block "MDNet5" var "X" in pos 0 25 cname left up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 500
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Button2" var "Click" out pos 140 30 cname right down hidden
+                id 1 block "MDNet5" var "Start" in pos 0 15 cname left up
+                id 2 pos 850 525
+                id 3 block "SigNet2" var "x" in pos 0 10 cname left up
+                id 4 pos 690 545
+                id 5 block "nextscreen" var "nextscreen" in pos 60 0 cname right up
+                id 6 block "WindowOp1" var "Close" in pos 30 10 cname right up
+                id 7 pos 225 545
+               end
+              lines
+               begin
+                line 2 3
+                line 0 4
+                line 4 2
+                line 4 5
+                line 1 2
+                line 4 7
+                line 7 6
+               end
+             end
+            conn id 501
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Block7" var "FullBids" out pos 165 25 cname right up
+                id 1 block "MatIns1" var "X" in pos 0 10 cname left up
+                id 2 pos 830 550
+                id 3 pos 830 600
+                id 4 block "PlayerBids" var "PlayerBids" in pos 0 10 cname left up
+                id 5 pos 830 420
+                id 6 pos 830 440
+                id 7 block "MDDisplay1" var "M" in pos 29 20 cname right up hidden
+               end
+              lines
+               begin
+                line 2 1
+                line 2 3
+                line 3 4
+                line 0 5
+                line 5 6
+                line 6 2
+                line 6 7
+               end
+             end
+            conn id 592
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 bus "Шина1" var "TrueProjects" out pos 20 145 cname right up
+                id 1 block "MDDisplay3" var "M" in pos 0 20 cname left up hidden
+                id 2 pos 365 115
+                id 3 block "Sys4" var "trueproj" in pos 0 5 cname left up
+               end
+              lines
+               begin
+                line 0 2
+                line 2 1
+                line 2 3
+               end
+             end
+            conn id 597
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "DEdit3" var "edit" out pos 115 5 cname right up hidden
+                id 1 block "WindowOp1" var "Width" in pos 0 25 cname left up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 598
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "DEdit2" var "edit" out pos 105 0 cname right up hidden
+                id 1 block "WindowOp1" var "Height" in pos 10 30 cname right down
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 619
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Button3" var "Click" out pos 115 0 cname right up hidden
+                id 1 block "MDEdit3" var "MInputSet" in pos 29 20 cname right up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 624
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 bus "Шина1" var "Budget" out pos 20 80 cname right up
+                id 1 pos 110 80
+                id 2 block "DDisplay4" var "v" in pos 0 10 cname left up hidden
+               end
+              lines
+               begin
+                line 0 1
+                line 1 2
+               end
+             end
+           end
+          end
+        system name "CommonStage2" id 377
+         begin
+          pos 205 260
+          layer id 1
+          vars
+           begin
+            int name "Group" in menu default 0
+            signal name "open" in menu default 0
+            signal name "close" in menu default 0
+            matrix int name "PlayerBids" in menu default "[ ] 0"
+           end
+          layers
+           begin
+            layer id 1 name "Слой 1"
+            config name "Основная" current layers =1 end
+           end
+          editor
+           begin
+            window maximized pos 0 0 size 0 0 open printbar 592 2 layerbar 141 2 zoombar 452 2 displaybar 654 2 calcbar 11 2 status
+            field size 2000 2000
+            grid size 5 5 snap color 16711680
+            crosscolor 16711680
+            blocknames spacing 7 font "Arial" height 9 color 0
+            varnames font "Arial" height 8
+           end
+          print
+           begin
+           end
+          content
+           begin
+            dllblock name "WindowOp1" id 365
+             begin
+              pos 205 610
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                int name "X" in menu run default 0
+                int name "Y" in menu run default 0
+                int name "Width" in menu run default 0
+                int name "Height" in menu run default 0
+                logical name "Max" in menu run default 0
+                signal name "chg" default 0
+                signal name "Open" in menu run default 0
+                signal name "Close" in menu run default 0
+               end
+              auto
+               begin
+                var "X" ctrl "chg"
+                var "Y" ctrl "chg"
+                var "Width" ctrl "chg"
+                var "Height" ctrl "chg"
+                var "Max" ctrl "chg"
+               end
+              layout rect 30 30 fill 16777215 line 0 text "Win" font "Arial" height 13 color 0
+              dll file "$DLL$\\Common.dll" func "WindowOperation" setup "" auto
+              dlldata text
+               mode 2
+              enddlldata
+             end
+            dllblock name "Button1" id 367
+             begin
+              pos 265 615
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                signal name "Click" out menu hide default 0
+                logical name "Down" out menu default 0
+                logical name "Enabled" in menu default 1
+                signal name "Press" in menu run default 0
+                signal name "Release" in menu run default 0
+               end
+              dll file "$DLL$\\Common.dll" func "PushButton" draw mouse key setup "Настройка" auto
+              dlldata text
+               mode 2 flags 3 border 0 text "Maximize" mainfont font "Arial" height 15 charset rus color 0 init 1 1
+              enddlldata
+              rect 80 25
+             end
+            input name "Group" id 372
+             begin
+              pos 575 5
+              layer id 1
+              options sizeable
+              vars
+               begin
+                int name "Group" out menu default 0
+               end
+              layout rect 95 20 fill 16777215 line 0 text "Номер группы" font "Arial" height 10 color 0
+             end
+            port name "In" id 512
+             begin
+              pos 10 15
+              layer id 1
+             end
+            input name "open" id 529
+             begin
+              pos 15 605
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "open" out menu default 0
+               end
+              layout rect 125 20 fill 8454143 line 0 text "Сигнал открытия (вход)" font "Arial" height 10 color 0
+             end
+            input name "close" id 530
+             begin
+              pos 15 635
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "close" out menu default 0
+               end
+              layout rect 125 20 fill 8454143 line 0 text "Сигнал закрытия (вход)" font "Arial" height 10 color 0
+             end
+            dllblock name "Block3" id 533
+             begin
+              pos 165 25
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "Start" in menu run default 0
+                signal name "Ready" out menu default 0
+               end
+              layout rect 745 545 fill 16777215 line 0 text "Результат периода" font "Arial" height 13 color 0 right up
+             end
+            dllblock name "Решение центра" id 534
+             begin
+              pos 355 130
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "Start" in menu run default 0
+                signal name "Ready" out menu default 0
+               end
+              layout rect 310 95 fill 16777215 line 0 text "Решение Центра" font "Arial" height 13 color 0 right up
+             end
+            dllblock name "Выбор проектов агентом4" id 535
+             begin
+              pos 585 170
+              layer id 1
+              name pos 147 83
+              options sizeable
+              vars
+               begin
+                signal name "Start" in menu run default 0
+                signal name "Ready" out menu default 0
+               end
+              layout rect 295 70 fill 16777088 line 0 text "Поддержанные Центром\r\nпроекты" font "Arial" height 19 color 0 right
+             end
+            dllblock name "Выбор проектов агентом3" id 536
+             begin
+              pos 585 355
+              layer id 1
+              name pos 147 93
+              options sizeable
+              vars
+               begin
+                signal name "Start" in menu run default 0
+                signal name "Ready" out menu default 0
+               end
+              layout rect 295 80 fill 16777215 line 0 text "Ваша Целевая функция\r\n(выигрыш)" font "Arial" height 19 color 0 right
+             end
+            dllblock name "Выбор проектов агентом" id 537
+             begin
+              pos 585 265
+              layer id 1
+              name pos 147 83
+              options sizeable
+              vars
+               begin
+                signal name "Start" in menu run default 0
+                signal name "Ready" out menu default 0
+               end
+              layout rect 295 70 fill 8454016 line 0 text "Выберите проекты,\r\nкоторые Вы реализуете" font "Arial" height 19 color 0 right
+             end
+            dllblock name "MDNet4" id 538
+             begin
+              pos 360 135
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run default 1
+                signal name "Ready" out default 0
+                matrix double oneindex name "X" in menu run default "[ ] 0"
+                matrix double oneindex name "Y" out menu default "[ ] 0"
+                logical name "Enabled" in menu run default 1
+               end
+              layout rect 30 30 fill 16777215 line 0 text "NET\r\nARR" font "Arial" height 10 color 0 width 1 scalewidth
+              dll file "$DLL$\\Common.dll" func "DoubleNetConn" hint setup "" auto
+              dlldata text
+               host "" port -1 channel "Decision" delay -1 udp 0
+              enddlldata
+             end
+            system name "целевая функция" id 566
+             begin
+              pos 525 390
+              layer id 1
+              vars
+               begin
+                matrix double name "t" in menu default "[ ] 0"
+                matrix double name "r" in menu default "[ ] 0"
+                double name "D_out_1" out menu default "0"
+                double name "beta" in menu default "0"
+                matrix double name "Projects" in menu default "[ ] 0"
+                matrix double name "ProjectsBids" in menu default "[ ] 0"
+               end
+              layers
+               begin
+                layer id 1 name "Слой 1"
+                config name "Основная" current layers =1 end
+               end
+              editor
+               begin
+                window pos 176 62 size 1151 661 printbar 592 2 layerbar 141 2 zoombar 452 2 displaybar 654 2 calcbar 11 2 status
+                field size 2000 2000
+                grid size 5 5 snap color 16711680
+                crosscolor 16711680
+                blocknames show spacing 7 font "Arial" height 9 color 0
+                varnames font "Arial" height 8
+               end
+              print
+               begin
+               end
+              content
+               begin
+                input name "Выбор центра" id 539
+                 begin
+                  pos 335 270
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    matrix double name "t" out menu default "[ ] 0"
+                   end
+                  layout rect 95 20 fill 12632256 line 0 text "Матрица (вход)" font "Arial" height 10 color 0
+                 end
+                input name "Выбор агента" id 540
+                 begin
+                  pos 20 335
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    matrix double name "r" out menu default "[ ] 0"
+                   end
+                  layout rect 95 20 fill 12632256 line 0 text "Матрица (вход)" font "Arial" height 10 color 0
+                 end
+                dllblock name "MatT1" id 541
+                 begin
+                  pos 215 90
+                  layer id 1
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X" in menu run default "[ ] 0"
+                    matrix double name "Y" out menu default "[ ] 0"
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nTR" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatTranspDouble" hint setup "" auto
+                 end
+                dllblock name "Eff * r" id 542
+                 begin
+                  pos 505 110
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X1" in menu run default "[ ] 0"
+                    matrix double name "X2" in menu run default "[ ] 0"
+                    matrix double name "Y" out menu default "[ ] 0"
+                    logical name "OK" out default 1
+                    logical name "Error" out default 0
+                    int name "Rows" out default 0
+                    int name "Cols" out default 0
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nMUL" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatMulDouble" setup "" auto
+                 end
+                dllblock name "MatT2" id 543
+                 begin
+                  pos 200 170
+                  layer id 1
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X" in menu run default "[ ] 0"
+                    matrix double name "Y" out menu default "[ ] 0"
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nTR" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatTranspDouble" hint setup "" auto
+                 end
+                dllblock name "CostBid * t" id 544
+                 begin
+                  pos 505 180
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X1" in menu run default "[ ] 0"
+                    matrix double name "X2" in menu run default "[ ] 0"
+                    matrix double name "Y" out menu default "[ ] 0"
+                    logical name "OK" out default 1
+                    logical name "Error" out default 0
+                    int name "Rows" out default 0
+                    int name "Cols" out default 0
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nMUL" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatMulDouble" setup "" auto
+                 end
+                dllblock name "MatT3" id 545
+                 begin
+                  pos 210 30
+                  layer id 1
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X" in menu run default "[ ] 0"
+                    matrix double name "Y" out menu default "[ ] 0"
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nTR" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatTranspDouble" hint setup "" auto
+                 end
+                dllblock name "Cost * r" id 546
+                 begin
+                  pos 510 40
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X1" in menu run default "[ ] 0"
+                    matrix double name "X2" in menu run default "[ ] 0"
+                    matrix double name "Y" out menu default "[ ] 0"
+                    logical name "OK" out default 1
+                    logical name "Error" out default 0
+                    int name "Rows" out default 0
+                    int name "Cols" out default 0
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nMUL" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatMulDouble" setup "" auto
+                 end
+                dllblock name "Sum_1" id 547
+                 begin
+                  pos 660 125
+                  layer id 1
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    double name "x1" in menu run default "0"
+                    double name "x2" in menu run default "0"
+                    double name "x3" in menu run default "0"
+                    double name "y" out menu default "0"
+                   end
+                  picture id 2 end
+                  dll file "$DLL$\\Common.dll" func "Sum3Double" setup "" auto
+                 end
+                dllblock name "Diff_1" id 548
+                 begin
+                  pos 755 65
+                  layer id 1
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    double name "x1" in menu run default "0"
+                    double name "x2" in menu run default "0"
+                    double name "y" out menu default "0"
+                   end
+                  picture id 3 end
+                  dll file "$DLL$\\Common.dll" func "Dif2Double" setup "" auto
+                 end
+                output name "D_out_1" id 549
+                 begin
+                  pos 995 170
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    double name "D_out_1" in menu default "0"
+                   end
+                  layout rect 95 20 fill 16777215 line 0 text "double (выход)" font "Arial" height 10 color 0
+                 end
+                input name "beta" id 550
+                 begin
+                  pos 30 460
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    double name "beta" out menu default "0"
+                   end
+                  layout rect 95 20 fill 16777215 line 0 text "double (вход)" font "Arial" height 10 color 0
+                 end
+                dllblock name "Поэлементное умножение" id 551
+                 begin
+                  pos 330 365
+                  layer id 1
+                  name pos 15 43
+                  vars
+                   begin
+                    signal name "Start" in menu run default 0
+                    signal name "Ready" out menu default 0
+                    matrix double name "a" in menu default "[ ] 0"
+                    matrix double name "b" in menu default "[ ] 0"
+                    matrix double name "y" out menu default "[ ] 0"
+                   end
+                  auto
+                   begin
+                   end
+                  dll file "Вспомогательные\\multbyelement.dll" func "rdsbcppBlockEntryPoint" cycle
+                  autocomp file "$DLL$\\Common.dll" func "SearchComp" model "Вспомогательные\\multbyelement.mdl" alt "C:\\RDS\\A_Projects\\Деловая игра УБС2016\\Вспомогательные\\multbyelement.mdl\nC:\\RDS\\A_Projects\\Деловая игра УБС2016\\Агент.rds"
+                 end
+                dllblock name "MatSub1" id 552
+                 begin
+                  pos 425 360
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X1" in menu run default "[ ] 0"
+                    matrix double name "X2" in menu run default "[ ] 0"
+                    matrix double name "Y" out menu default "[ ] 0"
+                    int name "Rows" out default 0
+                    int name "Cols" out default 0
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nSUB" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatSubDouble" setup "" auto
+                 end
+                dllblock name "MatT4" id 553
+                 begin
+                  pos 475 360
+                  layer id 1
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X" in menu run default "[ ] 0"
+                    matrix double name "Y" out menu default "[ ] 0"
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nTR" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatTranspDouble" hint setup "" auto
+                 end
+                dllblock name "MatMul1" id 554
+                 begin
+                  pos 605 355
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X1" in menu run default "[ ] 0"
+                    matrix double name "X2" in menu run default "[ ] 0"
+                    matrix double name "Y" out menu default "[ ] 0"
+                    logical name "OK" out default 1
+                    logical name "Error" out default 0
+                    int name "Rows" out default 0
+                    int name "Cols" out default 0
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nMUL" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatMulDouble" setup "" auto
+                 end
+                dllblock name "Штраф" id 555
+                 begin
+                  pos 720 425
+                  layer id 1
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    double name "x1" in menu run default "0"
+                    double name "x2" in menu run default "0"
+                    double name "y" out menu default "0"
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "X" font "Arial" height 13 bold color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "Mul2Double" setup "" auto
+                 end
+                dllblock name "Diff_2" id 556
+                 begin
+                  pos 875 205
+                  layer id 1
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    double name "x1" in menu run default "0"
+                    double name "x2" in menu run default "0"
+                    double name "y" out menu default "0"
+                   end
+                  picture id 3 end
+                  dll file "$DLL$\\Common.dll" func "Dif2Double" setup "" auto
+                 end
+                input name "Проекты" id 557
+                 begin
+                  pos 20 80
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    matrix double name "Projects" out menu default "[ ] 0"
+                   end
+                  layout rect 95 20 fill 12632256 line 0 text "Матрица (вход)" font "Arial" height 10 color 0
+                 end
+                input name "Заявки проектов" id 558
+                 begin
+                  pos 20 180
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    matrix double name "ProjectsBids" out menu default "[ ] 0"
+                   end
+                  layout rect 95 20 fill 12632256 line 0 text "Матрица (вход)" font "Arial" height 10 color 0
+                 end
+                dllblock name "Затраты" id 559
+                 begin
+                  pos 155 30
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X" in menu run default "[ ] 0"
+                    int name "R1" in menu run default 2
+                    int name "R2" in menu run default 3
+                    int name "NR" in menu run default 2
+                    int name "C1" in menu run default 1
+                    int name "C2" in menu run default 3
+                    int name "NC" in menu run default 1
+                    logical name "OK" out default 1
+                    logical name "Error" out default 0
+                    matrix double name "Y" out menu default "[ ] 0"
+                    int name "Flags" default 80
+                    int name "Rows" out default 0
+                    int name "Cols" out default 0
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nEX" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatCutDouble" hint setup "" auto
+                 end
+                dllblock name "Эффекты" id 560
+                 begin
+                  pos 155 95
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X" in menu run default "[ ] 0"
+                    int name "R1" in menu run default 2
+                    int name "R2" in menu run default 3
+                    int name "NR" in menu run default 2
+                    int name "C1" in menu run default 2
+                    int name "C2" in menu run default 3
+                    int name "NC" in menu run default 1
+                    logical name "OK" out default 1
+                    logical name "Error" out default 0
+                    matrix double name "Y" out menu default "[ ] 0"
+                    int name "Flags" default 64
+                    int name "Rows" out default 0
+                    int name "Cols" out default 0
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nEX" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatCutDouble" hint setup "" auto
+                 end
+                dllblock name "Заявки затрат" id 561
+                 begin
+                  pos 155 165
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X" in menu run default "[ ] 0"
+                    int name "R1" in menu run default 2
+                    int name "R2" in menu run default 3
+                    int name "NR" in menu run default 2
+                    int name "C1" in menu run default 1
+                    int name "C2" in menu run default 3
+                    int name "NC" in menu run default 1
+                    logical name "OK" out default 1
+                    logical name "Error" out default 0
+                    matrix double name "Y" out menu default "[ ] 0"
+                    int name "Flags" default 80
+                    int name "Rows" out default 0
+                    int name "Cols" out default 0
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nEX" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatCutDouble" hint setup "" auto
+                 end
+                dllblock name "Заявки эффектов" id 562
+                 begin
+                  pos 155 225
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X" in menu run default "[ ] 0"
+                    int name "R1" in menu run default 2
+                    int name "R2" in menu run default 3
+                    int name "NR" in menu run default 2
+                    int name "C1" in menu run default 2
+                    int name "C2" in menu run default 3
+                    int name "NC" in menu run default 1
+                    logical name "OK" out default 1
+                    logical name "Error" out default 0
+                    matrix double name "Y" out menu default "[ ] 0"
+                    int name "Flags" default 64
+                    int name "Rows" out default 0
+                    int name "Cols" out default 0
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nEX" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatCutDouble" hint setup "" auto
+                 end
+                dllblock name "DEdit1" id 563
+                 begin
+                  pos 170 485
+                  layer id 1
+                  name hidden
+                  options sizeable
+                  vars
+                   begin
+                    signal name "Start" in run hide default 0
+                    signal name "Ready" out hide default 0
+                    double name "v" in run hide default "0"
+                    double name "edit" out menu hide default "0"
+                   end
+                  dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh mouse setup "Настройка" auto
+                  dlldata text
+                   value prec 2 font "Arial" height 15 color 0 set 1 initial 1
+                   frame border 0 fill 16777215
+                   input l inc 0.01 updown arrwidth 13
+                  enddlldata
+                  rect 75 19
+                 end
+                dllblock name "DDisplay1" id 564
+                 begin
+                  pos 830 85
+                  layer id 1
+                  name hidden
+                  options sizeable
+                  vars
+                   begin
+                    signal name "Start" in run hide default 0
+                    signal name "Ready" out hide default 0
+                    double name "v" in menu run hide default "0"
+                   end
+                  dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+                  dlldata text
+                   value prec 1 font "Arial" height 15 color 0 set 0 initial
+                   frame border 0 fill 12632256
+                  enddlldata
+                  rect 75 19
+                 end
+                dllblock name "DDisplay2" id 565
+                 begin
+                  pos 830 380
+                  layer id 1
+                  name hidden
+                  options sizeable
+                  vars
+                   begin
+                    signal name "Start" in run hide default 0
+                    signal name "Ready" out hide default 0
+                    double name "v" in menu run hide default "0"
+                   end
+                  dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+                  dlldata text
+                   value prec 1 font "Arial" height 15 color 0 set 0 initial
+                   frame border 0 fill 12632256
+                  enddlldata
+                  rect 75 19
+                 end
+                conn id 114
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Эффекты" var "Y" out pos 30 10 cname right up
+                    id 1 block "MatT1" var "X" in pos 0 20 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 116
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "MatT1" var "Y" out pos 30 20 cname right up
+                    id 1 block "Eff * r" var "X1" in pos 0 10 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 117
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Выбор агента" var "r" out pos 95 10 cname right up
+                    id 1 block "Eff * r" var "X2" in pos 0 25 cname left up
+                    id 2 pos 450 155
+                    id 3 block "Cost * r" var "X2" in pos 0 25 cname left up
+                    id 4 pos 450 85
+                    id 5 pos 175 345
+                    id 6 block "Поэлементное умножение" var "b" in pos 0 15 cname left up
+                   end
+                  lines
+                   begin
+                    line 2 1
+                    line 3 4
+                    line 4 2
+                    line 5 2
+                    line 6 5
+                    line 0 5
+                   end
+                 end
+                conn id 121
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Заявки затрат" var "Y" out pos 30 20 cname right up
+                    id 1 block "MatT2" var "X" in pos 0 15 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 122
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "MatT2" var "Y" out pos 30 15 cname right up
+                    id 1 block "CostBid * t" var "X1" in pos 0 10 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 123
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Выбор центра" var "t" out pos 95 10 cname right up
+                    id 1 block "CostBid * t" var "X2" in pos 0 15 cname left up
+                    id 2 pos 460 280
+                    id 3 block "MatMul1" var "X2" in pos 0 25 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 2
+                    line 2 1
+                    line 3 2
+                   end
+                 end
+                conn id 125
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Затраты" var "Y" out pos 30 25 cname right up
+                    id 1 block "MatT3" var "X" in pos 0 20 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 127
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "MatT3" var "Y" out pos 25 15 cname right up
+                    id 1 block "Cost * r" var "X1" in pos 0 5 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 132
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Eff * r" var "Y[0,0]" out pos 30 15 cname right up
+                    id 1 block "Sum_1" var "x1" in pos 0 20 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 133
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "CostBid * t" var "Y[0,0]" out pos 30 15 cname right up
+                    id 1 block "Sum_1" var "x2" in pos 0 25 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 134
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Sum_1" var "y" out pos 15 0 cname right up
+                    id 1 block "Diff_1" var "x1" in pos 0 10 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 135
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Cost * r" var "Y[0,0]" out pos 25 15 cname right up
+                    id 1 block "Diff_1" var "x2" in pos 0 25 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 144
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Эффекты" var "Y" out pos 25 30 cname right down
+                    id 1 block "Поэлементное умножение" var "a" in pos 0 15 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 147
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Заявки эффектов" var "Y" out pos 30 25 cname right up
+                    id 1 block "MatSub1" var "X1" in pos 0 10 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 148
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Поэлементное умножение" var "y" out pos 25 15 cname right up
+                    id 1 block "MatSub1" var "X2" in pos 0 20 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 150
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "MatSub1" var "Y" out pos 30 20 cname right up
+                    id 1 block "MatT4" var "X" in pos 0 20 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 152
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "MatT4" var "Y" out pos 30 15 cname right up
+                    id 1 block "MatMul1" var "X1" in pos 0 5 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 155
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "DEdit1" var "edit" out pos 75 10 cname right up hidden
+                    id 1 block "Штраф" var "x1" in pos 0 15 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 156
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "MatMul1" var "Y[0,0]" out pos 30 15 cname right up
+                    id 1 block "Штраф" var "x2" in pos 0 10 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 158
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Diff_1" var "y" out pos 25 25 cname right up
+                    id 1 block "Diff_2" var "x1" in pos 0 10 cname left up
+                    id 2 pos 810 130
+                    id 3 block "DDisplay1" var "v" in pos 10 19 cname right down hidden
+                   end
+                  lines
+                   begin
+                    line 0 2
+                    line 2 1
+                    line 2 3
+                   end
+                 end
+                conn id 159
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Штраф" var "y" out pos 30 15 cname right up
+                    id 1 block "Diff_2" var "x2" in pos 0 25 cname left up
+                    id 2 pos 785 375
+                    id 3 block "DDisplay2" var "v" in pos 0 10 cname left up hidden
+                   end
+                  lines
+                   begin
+                    line 0 2
+                    line 2 1
+                    line 2 3
+                   end
+                 end
+                conn id 160
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Diff_2" var "y" out pos 25 15 cname right up
+                    id 1 block "D_out_1" var "D_out_1" in pos 25 0 cname right up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 173
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Проекты" var "Projects" out pos 95 10 cname right up
+                    id 1 block "Эффекты" var "X" in pos 0 15 cname left up
+                    id 2 pos 125 95
+                    id 3 block "Затраты" var "X" in pos 5 20 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 2
+                    line 2 1
+                    line 3 2
+                   end
+                 end
+                conn id 176
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Заявки проектов" var "ProjectsBids" out pos 90 10 cname right up
+                    id 1 block "Заявки затрат" var "X" in pos 0 15 cname left up
+                    id 2 pos 130 205
+                    id 3 block "Заявки эффектов" var "X" in pos 0 25 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 2
+                    line 2 1
+                    line 3 2
+                   end
+                 end
+               end
+              end
+            dllblock name "DDisplay4" id 568
+             begin
+              pos 605 405
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in menu run hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+              dlldata text
+               value prec 1 font "Arial" height 19 color 0 set 0 initial
+               frame border 4227327 fill 16777215
+              enddlldata
+              rect 75 24
+             end
+            system name "Sys1" id 574
+             begin
+              pos 360 170
+              layer id 1
+              options sizeable
+              vars
+               begin
+                int name "player" in menu default 0
+                matrix int name "decision" in menu default "[ ] 0"
+                matrix int name "suppProjects" out menu default "[ ] 0"
+                matrix int name "ProjectsBids" in menu default "[ ] 0"
+                matrix int name "supported" out menu default "[ ] 0"
+               end
+              layout rect 155 45 fill 16777215 line 0 text "Подсистема выделения \r\nподдержанных проектов" font "Arial" height 13 color 0
+              layers
+               begin
+                layer id 1 name "Слой 1"
+                config name "Основная" current layers =1 end
+               end
+              editor
+               begin
+                window pos 640 180 size 640 720 printbar 592 2 layerbar 141 2 zoombar 452 2 displaybar 654 2 calcbar 11 2 status
+                field size 2000 2000
+                grid size 5 5 snap color 16711680
+                crosscolor 16711680
+                blocknames spacing 7 font "Arial" height 9 color 0
+                varnames font "Arial" height 8
+               end
+              print
+               begin
+               end
+              content
+               begin
+                dllblock name "MatEx1" id 569
+                 begin
+                  pos 245 65
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X" in menu run default "[ ] 0"
+                    int name "R1" in menu run default 2
+                    int name "R2" in menu run default 3
+                    int name "NR" in menu run default 2
+                    int name "C1" in menu run default 2
+                    int name "C2" in menu run default 3
+                    int name "NC" in menu run default 1
+                    logical name "OK" out default 1
+                    logical name "Error" out default 0
+                    matrix double name "Y" out menu default "[ ] 0"
+                    int name "Flags" default 81
+                    int name "Rows" out default 0
+                    int name "Cols" out default 0
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nEX" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatCutDouble" hint setup "" auto
+                 end
+                input name "player" id 570
+                 begin
+                  pos 15 100
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    int name "player" out menu default 0
+                   end
+                  layout rect 95 20 fill 16777215 line 0 text "номер игрока" font "Arial" height 10 color 0
+                 end
+                input name "decision" id 571
+                 begin
+                  pos 15 35
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    matrix int name "decision" out menu default "[ ] 0"
+                   end
+                  layout rect 95 20 fill 12632256 line 0 text "Решение Центра" font "Arial" height 10 color 0
+                 end
+                dllblock name "Block1" id 572
+                 begin
+                  pos 155 70
+                  layer id 1
+                  vars
+                   begin
+                    signal name "Start" in menu run default 0
+                    signal name "Ready" out menu default 0
+                    int name "player" in menu default 0
+                    matrix int name "M" in menu run default "[ ] 0"
+                    int name "startrow" out menu default 0
+                    int name "endrow" out menu default 0
+                   end
+                  auto
+                   begin
+                   end
+                  dll file "Вспомогательные\\выделениеСтрокИгрока.dll" func "rdsbcppBlockEntryPoint"
+                  autocomp file "$DLL$\\Common.dll" func "SearchComp" model "Вспомогательные\\выделениеСтрокИгрока.mdl" alt "C:\\RDS\\A_Projects\\Деловая игра УБС2016\\Вспомогательные\\выделениеСтрокИгрока.mdl\nC:\\RDS\\A_Projects\\Деловая игра УБС2016\\Агент.rds"
+                 end
+                output name "suppProjects" id 573
+                 begin
+                  pos 360 175
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    matrix int name "suppProjects" in menu default "[ ] 0"
+                   end
+                  layout rect 120 30 fill 12632256 line 0 text "поддержанные проекты" font "Arial" height 10 color 0
+                 end
+                input name "ProjectsBids" id 601
+                 begin
+                  pos 15 175
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    matrix int name "ProjectsBids" out menu default "[ ] 0"
+                   end
+                  layout rect 115 20 fill 12632256 line 0 text "Заявки игрока (вход)" font "Arial" height 10 color 0
+                 end
+                dllblock name "MatJoin1" id 602
+                 begin
+                  pos 235 175
+                  layer id 1
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "A" in menu run default "[ ] 0"
+                    matrix double name "B" in menu run default "[ ] 0"
+                    matrix double name "Y" out menu default "[ ] 0"
+                    logical name "OK" out default 1
+                    logical name "Error" out default 0
+                    int name "Rows" out default 0
+                    int name "Cols" out default 0
+                    int name "Flags" default 1
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nA|B" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatJoinDouble" hint setup "" auto
+                 end
+                output name "supported" id 605
+                 begin
+                  pos 355 65
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    matrix int name "supported" in menu default "[ ] 0"
+                   end
+                  layout rect 95 20 fill 12632256 line 0 text "вектор подд.\r\nпроектов (выход)" font "Arial" height 10 color 0
+                 end
+                conn id 282
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "player" var "player" out pos 85 20 cname right down
+                    id 1 block "Block1" var "player" in pos 0 25 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 284
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Block1" var "startrow" out pos 30 5 cname right up
+                    id 1 block "MatEx1" var "R1" in pos 0 10 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 285
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "Block1" var "endrow" out pos 30 15 cname right up
+                    id 1 block "MatEx1" var "R2" in pos 0 20 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 287
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "MatEx1" var "Y" out pos 30 15 cname right up
+                    id 1 block "MatJoin1" var "B" in pos 10 0 cname right up
+                    id 2 pos 260 125
+                    id 3 block "supported" var "supported" in pos 0 10 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 2
+                    line 2 1
+                    line 2 3
+                   end
+                 end
+                conn id 297
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "decision" var "decision" out pos 95 15 cname right up
+                    id 1 pos 255 50
+                    id 2 block "MatEx1" var "X" in pos 10 0 cname right up
+                    id 3 pos 125 50
+                    id 4 block "Block1" var "M" in pos 0 10 cname left up
+                   end
+                  lines
+                   begin
+                    line 1 2
+                    line 0 3
+                    line 3 1
+                    line 4 3
+                   end
+                 end
+                conn id 603
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "ProjectsBids" var "ProjectsBids" out pos 115 10 cname right up
+                    id 1 block "MatJoin1" var "A" in pos 0 10 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 604
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "MatJoin1" var "Y" out pos 30 20 cname right up
+                    id 1 block "suppProjects" var "suppProjects" in pos 0 20 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+               end
+              end
+            dllblock name "MDDisplay1" id 575
+             begin
+              pos 440 135
+              layer id 1
+              name hidden
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                matrix double name "M" in menu run hide default "[ ] 0"
+               end
+              picture id 1 end
+              dll file "$DLL$\\Common.dll" func "MatDisplay" mouse setup "Открыть" auto
+              dlldata text
+               window 209 153 636 480 horz "53.254438" filename ""
+               grid col 84 dec 1 open
+               export label "" file ""
+               expfam label "" file ""
+               bitmap file "" color 255 horz 0 16 "0" "1" vert 0 16 "0" "1"
+               graph row autox "0.1" autoy "0.1" legend 50 xfix
+               title text "" param font "Arial" height -13 charset 1 color 0
+               layout back 16777215 frame 0 border 16777215 0
+               axisx
+               begin
+               title text "" param font "Arial" height -13 charset 1 color 0
+               scale min "0" max "1" step "1" numbers dec 1 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+               lines show color 0 style dot
+               zero show color 0 style solid
+               end
+               axisy
+               begin
+               title text "" param font "Arial" height -13 charset 1 color 0
+               scale min "0" max "1" step "1" numbers dec 1 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+               lines show color 0 style dot
+               zero show color 0 style solid
+               end
+               line color 0 width 1 style 0 index 0
+               csv 44 34 0
+              enddlldata
+             end
+            dllblock name "MDDisplay2" id 576
+             begin
+              pos 610 190
+              layer id 1
+              name hidden
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                matrix double name "M" in menu run hide default "[ ] 0"
+               end
+              picture id 1 end
+              dll file "$DLL$\\Common.dll" func "MatDisplay" mouse setup "Открыть" auto
+              dlldata text
+               window 29 127 517 480 horz "53.254438" filename ""
+               grid col 84 dec 1 open
+               export label "" file ""
+               expfam label "" file ""
+               bitmap file "" color 255 horz 0 16 "0" "1" vert 0 16 "0" "1"
+               graph row autox "0.1" autoy "0.1" legend 50 xfix
+               title text "" param font "Arial" height -13 charset 1 color 0
+               layout back 16777215 frame 0 border 16777215 0
+               axisx
+               begin
+               title text "" param font "Arial" height -13 charset 1 color 0
+               scale min "0" max "1" step "1" numbers dec 1 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+               lines show color 0 style dot
+               zero show color 0 style solid
+               end
+               axisy
+               begin
+               title text "" param font "Arial" height -13 charset 1 color 0
+               scale min "0" max "1" step "1" numbers dec 1 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+               lines show color 0 style dot
+               zero show color 0 style solid
+               end
+               line color 0 width 1 style 0 index 0
+               csv 44 34 0
+              enddlldata
+             end
+            input name "PlayerBids" id 582
+             begin
+              pos 25 290
+              layer id 1
+              options sizeable
+              vars
+               begin
+                matrix int name "PlayerBids" out menu default "[ ] 0"
+               end
+              layout rect 115 20 fill 12632256 line 0 text "Заявки игрока (вход)" font "Arial" height 10 color 0
+             end
+            dllblock name "Button2" id 585
+             begin
+              pos 585 520
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                signal name "Click" out menu hide default 0
+                logical name "Down" out menu default 0
+                logical name "Enabled" in menu default 1
+                signal name "Press" in menu run default 0
+                signal name "Release" in menu run default 0
+               end
+              dll file "$DLL$\\Common.dll" func "PushButton" draw mouse key setup "Настройка" auto
+              dlldata text
+               mode 0 flags 1 border 0 llcolor 16777215 ldcolor 14935011 dlcolor 10526880 ddcolor 6908265 fcolor 12308991 text "Следующий период" mainfont font "Arial" height 15 charset rus color 0 init 0 1
+              enddlldata
+              rect 190 30
+             end
+            dllblock name "SigNet1" id 589
+             begin
+              pos 835 520
+              layer id 1
+              name hidden
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                signal name "x" in menu run default 0
+                signal name "y" out menu default 0
+                logical name "Enabled" in menu default 1
+               end
+              layout rect 30 30 fill 8454143 line 0 text "NET\r\nsig" font "Arial" height 10 color 0 width 1 scalewidth
+              dll file "$DLL$\\Common.dll" func "DoubleNetConn" hint setup "" auto
+              dlldata text
+               host "" port -1 channel "NextPeriod" delay -1 udp 0
+              enddlldata
+             end
+            dllblock name "DDisplay1" id 370
+             begin
+              pos 185 50
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in menu run hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 0 initial
+               frame border 0 fill 12632256
+               caption text "Этап" font "Arial" height 15 charset 1 color 0
+              enddlldata
+              rect 75 19
+             end
+            dllblock name "DDisplay2" id 373
+             begin
+              pos 450 50
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in menu run hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 0 initial
+               frame border 0 fill 12632256
+               caption text "Группа" font "Arial" height 15 charset 1 color 0
+              enddlldata
+              rect 75 19
+             end
+            dllblock name "DDisplay3" id 374
+             begin
+              pos 345 50
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in menu run hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 0 initial
+               frame border 0 fill 12632256
+               caption text "Игрок" font "Arial" height 15 charset 1 color 0
+              enddlldata
+              rect 75 19
+             end
+            dllblock name "DEdit1" id 376
+             begin
+              pos 259 50
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in run hide default "0"
+                double name "edit" out menu hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh mouse setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 20 initial 20
+               frame border 0 fill 12632256
+               caption text "из" font "Arial" height 15 charset 1 color 0
+              enddlldata
+              rect 50 19
+             end
+            system name "Sys4" id 613
+             begin
+              pos 410 280
+              layer id 1
+              vars
+               begin
+                matrix int name "trueproj" in menu default "[ ] 0"
+                matrix int name "bidsproj" out menu default "[ ] 0"
+               end
+              layers
+               begin
+                layer id 1 name "Слой 1"
+                config name "Основная" current layers =1 end
+               end
+              editor
+               begin
+                window pos 640 180 size 640 720 printbar 592 2 layerbar 141 2 zoombar 452 2 displaybar 654 2 calcbar 11 2 status
+                field size 2000 2000
+                grid size 5 5 snap color 16711680
+                crosscolor 16711680
+                blocknames spacing 7 font "Arial" height 9 color 0
+                varnames font "Arial" height 8
+               end
+              print
+               begin
+               end
+              content
+               begin
+                input name "trueproj" id 607
+                 begin
+                  pos 5 210
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    matrix int name "trueproj" out menu default "[ ] 0"
+                   end
+                  layout rect 160 20 fill 12632256 line 0 text "Истинные проекты (вход)" font "Arial" height 10 color 0
+                 end
+                dllblock name "MatDim1" id 608
+                 begin
+                  pos 225 90
+                  layer id 1
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "X" in menu run default "[ ] 0"
+                    int name "Rows" out menu default 0
+                    int name "Cols" out menu default 0
+                    logical name "Empty" out menu default 1
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nDIM" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatDimDouble" setup "" auto
+                 end
+                dllblock name "MatConst2" id 610
+                 begin
+                  pos 380 90
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    int name "Rows" in menu run default 2
+                    int name "Cols" in menu run default 1
+                    double name "Val" in menu run default "1"
+                    matrix double name "Y" out menu default "[ ] 0"
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nC" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatConstDouble" hint setup "" auto
+                 end
+                dllblock name "MatJoin2" id 611
+                 begin
+                  pos 380 205
+                  layer id 1
+                  vars
+                   begin
+                    signal name "Start" in run default 1
+                    signal name "Ready" out default 0
+                    matrix double name "A" in menu run default "[ ] 0"
+                    matrix double name "B" in menu run default "[ ] 0"
+                    matrix double name "Y" out menu default "[ ] 0"
+                    logical name "OK" out default 1
+                    logical name "Error" out default 0
+                    int name "Rows" out default 0
+                    int name "Cols" out default 0
+                    int name "Flags" default 1
+                   end
+                  layout rect 30 30 fill 16777215 line 0 text "MAT\r\nA|B" font "Arial" height 10 color 0 width 1 scalewidth
+                  dll file "$DLL$\\Common.dll" func "MatJoinDouble" hint setup "" auto
+                 end
+                output name "bidsproj" id 612
+                 begin
+                  pos 475 210
+                  layer id 1
+                  options sizeable
+                  vars
+                   begin
+                    matrix int name "bidsproj" in menu default "[ ] 0"
+                   end
+                  layout rect 120 20 fill 12632256 line 0 text "Проекты-заявки (выход)" font "Arial" height 10 color 0
+                 end
+                conn id 423
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "MatDim1" var "Rows" out pos 30 15 cname right up
+                    id 1 block "MatConst2" var "Rows" in pos 5 15 cname left up
+                   end
+                  lines
+                   begin
+                    line 1 0
+                   end
+                 end
+                conn id 425
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "trueproj" var "trueproj" out pos 155 10 cname right up
+                    id 1 block "MatJoin2" var "A" in pos 0 15 cname left up
+                    id 2 pos 195 220
+                    id 3 block "MatDim1" var "X" in pos 0 15 cname left up
+                    id 4 pos 195 105
+                   end
+                  lines
+                   begin
+                    line 0 2
+                    line 2 1
+                    line 3 4
+                    line 4 2
+                   end
+                 end
+                conn id 430
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "MatConst2" var "Y" out pos 15 30 cname right down
+                    id 1 block "MatJoin2" var "B" in pos 15 0 cname right up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+                conn id 432
+                 begin
+                  layer id 1
+                  style name "Стандартная связь"
+                  points
+                   begin
+                    id 0 block "MatJoin2" var "Y" out pos 30 15 cname right up
+                    id 1 block "bidsproj" var "bidsproj" in pos 0 10 cname left up
+                   end
+                  lines
+                   begin
+                    line 0 1
+                   end
+                 end
+               end
+              end
+            dllblock name "MDEdit3" id 614
+             begin
+              pos 605 285
+              layer id 1
+              name hidden
+              vars
+               begin
+                signal name "Start" in run default 0
+                signal name "Ready" out default 0
+                matrix double name "M" out menu hide default "[ ] 0"
+                matrix double name "GraphMark" in menu run default "[ ] 0"
+                matrix double oneindex name "EDbl" in menu run default "[ ] 0"
+                matrix int oneindex name "EInt" in menu run default "[ ] 0"
+                matrix double name "MInput" in default "[ ] 0"
+                signal name "MInputSet" in run default 0
+               end
+              picture id 0 end
+              dll file "$DLL$\\Common.dll" func "MatEdit" mouse setup "Открыть" auto
+              blob 0 0 1
+               440300000003000000000000000000F03F00000000000000400000000000000040000000000000F03F00000000000024400000000000000040000000000000F03F000000000000104000000000000000
+               40
+              endblob
+              dlldata text
+               window 597 72 612 326 horz "50" filename "" winhdr 1 "Заявки на основе истинных проектов"
+               grid col 113 dec 0 open setmod
+               export label "" file ""
+               expfam label "" file ""
+               bitmap file "" color 255 horz 0 16 "0" "1" vert 0 16 "0" "1"
+               graph row autox "0.1" autoy "0.1" legend 50 xfix
+               title text "" param font "Arial" height -13 charset 1 color 0
+               layout back 16777215 frame 0 border 16777215 0
+               axisx
+               begin
+               title text "" param font "Arial" height -13 charset 1 color 0
+               scale min "0" max "1" step "1" numbers dec 0 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+               lines show color 0 style dot
+               zero show color 0 style solid
+               end
+               axisy
+               begin
+               title text "" param font "Arial" height -13 charset 1 color 0
+               scale min "0" max "1" step "1" numbers dec 0 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+               lines show color 0 style dot
+               zero show color 0 style solid
+               end
+               curblob
+               colhdr 1 "Выбор\r\nЗаявка Эфф.\r\nЗаявка Затр.\r\nЭффект истинный\r\nЗатраты истинные\r\n"
+               csv 44 34 0
+               extmark horz 5 1 0 vert 5 1 0 type 1 5 0
+              enddlldata
+             end
+            dllblock name "MatEx1" id 616
+             begin
+              pos 540 325
+              layer id 1
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run default 1
+                signal name "Ready" out default 0
+                matrix double name "X" in menu run default "[ ] 0"
+                int name "R1" in menu run default 2
+                int name "R2" in menu run default 3
+                int name "NR" in menu run default 2
+                int name "C1" in menu run default 2
+                int name "C2" in menu run default 3
+                int name "NC" in menu run default 1
+                logical name "OK" out default 1
+                logical name "Error" out default 0
+                matrix double name "Y" out menu default "[ ] 0"
+                int name "Flags" default 64
+                int name "Rows" out default 0
+                int name "Cols" out default 0
+               end
+              layout rect 30 30 fill 16777215 line 0 text "MAT\r\nEX" font "Arial" height 10 color 0 width 1 scalewidth
+              dll file "$DLL$\\Common.dll" func "MatCutDouble" hint setup "" auto
+             end
+            dllblock name "DDisplay5" id 625
+             begin
+              pos 585 50
+              layer id 1
+              name hidden
+              options sizeable
+              vars
+               begin
+                signal name "Start" in run hide default 0
+                signal name "Ready" out hide default 0
+                double name "v" in menu run hide default "0"
+               end
+              dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+              dlldata text
+               value prec 0 font "Arial" height 15 color 0 set 0 initial
+               frame border 0 fill 12632256
+               caption text "Бюджет центра" font "Arial" height 15 charset 1 color 0
+              enddlldata
+              rect 160 19
+             end
+            conn id 336
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Button1" var "Down" out pos 20 0 cname right up
+                id 1 block "WindowOp1" var "Max" in pos 30 10 cname right up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 337
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "open" var "open" out pos 125 15 cname right up
+                id 1 block "WindowOp1" var "Open" in pos 0 10 cname left up
+                id 2 pos 175 620
+                id 3 pos 365 250
+                id 4 pos 570 250
+                id 5 block "MDEdit3" var "MInputSet" in pos 0 5 cname left up
+               end
+              lines
+               begin
+                line 0 2
+                line 2 1
+                line 2 3
+                line 3 4
+                line 4 5
+               end
+             end
+            conn id 339
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "close" var "close" out pos 125 5 cname right up
+                id 1 block "WindowOp1" var "Close" in pos 0 30 cname left up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 342
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 bus "Шина1" var "Stage" out pos 20 85 cname right up
+                id 1 block "DDisplay1" var "v" in pos 50 19 cname right down hidden
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 347
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 bus "Шина1" var "PlayerNum" out pos 20 100 cname right up
+                id 1 block "DDisplay3" var "v" in pos 45 19 cname right down hidden
+                id 2 pos 135 90
+                id 3 pos 205 195
+                id 4 block "Sys1" var "player" in pos 0 25 cname left up
+               end
+              lines
+               begin
+                line 0 2
+                line 2 1
+                line 2 3
+                line 3 4
+               end
+             end
+            conn id 348
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Group" var "Group" out pos 75 0 cname right up
+                id 1 block "DDisplay2" var "v" in pos 35 19 cname right down hidden
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 577
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "MDEdit3" var "M" out pos 5 30 cname right down hidden
+                id 1 block "MatEx1" var "X" in pos 0 15 cname left up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 578
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "MDNet4" var "Y" out pos 30 15 cname right up
+                id 1 block "Sys1" var "decision" in pos 55 5 cname right up
+                id 2 pos 415 150
+                id 3 block "MDDisplay1" var "M" in pos 0 15 cname left up hidden
+               end
+              lines
+               begin
+                line 0 2
+                line 2 1
+                line 2 3
+               end
+             end
+            conn id 579
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "целевая функция" var "D_out_1" out pos 25 20 cname right up
+                id 1 block "DDisplay4" var "v" in pos 0 15 cname left up hidden
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 580
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Sys1" var "suppProjects" out pos 150 40 cname right up
+                id 1 block "MDDisplay2" var "M" in pos 0 20 cname left up hidden
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            bus name "Шина1" id 581
+             begin
+              vars
+               begin
+                int name "Stage"
+                matrix int name "TrueProjects"
+                int name "PlayerNum"
+                int name "Budget"
+               end
+              layer id 1
+              style name "Стандартная шина" dotsize 0
+              points
+               begin
+                id 0 block "In" pos 10 15 cname right down
+                id 1 pos 20 185
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 583
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "PlayerBids" var "PlayerBids" out pos 100 20 cname right down
+                id 1 block "целевая функция" var "ProjectsBids" in pos 0 20 cname left up
+                id 2 pos 150 315
+                id 3 block "Sys1" var "ProjectsBids" in pos 15 45 cname right down
+               end
+              lines
+               begin
+                line 0 2
+                line 2 1
+                line 2 3
+               end
+             end
+            conn id 584
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 bus "Шина1" var "TrueProjects" out pos 20 160 cname right up
+                id 1 block "целевая функция" var "Projects" in pos 0 10 cname left up
+                id 2 pos 370 325
+                id 3 block "Sys4" var "trueproj" in pos 0 15 cname left up
+               end
+              lines
+               begin
+                line 0 2
+                line 2 1
+                line 2 3
+               end
+             end
+            conn id 590
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Button2" var "Click" out pos 190 15 cname right up hidden
+                id 1 block "SigNet1" var "x" in pos 0 15 cname left up
+                id 2 pos 790 535
+                id 3 pos 790 605
+                id 4 pos 220 600
+                id 5 block "WindowOp1" var "Close" in pos 15 30 cname right down
+               end
+              lines
+               begin
+                line 0 2
+                line 2 1
+                line 2 3
+                line 3 4
+                line 4 5
+               end
+             end
+            conn id 591
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 pos 910 85
+                id 1 pos 165 85
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 606
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Sys1" var "supported" out pos 120 45 cname right down
+                id 1 block "целевая функция" var "t" in pos 0 5 cname left up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 615
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "Sys4" var "bidsproj" out pos 15 30 cname right down
+                id 1 block "MDEdit3" var "MInput" in pos 0 25 cname left up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 617
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 block "MatEx1" var "Y" out pos 30 20 cname right up
+                id 1 block "целевая функция" var "r" in pos 15 0 cname right up
+               end
+              lines
+               begin
+                line 0 1
+               end
+             end
+            conn id 626
+             begin
+              layer id 1
+              style name "Стандартная связь"
+              points
+               begin
+                id 0 bus "Шина1" var "Budget" out pos 20 125 cname right up
+                id 1 pos 535 105
+                id 2 block "DDisplay5" var "v" in pos 10 19 cname right down hidden
+               end
+              lines
+               begin
+                line 0 1
+                line 1 2
+               end
+             end
+           end
+          end
+        dllblock name "LinApprox1" id 411
+         begin
+          pos 180 510
+          layer id 1
+          vars
+           begin
+            signal name "Start" in run default 1
+            signal name "Ready" out default 0
+            matrix double name "M" in menu run default "[ ] 0"
+            signal name "NewM" default 0
+            double name "x" in menu run default "0"
+            double name "y" out menu run hide default "0"
+            int name "XIndex" in run default 0
+            int name "YIndex" in run default 1
+           end
+          auto
+           begin
+            var "M" ctrl "NewM"
+            var "XIndex" ctrl "NewM"
+           end
+          picture id 4 end
+          dll file "$DLL$\\Common.dll" func "LinApprox" hint setup "" auto
+          dlldata text
+           col sort
+          enddlldata
+         end
+        dllblock name "MDGEdit1" id 413
+         begin
+          pos 180 570
+          layer id 1
+          name hidden
+          vars
+           begin
+            signal name "Start" in run default 0
+            signal name "Ready" out default 0
+            matrix double name "M" out menu hide default "[ ] 0"
+           end
+          picture id 5 end
+          dll file "$DLL$\\Common.dll" func "MatEdit" mouse setup "Открыть" auto
+          blob 0 0 1
+           440B0000000200000000000000000000000000000000000000000000000000F03F000000000000F03F0000000000000040000000000000F03F0000000000000840000000000000F03F00000000000010
+           40000000000000F03F0000000000001440000000000000F03F0000000000001840000000000000F03F0000000000001C40000000000000F03F0000000000002040000000000000F03F00000000000022
+           40000000000000F03F00000000000024400000000000000040
+          endblob
+          dlldata text
+           window 288 104 748 592 horz "26.216216" filename ""
+           grid col 64 dec 1 open setmod
+           export label "" file ""
+           expfam label "" file ""
+           bitmap file "" color 255 horz 0 16 "0" "1" vert 0 16 "0" "1"
+           graph col autox "0" autoy "0" horz 0 open legend 50
+           title text "График" param font "Arial" height -13 charset 1 color 0 show
+           layout back 16777215 frame 0 border 16777215 0
+           axisx
+           begin
+           title text "Ось X" param font "Arial" height -13 charset 1 color 0 show
+           scale min "0" max "10" step "1" numbers dec 0 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+           lines show color 0 style dot
+           zero show color 0 style solid
+           end
+           axisy
+           begin
+           title text "Ось Y" param font "Arial" height -13 charset 1 color 0 show
+           scale min "0" max "10" step "1" numbers dec 0 param font "Arial" height 13 charset 1 color 0 ticks 5 mul 0
+           lines show color 0 style dot
+           zero show color 0 style solid
+           end
+           line color 0 width 1 style 0 index 1
+           curblob
+           csv 44 34 0
+          enddlldata
+         end
+        port name "Port1" id 503
+         begin
+          pos 15 15
+          layer id 1
+         end
+        port name "Out" id 507
+         begin
+          pos 560 50
+          layer id 1
+         end
+        dllblock name "Block2" id 514
+         begin
+          pos 30 365
+          layer id 1
+          options sizeable
+          vars
+           begin
+            signal name "Start" in menu run default 0
+            signal name "Ready" out menu default 0
+           end
+          layout rect 140 50 fill 16777215 line 0 text "Идентификатор сцены" font "Arial" height 13 color 0 right up
+         end
+        dllblock name "DEdit2" id 515
+         begin
+          pos 45 390
+          layer id 1
+          name hidden
+          options sizeable
+          vars
+           begin
+            signal name "Start" in run hide default 0
+            signal name "Ready" out hide default 0
+            double name "v" in run hide default "0"
+            double name "edit" out menu hide default "0"
+           end
+          dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh mouse setup "Настройка" auto
+          dlldata text
+           value prec 0 font "Arial" height 15 color 0 set 1 initial 1
+           frame border 0 fill 16777215
+           input l inc 1 updown arrwidth 13
+          enddlldata
+          rect 75 19
+         end
+        dllblock name "Block3" id 516
+         begin
+          pos 30 320
+          layer id 1
+          options sizeable
+          vars
+           begin
+            signal name "Start" in menu run default 0
+            signal name "Ready" out menu default 0
+            int name "StageInId" in menu default 0
+            int name "StageId" in menu run default 0
+            signal name "Open" out menu default 0
+            signal name "Close" out menu default 0
+           end
+          auto
+           begin
+           end
+          layout rect 55 30 fill 16777215 line 0 text "запуск" font "Arial" height 13 color 0
+          dll file "Вспомогательные\\запускСцены.dll" func "rdsbcppBlockEntryPoint"
+          autocomp file "$DLL$\\Common.dll" func "SearchComp" model "Вспомогательные\\запускСцены.mdl" alt "C:\\RDS\\A_Projects\\Деловая игра УБС2016\\Вспомогательные\\запускСцены.mdl\nC:\\RDS\\A_Projects\\Деловая игра УБС2016\\Агент.rds"
+         end
+        dllblock name "Block4" id 523
+         begin
+          pos 290 375
+          layer id 1
+          options sizeable
+          vars
+           begin
+            signal name "Start" in menu run default 0
+            signal name "Ready" out menu default 0
+           end
+          layout rect 160 50 fill 16777215 line 0 text "Идентификатор сцены" font "Arial" height 13 color 0 right up
+         end
+        dllblock name "DEdit3" id 524
+         begin
+          pos 295 400
+          layer id 1
+          name hidden
+          options sizeable
+          vars
+           begin
+            signal name "Start" in run hide default 0
+            signal name "Ready" out hide default 0
+            double name "v" in run hide default "0"
+            double name "edit" out menu hide default "0"
+           end
+          dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh mouse setup "Настройка" auto
+          dlldata text
+           value prec 0 font "Arial" height 15 color 0 set 2 initial 2
+           frame border 0 fill 16777215
+           input l inc 1 updown arrwidth 13
+          enddlldata
+          rect 75 19
+         end
+        dllblock name "Block5" id 525
+         begin
+          pos 290 330
+          layer id 1
+          options sizeable
+          vars
+           begin
+            signal name "Start" in menu run default 0
+            signal name "Ready" out menu default 0
+            int name "StageInId" in menu default 0
+            int name "StageId" in menu run default 0
+            signal name "Open" out menu default 0
+            signal name "Close" out menu default 0
+           end
+          auto
+           begin
+           end
+          layout rect 55 30 fill 16777215 line 0 text "запуск" font "Arial" height 13 color 0
+          dll file "Вспомогательные\\запускСцены.dll" func "rdsbcppBlockEntryPoint"
+          autocomp file "$DLL$\\Common.dll" func "SearchComp" model "Вспомогательные\\запускСцены.mdl" alt "C:\\RDS\\A_Projects\\Деловая игра УБС2016\\Вспомогательные\\запускСцены.mdl\nC:\\RDS\\A_Projects\\Деловая игра УБС2016\\Агент.rds"
+         end
+        dllblock name "Block6" id 599
+         begin
+          pos 275 530
+          layer id 1
+          vars
+           begin
+            signal name "Start" in menu run default 1
+            signal name "Ready" out menu default 0
+            signal name "Close" out menu default 1
+           end
+         end
+        conn id 404
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "LinApprox1" var "y" out pos 15 0 cname right up hidden
+            id 1 block "Block3" var "StageId" in pos 55 25 cname right up
+            id 2 pos 195 480
+            id 3 block "Block5" var "StageId" in pos 0 15 cname left up
+           end
+          lines
+           begin
+            line 0 2
+            line 2 1
+            line 3 2
+           end
+         end
+        conn id 414
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "MDGEdit1" var "M" out pos 15 5 cname right up hidden
+            id 1 block "LinApprox1" var "M" in pos 15 25 cname right down
+           end
+          lines
+           begin
+            line 0 1
+           end
+         end
+        bus name "Шина1" id 504
+         begin
+          vars
+           begin
+            int name "Stage"
+            matrix int name "TrueProjects"
+            int name "PlayerNum"
+            int name "Budget"
+           end
+          layer id 1
+          style name "Стандартная шина" dotsize 0
+          points
+           begin
+            id 0 block "Port1" pos 10 20 cname right down
+            id 1 pos 25 215
+            id 2 pos 435 215
+            id 3 pos 70 215
+            id 4 block "CommonStage1" port "In" pos 10 0 cname right up
+            id 5 pos 220 215
+            id 6 block "CommonStage2" port "In" pos 15 0 cname right up
+           end
+          lines
+           begin
+            line 0 1
+            line 1 3
+            line 3 4
+            line 3 5
+            line 5 2
+            line 5 6
+           end
+         end
+        conn id 511
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 bus "Шина1" var "Stage" out pos 25 215 cname right down
+            id 1 block "LinApprox1" var "x" in pos 0 25 cname left up
+            id 2 pos 25 535
+           end
+          lines
+           begin
+            line 0 2
+            line 2 1
+           end
+         end
+        conn id 513
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "CommonStage1" var "PlayerBids" out pos 30 5 cname right up
+            id 1 block "CommonStage2" var "PlayerBids" in pos 0 5 cname left up
+           end
+          lines
+           begin
+            line 0 1
+           end
+         end
+        conn id 517
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "DEdit2" var "edit" out pos 10 0 cname right up hidden
+            id 1 block "Block3" var "StageInId" in pos 25 30 cname right down
+           end
+          lines
+           begin
+            line 0 1
+           end
+         end
+        conn id 521
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "Block3" var "Open" out pos 30 0 cname right up
+            id 1 block "CommonStage1" var "open" in pos 0 30 cname left up
+           end
+          lines
+           begin
+            line 0 1
+           end
+         end
+        conn id 522
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "Block3" var "Close" out pos 40 0 cname right up
+            id 1 block "CommonStage1" var "close" in pos 10 30 cname right down
+           end
+          lines
+           begin
+            line 0 1
+           end
+         end
+        conn id 526
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "DEdit3" var "edit" out pos 25 0 cname right up hidden
+            id 1 block "Block5" var "StageInId" in pos 30 30 cname right down
+           end
+          lines
+           begin
+            line 0 1
+           end
+         end
+        conn id 531
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "Block5" var "Open" out pos 0 5 cname left up
+            id 1 pos 290 295
+           end
+          lines
+           begin
+            line 0 1
+           end
+         end
+        conn id 532
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "Block5" var "Close" out pos 15 0 cname right up
+            id 1 pos 305 290
+           end
+          lines
+           begin
+            line 0 1
+           end
+         end
+        conn id 587
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "CommonStage1" var "nextscreen" out pos 30 20 cname right up
+            id 1 block "CommonStage2" var "open" in pos 0 20 cname left up
+           end
+          lines
+           begin
+            line 0 1
+           end
+         end
+        conn id 600
+         begin
+          layer id 1
+          style name "Стандартная связь"
+          points
+           begin
+            id 0 block "Block6" var "Close" out pos 15 0 cname right up
+            id 1 block "CommonStage1" var "close" in pos 20 30 cname right down
+            id 2 pos 190 415
+            id 3 block "CommonStage2" var "close" in pos 10 30 cname right down
+           end
+          lines
+           begin
+            line 0 2
+            line 2 1
+            line 2 3
+           end
+         end
+       end
+      end
+    dllblock name "DblNet3" id 620
+     begin
+      pos 65 295
+      layer id 1
+      name hidden
+      vars
+       begin
+        signal name "Start" in run default 1
+        signal name "Ready" out default 0
+        double name "x" in menu run default "0"
+        double name "y" out menu default "0"
+        logical name "Enabled" in menu run default 1
+       end
+      layout rect 30 30 fill 16777215 line 0 text "NET\r\ndbl" font "Arial" height 10 color 0 width 1 scalewidth
+      dll file "$DLL$\\Common.dll" func "DoubleNetConn" hint setup "" auto
+      dlldata text
+       host "" port -1 channel "Budget" delay -1 udp 0
+      enddlldata
+     end
+    dllblock name "DDisplay1" id 621
+     begin
+      pos 150 315
+      layer id 1
+      name hidden
+      options sizeable
+      vars
+       begin
+        signal name "Start" in run hide default 0
+        signal name "Ready" out hide default 0
+        double name "v" in menu run hide default "0"
+       end
+      dll file "$DLL$\\Common.dll" func "DoubleDisplay" draw lockh setup "Настройка" auto
+      dlldata text
+       value prec 0 font "Arial" height 15 color 0 set 0 initial
+       frame border 0 fill 12632256
+       caption text "Бюджет" font "Arial" height 15 charset 1 color 0
+      enddlldata
+      rect 100 19
+     end
+    conn id 241
+     begin
+      layer id 2
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "DblNet1" var "y" out pos 30 15 cname right up
+        id 1 block "Block4" var "newnum" in pos 0 15 cname left up
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+    conn id 245
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "DblNet2" var "y" out pos 25 15 cname right up
+        id 1 block "DEdit2" var "v" in pos 15 19 cname right down hidden
+        id 2 pos 120 360
+        id 3 bus "Шина1" var "Stage" in pos 505 220 cname right down
+        id 4 pos 495 330
+       end
+      lines
+       begin
+        line 0 2
+        line 2 1
+        line 2 4
+        line 4 3
+       end
+     end
+    conn id 263
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "Button2" var "Click" out pos 120 15 cname right up hidden
+        id 1 block "SigNet1" var "x" in pos 0 15 cname left up
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+    conn id 288
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "DEdit1" var "edit" out pos 20 15 cname left up hidden
+        id 1 pos 270 185
+        id 2 block "Sys3" var "player" in pos 135 5 cname right up
+        id 3 bus "Шина1" var "PlayerNum" in pos 495 185 cname right up
+       end
+      lines
+       begin
+        line 0 1
+        line 1 2
+        line 1 3
+       end
+     end
+    conn id 310
+     begin
+      layer id 3
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "DEdit1" var "edit" out pos 0 15 cname left up hidden
+        id 1 block "Block4" var "mynum" in pos 30 10 cname right up
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+    conn id 311
+     begin
+      layer id 3
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "Block4" var "num" out pos 30 0 cname right up
+        id 1 block "DEdit1" var "v" in pos 0 5 cname left up hidden
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+    conn id 312
+     begin
+      layer id 3
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "Button2" var "Down" out pos 75 30 cname right down
+        id 1 block "Block4" var "turnon" in pos 5 0 cname right up
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+    conn id 313
+     begin
+      layer id 3
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "Block4" var "btnVisible" out pos 15 0 cname right up
+        id 1 block "Button2" var "Enabled" in pos 85 25 cname right down
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+    conn id 325
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "MDNet1" var "Y" out pos 30 10 cname right up
+        id 1 block "Sys3" var "M" in pos 0 10 cname left up
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+    conn id 326
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "MatEx1" var "Y" out pos 30 5 cname right up
+        id 1 bus "Шина1" var "TrueProjects" in pos 495 195 cname left up
+       end
+      lines
+       begin
+        line 1 0
+       end
+     end
+    conn id 328
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "Sys3" var "plRows" out pos 155 20 cname right up
+        id 1 block "MatEx1" var "X" in pos 0 20 cname left up
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+    bus name "Шина1" id 506
+     begin
+      vars
+       begin
+        int name "Stage"
+        matrix int name "TrueProjects"
+        int name "PlayerNum"
+        int name "Budget"
+       end
+      layer id 1
+      style name "Стандартная шина" dotsize 0
+      points
+       begin
+        id 0 pos 495 185
+        id 1 block "Stages" port "Port1" pos 0 15 cname left up
+        id 2 pos 495 220
+       end
+      lines
+       begin
+        line 0 2
+        line 2 1
+       end
+     end
+    bus name "Шина2" id 508
+     begin
+      layer id 1
+      style name "Стандартная шина" dotsize 0
+      points
+       begin
+        id 0 pos 685 220
+        id 1 block "Stages" port "Out" pos 30 15 cname right up
+       end
+      lines
+       begin
+        line 0 1
+       end
+     end
+    conn id 622
+     begin
+      layer id 1
+      style name "Стандартная связь"
+      points
+       begin
+        id 0 block "DblNet3" var "y" out pos 30 15 cname right up
+        id 1 pos 125 310
+        id 2 block "DDisplay1" var "v" in pos 0 10 cname left up hidden
+        id 3 bus "Шина1" var "Budget" in pos 495 215 cname left up
+       end
+      lines
+       begin
+        line 0 1
+        line 1 2
+        line 1 3
+       end
+     end
+   end
+  end
+
+additional
+ begin
+  window layer pos 735 130 size 291 392
+  window system ""
+  window system ":Stages"
+  window system ":Stages:CommonStage2"
+ end

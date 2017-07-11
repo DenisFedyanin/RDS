@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.20.1. rdsNetBroadcastData &ndash; передача данных всем блокам канала</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_20">А.5.20. Сетевые функции</a></p>
+<div class="level"><p>А.5.20.1. <span class="cpp">rdsNetBroadcastData</span> &ndash; передача данных всем блокам канала</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsTMPRememberFileName.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsNetCloseConnection.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsNetBroadcastData">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4>А.5.20. Сетевые функции</h4>
+<p class="abstract">Описываются функции, позволяющие моделям блоков обмениваться данными по сети со схемами, загруженными в RDS на других машинах (см. <a href="pm_index.htm#light_htm:pm_2_15" title="&sect;2.15. Обмен данными по сети">&sect;2.15 руководства программиста</a>).</p>
+<h5>А.5.20.1. <span class="cpp">rdsNetBroadcastData</span> &ndash; передача данных всем блокам канала</h5>
+
+
+<p>Функция <span class="cpp">rdsNetBroadcastData</span> передает указанные данные всем блокам, установившим
+соединение с указанным каналом сервера.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsNetBroadcastData(
+    <span class="kw">int</span> ConnId,    <span class="rem">// Идентификатор соединения</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Flags,   <span class="rem">// Флаги (RDS_NETSEND_*)</span>
+    <span class="kw">int</span> Id,        <span class="rem">// Передаваемое целое (идентификатор)</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> String,  <span class="rem">// Передаваемая строка</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Buf,    <span class="rem">// Передаваемая область памяти</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> BufSize  <span class="rem">// Размер передаваемой области</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_BIDwISpVDw</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">ConnId</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Уникальный идентификатор сетевого соединения, через которое будут переданы данные.</dd>
+
+  <dt><span id="ref1"><span class="cpp">Flags</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a></i></span>)</span></dt>
+  <dd>Набор <span id="light_ref1">битовых флагов, управляющих передачей</span>:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref2">RDS_NETSEND_NOWAIT</span></span></td>
+          <td>После передачи данных RDS не будет ждать ответа от сервера перед передачей следующей
+          порции данных (ожидание снижает нагрузку на сеть, но уменьшает скорость передачи).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref3">RDS_NETSEND_SERVREPLY</span></span></td>
+          <td>Получив эти данные, сервер должен ответить передавшему блоку &ndash; модель блока будет вызвана для
+          реакции на событие <span class="cpp"><a href="RDS_BFM_NETDATAACCEPTED.htm" title="А.2.8.2. RDS_BFM_NETDATAACCEPTED &ndash; получение данных сервером">RDS_BFM_NETDATAACCEPTED</a></span>).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="ref5"><span id="light_ref4">RDS_NETSEND_UDP</span></span></span></td>
+          <td>Передавать данные по протоколу <span id="light_ref5">UDP</span>,
+          если это разрешено настройками RDS (по умолчанию данные передаются по протоколу TCP).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref6">RDS_NETSEND_UPDATE</span></span></td>
+          <td>Если в очереди на отправку данных уже есть данные, отправленные тем же блоком в тот же канал
+          с тем же значением <span class="cpp">Id</span> (см. ниже), старые данные будут выброшены из очереди.</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp">Id</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Передаваемое в канал целое число. При установленном в параметре <span class="cpp">Flags</span> флаге
+  <span class="cpp">RDS_NETSEND_UPDATE</span> играет роль идентификатора передаваемых данных: устаревшие данные
+  будут выброшены из очереди только в том случае, если их значение <span class="cpp">Id</span> совпадает с
+  <span class="cpp">Id</span> в данном вызове.</dd>
+
+  <dt><span class="cpp">String</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на передаваемую в канал строку. Если строку передавать не нужно, этот параметр
+  может быть равен <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">Buf</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></i></span>)</dt>
+  <dd>Указатель на начало передаваемой в канал области памяти с двоичными данными.
+  Если двоичные данные передавать не нужно, этот параметр может быть равен <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">BufSize</span>&emsp;(<span class="cpp"><i>DWORD</i></span>)</dt>
+  <dd>Размер в байтах передаваемой области памяти по указателю <span class="cpp">Buf</span>. При
+  <span class="cpp">Buf==NULL</span> значение этого параметра игнорируется.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p><span class="cpp">TRUE</span> &ndash; данные успешно поставлены в очередь на передачу,
+<span class="cpp">FALSE</span> &ndash; ошибка (например, нет соединения с идентификатором
+<span class="cpp">ConnId</span>).</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция используется для передачи целого числа <span class="cpp">Id</span>, строки
+<span class="cpp">String</span> и набора двоичных данных <span class="cpp">Buf</span> всем блокам,
+подключившимся к какому-либо каналу передачи данных сервера (принципы обмена данных по сети и каналы передачи
+данных подробно рассматриваются в
+<a href="pm_2_15_1.htm" title="&sect;2.15.1. Общие принципы обмена данными по сети в RDS">&sect;2.15.1 руководства программиста</a>). В параметре
+<span class="cpp">ConnId</span> передается идентификатор сетевого соединения с конкретным каналом
+конкретного сервера, полученный с помощью функций
+<span class="cpp"><a href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a></span> или <span class="cpp"><a href="rdsNetServer.htm" title="А.5.20.5. rdsNetServer &ndash; запуск сервера и установка соединения с ним">rdsNetServer</a></span>.
+Строку и двоичные данные передавать не обязательно &ndash; если они не нужны, соответствующим
+параметрам можно присвоить <span class="cpp">NULL</span>.</p>
+
+<p>В результате вызова этой функции данные, указанные в ее параметрах, ставятся в очередь для отправки
+на сервер. Сервер, получив эти данные, отправляет их всем блокам, подписавшимся на прием данных из канала,
+соответствующего соединению <span class="cpp">ConnId</span>. После получения данных модели этих блоков
+вызываются для реакции на событие <span class="cpp"><a href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">RDS_BFM_NETDATARECEIVED</a></span> и в них передаются
+принятое целое число, строка и набор двоичных данных.</p>
+
+<p>Помимо указанных в параметрах функции данных на сервер также передается идентификатор блока-отправителя
+(блока, из модели которого вызвана <span class="cpp">rdsNetBroadcastData</span>), чтобы любой из блоков-получателей,
+при необходимости, мог в ответ вызовом <span class="cpp"><a href="rdsNetSendData.htm" title="А.5.20.4. rdsNetSendData &ndash; передача данных конкретному блоку канала">rdsNetSendData</a></span> передать данные непосредственно
+отправителю, а не всем блокам канала.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции <span class="cpp">rdsNetBroadcastData</span> приведен
+в <a href="pm_2_15_2.htm" title="&sect;2.15.2. Пример использования функций передачи и приема данных">&sect;2.15.2 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsNetConnect.htm" title="А.5.20.3. rdsNetConnect &ndash; установка сетевого соединения">rdsNetConnect</a></span>,
+<span class="cpp"><a href="rdsNetServer.htm" title="А.5.20.5. rdsNetServer &ndash; запуск сервера и установка соединения с ним">rdsNetServer</a></span>,
+<span class="cpp"><a href="rdsNetSendData.htm" title="А.5.20.4. rdsNetSendData &ndash; передача данных конкретному блоку канала">rdsNetSendData</a></span>,
+<span class="cpp"><a href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">RDS_BFM_NETDATARECEIVED</a></span>,
+<span class="cpp"><a href="RDS_BFM_NETDATAACCEPTED.htm" title="А.2.8.2. RDS_BFM_NETDATAACCEPTED &ndash; получение данных сервером">RDS_BFM_NETDATAACCEPTED</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsTMPRememberFileName.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsNetCloseConnection.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsNetBroadcastData">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

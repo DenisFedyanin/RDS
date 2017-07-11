@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.6.11. rdsEnumBlocks &ndash; перебрать все блоки подсистемы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_6">А.5.6. Операции с блоками и связями</a></p>
+<div class="level"><p>А.5.6.11. <span class="cpp">rdsEnumBlocks</span> &ndash; перебрать все блоки подсистемы</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsDuplicateBlock.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsEnumConnectedBlocks.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsEnumBlocks">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.6. Операции с блоками и связями</h4>
+<h5>А.5.6.11. <span class="cpp">rdsEnumBlocks</span> &ndash; перебрать все блоки подсистемы</h5>
+
+
+<p><span id="ref1">Функция</span> <span class="cpp">rdsEnumBlocks</span> вызывает пользовательскую функцию,
+указатель 
+на которую передается в параметрах, 
+для каждого блока указанной <a href="um_1_2.htm#light_ref10" title="Подсистема">подсистемы</a>.</p>
+
+<pre class="cpp">  <span id="light_ref1"><a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsEnumBlocks(
+      <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Parent,    <span class="rem">// Подсистема</span>
+      <span class="kw">int</span> Type,              <span class="rem">// Маска типов блоков</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Recurse,          <span class="rem">// Вызывать во вложенных подсистемах</span>
+      RDS_BBhpV CallBack,    <span class="rem">// Функция пользователя</span>
+      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> Data            <span class="rem">// Параметр функции пользователя</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_BhBhIBCbpV</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Parent</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор подсистемы, для блоков которой нужно вызвать функцию пользователя <span class="cpp">CallBack</span>.</dd>
+
+  <dt><span class="cpp">Type</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Маска <a href="um_1_2.htm#ref8" title="Типы блоков в RDS">типов блоков</a>, для которых нужно вызывать функцию &ndash; 
+  стандартные константы типов блоков <span class="cpp"><a href="RDS_BLOCKDESCRIPTION.htm#ref4" title="Константы типа блоков">RDS_BT*</a></span>, 
+  объединенные битовым ИЛИ. Если нужно вызвать функцию для каждого блока подсистемы независимо от 
+  его типа, в этом параметре можно передать 0.</dd>
+  
+  <dt><span class="cpp">Recurse</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если нужно вызывать функцию <span class="cpp">CallBack</span> не только 
+  для блоков, непосредственно находящихся в подсистеме <span class="cpp">Parent</span>, но для блоков во всех 
+  ее вложенных подсистемах. <span class="cpp">FALSE</span>, если нужно вызывать функцию только для блоков, 
+  непосредственно находящихся в <span class="cpp">Parent</span>.</dd>
+  
+  <dt><span class="cpp">CallBack</span>&emsp;(<span class="cpp"><i>RDS_BBhpV</i></span>)</dt>
+  <dd>Указатель на пользовательскую функцию, которую нужно вызвать для каждого блока, удовлетворяющего 
+  параметрам <span class="cpp">Type</span> и <span class="cpp">Recurse</span>. Пользовательская функция должна 
+  иметь следующий вид:<br />
+  <pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции</i>(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block,<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> param);</pre>
+  В параметре <span class="cpp">block</span> пользовательской функции передается идентификатор блока, 
+  для которого вызвана функция, в параметре <span class="cpp">param</span> &ndash; параметр 
+  <span class="cpp">Data</span> (см. ниже) без какой-либо обработки. Функция пользователя должна вернуть 
+  <span class="cpp">TRUE</span>, если перебор блоков необходимо продолжить, и <span class="cpp">FALSE</span>, 
+  если его нужно немедленно остановить.</dd>
+  
+  <dt><span class="cpp">Data</span>&emsp;(<span class="cpp"><i>LPVOID</i></span>)</dt>
+  <dd>Параметр типа <span class="cpp">void*</span>, передаваемый в параметре <span class="cpp">param</span> 
+  пользовательской функции при каждом ее вызове.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Идентификатор блока (<span class="cpp"><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></span>), для которого функция пользователя вернула 
+<span class="cpp">FALSE</span>. Если функция пользователя всегда возвращала <span class="cpp">TRUE</span> (перебраны 
+все блоки), вместо идентификатора блока возвращается <span class="cpp">NULL</span>.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Функция <span class="cpp">rdsEnumBlocks</span> обычно используется для выполнения каких-
+либо однотипных действий над блоками подсистемы. Ее также можно использовать для поиска блока по 
+какому-либо критерию: если написать пользовательскую функцию, которая будет вызываться для каждого блока 
+таким образом, чтобы она возвращала <span class="cpp">FALSE</span>, если блок, переданный в ее параметре 
+<span class="cpp">block</span>, удовлетворяет заданному критерию, то результатом возврата 
+<span class="cpp">rdsEnumBlocks</span> будет искомый блок.</p>
+
+<p>Функция перебирает блоки в порядке, определяемом внутренней логикой RDS, программист никак не может 
+изменить этот порядок.</p>
+
+<p>Параметр <span class="cpp">Data</span>, имеющий тип <span class="cpp"><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></span> (произвольный указатель), 
+передается в вызываемую функцию пользователя без изменений. Это единственный способ передать ей какие-либо 
+данные: например, можно передать указатель на какую-либо структуру, а внутри пользовательской функции привести 
+его к нужному типу и обращаться к полям этой структуры.</p>
+
+<p>Для перебора всех блоков заданного типа в какой-либо подсистеме вместо <span class="cpp">rdsEnumBlocks</span> 
+можно использовать функции <span class="cpp"><a href="rdsGetFirstBlock.htm" title="А.5.6.26. rdsGetFirstBlock &ndash; первый блок в подсистеме">rdsGetFirstBlock</a></span> и 
+<span class="cpp"><a href="rdsGetNextBlock.htm" title="А.5.6.32. rdsGetNextBlock &ndash; следующий блок в подсистеме">rdsGetNextBlock</a></span>.</p>
+
+<p class="apphdr">Пример</p>
+<p>В этом примере <span class="cpp">rdsEnumBlocks</span> используется для поиска первого попавшегося 
+блока схемы, комментарий которого содержит заданный текст.</p>
+
+<pre class="cpp">  <span class="rem">// Функция пользователя</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> MyEnumCallback(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block,<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> param)
+  { <span class="kw">char</span> *text=(<span class="kw">char</span>*)param; <span class="rem">// Приводим тип к char*</span>
+    <span class="rem">// Получаем описание блока block с комментарием</span>
+    <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a> Descr;
+    Descr.servSize=<span class="kw">sizeof</span>(Descr);
+    <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(block,&Descr);
+    <span class="rem">// Возвращаем FALSE, если в комментарии есть текст param</span>
+    <span class="kw">if</span>(strstr(Descr.BlockComment,text))
+      <span class="kw">return</span> FALSE;
+    <span class="kw">return</span> TRUE;
+  }
+      ...
+  <span class="rem">// Поиск во всей схеме простого блока, в комментарии которого</span>
+  <span class="rem">// содержится текст "тест"</span>
+  <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> found=rdsEnumBlocks(
+    <a class="hidden" href="rdsGetRootSystem.htm" title="А.5.6.37. rdsGetRootSystem &ndash; корневая подсистема">rdsGetRootSystem</a>(NULL),  <span class="rem">// Корневая подсистема</span>
+    <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#light_ref7" title="RDS_BTSIMPLEBLOCK">RDS_BTSIMPLEBLOCK</a>,       <span class="rem">// Только простые блоки</span>
+    TRUE,                    <span class="rem">// С вложенными подсистемами</span>
+    MyEnumCallback,          <span class="rem">// Вызываемая функция</span>
+    <span class="str">"тест"</span>);                 <span class="rem">// Текст для поиска</span>
+  <span class="rem">// В found находится идентификатор найденного блока или NULL</span></pre>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsEnumConnectedBlocks.htm" title="А.5.6.12. rdsEnumConnectedBlocks &ndash; перебрать все соединенные блоки">rdsEnumConnectedBlocks</a></span>,
+<span class="cpp"><a href="rdsEnumConnectedBlocksByVar.htm" title="А.5.6.13. rdsEnumConnectedBlocksByVar &ndash; перебрать все блоки, соединенные с заданной переменной">rdsEnumConnectedBlocksByVar</a></span>,
+<span class="cpp"><a href="rdsBroadcastFunctionCallsEx.htm" title="А.5.13.6. rdsBroadcastFunctionCallsEx &ndash; прямой вызов функции всех блоков подсистемы">rdsBroadcastFunctionCallsEx</a></span>,
+<span class="cpp"><a href="rdsBCLCreateList.htm" title="А.5.24.1. rdsBCLCreateList &ndash; создать объект для хранения списка блоков и связей">rdsBCLCreateList</a></span>,
+<span class="cpp"><a href="rdsGetFirstBlock.htm" title="А.5.6.26. rdsGetFirstBlock &ndash; первый блок в подсистеме">rdsGetFirstBlock</a></span>,
+<span class="cpp"><a href="rdsGetNextBlock.htm" title="А.5.6.32. rdsGetNextBlock &ndash; следующий блок в подсистеме">rdsGetNextBlock</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsDuplicateBlock.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsEnumConnectedBlocks.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsEnumBlocks">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

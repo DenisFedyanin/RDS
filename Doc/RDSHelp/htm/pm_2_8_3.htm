@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.8.3. Сохранение параметров в текстовом формате</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_8">&sect;2.8. Сохранение и загрузка параметров блока</a></p>
+<div class="level"><p>&sect;2.8.3. Сохранение параметров в текстовом формате</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_8_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_8_4.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_8_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_8_3_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.8. Сохранение и загрузка параметров блока</h3>
+<h4>&sect;2.8.3. Сохранение параметров в текстовом формате</h4>
+<p class="abstract">Рассматривается сохранение и загрузка параметров блока в текстовом формате, описываются
+                соответствующие реакции модели (<span class="cpp"><a href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a></span> и <span class="cpp"><a href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a></span>).
+                В модель ранее описанного в примерах блока-генератора добавляются процедуры для хранения его параметров в
+                текстовом виде.</p>
+
+
+<p><span id="light_ref1">Добавим</span>
+в <a href="pm_2_7_2.htm#light_ref13" title="Пример блока-генератора с настройкой параметров">блок</a>, выдающий на выход синусоиду, косинусоиду или прямоугольные импульсы,
+загрузку и сохранение параметров в текстовом формате. В
+<a href="pm_1_4.htm#ref8" title="Личная область данных блока">личной области данных</a> этого блока хранятся три параметра: целый
+<span class="cpp">Type</span>, задающий тип формируемой функции (0 &ndash; синус, 1 &ndash; косинус,
+2 &ndash; прямоугольные импульсы), и вещественные <span class="cpp">Period</span> и <span class="cpp">Impulse</span>,
+задающие период функции и длительность прямоугольного импульса соответственно. Поскольку этот блок вполне
+может использоваться на практике в качестве генератора сигналов, целесообразно хранить его параметры именно в
+текстовом виде. Это позволит, при необходимости, модифицировать его модель, не опасаясь того, что схемы
+с этим блоком перестанут читаться.</p>
+
+<p>Личная область данных блока оформлена в виде класса. Добавим в его описание две новых функции-члена:
+функцию <span class="cpp">SaveText</span> для сохранения параметров и функцию <span class="cpp">LoadText</span> для
+их загрузки. Теперь описание класса будет выглядеть следующим образом (изменения выделены
+<span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">//====== Класс личной области данных ======</span>
+  <span class="kw">class</span> TTestGenData
+  { <span class="kw">public</span>:
+      <span class="kw">int</span> Type;         <span class="rem">// Тип (0-sin,1-cos,2-прямоугольные)</span>
+      <span class="kw">double</span> Period;    <span class="rem">// Период</span>
+      <span class="kw">double</span> Impulse;   <span class="rem">// Длительность импульса</span>
+
+      <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> Time; <span class="rem">// Связь с динамической</span>
+                            <span class="rem">// переменной времени</span>
+
+      <span class="kw">int</span> Setup(<span class="kw">void</span>);           <span class="rem">// Функция настройки</span>
+      <span class="changes"><span class="kw">void</span> SaveText(<span class="kw">void</span>);       <span class="rem">// Сохранение параметров</span></span>
+      <span class="changes"><span class="kw">void</span> LoadText(<span class="kw">char</span> *text); <span class="rem">// Загрузка параметров</span></span>
+      TTestGenData(<span class="kw">void</span>)         <span class="rem">// Конструктор класса</span>
+        { Type=<span class="const">0</span>; Period=<span class="const">1.0</span>; Impulse=<span class="const">0</span>.<span class="const">5</span>;
+      <span class="rem">// &hellip; далее без изменений &hellip;</span>
+  };</pre>
+
+<p>В функцию модели блока необходимо добавить операторы <span class="cpp">case</span> для вызова этих функций:</p>
+
+<pre class="cpp">  <span class="rem">//============= Модель блока ==============</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestGen(<span class="kw">int</span> CallMode,
+                        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define y      (*((double *)(pStart+2)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на личную область</span>
+    <span class="rem">// данных блока, приведенный к правильному типу</span>
+    TTestGenData *data;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          BlockData-&gt;BlockData=<span class="kw">new</span> TTestGenData();
+          <span class="kw">break</span>;
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          data=(TTestGenData*)(BlockData-&gt;BlockData);
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+        <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+          
+<div class="changes">        <span class="rem">// Запись параметров в текстовом формате </span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a>:
+          data=(TTestGenData*)(BlockData-&gt;BlockData);
+          data-&gt;SaveText();
+          <span class="kw">break</span>;
+        <span class="rem">// Загрузка параметров в текстовом формате </span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a>:
+          data=(TTestGenData*)(BlockData-&gt;BlockData);
+          data-&gt;LoadText((<span class="kw">char</span>*)ExtParam);
+          <span class="kw">break</span>;</div>
+        <span class="rem">// Функция настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          data=(TTestGenData*)(BlockData-&gt;BlockData);
+          <span class="kw">return</span> data-&gt;Setup();
+
+        <span class="rem">// &hellip; далее без изменений &hellip;</span>
+
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>При сохранении схемы модель блока будет вызвана с параметром <span class="cpp"><span id="light_ref2"><a href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a></span></span>,
+что приведет к вызову функции-члена <span class="cpp">SaveText</span> класса личной области данных блока
+<span class="cpp">TTestGenData</span> (перед этим указатель на личную область данных, приведенный
+к нужному типу, записывается во вспомогательную переменную <span class="cpp">data</span>). Эта функция должна
+сформировать текст, который будет записан в схему вместе с остальными данными, относящимися к описанию
+этого блока. При загрузке схемы модель будет вызвана с параметром <span class="cpp"><span id="light_ref3"><a href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a></span></span>,
+при этом в <span class="cpp">ExtParam</span> будет содержаться указатель на начало текста,
+считанного из файла схемы. Это тот самый текст, который был сформирован функцией-членом <span class="cpp">SaveText</span>
+в момент сохранения. После приведения указателя на текст к типу <span class="cpp">char*</span> он передается
+в функцию-член <span class="cpp">LoadText</span>, задача которой &ndash; разобрать его и присвоить нужные
+значения параметрам блока.</p>
+
+<p><span id="ref4">Рассмотрим</span>
+сначала функцию сохранения параметров <span class="cpp" id="light_ref4">SaveText</span>, поскольку
+от выбранного формата записи будет зависеть способ разбора текста в функции загрузки. Для каждого
+параметра будем записывать пару &laquo;<i>ключевое_слово</i><i> значение</i>&raquo;: значение параметра
+<span class="cpp">Type</span> после слова &laquo;type&raquo;, значение <span class="cpp">Period</span> после
+слова &laquo;period&raquo;, значение <span class="cpp">Impulse</span> &ndash; после
+&laquo;impulse&raquo;. На самом деле, значение параметра <span class="cpp">Impulse</span> нужно сохранять
+только тогда, когда выбрано формирование прямоугольных импульсов (значение <span class="cpp">Type</span> равно 2),
+поскольку для синуса и косинуса длительность импульса не задается. Тем не менее, пока, для упрощения примера,
+мы будем всегда сохранять все три параметра. Функция <span class="cpp">SaveText</span> будет выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Функция сохранения параметров</span>
+  <span class="kw">void</span> TTestGenData::SaveText(<span class="kw">void</span>)
+  { <span class="kw">char</span> buffer[<span class="const">100</span>]; <span class="rem">// Буфер для формирования текста</span>
+    <span class="rem">// Формирование текста в буфере при помощи функции sprintf</span>
+    sprintf(buffer,
+            <span class="str">"type %d period %lf impulse %lf"</span>,
+            Type,Period,Impulse);
+    <span class="rem">// Передача сформированного текста в RDS</span>
+    <span id="light_ref5"><a class="hidden" href="rdsWriteBlockDataText.htm" title="А.5.10.5. rdsWriteBlockDataText &ndash; добавление текста к сохраняемым в текстовом формате данным блока">rdsWriteBlockDataText</a></span>(buffer,FALSE);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Прежде всего в функции создается символьный массив <span class="cpp">buffer</span> размером в 100 символов,
+в котором будет формироваться текст. Необходимо сохранить целое число, два вещественных числа двойной точности и
+три ключевых слова &ndash; ста символов должно хватить для этого с большим запасом. Далее, при помощи
+стандартной функции <span class="cpp">sprintf</span>, в этот массив записывается строка, содержащая ключевые
+слова и значения параметров. Из-за присутствия функции <span class="cpp">sprintf</span> для успешной компиляции
+этого примера необходимо включить в исходный текст стандартный файл заголовка
+&laquo;<span class="file">stdio.h</span>&raquo;, в котором она описана. Ключевые слова содержатся в строке формата (второй
+аргумент функции <span class="cpp">sprintf</span>). В сформированном в массиве <span class="cpp">buffer</span>
+тексте вместо спецификаторов формата &laquo;%d&raquo; и &laquo;%lf&raquo; появятся значения полей класса
+<span class="cpp">Type</span>, <span class="cpp">Period</span> и <span class="cpp">Impulse</span>, в том порядке,
+в котором они были переданы в функцию <span class="cpp">sprintf</span>. В результате, в массиве
+<span class="cpp">buffer</span> окажется строка вида &laquo;type 0 period 1.000000 impulse 0.500000&raquo;
+(в данном случае для примера использованы значения параметров блока по умолчанию, заданные в конструкторе).</p>
+
+<p>После того, как строка со значениями параметров блока сформирована, необходимо передать ее в RDS
+при помощи сервисной функции <span class="cpp"><a href="rdsWriteBlockDataText.htm" title="А.5.10.5. rdsWriteBlockDataText &ndash; добавление текста к сохраняемым в текстовом формате данным блока">rdsWriteBlockDataText</a></span>:</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsWriteBlockDataText.htm" title="А.5.10.5. rdsWriteBlockDataText &ndash; добавление текста к сохраняемым в текстовом формате данным блока">rdsWriteBlockDataText</a>(
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> String,   <span class="rem">// Передаваемый текст</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> NewLine);  <span class="rem">// Перевод строки перед текстом</span></pre>
+
+<p>Эта функция добавляет к тексту, уже записанному для данного блока, фрагмент, указатель на который передается
+в параметре <span class="cpp">String</span>. При этом перед добавляемым фрагментом вставляется перевод
+строки, если значение параметра <span class="cpp">NewLine</span> истинно, или пробел, если значение <span class="cpp">NewLine</span>
+ложно. В данном примере мы одним вызовом передаем в RDS весь сформированный текст, но при необходимости,
+можно передавать его по частям несколькими вызовами
+<span class="cpp"><a class="hidden" href="rdsWriteBlockDataText.htm" title="А.5.10.5. rdsWriteBlockDataText &ndash; добавление текста к сохраняемым в текстовом формате данным блока">rdsWriteBlockDataText</a></span>. Например, можно было бы записывать значение параметра
+<span class="cpp">Impulse</span>, только если блок формирует прямоугольные импульсы. В этом случае функция
+<span class="cpp">SaveText</span> выглядела бы так:</p>
+
+<pre class="cpp">  <span class="rem">// Функция сохранения параметров – вариант с условием</span>
+  <span class="kw">void</span> TTestGenData::SaveText(<span class="kw">void</span>)
+  { <span class="kw">char</span> buffer[<span class="const">100</span>]; <span class="rem">// Буфер для формирования текста</span>
+    <span class="rem">// Формирование текста для Type и Period</span>
+    sprintf(buffer,
+            <span class="str">"type %d period %lf"</span>,
+            Type,Period);
+    <span class="rem">// Передача сформированного текста в RDS</span>
+    <a class="hidden" href="rdsWriteBlockDataText.htm" title="А.5.10.5. rdsWriteBlockDataText &ndash; добавление текста к сохраняемым в текстовом формате данным блока">rdsWriteBlockDataText</a>(buffer,FALSE);
+    <span class="rem">// Запись Impulse если Type равно 2</span>
+    <span class="kw">if</span>(Type==<span class="const">2</span>)
+     { <span class="rem">// Формирование текста</span>
+       sprintf(buffer,<span class="str">"impulse %lf"</span>,Impulse);
+       <span class="rem">// Передача текста в RDS</span>
+       <a class="hidden" href="rdsWriteBlockDataText.htm" title="А.5.10.5. rdsWriteBlockDataText &ndash; добавление текста к сохраняемым в текстовом формате данным блока">rdsWriteBlockDataText</a>(buffer,FALSE);
+     }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Здесь сначала формируется и передается текст для параметров <span class="cpp">Type</span> и
+<span class="cpp">Period</span>, а затем, если значение параметра <span class="cpp">Type</span> равно двум,
+в том же массиве <span class="cpp">buffer</span> формируется и передается в RDS текст для параметра
+<span class="cpp">Impulse</span>. Перед ключевым словом &laquo;impulse&raquo; будет автоматически добавлен
+пробел, поскольку второй параметр <span class="cpp"><a class="hidden" href="rdsWriteBlockDataText.htm" title="А.5.10.5. rdsWriteBlockDataText &ndash; добавление текста к сохраняемым в текстовом формате данным блока">rdsWriteBlockDataText</a></span> равен <span class="cpp">FALSE</span>,
+и это слово не сольется со значением параметра <span class="cpp">Period</span>, которым заканчивается текст,
+переданный в первом вызове. Можно было бы вместо <span class="cpp">FALSE</span> указать <span class="cpp">TRUE</span>,
+тогда ключевое слово &laquo;impulse&raquo; и значение параметра разместились бы на отдельной строке.
+Заметим, что первый вызов функции также производится с параметром <span class="cpp">FALSE</span>,
+то есть перед ключевым словом &laquo;type&raquo; тоже должен был бы быть добавлен пробел, однако
+RDS автоматически удаляет начальные пробелы и переводы строк в сохраняемом тексте, поэтому этот пробел
+не будет записан.</p>
+
+<p><span id="ref6">Теперь</span>
+для блока с такой моделью при сохранении в текстовом формате будет записан <span id="light_ref6">текст</span>,
+выглядящий примерно так (результат работы функции <span class="cpp">SaveText</span> выделен
+<span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  dllblock name "Block1"
+   begin
+    pos 40 30
+    layer id 1
+    vars
+     begin
+      signal name "Start" in menu run default 0
+      signal name "Ready" out menu default 0
+      double name "y" out menu default 0
+     end
+    dll file "$DLL$\\testdll.dll" func "TestGen" setup "" auto
+    dlldata text
+     <span class="changes">type 2 period 1.000000 impulse 0.500000</span>
+    enddlldata
+   end</pre>
+
+<p>Текст, сформированный моделью блока, размещается между строками &laquo;dlldata text&raquo; и
+&laquo;enddlldata&raquo;. По ключевому слову &laquo;enddlldata&raquo; RDS опознает конец текста,
+поэтому при сохранении параметров блока в текстовом формате ни в коем случае нельзя начинать какую-либо строку
+с этого слова. При загрузке блока RDS выделяет из файла или буфера обмена текст, заключенный между этими
+двумя строками, удаляет из каждой строки начальные и конечные пробелы и символы табуляции, после чего этот текст
+передается в функцию модели как единый массив символов.</p>
+
+<p>Теперь рассмотрим функцию загрузки параметров <span class="cpp">LoadText</span>, которая будет обрабатывать
+текст, сформированный при сохранении. Эта функция должна опознавать в переданном ей тексте ключевые слова
+&laquo;type&raquo;, &laquo;period&raquo; и &laquo;impulse&raquo;, и считывать из следующего слова
+значение конкретного параметра. Разбор текста и поиск ключевых слов &ndash; достаточно часто встречающаяся задача.
+Чтобы не загромождать пример, будем использовать в нем сервисную функцию RDS, выделяющую первое слово из
+текста &ndash; это стандартная операция, и нет большого смысла расписывать ее полностью. Функция
+<span class="cpp">LoadText</span> будет извлекать из переданного ей текста слово за словом и сравнивать их
+с ключевыми, до тех пор, пока текст не закончится:</p>
+
+<pre class="cpp">  <span class="rem">// Функция загрузки параметров</span>
+  <span class="kw">void</span> TTestGenData::LoadText(<span class="kw">char</span> *text)
+  { <span class="kw">char</span> *word,*ptr,c;
+
+    <span class="rem">// Установка указателя ptr на начало переданного текста</span>
+    ptr=text;
+    <span class="rem">// Цикл по словам в тексте</span>
+    <span class="kw">for</span>(;;)
+      { <span class="rem">// Получить из текста очередное слово</span>
+        word=<span id="light_ref7"><a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a></span>(ptr,&amp;ptr,&amp;c,TRUE);
+        <span class="kw">if</span>(c==<span class="const">0</span>) <span class="rem">// Текст закончился – выход из цикла</span>
+          <span class="kw">break</span>;
+        <span class="kw">if</span>(c==<span class="str">'\n'</span>) <span class="rem">// Перевод строки – пропускаем и продолжаем</span>
+          <span class="kw">continue</span>;
+        <span class="kw">if</span>(strcmp(word,<span class="str">"type"</span>)==<span class="const">0</span>) <span class="rem">// Тип сигнала</span>
+          { <span class="rem">// Следующее слово – целое число</span>
+            word=<a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a>(ptr,&amp;ptr,NULL,FALSE);
+            Type=atoi(word);
+          }
+        <span class="kw">else</span> <span class="kw">if</span>(strcmp(word,<span class="str">"period"</span>)==<span class="const">0</span>) <span class="rem">// Период</span>
+          { <span class="rem">// Следующее слово - число double</span>
+            word=<a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a>(ptr,&amp;ptr,NULL,FALSE);
+            Period=atof(word);
+          }
+        <span class="kw">else</span> <span class="kw">if</span>(strcmp(word,<span class="str">"impulse"</span>)==<span class="const">0</span>) <span class="rem">// Длительность импульса</span>
+          { <span class="rem">// Следующее слово - число double</span>
+            word=<a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a>(ptr,&amp;ptr,NULL,FALSE);
+            Impulse=atof(word);
+          }
+        <span class="kw">else</span> <span class="rem">// Неопознанное ключевое слово</span>
+          <span class="kw">break</span>; <span class="rem">// Ошибка – прекращаем обработку</span>
+      } <span class="rem">// Конец цикла for(;;)</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В начале функции описываются три вспомогательные переменные: <span class="cpp">word</span>, в которую будет
+помещаться указатель на очередное слово строки; <span class="cpp">ptr</span>, в которой будет храниться
+указатель на текущую позицию в тексте; и <span class="cpp">c</span>, в которую сервисная функция RDS
+будет помещать первый символ считанного из строки слова или служебную информацию. Сама функция состоит из
+&laquo;бесконечного&raquo; цикла <span class="cpp">for(;;)</span>, перед которым в переменную
+<span class="cpp">ptr</span> помещается указатель на начало переданного в функцию текста <span class="cpp">text</span>.</p>
+
+<p>Для извлечения слова из текста будет использоваться сервисная функция RDS
+<span class="cpp"><a href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a></span>:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a>(
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Start,      <span class="rem">// Начало текста</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> *pNext,     <span class="rem">// Указатель на следующее слово</span>
+    <span class="kw">char</span> *pSym,       <span class="rem">// Тип слова или первый символ</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> LowerCase);  <span class="rem">// Перевести в нижний регистр</span></pre>
+
+<p>В параметре <span class="cpp">Start</span> в эту функцию передается указатель на текст,
+из которого нужно извлечь первое слово. Функция считает словом любую последовательность символов, ограниченную
+пробелами, табуляциями или переводами строк, или любую последовательность символов в двойных кавычках.
+Перевод строки сам по себе тоже считается словом из одного символа с кодом 10 (<span class="cpp">0x0A</span> или
+&laquo;\n&raquo; в терминах языка C). Первое слово текста копируется во внутренний буфер RDS и,
+если параметр <span class="cpp">LowerCase</span> равен <span class="cpp">TRUE</span>, переводится в нижний
+регистр. Функция возвращает указатель на этот внутренний буфер, при этом указатель на начало следующего слова
+записывается по адресу, переданному в параметре <span class="cpp">pNext</span>, а однобайтовый тип считанного слова
+&ndash; по адресу, переданному в параметре <span class="cpp">pSym</span>. В качестве типа слова возвращается
+первый символ этого слова или одна из следующих констант:</p>
+
+<ul>
+  <li>0 &ndash; текст закончился, больше нет слов;</li>
+  <li>10 (&laquo;\n&raquo;) &ndash; перевод строки;</li>
+  <li>двойная кавычка (&laquo;\"&raquo;) &ndash; считанное слово было строкой в кавычках.</li>
+</ul>
+
+<p class="noindent">Нас здесь будут интересовать только два первых варианта &ndash; конец текста,
+при обнаружении которого нужно выйти из цикла, и перевод строки, который нужно игнорировать.</p>
+
+<p>Поскольку текст с параметрами блока состоит из пар слов вида
+&laquo;<i>ключевое_слово</i> <i>значение</i>&raquo;, в цикле необходимо считывать ключевое слово,
+опознавать его, после чего брать из следующего за ключевым слова значение соответствующего параметра. В
+самом первом операторе цикла производится чтение из текста очередного слова, которое будет потом сравниваться
+с ключевыми &ndash; указатель на внутренний буфер, в котором находится слово, присваивается переменной <span class="cpp">word</span>:</p>
+
+<pre class="cpp">  word=<a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a>(ptr,&amp;ptr,&amp;c,TRUE);</pre>
+
+<p>В качестве начала текста в функцию передается указатель на текущую позицию в тексте <span class="cpp">ptr</span>,
+в эту же переменную будет записан указатель на следующее слово текста. Тип слова будет записан в переменную <span class="cpp">c</span>.
+В параметре <span class="cpp">LowerCase</span> в функцию передано значение <span class="cpp">TRUE</span>,
+поэтому слово, извлеченное из текста, будет переведено в нижний регистр. Может показаться, что в данном случае
+перевод в нижний регистр не нужен &ndash; при сохранении параметров блока функцией
+<span class="cpp">SaveText</span> все ключевые слова записываются в нижнем регистре, поэтому при чтении верхнему
+регистру будет просто неоткуда взяться. Однако, следует помнить, что файл схемы или блока в текстовом формате
+может быть отредактирован пользователем вручную, и, если он напишет &laquo;TYPE&raquo; или &laquo;Type&raquo;
+вместо &laquo;type&raquo;, ключевое слово может быть не опознано функцией <span class="cpp">LoadText</span>.
+Поэтому, желательно либо переводить все считанные слова в нижний регистр, либо сравнивать их с ключевыми без
+учета регистра.</p>
+
+<p>После того, как слово считано, нужно проверить его тип. Если достигнут конец текста, и больше слов в
+нем нет (<span class="cpp">c==0</span>), выполняется выход из цикла. Если вместо слова считан перевод строки
+(<span class="cpp">c=='\n'</span>), его нужно пропустить и считать следующее слово. В противном случае следует
+сравнить считанное слово с одним из трех ключевых.</p>
+
+<p>Сначала, при помощи стандартной функции <span class="cpp">strcmp</span> (описана в файле заголовков
+&laquo;<span class="file">string.h</span>&raquo;), считанное слово сравнивается со строкой &laquo;type&raquo;. Если функция вернула
+0, значит, строки совпали, и следующее слово представляет собой символьное представление целого числа, которое
+нужно занести в переменную <span class="cpp">Type</span>. После первого вызова
+<span class="cpp"><a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a></span> указатель на начало следующего слова был записан в переменную
+<span class="cpp">ptr</span>, поэтому еще один вызов вида
+<span class="cpp">word=<a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a>(ptr,&amp;ptr,&hellip;)</span> считает из
+текста следующее слово. Вообще, каждый такой вызов продвигает указатель <span class="cpp">ptr</span> на одно
+слово вперед и возвращает очередное считанное слово через переменную <span class="cpp">word</span>. Считанное таким
+образом значение типа формируемого сигнала переводится в целое число при помощи стандартной функции
+<span class="cpp">atoi</span> и присваивается переменной <span class="cpp">Type</span>.</p>
+
+<p>Если <span class="cpp">strcmp</span> вернула ненулевое значение, строки не совпадают, и <span class="cpp">word</span>
+необходимо сравнить с другими ключевыми словами аналогичным образом. Проверка на ключевые слова
+&laquo;period&raquo; и &laquo;impulse&raquo; отличается от уже рассмотренного фрагмента только тем,
+что за этими ключевыми словами следуют вещественные значения, поэтому для преобразования их в число
+следует использовать функцию <span class="cpp">atof</span> вместо <span class="cpp">atoi</span>.</p>
+
+<p>Следует отметить, что если между ключевым словом и значением попадется перевод строки, функция сработает
+неправильно, поскольку при вызове <span class="cpp"><a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a></span> для чтения значения мы
+не проверяем тип считанного слова &ndash; в параметре <span class="cpp">pSym</span> передается
+<span class="cpp">NULL</span>. Однако, это не является большим недостатком, поскольку перевод строки
+может оказаться там только после редактирования файла пользователем, а пользователю вряд ли придет в голову
+располагать название параметра и его значение на разных строках. В конце концов, при необходимости, можно
+запретить делать это в описании пользователя для разрабатываемого блока.</p>
+
+<p>Если считанное из текста ключевое слово не совпало ни с одним из трех используемых в этом блоке,
+выполнение цикла прерывается. Это может произойти либо если файл схемы испорчен, либо если мы пытаемся
+загрузить данные, сохраненные более новой версией модели блока (в которой могли добавиться новые ключевые слова)
+при помощи более старой модели. В любом случае, дальнейшая загрузка данных блока при этом бессмысленна.</p>
+
+<p>При использовании функции <span class="cpp"><a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a></span> следует всегда помнить,
+что извлеченное из текста слово хранится во внутреннем буфере RDS только до тех пор, пока функция не
+будет вызвана в следующий раз. В приведенном примере слова в тексте идут парами &ndash;
+сначала ключевое слово, затем значение. Может показаться, что можно сразу считать два слова, а затем,
+в зависимости от первого, преобразовать второе в целое или вещественное число и присвоить это число соответствующему
+параметру:</p>
+
+<pre class="cpp">  <span class="kw">for</span>(;;)
+    { <span class="rem">// Получить из текста первое слово</span>
+      word1=<a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a>(ptr,&amp;ptr,&amp;c,TRUE);
+      <span class="kw">if</span>(c==<span class="const">0</span>) <span class="rem">// Текст закончился – выход из цикла</span>
+        <span class="kw">break</span>;
+      <span class="kw">if</span>(c==<span class="str">'\n'</span>) <span class="rem">// Перевод строки – пропускаем и продолжаем</span>
+        <span class="kw">continue</span>;
+      <span class="rem">// Получить из текста второе слово (word1 будет утеряно!)</span>
+      word2=<a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a>(ptr,&amp;ptr,NULL,FALSE);
+      <span class="rem">// Анализ</span>
+      <span class="kw">if</span>(strcmp(word1,<span class="str">"type"</span>)==<span class="const">0</span>) <span class="rem">// Тип сигнала</span>
+        Type=atoi(word2);
+      <span class="kw">else</span> <span class="kw">if</span>(strcmp(word1,<span class="str">"period"</span>)==<span class="const">0</span>) <span class="rem">// Период</span>
+        Period=atof(word2);
+      <span class="rem">// &hellip;</span></pre>
+
+<p>Однако, приведенный фрагмент программы не будет работать. Первый в цикле вызов
+<span class="cpp"><a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a></span> считает ключевое слово во внутренний буфер и присвоит указатель на
+этот буфер переменной <span class="cpp">word1</span>. Второй вызов считает следующее слово в этот же буфер,
+присвоив указатель на него <span class="cpp">word2</span>. В результате, в лучшем случае первое считанное
+слово будет просто потеряно, в худшем &ndash; указатель, содержащийся в переменной
+<span class="cpp">word1</span>, будет ссылаться на уже освобожденную область памяти (RDS
+может заново отвести память под буфер другого размера при очередном вызове <span class="cpp"><a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a></span>).
+В любом случае, после второго вызова <span class="cpp"><a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a></span> переменную
+<span class="cpp">word1</span> уже нельзя использовать, и вызов
+<span class="cpp">strcmp(word1,"type")</span> приведет к непредсказуемым последствиям. Если необходимо
+считать все слова из текста до их анализа, можно использовать функцию
+<span class="cpp"><span id="light_ref8"><a href="rdsGetTextWordDyn.htm" title="А.5.11.3. rdsGetTextWordDyn &ndash; извлечение слова из текста">rdsGetTextWordDyn</a></span></span>, которая работает с текстом точно так же, как
+<span class="cpp"><a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a></span>, и имеет те же самые параметры, но вместо того, чтобы возвращать
+указатель на слово во внутреннем буфере, создает и возвращает динамическую строку с этим словом. Разумеется,
+строка, возвращенная <span class="cpp"><a class="hidden" href="rdsGetTextWordDyn.htm" title="А.5.11.3. rdsGetTextWordDyn &ndash; извлечение слова из текста">rdsGetTextWordDyn</a></span>, должна быть потом обязательно освобождена
+вызовом <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_8_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_8_4.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_8_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

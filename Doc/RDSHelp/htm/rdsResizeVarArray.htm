@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_15">А.5.15. Работа с матрицами и массивами</a></p>
+<div class="level"><p>А.5.15.10. <span class="cpp">rdsResizeVarArray</span> &ndash; изменить размер матрицы/массива</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsGetVarArrayParams.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsVarArrayIndexCheck.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsResizeVarArray">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.15. Работа с матрицами и массивами</h4>
+<h5>А.5.15.10. <span class="cpp">rdsResizeVarArray</span> &ndash; изменить размер матрицы/массива</h5>
+
+
+<p>Функция <span class="cpp">rdsResizeVarArray</span> изменяет число строк и столбцов указанной
+<a href="pm_1_5.htm#light_ref13" title="тип переменной: массив">матрицы или массива</a> с возможностью сохранения старого содержимого.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsResizeVarArray(
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> BaseAddr,                    <span class="rem">// Базовый адрес переменной</span>
+    <span class="kw">int</span> Rows,                           <span class="rem">// Новое число строк</span>
+    <span class="kw">int</span> Cols,                           <span class="rem">// Новое число столбцов</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> KeepData,                      <span class="rem">// Сохранять содержимое</span>
+    <a class="hidden" href="RDS_ARRAYACCESSDATA.htm#ref2" title="Указатель на RDS_ARRAYACCESSDATA">RDS_PARRAYACCESSDATA</a> pAccessData    <span class="rem">// Заполняемое описание</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_BpVIIBAd</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">BaseAddr</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></i></span>)</dt>
+  <dd>Указатель (может быть любого типа, в т.ч. и <span class="cpp">void*</span>) на данные матрицы в дереве
+  переменных блока, то есть указатель на область из восьми байтов, которые эта матрицы занимает в дереве
+  переменных (см. <a href="pm_2_5_3.htm" title="&sect;2.5.3. Доступ к матрицам и массивам">&sect;2.5.3 руководства программиста</a>).</dd>
+
+  <dt><span class="cpp">Rows</span>,&nbsp;<span class="cpp">Cols</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Новое число строк (<span class="cpp">Rows</span>) и столбцов (<span class="cpp">Cols</span>) в матрице.
+  Для очистки матрицы можно передать ноль в обоих этих параметрах.</dd>
+
+  <dt><span class="cpp">KeepData</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span> &ndash; сохранять старое содержимое матрицы (если ее размер уменьшается,
+  она будет обрезана справа и снизу, если увеличивается &ndash; дополнена ячейками со значением элемента
+  по умолчанию). <span class="cpp">FALSE</span> &ndash; после изменения размера заполнить всю матрицу значением
+  по умолчанию.</dd>
+
+  <dt><span class="cpp">pAccessData</span>&emsp;(<span class="cpp"><i><a href="RDS_ARRAYACCESSDATA.htm#ref2" title="Указатель на RDS_ARRAYACCESSDATA">RDS_PARRAYACCESSDATA</a></i></span>)</dt>
+  <dd>Указатель на структуру описания матрицы <span class="cpp"><a href="RDS_ARRAYACCESSDATA.htm#ref1" title="Структура RDS_ARRAYACCESSDATA">RDS_ARRAYACCESSDATA</a></span> которую функция должна
+  заполнить после изменения размера. Если описание матрицы не нужно вызывающей программе, в
+  этом параметре можно передать <span class="cpp">NULL</span>.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p><span class="cpp">TRUE</span> &ndash; размер матрицы изменен,
+<span class="cpp">FALSE</span> &ndash; произошла ошибка (указанная в параметре <span class="cpp">BaseAddr</span>
+переменная &ndash; не матрица и не массив).</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция изменяет размер матрицы по указателю <span class="cpp">BaseAddr</span>.</p>
+
+<p class="apphdr">Пример</p>
+<p> Пример использования функции <span class="cpp">rdsResizeVarArray</span>
+приведен в <a href="pm_2_5_3.htm" title="&sect;2.5.3. Доступ к матрицам и массивам">&sect;2.5.3 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_ARRAYACCESSDATA.htm#ref1" title="Структура RDS_ARRAYACCESSDATA">RDS_ARRAYACCESSDATA</a></span>,
+<span class="cpp"><a href="rdsCopyVarArray.htm" title="А.5.15.7. rdsCopyVarArray &ndash; копировать одну матрицу/массив в другую">rdsCopyVarArray</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsGetVarArrayParams.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsVarArrayIndexCheck.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsResizeVarArray">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

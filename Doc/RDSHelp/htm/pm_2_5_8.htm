@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.5.8. Использование выходов с управляющими переменными</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_5">&sect;2.5. Статические переменные блоков</a></p>
+<div class="level"><p>&sect;2.5.8. Использование выходов с управляющими переменными</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_5_7.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_6_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_8">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_5_8_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.5. Статические переменные блоков</h3>
+<h4>&sect;2.5.8. Использование выходов с управляющими переменными</h4>
+<p class="abstract">Описывается использование управляющих переменных, которые позволяют запретить передачу по
+                связям значения конкретного выхода блока, а также активировать связь, подключенную к конкретному элементу
+                выхода-массива. Приведен пример модели переключателя с двумя выходами, передающего входное значение на
+                один или на оба выхода в зависимости от значения дополнительного входа (работа неактивного выхода блокируется
+                управляющей переменной). Также приведен пример демультиплексора на произвольное число выходов
+                (активный выход выбирается целой управляющей переменной массива).</p>
+
+
+<p>Связи, подключенные к выходам простого блока, срабатывают в
+<a href="pm_1_3.htm#ref3" title="Режим расчета">режиме расчета</a> только тогда, когда значение
+<a href="pm_1_5.htm#ref4" title="Обязательные сигналы простого блока">стандартного сигнала</a>
+&laquo;<span class="rdsvar">Ready</span>&raquo; (сигнального выхода блока со смещением 1) равно единице. Перед запуском
+модели блока в режиме <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span> RDS автоматически взводит этот сигнал,
+поэтому, если модель не предпримет никаких действий, в конце такта расчета значения всех выходов
+блока будут переданы на входы других блоков, связанных с ним. Если модель присвоит переменной
+&laquo;<span class="rdsvar">Ready</span>&raquo; нулевое значение, ни одна из связей, соединенных с выходами блока, не сработает.
+Чаще всего модели сбрасывают &laquo;<span class="rdsvar">Ready</span>&raquo;, если значения выходов блока не изменились,
+поскольку в этом случае нет никакого смысла передавать по связям те же самые данные еще раз. Повторная
+передача данных не приведет к возникновению каких-либо ошибок, но из-за срабатывания связей могут
+запуститься модели блоков, ко входам которых эти связи подключены. Поскольку входные данные этих моделей
+не изменились, их запуск был бы напрасной тратой времени.</p>
+
+<p>Разрешение и запрещение передачи данных отдельных выходов по связям часто требуется при
+создании блоков-выключателей и демультиплексоров, управляющих передачей данных со входа
+на один или несколько выходов. Использование сигнала &laquo;<span class="rdsvar">Ready</span>&raquo; позволяет управлять только
+всеми выходами одновременно: или сработают все связи, или не сработает ни одна из них. Для переключателей
+с единственным выходом (см. пример в <a href="pm_2_5_6.htm#ref1" title="Пример блока-выключателя связи">&sect;2.5.6</a>) это вполне подходит,
+однако, если выходов несколько, бывает необходимо управлять ими независимо &ndash; разрешать передачу
+данных для одних выходов, запрещая при этом передачу других.</p>
+
+<p>Для управления передачей данных конкретного выхода блока необходимо ввести дополнительную
+логическую переменную и связать с ней выход, задав для него тип
+&laquo;выход/логическая&raquo; вместо &laquo;выход&raquo; и указав имя логической переменной
+(см. <a href="pm_1_5.htm#pic2" title="Редактор переменных">рис.&nbsp;9</a>). При этом связи, подключенные к этому выходу,
+будут передавать данные только в том случае, если связанная логическая переменная будет иметь значение 1.
+Разумеется, сигнал &laquo;<span class="rdsvar">Ready</span>&raquo; также должен быть равен единице, иначе ни одна выходная связь блока
+не сработает, какие бы значения не имели управляющие логические переменные выходов. Если выход блока &ndash;
+массив, можно вместо логической управляющей переменной указать для него целую. Целая переменная будет управлять
+только связями, подключенными к отдельным элементам массива, никак не влияя на связи, подключенные ко всему
+массиву как к одной сложной переменной. Значение переменной будет определять номер элемента массива,
+для которого разрешена передача данных. Если переменная будет иметь значение 0, будут работать только связи,
+присоединенные к нулевому элементу массива, если она будет равна единице &ndash; только связи, присоединенные
+к первому элементу и т.д.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/TestSW2.png" width="336" height="84" alt="Управление отдельными выходными связями блока" />
+<p id="light_pic1">Рис.&nbsp;35. Управление отдельными<br />выходными связями блока</p>
+</div></div>
+
+
+<p>Для примера сначала рассмотрим блок, который должен передавать данные вещественного входа &laquo;<span class="rdsvar">x</span>&raquo;
+на один из выходов &laquo;<span class="rdsvar">y0</span>&raquo; и &laquo;<span class="rdsvar">y1</span>&raquo; в зависимости от значения переменной
+&laquo;<span class="rdsvar">N</span>&raquo;: при нулевом &laquo;<span class="rdsvar">N</span>&raquo; значение должно передаваться на выход
+&laquo;<span class="rdsvar">y0</span>&raquo;, при &laquo;<span class="rdsvar">N</span>&raquo;=1 &ndash; на выход &laquo;<span class="rdsvar">y1</span>&raquo;, при &laquo;<span class="rdsvar">N</span>&raquo;=2 &ndash;
+на оба выхода
+(<a href="#pic1" title="Управление отдельными выходными связями блока">рис.&nbsp;35</a>). Для этого блока потребуется раздельное управление выходами,
+поэтому придется ввести в него две дополнительных логических переменных &laquo;<span class="rdsvar">L0</span>&raquo; и &laquo;<span class="rdsvar">L1</span>&raquo;,
+которые будут управлять выходами &laquo;<span class="rdsvar">y0</span>&raquo; и &laquo;<span class="rdsvar">y1</span>&raquo; соответственно:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">x</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">N</td>
+<td class="center">int</td>
+<td class="center">4</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">14</td>
+<td class="vcenter">L0</td>
+<td class="center">Логическая</td>
+<td class="center">1</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">15</td>
+<td class="vcenter">L1</td>
+<td class="center">Логическая</td>
+<td class="center">1</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">16</td>
+<td class="vcenter">y0</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Выход/логическая<br />L0</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">24</td>
+<td class="vcenter">y1</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Выход/логическая<br />L1</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Модель блока будет выглядеть так:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestSW2(<span class="kw">int</span> CallMode,
+                        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x       (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define N       (*((int *)(pStart+10)))</span>
+  <span class="preproc">#define L0      (*((char *)(pStart+14)))</span>
+  <span class="preproc">#define L1      (*((char *)(pStart+15)))</span>
+  <span class="preproc">#define y0      (*((double *)(pStart+16)))</span>
+  <span class="preproc">#define y1      (*((double *)(pStart+24)))</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDILLDD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">switch</span>(N)
+            { <span class="kw">case</span> <span class="const">0</span>: <span class="rem">// Передать данные на выход y0</span>
+                y0=x;
+                L0=<span class="const">1</span>; <span class="rem">// Разрешить y0</span>
+                L1=<span class="const">0</span>; <span class="rem">// Запретить y1</span>
+                <span class="kw">break</span>;
+              <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Передать данные на выход y1</span>
+                y1=x;
+                L0=<span class="const">0</span>; <span class="rem">// Запретить y0</span>
+                L1=<span class="const">1</span>; <span class="rem">// Разрешить y1</span>
+                <span class="kw">break</span>;
+              <span class="kw">default</span>: <span class="rem">// Передать данные на оба выхода</span>
+                y0=y1=x;
+                L0=L1=<span class="const">1</span>; <span class="rem">// Разрешить оба выхода</span>
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y1</span>
+  <span class="preproc">#undef y0</span>
+  <span class="preproc">#undef L1</span>
+  <span class="preproc">#undef L0</span>
+  <span class="preproc">#undef N</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В режиме <span class="cpp"><a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span> модель выполняет разные действия в зависимости
+от значения входа <span class="cpp">N</span>. Если значение <span class="cpp">N</span> равно нулю, выходу
+<span class="cpp">y0</span> присваивается значение входа <span class="cpp">x</span>, после чего логической переменной
+<span class="cpp">L0</span> присваивается единица, а <span class="cpp">L1</span> &ndash; ноль. При таких значениях
+управляющих переменных сработает только связь, присоединенная к выходу <span class="cpp">y0</span>, которым управляет
+<span class="cpp">L0</span>. Если значение <span class="cpp">N</span> равно единице, все происходит наоборот
+&ndash; переменной <span class="cpp">L0</span> присваивается 0, а <span class="cpp">L1</span> &ndash; единица,
+при этом будет работать только связь, присоединенная к <span class="cpp">y1</span>. Если же
+<span class="cpp">N</span> имеет какое-либо другое значение, обеим управляющим переменным присваивается значение
+1, что разрешает работу связей, присоединенных к обоим выходам блока.</p>
+
+<div class="picright"><div class="container" id="pic2">
+<img src="../img/TestSW.png" width="285" height="122" alt="Управление передачей отдельных элементов массива" />
+<p id="light_pic2">Рис.&nbsp;36. Управление передачей<br />отдельных элементов массива</p>
+</div></div>
+
+
+<p><span id="ref1">Теперь</span>
+рассмотрим пример, в котором целая переменная будет управлять передачей данных элементов
+<span id="light_ref1">массива</span>. Предположим, что необходимо создать модель блока-демультиплексора,
+который будет передавать значение вещественного входа &laquo;<span class="rdsvar">x</span>&raquo; на выход, номер которого определяется
+целым входом &laquo;<span class="rdsvar">N</span>&raquo;. Поскольку заранее неизвестно, сколько выходов должно быть у блока, его выходом
+будет вещественный массив &laquo;<span class="rdsvar">Y</span>&raquo;, к элементам которого будут подключаться связи
+(<a href="#pic2" title="Управление передачей отдельных элементов массива">рис.&nbsp;36</a>).
+Чтобы для любого значения &laquo;<span class="rdsvar">N</span>&raquo; срабатывала только связь, соединенная с элементом
+&laquo;<span class="rdsvar">Y[N]</span>&raquo;, целая переменная &laquo;<span class="rdsvar">N</span>&raquo; будет указана в качестве управляющей для массива
+&laquo;<span class="rdsvar">Y</span>&raquo;:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">x</td>
+<td class="center">double</td>
+<td class="center">8</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">10</td>
+<td class="vcenter">N</td>
+<td class="center">int</td>
+<td class="center">4</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">14</td>
+<td class="vcenter">Y</td>
+<td class="center">Массив double</td>
+<td class="center">8</td>
+<td class="center">Выход/логическая<br />N</td>
+<td></td>
+<td class="center"></td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>В данном случае управляющая массивом &laquo;<span class="rdsvar">Y</span>&raquo; переменная &laquo;<span class="rdsvar">N</span>&raquo; одновременно является
+входом блока, поэтому в модели не нужно отдельно управлять номером выхода, связь которого будет работать
+&ndash; это произойдет автоматически при поступлении на вход &laquo;<span class="rdsvar">N</span>&raquo; нового значения. Модель блока
+будет выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestSW(<span class="kw">int</span> CallMode,
+                       <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                       <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart  ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start   (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready   (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x       (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define N       (*((int *)(pStart+10)))</span>
+  <span class="preproc">#define pY      ((void **)(pStart+14))</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDIMD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта моделирования</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">if</span>(N&lt;<span class="const">0</span>) <span class="rem">// Значение N не должно быть отрицательным</span>
+            Ready=<span class="const">0</span>; <span class="rem">// Не передавать ничего по связям</span>
+          <span class="kw">else</span> <span class="rem">// Значение N не отрицательно</span>
+            { <span class="kw">int</span> count;
+              <span class="kw">double</span> *array;
+              <span class="rem">// Число элементов в массиве Y</span>
+              count=<a class="hidden" href="RDS_ARRAYEXISTS.htm" title="А.5.15.3. Макрос RDS_ARRAYEXISTS &ndash; проверка наличия элементов в матрице/массиве">RDS_ARRAYEXISTS</a>(pY)?<a class="hidden" href="RDS_ARRAYCOLS.htm" title="А.5.15.1. Макрос RDS_ARRAYCOLS &ndash; число столбцов матрицы/массива">RDS_ARRAYCOLS</a>(pY):<span class="const">0</span>;
+              <span class="kw">if</span>(N&gt;=count) <span class="rem">// Число элементов недостаточно</span>
+                { <span class="rem">// Увеличение размера Y</span>
+                  <span class="kw">if</span>(!<a class="hidden" href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a>(pY,<span class="const">1</span>,N+<span class="const">1</span>,TRUE,NULL))
+                    { <span class="rem">// Ошибка: не удалось увеличить размер массива</span>
+                      <a class="hidden" href="rdsStopCalc.htm" title="А.5.2.42. rdsStopCalc &ndash; остановка расчета">rdsStopCalc</a>(); <span class="rem">// Остановка расчета</span>
+                      <span class="rem">// Не передавать ничего по связям</span>
+                      Ready=<span class="const">0</span>;
+                      <span class="rem">// Вывод сообщения</span>
+                      <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(<span class="str">"Мало памяти"</span>,
+                                    <span class="str">"Ошибка"</span>,
+                                    MB_OK | MB_ICONERROR);
+                      <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+                    }
+                }
+              <span class="rem">// Получить указатель на первый элемент Y</span>
+              array=(<span class="kw">double</span>*)<a class="hidden" href="RDS_ARRAYDATA.htm" title="А.5.15.2. Макрос RDS_ARRAYDATA &ndash; указатель на первый элемент матрицы/массива">RDS_ARRAYDATA</a>(pY);
+              <span class="rem">// Записать в Y[N] значение входа</span>
+              array[N]=x;
+            } <span class="rem">// else (N&gt;=0)</span>
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef pY</span>
+  <span class="preproc">#undef N</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Поскольку у массива не может быть элементов с отрицательными индексами, модель в режиме
+<span class="cpp"><a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span> сначала проверяет неотрицательность значения <span class="cpp">N</span>.
+Если <span class="cpp">N</span> отрицательно, сигнал <span class="cpp">Ready</span> обнуляется и работа модели
+на этом завершается. В противном случае текущее число элементов массива <span class="cpp">Y</span> записывается
+во вспомогательную переменную <span class="cpp">count</span> и сравнивается с <span class="cpp">N</span> (поскольку
+число строк массива всегда равно единице, число элементов в нем всегда равно числу столбцов и вычисляется при
+помощи макроса <span class="cpp"><a href="RDS_ARRAYCOLS.htm" title="А.5.15.1. Макрос RDS_ARRAYCOLS &ndash; число столбцов матрицы/массива">RDS_ARRAYCOLS</a></span>). Если значение <span class="cpp">N</span> больше или
+равно числу элементов в <span class="cpp">Y</span>, значит, элемент <span class="cpp">Y[N]</span> еще не
+существует, и размер массива нужно увеличить до <span class="cpp">N+1</span>. Для этого вызывается сервисная функция
+<span class="cpp"><a href="rdsResizeVarArray.htm" title="А.5.15.10. rdsResizeVarArray &ndash; изменить размер матрицы/массива">rdsResizeVarArray</a></span> и проверяется возвращаемое ей значение. Если размер массива увеличить
+не удалось (из-за нехватки памяти или слишком большого значения <span class="cpp">N</span>), функция вернет
+<span class="cpp">FALSE</span>. В этом случае модель остановит расчет, вызвав функцию
+<span class="cpp"><span id="light_ref2"><a href="rdsStopCalc.htm" title="А.5.2.42. rdsStopCalc &ndash; остановка расчета">rdsStopCalc</a></span></span>, присвоит сигналу <span class="cpp">Ready</span> значение 0 и выведет сообщение
+&laquo;Мало памяти&raquo; при помощи функции <span class="cpp"><a href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a></span>. Обнуление сигнала
+<span class="cpp">Ready</span> может показаться лишним, поскольку расчет все равно будет остановлен,
+однако остановка расчета произойдет только после завершения текущего такта моделирования. Если не обнулить
+<span class="cpp">Ready</span>, значение выхода <span class="cpp">Y</span> будет передано по связям в
+конце такта, что нежелательно.</p>
+
+<p>После того, как модель удостоверилась в существовании элемента массива <span class="cpp">Y[N]</span> (или
+создала его, увеличив размер <span class="cpp">Y</span>), этому элементу присваивается значение входа <span class="cpp">x</span>.
+Поскольку переменная <span class="cpp">N</span> указана как управляющая для выхода <span class="cpp">Y</span>, только
+это значение будет передано по связям в конце такта расчета.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_5_7.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_6_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_8">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

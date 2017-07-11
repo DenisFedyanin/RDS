@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.8.3. Сохранение параметров в текстовом формате</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_8">&sect;2.8. Сохранение и загрузка параметров блока</a></p>
+<div class="level"><p>&sect;2.8.3. Сохранение параметров в текстовом формате</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_8_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_8_4.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_8_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_8_3.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделью блока-генератора синусоиды,
+косинусоиды или прямоугольных импульсов, сохраняющего свои параметры в текстовом формате.
+Изменения относительно примера из <a href="pm_2_7_2.htm#light_ref13" title="Пример блока-генератора с настройкой параметров">&sect;2.7.2</a>
+выделены <span class="changes">цветом</span>.</p>
+
+<pre class="cpp">  <span class="rem">// Сохранение параметров в текстовом формате</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;math.h&gt;</span>
+  <span class="preproc">#include &lt;stdio.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">//=             Генератор                 =</span>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//====== Класс личной области данных ======</span>
+  <span class="kw">class</span> TTestGenData
+  { <span class="kw">public</span>:
+      <span class="kw">int</span> Type;         <span class="rem">// Тип (0-sin,1-cos,2-прямоугольные)</span>
+      <span class="kw">double</span> Period;    <span class="rem">// Период</span>
+      <span class="kw">double</span> Impulse;   <span class="rem">// Длительность импульса</span>
+
+      <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> Time;  <span class="rem">// Связь с динамической</span>
+                             <span class="rem">// переменной времени</span>
+
+      <span class="kw">int</span> Setup(<span class="kw">void</span>);      <span class="rem">// Функция настройки</span>
+      <span class="changes"><span class="kw">void</span> SaveText(<span class="kw">void</span>);  <span class="rem">// Сохранение параметров </span></span>
+      <span class="changes"><span class="kw">void</span> LoadText(<span class="kw">char</span> *text);<span class="rem">// Загрузка параметров </span></span>
+      TTestGenData(<span class="kw">void</span>)    <span class="rem">// Конструктор класса</span>
+        { Type=<span class="const">0</span>; Period=<span class="const">1.0</span>; Impulse=<span class="const">0</span>.<span class="const">5</span>;
+          <span class="rem">// Подписка на динамическую переменную времени</span>
+          Time=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(<a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,
+                                        <span class="str">"DynTime"</span>,
+                                        <span class="str">"D"</span>,
+                                        TRUE);
+        };
+      ~TTestGenData(<span class="kw">void</span>)	<span class="rem">// Деструктор класса</span>
+        { <span class="rem">// Прекращение подписки</span>
+          <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(Time);
+        };
+  };
+
+  <span class="rem">//==== Прототип функции обратного вызова окна настроек ====</span>
+  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestGenDataCheckFunc2(<a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> win,
+                                     <a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#ref2" title="Указатель на RDS_FORMSERVFUNCDATA">RDS_PFORMSERVFUNCDATA</a> data);
+
+  <span class="rem">//====== Функция редактирования параметров ======</span>
+  <span class="kw">int</span> TTestGenData::Setup(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window; <span class="rem">// Идентификатор вспомогательного объекта</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;            <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="rem">// Создание окна</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Простой генератор"</span>);
+    <span class="rem">// Добавление полей ввода</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">1</span>,<a class="hidden" href="app_a_fields.htm#light_ref5" title="RDS_FORMCTRL_COMBOLIST">RDS_FORMCTRL_COMBOLIST</a>,
+                   <span class="str">"Вид:"</span>,<span class="const">210</span>);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,
+                   <span class="str">"Период:"</span>,<span class="const">80</span>);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">3</span>,<a class="hidden" href="app_a_fields.htm#light_ref8" title="RDS_FORMCTRL_EDIT">RDS_FORMCTRL_EDIT</a>,
+                   <span class="str">"Длительность:"</span>,<span class="const">80</span>);
+    <span class="rem">// Установка списка вариантов</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a>,
+                    <span class="str">"Синус\nКосинус\nПрямоугольные импульсы"</span>);
+    <span class="rem">// Занесение исходных значений в поля ввода</span>
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Type);
+    <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Period);
+    <a class="hidden" href="rdsSetObjectDouble.htm" title="А.5.22.10. rdsSetObjectDouble &ndash; установить вещественное число">rdsSetObjectDouble</a>(window,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,Impulse);
+    <span class="rem">// Включение дополнительной панели слева от полей ввода</span>
+    <a class="hidden" href="rdsFORMEnableSidePanel.htm" title="А.5.28.5. rdsFORMEnableSidePanel &ndash; включить боковую панель">rdsFORMEnableSidePanel</a>(window,<span class="const">1</span>,-<span class="const">1</span>);
+    <span class="rem">// Добавление области для рисования графика</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">1</span>,<span class="const">4</span>,<a class="hidden" href="app_a_fields.htm#light_ref16" title="RDS_FORMCTRL_PAINTBOX">RDS_FORMCTRL_PAINTBOX</a>,NULL,<span class="const">100</span>);
+    <span class="rem">// Автоматическое вычисление высоты этой области</span>
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">4</span>,<a class="hidden" href="RDS_FORMVAL_PBHEIGHT.htm" title="А.5.28.22. Команда RDS_FORMVAL_PBHEIGHT &ndash; высота области программного рисования">RDS_FORMVAL_PBHEIGHT</a>,-<span class="const">1</span>);
+    <span class="rem">// Открытие окна с другой функцией обратного вызова</span>
+    ok=<a class="hidden" href="rdsFORMShowModalServ.htm" title="А.5.28.7. rdsFORMShowModalServ &ndash; открыть окно с расширенной функцией обратного вызова">rdsFORMShowModalServ</a>(window,TestGenDataCheckFunc2);
+
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Нажата кнопка OK - запись параметров обратно в блок</span>
+        Type=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        Period=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        Impulse=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(window,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="rem">// Возвращаемое значение</span>
+    <span class="kw">return</span> ok?<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+
+  <span class="rem">//====== Функция обратного вызова для окна настроек ======</span>
+  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestGenDataCheckFunc2(<a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> win,
+                                     <a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#ref2" title="Указатель на RDS_FORMSERVFUNCDATA">RDS_PFORMSERVFUNCDATA</a> data)
+  { <span class="rem">// Считать номер пункта выпадающего списка</span>
+    <span class="kw">int</span> type=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(win,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+    <span class="rem">// Вспомогательные переменные для рисования графика</span>
+    <span class="kw">int</span> y0,y_ampl,x0,x1;
+    <span class="kw">double</span> pix_period;
+
+    <span class="kw">switch</span>(data-&gt;Event)
+      { <span class="rem">// Изменение поля ввода</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#light_ref3" title="RDS_FORMSERVEVENT_CHANGE">RDS_FORMSERVEVENT_CHANGE</a>:
+          <span class="rem">// Запретить ввод длительность импульса для sin и cos</span>
+          <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(win,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_ENABLED.htm" title="А.5.28.15. Команда RDS_FORMVAL_ENABLED &ndash; разрешение и запрещение всего поля ввода">RDS_FORMVAL_ENABLED</a>,type==<span class="const">2</span>);
+          <span class="rem">// Перерисовать график</span>
+          <a class="hidden" href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a>(win,<a class="hidden" href="RDS_FORM_INVALIDATE.htm" title="А.5.28.9. Команда RDS_FORM_INVALIDATE &ndash; обновить окно">RDS_FORM_INVALIDATE</a>);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Рисование</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#light_ref4" title="RDS_FORMSERVEVENT_DRAW">RDS_FORMSERVEVENT_DRAW</a>:
+          <span class="rem">// Заливка фона белым цветом</span>
+          <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,RDS_GFS_SOLID,<span class="const">0xffffff</span>);
+          <a class="hidden" href="rdsXGFillRect.htm" title="А.5.18.7. rdsXGFillRect &ndash; заполненный прямоугольник">rdsXGFillRect</a>(data-&gt;Left,
+                        data-&gt;Top,
+                        data-&gt;Left+data-&gt;Width,
+                        data-&gt;Top+data-&gt;Height);
+          <span class="rem">// Координаты рисования</span>
+          x0=data-&gt;Left+<span class="const">10</span>;               <span class="rem">// Начало графика</span>
+          x1=data-&gt;Left+data-&gt;Width-<span class="const">10</span>;<span class="rem">// Конец графика</span>
+          y0=data-&gt;Top+data-&gt;Height/<span class="const">2</span>; <span class="rem">// Центр по вертикали</span>
+          y_ampl=(data-&gt;Height-<span class="const">20</span>)/<span class="const">2</span>;     <span class="rem">// Амплитуда</span>
+          pix_period=<span class="const">0</span>.<span class="const">5</span>*(x1-x0);            <span class="rem">// Период на рисунке</span>
+          <span class="rem">// Координатные оси</span>
+          <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,<span class="const">1</span>,<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+          <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(data-&gt;Left+<span class="const">5</span>,y0);
+          <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(data-&gt;Left+data-&gt;Width-<span class="const">5</span>,y0);
+          <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(x0,data-&gt;Top+<span class="const">5</span>);
+          <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0,data-&gt;Top+data-&gt;Height-<span class="const">5</span>);
+          <span class="rem">// График</span>
+          <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref5" title="RDS_GFWIDTH">RDS_GFWIDTH</a>,<span class="const">0</span>,<span class="const">3</span>,<span class="const">0</span>,<span class="const">0</span>);
+          <span class="kw">if</span>(type==<span class="const">2</span>) <span class="rem">// Прямоугольные импульсы</span>
+            { <span class="kw">double</span> period,impulse,pix_impulse;
+              <span class="rem">// Чтение введенных пользователем значений</span>
+              period=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(win,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+              impulse=<a class="hidden" href="rdsGetObjectDouble.htm" title="А.5.22.6. rdsGetObjectDouble &ndash; получить вещественное число">rdsGetObjectDouble</a>(win,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+              <span class="kw">if</span>(period==<span class="const">0</span>.<span class="const">0</span>) <span class="rem">// Нельзя вычислить частоту</span>
+                <span class="kw">return</span>;
+              <span class="rem">// Длительность импульса на рисунке</span>
+              pix_impulse=impulse*pix_period/period;
+              <span class="rem">// Первый период</span>
+              <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(x0,y0+y_ampl);
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0,y0-y_ampl);
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0+pix_impulse,y0-y_ampl);
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0+pix_impulse,y0+y_ampl);
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0+pix_period,y0+y_ampl);
+              <span class="rem">// Второй период</span>
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0+pix_period,y0-y_ampl);
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0+pix_period+pix_impulse,y0-y_ampl);
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x0+pix_period+pix_impulse,y0+y_ampl);
+              <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x1,y0+y_ampl);
+            }
+          <span class="kw">else</span> <span class="rem">// Синус или косинус</span>
+            { <span class="kw">double</span> t,y;
+              <span class="rem">// Цикл по горизонтали с шагом в 3 точки</span>
+              <span class="kw">for</span>(<span class="kw">int</span> x=x0;x&lt;=x1;x+=<span class="const">3</span>)
+                { t=<span class="const">2</span>*M_PI*(x-x0)/pix_period;
+                  y=y_ampl*((type==<span class="const">0</span>)?sin(t):cos(t));
+                  <span class="kw">if</span>(x==x0) <span class="rem">// Первая точка – установить позицию</span>
+                    <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(x,y0-y);
+                  <span class="kw">else</span> <span class="rem">// Рисовать линию от предыдущей точки</span>
+                    <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(x,y0-y);
+                } <span class="rem">// for(int x=x0...)</span>
+            }
+          <span class="kw">break</span>;
+      } <span class="rem">// switch</span>
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//============= Модель блока ==============</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestGen(<span class="kw">int</span> CallMode,
+                        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define y      (*((double *)(pStart+2)))</span>
+    <span class="rem">// Вспомогательная переменная – указатель на личную область</span>
+    <span class="rem">// данных блока, приведенный к правильному типу</span>
+    TTestGenData *data;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          BlockData-&gt;BlockData=<span class="kw">new</span> TTestGenData();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          data=(TTestGenData*)(BlockData-&gt;BlockData);
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+<div class="changes">        <span class="rem">// Запись параметров в текстовом формате</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a>:
+          data=(TTestGenData*)(BlockData-&gt;BlockData);
+          data-&gt;SaveText();
+          <span class="kw">break</span>;</div>
+<div class="changes">        <span class="rem">// Загрузка параметров в текстовом формате</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a>:
+          data=(TTestGenData*)(BlockData-&gt;BlockData);
+          data-&gt;LoadText((<span class="kw">char</span>*)ExtParam);
+          <span class="kw">break</span>;</div>
+        <span class="rem">// Функция настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          data=(TTestGenData*)(BlockData-&gt;BlockData);
+          <span class="kw">return</span> data-&gt;Setup();
+
+        <span class="rem">// Изменение динамической переменной или запуск расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_STARTCALC.htm" title="А.2.4.14. RDS_BFM_STARTCALC &ndash; запуск расчета">RDS_BFM_STARTCALC</a>:
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DYNVARCHANGE.htm" title="А.2.4.4. RDS_BFM_DYNVARCHANGE &ndash; изменение динамической переменной">RDS_BFM_DYNVARCHANGE</a>:
+          data=(TTestGenData*)(BlockData-&gt;BlockData);
+          <span class="kw">if</span>(data-&gt;Period==<span class="const">0</span>.<span class="const">0</span>) <span class="rem">// Нельзя вычислить частоту</span>
+            <span class="kw">return</span> <span class="const">0</span>;
+          <span class="rem">// Проверка наличия переменной “DynTime"</span>
+          <span class="kw">if</span>(data-&gt;Time!=NULL &amp;&amp; data-&gt;Time-&gt;Data!=NULL)
+            { <span class="rem">// Динамическая переменная найдена – чтение значения</span>
+              <span class="kw">double</span> t=*((<span class="kw">double</span>*)data-&gt;Time-&gt;Data);
+              <span class="kw">switch</span>(data-&gt;Type)
+                { <span class="kw">case</span> <span class="const">0</span>: <span class="rem">// Синус</span>
+                    y=sin(<span class="const">2</span>*M_PI*t/data-&gt;Period);
+                    <span class="kw">break</span>;
+                  <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Косинус</span>
+                    y=cos(<span class="const">2</span>*M_PI*t/data-&gt;Period);
+                    <span class="kw">break</span>;
+                  <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Прямоугольные импульсы</span>
+                    t=fmod(t,data-&gt;Period);
+                    y=(t&gt;data-&gt;Impulse)?-<span class="const">1.0</span>:<span class="const">1.0</span>;
+                    <span class="kw">break</span>;
+                }
+              <span class="rem">// Взвести Ready для передачи выхода по связям</span>
+              Ready=<span class="const">1</span>;
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span>
+
+<div class="changes">  <span class="rem">// Функция сохранения параметров </span>
+  <span class="kw">void</span> TTestGenData::SaveText(<span class="kw">void</span>)
+  { <span class="kw">char</span> buffer[<span class="const">100</span>]; <span class="rem">// Буфер для формирования текста </span>
+    <span class="rem">// Формирование текста в буфере при помощи функции sprintf </span>
+    sprintf(buffer,
+            <span class="str">"type %d period %lf impulse %lf"</span>,
+            Type,Period,Impulse);
+    <span class="rem">// Передача сформированного текста в RDS </span>
+    <a class="hidden" href="rdsWriteBlockDataText.htm" title="А.5.10.5. rdsWriteBlockDataText &ndash; добавление текста к сохраняемым в текстовом формате данным блока">rdsWriteBlockDataText</a>(buffer,FALSE);
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">/* 
+  </span><span class="rem">// Функция сохранения параметров – вариант с условием </span><span class="rem">
+  void TTestGenData::SaveText(void)
+  { char buffer[100]; </span><span class="rem">// Буфер для формирования текста </span><span class="rem">
+    </span><span class="rem">// Формирование текста для Type и Period</span><span class="rem">
+    sprintf(buffer,
+            "type %d period %lf",
+            Type,Period);
+    </span><span class="rem">// Передача сформированного текста в RDS </span><span class="rem">
+    </span><a class="hidden" href="rdsWriteBlockDataText.htm" title="А.5.10.5. rdsWriteBlockDataText &ndash; добавление текста к сохраняемым в текстовом формате данным блока"><span class="rem">rdsWriteBlockDataText</span></a><span class="rem">(buffer,FALSE);
+    </span><span class="rem">// Запись Impulse если Type равно 2 </span><span class="rem">
+    if(Type==2)
+     { </span><span class="rem">// Формирование текста </span><span class="rem">
+       sprintf(buffer,"impulse %lf",Impulse);
+       </span><span class="rem">// Передача текста в RDS </span><span class="rem">
+       </span><a class="hidden" href="rdsWriteBlockDataText.htm" title="А.5.10.5. rdsWriteBlockDataText &ndash; добавление текста к сохраняемым в текстовом формате данным блока"><span class="rem">rdsWriteBlockDataText</span></a><span class="rem">(buffer,FALSE);
+     }
+  }
+  </span><span class="rem">//=========================================</span><span class="rem">
+  */</span></div>
+<div class="changes">  <span class="rem">// Функция загрузки параметров </span>
+  <span class="kw">void</span> TTestGenData::LoadText(<span class="kw">char</span> *text)
+  { <span class="kw">char</span> *word,*ptr,c;
+    <span class="rem">// Установка указателя ptr на начало переданного текста </span>
+    ptr=text;
+    <span class="rem">// Цикл по словам в тексте </span>
+    <span class="kw">for</span>(;;)
+      { <span class="rem">// Получить из текста очередное слово </span>
+        word=<a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a>(ptr,&amp;ptr,&amp;c,TRUE);
+        <span class="kw">if</span>(c==<span class="const">0</span>) <span class="rem">// Текст закончился – выход из цикла </span>
+          <span class="kw">break</span>;
+        <span class="kw">if</span>(c==<span class="str">'\n'</span>) <span class="rem">// Перевод строки – пропускаем и продолжаем </span>
+          <span class="kw">continue</span>;
+        <span class="kw">if</span>(strcmp(word,<span class="str">"type"</span>)==<span class="const">0</span>) <span class="rem">// Тип сигнала </span>
+          { <span class="rem">// Следующее слово – целое число</span>
+            word=<a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a>(ptr,&amp;ptr,NULL,FALSE);
+            Type=atoi(word);
+          }
+        <span class="kw">else</span> <span class="kw">if</span>(strcmp(word,<span class="str">"period"</span>)==<span class="const">0</span>) <span class="rem">// Период</span>
+          { <span class="rem">// Следующее слово - число double</span>
+            word=<a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a>(ptr,&amp;ptr,NULL,FALSE);
+            Period=atof(word);
+          }
+        <span class="kw">else</span> <span class="kw">if</span>(strcmp(word,<span class="str">"impulse"</span>)==<span class="const">0</span>) <span class="rem">// Длительность импульса </span>
+          { <span class="rem">// Следующее слово - число double</span>
+            word=<a class="hidden" href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a>(ptr,&amp;ptr,NULL,FALSE);
+            Impulse=atof(word);
+          }
+        <span class="kw">else</span> <span class="rem">// Неопознанное ключевое слово </span>
+          <span class="kw">break</span>; <span class="rem">// Ошибка – прекращаем обработку </span>
+      } <span class="rem">// Конец цикла for(;;)</span>
+  }
+  <span class="rem">//=========================================</span></div></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_8_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_8_4.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_8_3">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

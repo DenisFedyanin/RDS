@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.2. Главная функция DLL и файлы заголовков</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p>&sect;2.2. Главная функция DLL и файлы заголовков</p>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_3.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3>&sect;2.2. Главная функция DLL и файлы заголовков</h3>
+<p class="abstract">Описывается главная функция DLL, которую должна иметь каждая библиотека с моделями блоков, а также реализация взаимодействия программы модели с главной программой RDS при помощи сервисных функций. Приводится пример использования макроса, позволяющего получить доступ ко всем функциям RDS сразу.</p>
+
+
+<p><span id="ref1">Для</span>
+<span id="ref2">создания</span>  библиотеки с моделью блока в файл исходного текста необходимо включить по крайней мере два файла
+заголовков: <span id="light_ref1">&laquo;<span class="file">windows.h</span>&raquo;</span>, содержащий стандартные описания Windows, и
+<span id="light_ref2">&laquo;<span class="file">RdsDef.h</span>&raquo;</span> из комплекта RDS
+(<a href="pm_1_1.htm" title="&sect;1.1. Общая структура RDS">папка &laquo;<span class="file">Include\</span>&raquo;</a>), содержащий описания типов и
+констант, необходимые для моделей блоков. Для создания простейших моделей ничего больше не требуется.
+Если в модели будут использоваться какие-либо сервисные функции RDS, надо предпринять несколько
+дополнительных шагов, чтобы получить к ним доступ.</p>
+
+<p><span id="light_ref3">Сервисные функции</span> RDS
+<span id="ref4">&ndash;</span>
+это обычные функции,
+экспортированные из модуля &laquo;<span class="file">rds.exe</span>&raquo;. Все они имеют тип вызова
+<span class="cpp" id="light_ref4">RDSCALL</span>, описанный в файле
+&laquo;<span class="file">RdsDef.h</span>&raquo;. Этому типу полностью соответствуют
+<span class="cpp">CALLBACK</span> в Windows API и <span class="cpp">__stdcall</span> в Borland С++
+(аргументы функции передаются в стеке справа налево, стек освобождается вызванной функцией).
+<span id="ref5">Для</span> получения их
+адресов (указателей на функции) следует использовать функцию Windows API
+<span class="cpp" id="light_ref5">GetProcAddress</span>.</p>
+
+<p>Проще всего получить указатели на все необходимые сервисные функции в момент загрузки библиотеки с моделями
+блоков.
+<span id="ref6">Допустим</span>,
+<span id="ref7">что</span> для написания модели какого-либо блока требуется сервисная функция
+<span class="cpp" id="light_ref6"><a href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a></span>, выводящая окно с сообщением (при написании моделей она
+может быть удобнее стандартной функции Windows API
+<span class="cpp" id="light_ref7">MessageBox</span>, поскольку для функции RDS не нужно указывать окно-владелец, и, кроме
+того, при вызове этой функции из режима расчета расчет не останавливается).
+<span id="ref8">Ниже</span> приведен фрагмент исходного текста
+библиотеки с главной функцией DLL, включающей команды получения доступа к этой сервисной функции.</p>
+
+<pre class="cpp">  <span class="preproc">#include &lt;windows.h&gt;  </span><span class="rem">// Стандартные описания Windows</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;   </span><span class="rem">// Описания RDS</span>
+
+  <span class="rem">// Описание переменной-указателя на функцию</span>
+  RDS_ISSI <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>;
+
+  <span class="rem">// Главная функция DLL</span>
+  <span class="kw">int</span> WINAPI <span id="light_ref8">DllEntryPoint</span>(
+         <a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,   <span class="rem">// Дескриптор модуля этой DLL</span>
+         <span class="kw">unsigned</span> <span class="kw">long</span> reason,  <span class="rem">// Причина вызова (загрузка или</span>
+                                <span class="rem">// выгрузка DLL)</span>
+         <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>   <span class="rem">// Способ загрузки – динамический</span>
+                                <span class="rem">// или статический</span>
+    )
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      <span class="rem">// Получение указателя на функцию rdsMessageBox</span>
+      <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>=(RDS_ISSI)GetProcAddress(GetModuleHandle(NULL),
+                                             <span class="str">"rdsMessageBox"</span>);
+    <span class="rem">// Возврат – успешное завершение</span>
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//------------------------------------------</span>
+  <span class="rem">// ... здесь должны быть функции моделей ...</span>
+  <span class="rem">//------------------------------------------</span></pre>
+
+<p>Сначала описывается глобальная переменная <span class="cpp">rdsMessageBox</span> &ndash;
+указатель на функцию соответствующего типа. Тип <span class="cpp">RDS_ISSI</span> описан в файле
+&laquo;<span class="file">RdsDef.h</span>&raquo; следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">int</span> (<a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> *RDS_ISSI)(<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a>,<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a>,<span class="kw">int</span>);</pre>
+
+<p>Таким образом, переменная <span class="cpp">rdsMessageBox</span> становится указателем на
+функцию, получающую в качестве параметров две строки (<span class="cpp">LPSTR</span> &ndash; тип, эквивалентный
+типу <span class="cpp">char*</span>) и целое число. Теперь нужно присвоить этой переменной указатель на
+одноименную функцию в &laquo;<span class="file">rds.exe</span>&raquo; &ndash; для этого мы используем главную функцию DLL.</p>
+
+<p>Каждая динамически подключаемая библиотека в Windows обязательно имеет главную функцию, которая автоматически
+вызывается при загрузке и выгрузке этой библиотеки, а также при создании и уничтожении потоков в загрузившем
+библиотеку процессе. В компиляторе Borland C++ 5.5 она обычно имеет название <span class="cpp">DllEntryPoint</span>,
+в других компиляторах может иметь другое имя, но она всегда принимает три параметра и возвращает целое число:</p>
+
+<pre class="cpp">  <span class="kw">int</span> WINAPI DllEntryPoint(
+        <a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> hinst,      <span class="rem">// Дескриптор модуля этой DLL</span>
+        <span class="kw">unsigned</span> <span class="kw">long</span> reason, <span class="rem">// Причина вызова (загрузка или</span>
+                              <span class="rem">// выгрузка DLL)</span>
+        <span class="kw">void</span>* lpReserved)     <span class="rem">// Способ загрузки – динамический</span>
+                              <span class="rem">// или статический</span></pre>
+
+<p>В первом параметре функции <span class="cpp">hinst</span> передается дескриптор (уникальный идентификатор)
+модуля данной DLL &ndash; он может понадобиться, если функции библиотеки будут загружать из нее же какие-либо
+ресурсы (строки, растровые изображения и т.п.).
+<span id="ref9">Во</span> втором параметре <span class="cpp">reason</span> передается
+одна из четырех целых констант, описанных в файлах заголовков Windows API, указывающая на причину вызова главной
+функции DLL: загрузка библиотеки (<span class="cpp" id="light_ref9">DLL_PROCESS_ATTACH</span>), ее выгрузка
+(<span class="cpp">DLL_PROCESS_DETACH</span>), создание или уничтожение потока внутри процесса
+(<span class="cpp">DLL_THREAD_ATTACH</span> и <span class="cpp">DLL_THREAD_DETACH</span> соответственно). Нас будет
+интересовать именно загрузка библиотеки &ndash; это самый подходящий момент для инициализации ее глобальных
+переменных. Наконец, третий параметр <span class="cpp">lpReserved</span> указывает на способ загрузки и выгрузки
+DLL &ndash; нас он интересовать не будет. Возвращаемое главной функцией целое число информирует загружающий
+библиотеку процесс об успешности инициализации библиотеки: если все в порядке, нужно вернуть ненулевое число,
+если при инициализации произошли какие-либо ошибки и библиотеку нельзя использовать, нужно вернуть 0. Моменты
+вызова главной функции DLL и ее параметры подробно описаны в документации по Windows API.</p>
+
+<p>В приведенном выше примере в главной функции DLL <span class="cpp">DllEntryPoint</span> при загрузке
+библиотеки (когда параметр <span class="cpp">reason</span> равен константе
+<span class="cpp">DLL_PROCESS_ATTACH</span> из стандартных описаний Windows) глобальной переменной
+<span class="cpp">rdsMessageBox</span> присваивается указатель на функцию с именем &laquo;rdsMessageBox&raquo;,
+экспортированную из главного модуля, то есть из &laquo;<span class="file">rds.exe</span>&raquo;.
+<span id="ref10">Для</span> получения дескриптора, то есть
+уникального идентификатора, главного модуля приложения используется вызов API
+<span class="cpp" id="light_ref10">GetModuleHandle</span>, а для получения указателя на функцию с заданным
+именем из этого модуля &ndash; <span class="cpp">GetProcAddress</span>. Затем главная функция возвращает значение
+1, что сигнализирует об успешной загрузке библиотеки.</p>
+
+<p>В этом примере используется только один параметр главной функции &ndash; причина вызова <span class="cpp">reason</span>.
+Два других параметра &ndash; дескриптор модуля DLL <span class="cpp">hinst</span> и дополнительный параметр
+<span class="cpp">lpReserved</span>, указывающий способ загрузки или выгрузки DLL, не используются, поэтому их имена записаны внутри комментария. При создании библиотек с моделями блоков RDS эти параметры используются крайне редко. Если же они, тем не менее, понадобятся, комментарий можно будет убрать.</p>
+
+<p>После получения указателя на функцию, ее можно вызывать непосредственно по имени, например:</p>
+
+<pre class="cpp">  <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(<span class="str">"Проверка вызова функции"</span>, <span class="rem">// Текст сообщения</span>
+                <span class="str">"Сообщение"</span>,               <span class="rem">// Заголовок сообщения</span>
+                MB_OK|MB_ICONINFORMATION); <span class="rem">// Кнопка OK и иконка "i"</span></pre>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/MessageBoxTest.png" width="268" height="138" alt="Результат вызова функции rdsMessageBox" />
+<p id="light_pic1">Рис.&nbsp;14. Результат вызова функции</br><span class="cpp">rdsMessageBox</span></p>
+</div></div>
+
+
+
+<p>Окно сообщения, выводимое этой функцией
+(<a href="#pic1" title="Результат вызова функции rdsMessageBox">рис.&nbsp;14</a>),
+знакомо практически каждому программисту, когда-либо создававшему программу для Windows.</p>
+
+
+<p><span id="ref11">Если</span> для написания моделей блоков требуется несколько
+сервисных функций, необходимо описать столько глобальных переменных и сделать столько вызовов
+<span class="cpp">GetProcAddress</span>, сколько функций предполагается использовать.
+При большом количестве функций это не очень удобно, поэтому в таких случаях лучше включить в исходный текст
+заголовочный файл <span id="light_ref11">&laquo;<span class="file">RdsFunc.h</span>&raquo;</span>, который позволяет получить доступ
+сразу ко всем сервисным функциям RDS. Ниже приведен пример использования этого файла (отличия от предыдущего
+примера выделены цветом).</p>
+
+<pre class="cpp">  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+
+  <span class="changes"><span class="rem">// Подготовка описаний сервисных функций </span></span>
+  <span class="changes"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></span>
+  <span class="changes"><span class="preproc">#include &lt;RdsFunc.h&gt;</span></span>
+
+  <span class="rem">// Главная функция DLL</span>
+  <span class="kw">int</span> WINAPI DllEntryPoint(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="changes"><span class="rem">// Получение доступа к функциям </span></span>
+        <span class="changes"><span class="kw">if</span>(!GetInterfaceFunctions())</span>
+          <span class="changes">MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);</span>
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//------------------------------------------</span>
+  <span class="rem">// ... здесь должны быть функции моделей ...</span>
+  <span class="rem">//------------------------------------------</span></pre>
+
+<p>В этом примере перед включением файла &laquo;<span class="file">RdsFunc.h</span>&raquo; находится описание вида</p>
+
+<pre class="cpp">  <span class="preproc">#define RDS_SERV_FUNC_BODY </span><i><span class="preproc">имя_функции_пользователя</span></i></pre>
+
+<p>Наличие этого описание приведет к тому, что в месте включения файла (в приведенном примере &ndash; в следующей
+строке) будет вставлен полный набор переменных-указателей на все сервисные функции RDS, после которого будет
+автоматически сформирована дополнительная функция с именем, указанным пользователем (в данном случае &ndash;
+<span class="cpp">GetInterfaceFunctions</span>), которая получает указатели на функции и присваивает их
+этим переменным. Теперь, вместо того, чтобы вручную присваивать указатели на функции глобальным переменными,
+нужно просто вызвать эту функцию внутри <span class="cpp">DllEntryPoint</span> и, при желании, проверить
+возвращаемое логическое (<span class="cpp">BOOL</span>) значение. Возврат <span class="cpp">FALSE</span> указывает
+на то, что не все указатели на сервисные функции удалось получить (чаще всего это говорит о том, что версия
+&laquo;<span class="file">rds.exe</span>&raquo; более старая, чем версия описаний в &laquo;<span class="file">RdsFunc.h</span>&raquo;, и некоторые
+сервисные функции в ней еще не реализованы).</p>
+
+<p>Если проект DLL состоит из нескольких модулей, заголовочный файл &laquo;<span class="file">RdsFunc.h</span>&raquo; следует
+включить в те из них, которые используют сервисные функции RDS. При этом следует помнить, что описание
+константы &laquo;<span class="cpp">#define RDS_SERV_FUNC_BODY</span>&raquo; может находиться
+только в одном модуле. При его наличии в нескольких модулях будет создано несколько комплектов глобальных
+переменных с одинаковыми именами и несколько одинаковых функций, что приведет к ошибкам при компоновке
+библиотеки.</p>
+
+<p>По понятным причинам, описание &laquo;<span class="cpp">#define RDS_SERV_FUNC_BODY</span>&raquo; и
+файл &laquo;<span class="file">RdsFunc.h</span>&raquo; можно использовать только тогда, когда модель блока пишется на языке C или C++.
+В других языках необходимо получать указатель на каждую сервисную функцию вручную, при помощи функции Windows API
+<span class="cpp">GetProcAddress</span>, как описано в первом примере.</p>
+
+<p><b><i><span id="ref12">Замечание</span>
+<span id="ref13">для</span> Borland C++ Builder.</i></b> Если в моделях блоков будут использоваться функции и классы
+библиотеки VCL, и если модели будут открывать собственные окна, в главной функции DLL необходимо добавить два
+присваивания (выделены цветом):</p>
+
+<pre class="cpp">  <span class="kw">int</span> WINAPI DllEntryPoint(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">switch</span>(reason)
+      { <span class="kw">case</span> DLL_PROCESS_ATTACH: <span class="rem">// Загрузка DLL</span>
+          <span class="kw">if</span>(!GetInterfaceFunctions())
+            MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+          <span class="changes"><span class="kw">else</span></span>
+            <span class="changes">Application-&gt;Handle=<span id="light_ref13"><a class="hidden" href="rdsGetAppWindowHandle.htm" title="А.5.2.18. rdsGetAppWindowHandle &ndash; дескриптор главного окна RDS">rdsGetAppWindowHandle</a></span>();</span>
+          <span class="kw">break</span>;
+        <span class="changes"><span class="kw">case</span> <span id="light_ref12">DLL_PROCESS_DETACH</span>: <span class="rem">// Выгрузка DLL </span></span>
+          <span class="changes">Application-&gt;Handle=NULL;</span>
+          <span class="changes"><span class="kw">break</span>;</span>
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+}</pre>
+
+<p>Здесь при загрузке библиотеки инициализируется глобальная переменная библиотеки VCL
+<span class="cpp">Application</span>: ее свойству <span class="cpp">Handle</span> присваивается дескриптор
+главного окна RDS, возвращаемый сервисной функцией <span class="cpp">rdsGetAppWindowHandle</span>.
+Это необходимо для того, чтобы привязать все окна, открываемые в этой DLL, к приложению-владельцу, то есть к
+&laquo;<span class="file">rds.exe</span>&raquo; (подробнее это описано в документации к Borland C++ Builder и библиотеке VCL).
+При выгрузке библиотеки (когда параметр <span class="cpp">reason</span> принимает значение
+<span class="cpp">DLL_PROCESS_DETACH</span>) необходимо очистить это свойство, присвоив ему <span class="cpp">NULL</span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_3.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

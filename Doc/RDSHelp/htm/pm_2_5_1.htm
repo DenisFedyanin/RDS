@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.5.1. Доступ к статическим переменным и работа в режиме расчета</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_5">&sect;2.5. Статические переменные блоков</a></p>
+<div class="level"><p>&sect;2.5.1. Доступ к статическим переменным и работа в режиме расчета</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_4.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_5_2.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_5_1_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3>&sect;2.5. Статические переменные блоков</h3>
+<p class="abstract">Описывается работа со статическими переменными блоков (то есть переменными фиксированной структуры), которые могут служить им входами и выходами. Рассматриваются особенности работы с сигнальными переменными, матрицами и массивами, структурами, строками произвольной длины, а также с переменными, меняющими свой тип в процессе работы. Приводятся примеры моделей блоков, иллюстрирующие доступ к переменным каждого типа.</p>
+<h4>&sect;2.5.1. Доступ к статическим переменным и работа в режиме расчета</h4>
+<p class="abstract">Описывается способ чтения и записи значений статических переменных блока. Рассматривается событие проверки допустимости типа статических переменных <span class="cpp">RDS_BFM_VARCHECK</span> и событие выполнения такта расчета <span class="cpp">RDS_BFM_MODEL</span>. Приводится пример блока, выдающего в режиме расчета на выход разность двух вещественных входов. В примере предусмотрена проверка значений входов блока на специальное значение, символизирующее ошибку вещественных вычислений.</p>
+
+
+<p><span id="ref1">Для</span>
+<span id="ref2">написания</span>
+<span id="ref3">простейшей</span> модели, работающей в
+<a href="pm_1_3.htm#ref3" title="Режим расчета">режиме расчета</a>, необходимо задать реакцию всего на два события: проверки типа
+статических переменных
+<span class="cpp" id="light_ref2"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> и выполнения одного
+<span id="light_ref1">такта расчета</span>
+<span class="cpp" id="light_ref3"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>.</p>
+
+<p>Обычно модели блоков, работающих в режиме расчета, производят какие-либо вычисления со значениями
+<a href="um_1_4.htm#ref20" title="Роли переменных в блоке">входов и внутренних переменных</a>
+и присваивают результаты своим выходам, то есть работают, в основном, со
+<a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статическими переменными</a>
+блока. Перед обращением к статическим переменным модель должна проверить, удовлетворяет ли их структура
+необходимым требованиям. Если этого не сделать, при подключении модели к блоку с неподходящими для этой
+модели переменными могут возникнуть серьезные проблемы, например, ошибки общей защиты из-за обращения к не
+отведенной памяти. При этом такие ошибки могут проявится не сразу: если окажется, что блок памяти, к которому
+ошибочно обращается модель, вместо данных переменной содержит какие-либо важные для RDS данные, при
+записи в этот блок работа RDS может нарушиться самым непредсказуемым образом: например, начнут возникать
+ошибки в других моделях, ошибки при попытке сохранения схемы (с возможной потерей данных) и т.п. Поэтому к
+проверке типов переменных блока программист должен относиться очень ответственно.</p>
+
+<p><span id="ref4">Для</span>
+проверки типов статических переменных служит вызов модели с параметром
+<span class="cpp">RDS_BFM_VARCHECK</span>, при этом через параметр <span class="cpp">ExtParam</span> передается
+<span id="light_ref4"><a href="pm_1_5.htm#ref19" title="Строка типа переменных блока">строка типа</a></span>
+переменных блока, которую модель должна проанализировать и возвратить один из следующих результатов:</p>
+
+<ul>
+  <li><span class="cpp"><span id="light_ref5">RDS_BFR_DONE</span></span> &ndash; структура
+  переменных блока удовлетворяет требованиям модели;</li>
+  <li><span class="cpp"><span id="light_ref6">RDS_BFR_ERROR</span></span> &ndash; структура
+  переменных блока не удовлетворяет требованиям модели;</li>
+  <li><span class="cpp"><span id="light_ref7">RDS_BFR_BADVARSMSG</span></span> &ndash;
+  структура переменных блока не удовлетворяет требованиям модели, RDS выведет предупреждающее сообщение
+  для пользователя.</li>
+</ul>
+
+<p>Если в ответ на событие <span class="cpp">RDS_BFM_VARCHECK</span> модель вернет
+<span class="cpp">RDS_BFR_ERROR</span> или <span class="cpp">RDS_BFR_BADVARSMSG</span>, все вызовы модели,
+кроме последующих <span class="cpp">RDS_BFM_VARCHECK</span> при новых изменениях структуры переменных, а также реакции
+на отключение модели <span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span>, будут заблокированы. Разумеется, вызов
+<span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span> также не блокируется, поскольку он производится самым первым, еще до
+<span class="cpp">RDS_BFM_VARCHECK</span>. Таким образом, введя в модель реакцию на это событие, в реакциях на
+все остальные события (кроме <span class="cpp">RDS_BFM_INIT</span> и <span class="cpp">RDS_BFM_CLEANUP</span>,
+в которых обращение к статическим переменным запрещено) можно
+обращаться к статическим переменным без каких-либо дополнительных проверок &ndash; все проверки уже сделаны в
+<span class="cpp">RDS_BFM_VARCHECK</span>.</p>
+
+<p><span id="light_ref8">В качестве примера</span>
+ассмотрим блок с двумя вещественными входами <span class="cpp">x1</span> и <span class="cpp">x2</span>
+и выходом <span class="cpp">y</span>, на который выдается разность входов
+(<span class="cpp">x1</span>&ndash;<span class="cpp">x2</span>). С учетом
+<a href="pm_1_5.htm#ref4" title="Обязательные сигналы простого блока">двух обязательных сигналов</a>
+<span class="cpp">Start</span> и <span class="cpp">Ready</span> структура переменных блока будет выглядеть
+следующим образом:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+  </tr>
+  <tr>
+    <td class="center">0</td>
+    <td>Start</td>
+    <td class="center">Сигнал</td>
+    <td class="center">1</td>
+    <td class="center">Вход</td>
+  </tr>
+  <tr>
+    <td class="center">1</td>
+    <td>Ready</td>
+    <td class="center">Сигнал</td>
+    <td class="center">1</td>
+    <td class="center">Выход</td>
+  </tr>
+  <tr>
+    <td class="center">2</td>
+    <td>x1</td>
+    <td class="center">double</td>
+    <td class="center">8</td>
+    <td class="center">Вход</td>
+  </tr>
+  <tr>
+    <td class="center">10</td>
+    <td>x2</td>
+    <td class="center">double</td>
+    <td class="center">8</td>
+    <td class="center">Вход</td>
+  </tr>
+  <tr>
+    <td class="center">18</td>
+    <td>y</td>
+    <td class="center">double</td>
+    <td class="center">8</td>
+    <td class="center">Выход</td>
+  </tr>
+</table>
+</div></div>
+
+<p>Структура переменных задается в окне параметров блока на вкладке
+&laquo;<span class="menu">Переменные</span>&raquo;
+(см. <a href="pm_1_5.htm#pic1" title="Параметры блока &ndash; переменные">рис.&nbsp;8</a>, кнопка &laquo;<span class="menu">Изменить</span>&raquo;). Для редактирования
+переменных блока открывается отдельное окно, в котором также отображается смещение для каждой из них
+(вычисляется автоматически) и строка типа для всей структуры переменных (см.
+<a href="pm_1_5.htm#pic2" title="Редактор переменных">рис.&nbsp;9</a>).</p>
+
+<p>Функция модели блока будет выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> TestSub(<span class="kw">int</span> CallMode,
+                        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><span id="light_ref9"><span class="rem">Макроопределения для статических переменных</span></span>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x1     (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define x2     (*((double *)(pStart+10)))</span>
+  <span class="preproc">#define y      (*((double *)(pStart+18)))</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDDD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+
+        <span class="rem">// Выполнение такта расчета</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          y=x1-x2;	<span class="rem">// Вычисление значения выхода</span>
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef x2</span>
+  <span class="preproc">#undef x1</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p><span id="ref10">В</span>
+тексте этой модели используются <span id="light_ref10">макроопределения</span> для доступа к статическим
+переменным, что позволяет сделать текст программы более читаемым. Сначала вводится определение
+<span class="cpp">pStart</span> &ndash; это указатель на начало дерева переменных, приведенный к типу
+&laquo;указатель на <span class="cpp">char</span>&raquo;:</p>
+
+<pre class="cpp">  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span></pre>
+
+<p>Тип <span class="cpp">char</span> выбран из-за своего размера в один байт: прибавление целого числа к
+такому указателю смещает его на заданное число байтов. Теперь, если требуется обратиться к переменной со
+смещением N, указатель на нее можно получить, добавив N к <span class="cpp">pStart</span>. Например, чтобы
+получить начальный адрес области памяти, занимаемой переменной <span class="cpp">y</span>, смещение к которой
+равно восемнадцати байтам, можно написать <span class="cpp">pStart+18</span>. Естественно, для доступа к этой
+переменной необходимо привести этот адрес к типу
+&laquo;указатель на <span class="cpp">double</span>&raquo;, то есть использовать конструкцию
+<span class="cpp">(double*)(pStart+18)</span>. А для того, чтобы можно было непосредственно использовать имя
+переменной в выражениях (как в правой части, так и в левой), вводится макроопределение вида</p>
+
+<pre class="cpp">  <span class="preproc">#define y ( *((double*)(pStart+18)) )</span></pre>
+
+<p>В конце функции модели все макроопределения уничтожаются командами <span class="cpp">#undef</span>, чтобы в
+следующей функции модели можно было, при желании, ввести новые определения для других переменных с теми
+же именами.</p>
+
+<p>Вместо того, чтобы писать все эти определения вручную, можно получить их у RDS, нажав правую кнопку мыши
+на строке типа в левом нижнем углу окна редактирования переменных и выбрав в меню пункт
+&laquo;<span class="menu">Копировать список (#define, по возможности сами данные)</span>&raquo;
+(<a href="#pic1" title="Вызов меню для копирования в буфер обмена всех макросов переменных блока">рис.&nbsp;16</a>).
+При этом в буфер обмена Windows будет помещен текст описаний для всех статических переменных блока вместе с
+командами <span class="cpp">#undef</span>.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/VarEditor_MacrosMenu.png" width="670" height="325" alt="Вызов меню для копирования в буфер обмена всех макросов переменных блока" />
+<p id="light_pic1">Рис.&nbsp;16. Вызов меню для копирования в буфер обмена всех макросов переменных блока</p>
+</div></div>
+
+
+<p><span id="light_ref11">Следует помнить</span>,
+что макроопределения для доступа к статическим переменным можно использовать только в функциях,
+в которые передается указатель на структуру данных блока <span class="cpp">BlockData</span>, поскольку все
+макросы ссылаются на этот указатель. Сначала вводится описание указателя на начало дерева переменных
+<span class="cpp">pStart</span>, а затем все остальные переменные определяются относительно него. Когда
+препроцессор языка C, обрабатывая текст приведенной выше модели, встретит в нем слово &laquo;y&raquo;, он
+сначала подставит вместо него текст</p>
+
+<pre class="cpp">  (*((<span class="kw">double</span> *)(pStart+<span class="const">18</span>)))</pre>
+
+<p class="noindent">а затем, раскрывая макроопределение для <span class="cpp">pStart</span>, преобразует его в</p>
+
+<pre class="cpp">  (*((<span class="kw">double</span> *)(((<span class="kw">char</span> *)(BlockData-&gt;VarData))+<span class="const">18</span>)))</pre>
+
+<p>Пока переменная <span class="cpp">y</span> используется внутри функции модели блока, развернутое
+макроопределение для нее будет компилироваться успешно &ndash; в функцию модели передается параметр
+<span class="cpp">BlockData</span>, и конструкция <span class="cpp">BlockData-&gt;VarData</span> будет понята
+компилятором. Если же переменную необходимо использовать и в других функциях, вызываемых из функции модели,
+в эти функции также необходимо передавать параметр
+<span class="cpp"><a href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData</span>, иначе развернутый макрос не будет
+скомпилирован. Кроме того, тексты всех этих функций должны размещаться после макроопределений для переменных,
+чтобы на момент их компиляции макросы уже существовали. Это несколько ухудшает читаемость текста программы: в
+функцию передается параметр, который, на первый взгляд, нигде не используется, при этом переменная
+<span class="cpp">y</span>, фигурирующая в функции, не описана ни как параметр, ни как внутренняя. К тому же,
+вероятнее всего, значение <span class="cpp">y</span> нельзя будет посмотреть в отладчике, поскольку это не
+настоящая переменная, а макрос. Тем не менее, при написании функций, интенсивно работающих с переменными блока,
+использование макросов позволяет передавать в функцию один параметр <span class="cpp">BlockData</span> вместо
+множества указателей на все переменные блока, а ухудшение читаемости текста можно компенсировать подробными
+комментариями.</p>
+
+<p>Вернемся к модели блока, вычисляющего разность своих входов. При вызове этой модели с параметром
+<span class="cpp">RDS_BFM_VARCHECK</span> производится сравнение строки типа переменных блока, переданной через
+параметр <span class="cpp">ExtParam</span>, со строкой, заложенной в программу. В данном случае строка,
+соответствующая структуре переменных, для которой разработана эта модель, выглядит как
+&laquo;{SSDDD}&raquo; &ndash; две сигнальных (&laquo;SS&raquo;) и три вещественных
+(&laquo;DDD&raquo;) переменных двойной точности. Сравнение производится стандартной библиотечной функцией
+<span class="cpp">strcmp</span> (из-за нее может потребоваться включение в исходный текст команды
+<span class="cpp">#include <string.h></span>), перед вызовом которой <span class="cpp">ExtParam</span>
+приводится к типу &laquo;<span class="cpp">char*</span>&raquo;. Если строки совпадают, эта
+функция возвращает значение 0. Функция модели в этом случае вернет константу
+<span class="cpp">RDS_BFR_DONE</span>, информируя RDS о том, что структура статических переменных подходит
+для данной модели. Если же строки не совпадут, функция модели вернет константу
+<span class="cpp">RDS_BFR_BADVARSMSG</span>, в результате чего RDS заблокирует все последующие вызовы
+этой модели (за исключением <span class="cpp">RDS_BFM_VARCHECK</span> и <span class="cpp">RDS_BFM_CLEANUP</span>)
+и выведет пользователю сообщение о несовместимости данной модели с данной структурой переменных. Если бы модель
+вернула константу <span class="cpp">RDS_BFR_ERROR</span>, все вызовы также были бы заблокированы, но без
+какого-либо сообщения пользователю.</p>
+
+<p>Строку типа, соответствующую структуре переменных блока, не обязательно записывать вручную. Так же, как и
+макросы переменных, ее можно получить у RDS, нажав правую кнопку мыши на строке типа, отображаемой в левом
+нижнем углу окна редактирования переменных, и выбрав в появившемся меню пункт
+&laquo;<span class="menu">Копировать тип</span>&raquo; (см. <a href="#pic1" title="Вызов меню для копирования в буфер обмена всех макросов переменных блока">рис.&nbsp;16</a>). При этом в
+буфер обмена Windows будет помещена указанная строка, которую можно будет вставить в текст программы.</p>
+
+<p>При вызове модели нашего блока с параметром <span class="cpp">RDS_BFM_MODEL</span> значение выхода
+<span class="cpp">y</span> вычисляется как разность входов <span class="cpp">x1</span> и
+<span class="cpp">x2</span>, при этом для доступа к переменным используются описанные выше макросы. Чтобы значение
+<span class="cpp">y</span> всегда соответствовало значениям входов, наша модель должна вызываться либо
+постоянно в каждом такте расчета, либо при изменении любого из входов. В первом случае можно задать для блока с
+этой моделью
+<a href="pm_1_4.htm#ref6" title="Запуск модели каждый такт">запуск каждый такт расчета</a>
+(в окне параметров блока на вкладке &laquo;<span class="menu">Общие</span>&raquo;), во втором &ndash; задать для переменной
+<span class="cpp">Start</span> начальное значение 1 и установить флаги &laquo;<span class="menu">Пуск</span>&raquo; для входов
+<span class="cpp">x1</span> и <span class="cpp">x2</span> (в
+<a href="#pic1" title="Вызов меню для копирования в буфер обмена всех макросов переменных блока">окне редактирования переменных</a>). Второй вариант
+предпочтительнее, поскольку он позволит избежать ненужных вызовов модели, если входы не изменялись: модель будет
+вызываться в режиме <span class="cpp">RDS_BFM_MODEL</span> только тогда, когда сработают связи, подключенные к
+<span class="cpp">x1</span> или <span class="cpp">x2</span>, то есть тогда, когда значение входов изменится.</p>
+
+<p><span id="ref12">Приведенная</span>
+ выше модель имеет один серьезный недостаток: в ней не <span id="light_ref12">проверяется допустимость выполнения
+операции</span> вычитания. Если на одном из входов блока окажется значение, используемое математическими функциями
+для индикации ошибки или переполнения, попытка выполнить с ним какую-либо операцию приведет к возникновению
+исключения. Чтобы этого избежать, необходимо перед вычитанием сравнить значения входов с этим специальным
+значением-индикатором. Можно использовать константу <span class="cpp">HUGE_VAL</span>, описанную в стандартном
+заголовочном файле &laquo;<span class="file">math.h</span>&raquo;, но лучше всего получить это значение у RDS при помощи
+сервисной функции <span class="cpp"><span id="light_ref13"><a href="rdsGetHugeDouble.htm" title="А.5.2.22. rdsGetHugeDouble &ndash; получение значения-индикатора математической ошибки">rdsGetHugeDouble</a></span></span>. Этот вариант более надежен, потому что все модели,
+использующие эту функцию, гарантированно получают одно и то же значение, не зависящее от версии RDS и
+версий библиотек, которые используются в DLL моделей.</p>
+
+<p>Лучше всего вызывать функцию <span class="cpp">rdsGetHugeDouble</span> один раз в главной функции DLL и
+записывать полученное значение в какую-нибудь глобальную переменную, которую смогут использовать все функции
+моделей этой DLL. В этом случае главная функция примет следующий вид (изменения относительно
+примера в <a href="pm_2_4.htm" title="&sect;2.4. Инициализация и очистка данных блока">&sect;2.4</a> выделены цветом):</p>
+
+<pre class="cpp">  <span class="changes"><span class="rem">// Глобальная переменная для значения ошибки </span></span>
+  <span class="changes"><span class="kw">double</span> DoubleErrorValue; </span>
+  <span class="rem">//========== Главная функция DLL ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+        <span class="changes"><span class="kw">else</span></span>
+          <span class="changes"><a class="hidden" href="rdsGetHugeDouble.htm" title="А.5.2.22. rdsGetHugeDouble &ndash; получение значения-индикатора математической ошибки">rdsGetHugeDouble</a>(&amp;DoubleErrorValue);</span>
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Функции <span class="cpp">rdsGetHugeDouble</span> передается указатель на глобальную переменную
+<span class="cpp">DoubleErrorValue</span>, в которую она заносит значение-индикатор ошибки. Теперь реакцию
+модели на выполнение одного такта моделирования можно изменить следующим образом:</p>
+
+<pre class="cpp">      <span class="rem">// Выполнение такта моделирования</span>
+      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+        <span class="changes"><span class="kw">if</span>(x1==DoubleErrorValue || x2==DoubleErrorValue)</span>
+          <span class="changes">y=DoubleErrorValue;</span>
+        <span class="changes"><span class="kw">else</span></span>
+          y=x1-x2;
+        <span class="kw">break</span>;</pre>
+
+<p>Если хотя бы на одном входе блока появляется значение, сигнализирующее об ошибке, выход тоже получает
+это значение.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_4.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_5_2.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_5_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

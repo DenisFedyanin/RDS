@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.8.5. Сохранение параметров блока в формате INI-файла</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_8">&sect;2.8. Сохранение и загрузка параметров блока</a></p>
+<div class="level"><p>&sect;2.8.5. Сохранение параметров блока в формате INI-файла</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_8_4.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_9_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_8_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_8_5_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.8. Сохранение и загрузка параметров блока</h3>
+<h4>&sect;2.8.5. Сохранение параметров блока в формате INI-файла</h4>
+<p class="abstract">Рассматривается вспомогательный объект RDS, позволяющий организовать хранение личных данных
+                блока в текстовом формате, похожем на стандартные INI-файлы Windows (&laquo;имя=значение&raquo;). В один
+                из предыдущих примеров добавляются процедуры сохранения и загрузки параметров с использованием этого объекта.</p>
+
+
+<p>В <a href="pm_2_8_1.htm" title="&sect;2.8.1. Способы хранения параметров блока">&sect;2.8.1</a> приводились причины, по которым текстовый формат хранения
+параметров блока предпочтительнее двоичного: текстовый формат более универсален, при его использовании менее
+вероятны проблемы с совместимостью разных версий моделей, данные в текстовом формате могут быть, при необходимости,
+просмотрены и отредактированы пользователем без использования RDS. Однако, поддержка полноценного текстового
+формата требует от программиста достаточно больших усилий, даже при использовании
+<a href="pm_2_8_4.htm" title="&sect;2.8.4. Поиск ключевых слов с помощью объекта RDS">вспомогательного объекта</a>
+для разбора текста. Требуется организовать цикл для считывания текста по словам, сравнивать считанные
+слова с ключевыми тем или иным способом и т.д. При желании, разработчик модели блока может упростить себе
+жизнь, используя для записи параметров блока не пары
+&laquo;<i>ключевое_слово</i> <i>значение</i>&raquo;, а формируя текст в формате INI-файлов Windows,
+то есть в виде отдельных строк &laquo;<i>ключевое_слово</i>=<i>значение</i>&raquo;, разбитых на секции,
+названия которых указываются в квадратных скобках. В RDS есть вспомогательный объект для работы с
+таким форматом данных, причем его можно использовать как при формировании текста с параметрами, так и
+при его разборе, что позволит сделать функции записи и чтения параметров очень похожими. Надо заметить,
+что скорость работы у него несколько ниже, чем у описанного
+в <a href="pm_2_8_4.htm" title="&sect;2.8.4. Поиск ключевых слов с помощью объекта RDS">&sect;2.8.4</a>
+объекта для поиска ключевых слов, и это нужно учитывать при создании моделей блоков с большим
+числом параметров.</p>
+
+<p><span id="ref1">При</span>
+рассмотрении записи параметров в двоичном формате мы использовали в качестве примера модель
+<span class="cpp"><a href="pm_2_8_2.htm#light_ref1" title="Пример сохранения параметров блока в двоичном формате">Test1</a></span>. Хотя эта модель и не выполняет никаких полезных действий,
+для иллюстрации различных способов сохранения параметров она довольно удобна, поскольку у нее есть
+<a href="pm_1_4.htm#ref8" title="Личная область данных блока">личная область данных</a> и два параметра разных типов.
+<span id="light_ref1">Добавим в нее поддержку текстового формата хранения параметров с
+использованием нового вспомогательного объекта</span>,
+выделив для удобства загрузку и сохранение параметров в отдельные функции-члены класса
+<span class="cpp">TTest1Data</span>. Описание класса личной области данных блока с двумя новыми функциями
+будет выглядеть следующим образом (изменения выделены <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">//====== Класс личной области данных ======</span>
+  <span class="kw">class</span> TTest1Data
+  { <span class="kw">public</span>:
+      <span class="kw">int</span> IParam;       <span class="rem">// Целый параметр</span>
+      <span class="kw">double</span> DParam;    <span class="rem">// Вещественный параметр</span>
+      <span class="changes"><span class="kw">void</span> SaveText(<span class="kw">void</span>);       <span class="rem">// Функция записи параметров </span></span>
+      <span class="changes"><span class="kw">void</span> LoadText(<span class="kw">char</span> *text); <span class="rem">// Функция загрузки параметров </span></span>
+      <span class="kw">int</span> Setup(<span class="kw">void</span>);  <span class="rem">// Функция настройки параметров</span>
+      TTest1Data(<span class="kw">void</span>)  <span class="rem">// Конструктор класса</span>
+        { IParam=<span class="const">0</span>; DParam=<span class="const">0</span>.<span class="const">0</span>;
+          <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(<span class="str">"Область создана"</span>,<span class="str">"TTest1Data"</span>,MB_OK);
+        };
+      ~TTest1Data()     <span class="rem">// Деструктор класса</span>
+        { <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(<span class="str">"Область удалена"</span>,<span class="str">"TTest1Data"</span>,MB_OK);};
+  };
+  <span class="rem">//=========================================</span></pre>
+
+<p>Модель блока будет вызывать функции <span class="cpp">SaveText</span> и <span class="cpp">LoadText</span> при
+сохранении и загрузке параметров точно так же, как и модели в предыдущих примерах. В оператор
+<span class="cpp">switch</span> внутри функции модели необходимо добавить два новых оператора <span class="cpp">case</span>:</p>
+
+<pre class="cpp">    <span class="rem">// Запись параметров в текстовом формате</span>
+    <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a>:
+      data=(TTest1Data*)(BlockData-&gt;BlockData);
+      data-&gt;SaveText();
+      <span class="kw">break</span>;
+    <span class="rem">// Загрузка параметров в текстовом формате</span>
+    <span class="kw">case</span> <a class="hidden" href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a>:
+      data=(TTest1Data*)(BlockData-&gt;BlockData);
+      data-&gt;LoadText((<span class="kw">char</span>*)ExtParam);
+      <span class="kw">break</span>;</pre>
+
+<p>В функции <span class="cpp">SaveText</span> мы будем формировать текст с параметрами блока при помощи
+вспомогательного объекта для работы с INI-файлами:</p>
+
+<pre class="cpp">  <span class="rem">// Функция сохранения параметров</span>
+  <span class="kw">void</span> TTest1Data::SaveText(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini; <span class="rem">// Вспомогательный объект</span>
+    <span class="rem">// Создание объекта для работы с образом INI-файла</span>
+    ini=<span id="light_ref2"><a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a></span>(TRUE);
+    <span class="rem">// Создание новой секции "General"</span>
+    <span id="light_ref3"><a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a></span>(ini,<span id="light_ref4"><a class="hidden" href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a></span>,<span class="const">0</span>,<span class="str">"General"</span>);
+    <span class="rem">// Запись двух параметров блока</span>
+    <span id="light_ref5"><a class="hidden" href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a></span>(ini,<span class="str">"IParam"</span>,IParam);
+    <span id="light_ref6"><a class="hidden" href="rdsINIWriteDouble.htm" title="А.5.27.7. rdsINIWriteDouble &ndash; установить вещественное значение параметра">rdsINIWriteDouble</a></span>(ini,<span class="str">"DParam"</span>,DParam);
+    <span class="rem">// Передача сформированного в объекте текста в RDS для записи</span>
+    <span id="light_ref7"><a class="hidden" href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a></span>(ini,<span id="light_ref8"><a class="hidden" href="RDS_HINI_SAVEBLOCKTEXT.htm" title="А.5.27.16. Команда RDS_HINI_SAVEBLOCKTEXT &ndash; передать текст параметров блока в RDS">RDS_HINI_SAVEBLOCKTEXT</a></span>);
+    <span class="rem">// Удаление объекта</span>
+    <span id="light_ref9"><a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>(ini);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Вспомогательный объект, работающий с образом INI-файла в памяти, создается сервисной функцией
+<span class="cpp"><a href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a></span>. Единственный логический параметр функции указывает на
+необходимость учитывать (<span class="cpp">FALSE</span>) или игнорировать (<span class="cpp">TRUE</span>)
+регистр символов в именах параметров и секций файла. В данном случае регистр нам не важен, поэтому в функцию
+передается значение <span class="cpp">TRUE</span>. Идентификатор созданного объекта присваивается
+переменной <span class="cpp">ini</span>.</p>
+
+<p>Сразу после создания объекта он не содержит ни одной секции. Несмотря на то, что в данном примере
+в блоке всего два параметра, и в разбиении их на секции нет необходимости, нам все равно придется
+записывать параметры в какую-либо секцию образа INI-файла &ndash; таковы требования формата. Будем хранить
+оба параметра в секции с названием &laquo;General&raquo;. Прежде чем записывать значения параметров блока,
+необходимо создать эту секцию при помощи универсальной функции передачи строки объекту
+<span class="cpp"><a href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a></span> с параметром <span class="cpp"><a href="RDS_HINI_CREATESECTION.htm" title="А.5.27.10. Команда RDS_HINI_CREATESECTION &ndash; создать секцию">RDS_HINI_CREATESECTION</a></span>. Начиная
+с этого момента, все команды записи и чтения параметров будут работать с этой секцией.</p>
+
+<p>Теперь, когда в образе INI-файла создана секция, можно записывать в нее параметры блока. Для
+этого используются сервисные функции <span class="cpp"><a href="rdsINIWriteInt.htm" title="А.5.27.8. rdsINIWriteInt &ndash; установить целое значение параметра">rdsINIWriteInt</a></span> (для целого параметра) и
+<span class="cpp"><a href="rdsINIWriteDouble.htm" title="А.5.27.7. rdsINIWriteDouble &ndash; установить вещественное значение параметра">rdsINIWriteDouble</a></span> (для вещественного), в которые, помимо идентификатора объекта,
+передается имя параметра и его значение. В данном случае имена параметров в тексте будут совпадать с
+именами параметров в классе блока: &laquo;IParam&raquo; для <span class="cpp">IParam</span> и
+&laquo;DParam&raquo; для <span class="cpp">DParam</span>. Имя секции в эти функции не передается,
+они всегда работают с текущей секцией образа файла. В данном случае текущей будет последняя созданная секция,
+то есть &laquo;General&raquo;.</p>
+
+<p>Теперь, когда образ INI-файла сформирован в объекте, необходимо передать его в RDS для записи
+вместе с другими параметрами блока. Самый простой способ сделать это &ndash; вызвать функцию
+<span class="cpp"><a href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a></span> с параметром <span class="cpp"><a href="RDS_HINI_SAVEBLOCKTEXT.htm" title="А.5.27.16. Команда RDS_HINI_SAVEBLOCKTEXT &ndash; передать текст параметров блока в RDS">RDS_HINI_SAVEBLOCKTEXT</a></span>. После этого
+вспомогательный объект больше не нужен &ndash; его следует уничтожить при помощи функции
+<span class="cpp"><a href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>.</p>
+
+<p>При сохранении блока в текстовом формате для блока с измененной моделью будет записан текст следующего вида
+(результат работы функции <span class="cpp">SaveText</span> выделен <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">
+  dllblock name "Block1"
+   begin
+    pos 10 10
+    layer id 1
+    vars
+     begin
+      signal name "Start" in menu run default 0
+      signal name "Ready" out menu default 0
+     end
+    dll file "$DLL$\\testdll.dll" func "Test1" cycle setup "" auto
+    dlldata text
+    <span class="changes"> [General]  </span>
+    <span class="changes"> IParam=1   </span>
+    <span class="changes"> DParam=5.5 </span>
+    enddlldata
+   end</pre>
+
+<p>Как обычно, текст, сформированный моделью блока, размещается между строками
+&laquo;dlldata text&raquo; и &laquo;enddlldata&raquo;.</p>
+
+<p>Функция <span class="cpp">SaveText</span> в этом примере получилась сложнее аналогичных функций из прошлых
+примеров, в которых не использовались вспомогательные объекты. В принципе, эту функцию тоже можно
+было бы переписать так, чтобы точно такой же текст формировался без участия объекта. В этом
+случае функция примет следующий вид:</p>
+
+<pre class="cpp">  <span class="rem">// Функция сохранения параметров – упрощенный вариант</span>
+  <span class="kw">void</span> TTest1Data::SaveText(<span class="kw">void</span>)
+  { <span class="kw">char</span> buffer[<span class="const">1024</span>]; <span class="rem">// Буфер для формирования текста</span>
+    <span class="rem">// Формирование текста в буфере при помощи функции sprintf</span>
+    sprintf(buffer,
+            <span class="str">"[General]\nIParam=%d\nDParam=%lf"</span>,
+            IParam,DParam);
+    <span class="rem">// Передача сформированного текста в RDS</span>
+    <a class="hidden" href="rdsWriteBlockDataText.htm" title="А.5.10.5. rdsWriteBlockDataText &ndash; добавление текста к сохраняемым в текстовом формате данным блока">rdsWriteBlockDataText</a>(buffer,FALSE);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Функция получится значительно короче, однако, это будет ее единственным достоинством. При увеличении числа
+параметров блока строка формата функции <span class="cpp">sprintf</span> очень скоро разрастется до
+огромных размеров, что существенно затруднит отладку и внесение изменений в нее. Чтобы найти спецификатор формата
+для какого-либо параметра блока, придется определять его номер в списке аргументов <span class="cpp">sprintf</span>,
+а затем отсчитывать в форматной строке такое же число спецификаторов. Строка формата не отличается хорошей
+читаемостью, поэтому здесь легко допустить ошибку, что приведет к тому, что параметры блока будут записываться в
+текст не на своих местах или в неправильном формате. Кроме того, необходимо постоянно следить за тем,
+чтобы формируемый текст гарантированно уместился в буфер, независимо от фактических значений параметров. Можно,
+конечно, записывать в буфер по одному значению параметра за раз, и каждый раз после этого вызывать
+<span class="cpp"><a href="rdsWriteBlockDataText.htm" title="А.5.10.5. rdsWriteBlockDataText &ndash; добавление текста к сохраняемым в текстовом формате данным блока">rdsWriteBlockDataText</a></span>. Это позволит использовать меньший буфер и улучшит читаемость
+текста, однако, при этом потеряется единственное достоинство упрощенной функции <span class="cpp">SaveText</span>
+&ndash; ее длина станет больше, чем у исходной версии, использующей вспомогательный объект.
+По этой причине первый вариант <span class="cpp">SaveText</span> предпочтительнее: объект сам следит за
+необходимым размером своих внутренних буферов.</p>
+
+<p>Рассмотрим теперь функцию <span class="cpp">LoadText</span>, которая будет извлекать значения
+параметров блока из текста в формате INI-файла:</p>
+
+<pre class="cpp">  <span class="rem">// Функция загрузки параметров</span>
+  <span class="kw">void</span> TTest1Data::LoadText(<span class="kw">char</span> *text)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> ini; <span class="rem">// Вспомогательный объект</span>
+    <span class="rem">// Создание объекта для работы с образом INI-файла</span>
+    ini=<a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a>(TRUE);
+    <span class="rem">// Передача в объект текста, полученного из RDS</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(ini,<span id="light_ref10"><a class="hidden" href="RDS_HINI_SETTEXT.htm" title="А.5.27.18. Команда RDS_HINI_SETTEXT &ndash; занести текст в объект">RDS_HINI_SETTEXT</a></span>,<span class="const">0</span>,text);
+    <span class="rem">// Установить текущую секцию</span>
+    <span class="kw">if</span>(<span id="light_ref11"><a class="hidden" href="rdsINIOpenSection.htm" title="А.5.27.2. rdsINIOpenSection &ndash; установить текущую секцию">rdsINIOpenSection</a></span>(ini,<span class="str">"General"</span>))
+      { <span class="rem">// Такая секция есть в тексте – считать из нее параметры</span>
+        IParam=<span id="light_ref12"><a class="hidden" href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a></span>(ini,<span class="str">"IParam"</span>,<span class="const">0</span>);
+        DParam=<span id="light_ref13"><a class="hidden" href="rdsINIReadDouble.htm" title="А.5.27.3. rdsINIReadDouble &ndash; получить вещественное значение параметра">rdsINIReadDouble</a></span>(ini,<span class="str">"DParam"</span>,<span class="const">0</span>.<span class="const">0</span>);
+      }
+    <span class="rem">// Удаление объекта</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(ini);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Прежде всего, как и в <span class="cpp">SaveText</span>, в этой функции вызывается
+<span class="cpp"><a class="hidden" href="rdsINICreateTextHolder.htm" title="А.5.27.1. rdsINICreateTextHolder &ndash; создать объект для работы с текстом">rdsINICreateTextHolder</a></span> для создания вспомогательного объекта. Затем в этот объект
+передается текст параметров блока, полученный из RDS. Для этого используется вызов
+<span class="cpp"><a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a></span> с параметром <span class="cpp"><a href="RDS_HINI_SETTEXT.htm" title="А.5.27.18. Команда RDS_HINI_SETTEXT &ndash; занести текст в объект">RDS_HINI_SETTEXT</a></span>. В этот
+момент объект разбирает переданный ему текст на секции, имена параметров и их значения, и переводит его
+во внутренний формат для ускорения поиска. Теперь можно получить из объекта значения параметров блока,
+но прежде необходимо указать, с какой секцией текста мы собираемся работать. Установка текущей секции производится
+с помощью функции <span class="cpp"><a href="rdsINIOpenSection.htm" title="А.5.27.2. rdsINIOpenSection &ndash; установить текущую секцию">rdsINIOpenSection</a></span>, в которую, кроме идентификатора объекта, передается
+имя секции (в данном случае, &laquo;General&raquo;). После этого все команды чтения параметров (как и
+команды записи, хотя мы и не используем их в этой функции) будут обращаться к указанной секции. Функция
+возвращает <span class="cpp">TRUE</span>, если такая секция есть в тексте, и <span class="cpp">FALSE</span>,
+если ее нет. Читать параметры блока имеет смысл только в том случае, если секция существует, поэтому вызов
+<span class="cpp"><a class="hidden" href="rdsINIOpenSection.htm" title="А.5.27.2. rdsINIOpenSection &ndash; установить текущую секцию">rdsINIOpenSection</a></span> производится в условии оператора <span class="cpp">if</span>.
+Если функция вернула <span class="cpp">TRUE</span>, значения параметров блока извлекаются из текущей
+секции при помощи функций <span class="cpp"><a href="rdsINIReadInt.htm" title="А.5.27.5. rdsINIReadInt &ndash; получить целое значение параметра">rdsINIReadInt</a></span> и <span class="cpp"><a href="rdsINIReadDouble.htm" title="А.5.27.3. rdsINIReadDouble &ndash; получить вещественное значение параметра">rdsINIReadDouble</a></span>,
+в которые передается идентификатор объекта, имя параметра и значение по умолчанию, которое будет возвращено
+в случае отсутствия в секции параметра с таким именем. В конце функции созданный вспомогательный объект уничтожается
+при помощи <span class="cpp"><a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a></span>.</p>
+
+<p>Можно заметить, что функция <span class="cpp">LoadText</span> по структуре похожа на
+<span class="cpp">SaveText</span>. Обе они начинаются созданием объекта и заканчиваются его уничтожением,
+созданию секции в <span class="cpp">SaveText</span> соответствует установка текущей секции в
+<span class="cpp">LoadText</span>, вызовам <span class="cpp">rdsINIWrite&hellip;</span> при записи параметров
+соответствуют аналогичные вызовы <span class="cpp">rdsINIRead&hellip;</span> для их чтения. Таким образом,
+написав и отладив функцию записи параметров, можно легко сделать на ее основе функцию чтения, заменив одни вызовы
+на другие с практически идентичными параметрами, и вставив в начало функции загрузки команду передачи текста
+в объект вместо команды передачи текста из объекта в RDS в конце функции записи. Из-за
+похожести этих функций значительно упрощается добавление в блок новых хранимых параметров: команды их чтения
+и записи будут вставляться примерно в одни и те же места двух похожих функций.</p>
+
+<p>Функция загрузки параметров, работающая с форматом INI-файла, устроена значительно проще функции,
+<a href="pm_2_8_4.htm#ref3" title="Пример функции загрузки параметров с использованием вспомогательного объекта">поддерживающей разбор произвольного текста</a> &ndash;
+в ней не нужно организовывать цикл для пословного чтения. Если при произвольном разборе считанное из текста
+слово ищется в массиве ключевых слов, то в этом формате, наоборот, указанное ключевое слово (имя параметра)
+ищется в тексте. Из-за этого вспомогательный объект, работающий с образом INI-файла, требует для работы
+гораздо больше памяти, чем объект для поиска ключевых слов. В отличие от последнего, хранящего в
+памяти сравнительно небольшой массив с ключевыми словами и их целыми идентификаторами, он переводит во
+внутренний формат весь предоставленный ему текст, разбивая его на секции и выделяя имена параметров.
+Это несколько замедляет работу, но без этого объекту пришлось бы каждый раз просматривать весь текст в
+поисках нужной секции и нужного параметра, что привело бы к гораздо большему снижению скорости. Другой недостаток
+этого формата &ndash; его жесткость. В нем нельзя организовывать иерархические конструкции, вроде блоков
+&laquo;begin&hellip;end&raquo;, которые широко используются в текстовом формате RDS и могут
+быть реализованы при разборе произвольного текста (хотя, следует отметить, что для этого
+придется затратить некоторые усилия &ndash; встроенного механизма для поддержки такой иерархии в объекте
+нет). Однако, для большинства блоков такой формат вполне подходит.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_8_4.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_9_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_8_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

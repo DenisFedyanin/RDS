@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;4.4. Компиляция моделей</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_4">Глава 4. Создание модулей автоматической компиляции</a></p>
+<div class="level"><p>&sect;4.4. Компиляция моделей</p>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_4_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="disbutton">&gt;&gt;</span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_4_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_4_4_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 4. Создание модулей автоматической компиляции</h2>
+<h3>&sect;4.4. Компиляция моделей</h3>
+<p class="abstract">Описывается способ формирования исходного текста модели блока на языке C и 
+            вызова для этого текста внешнего компилятора.</p>
+
+
+<p>Для того, чтобы модуль автокомпиляции мог преобразовывать введенные пользователем модели в исполняемые
+файлы библиотек (DLL), нам нужно добавить в его функцию реакции на два вызова:
+<span class="cpp"><span id="light_ref1"><a href="RDS_COMPM_PREPARE.htm" title="А.3.4.16. RDS_COMPM_PREPARE &ndash; подготовка модели к компиляции">RDS_COMPM_PREPARE</a></span></span> и <span class="cpp"><span id="light_ref2"><a href="RDS_COMPM_COMPILE.htm" title="А.3.4.6. RDS_COMPM_COMPILE &ndash; компиляция моделей">RDS_COMPM_COMPILE</a></span></span>. В реакции на
+<span class="cpp"><a class="hidden" href="RDS_COMPM_PREPARE.htm" title="А.3.4.16. RDS_COMPM_PREPARE &ndash; подготовка модели к компиляции">RDS_COMPM_PREPARE</a></span> модуль должен проверить, нужно ли компилировать указанную в
+параметрах вызова модель, и подготовить ее к компиляции, если это необходимо (и, кроме того, записать в
+параметры блока имя файла библиотеки, которая будет создана в результате компиляции, и имя экспортированной из нее
+<a href="pm_2_3.htm" title="&sect;2.3. Структура функции модели блока">функции блока</a>).
+В реакции на <span class="cpp"><a class="hidden" href="RDS_COMPM_COMPILE.htm" title="А.3.4.6. RDS_COMPM_COMPILE &ndash; компиляция моделей">RDS_COMPM_COMPILE</a></span> модуль должен будет скомпилировать либо все
+модели, которые он сам пометил как требующие компиляции в реакции на
+<span class="cpp"><a class="hidden" href="RDS_COMPM_PREPARE.htm" title="А.3.4.16. RDS_COMPM_PREPARE &ndash; подготовка модели к компиляции">RDS_COMPM_PREPARE</a></span>, либо вообще все свои модели по требованию пользователя, который
+выбрал пункт главного меню RDS &laquo;<span class="menu">Система | Перекомпилировать все модели</span>&raquo;. В процессе компиляции
+должны будут быть созданы файлы DLL, имена которых занесены в блоки в реакции на
+<span class="cpp"><a class="hidden" href="RDS_COMPM_PREPARE.htm" title="А.3.4.16. RDS_COMPM_PREPARE &ndash; подготовка модели к компиляции">RDS_COMPM_PREPARE</a></span>, и всем блокам, связанным с каждой скомпилированной моделью, должна
+быть присвоена структура переменных этой модели.</p>
+
+<p>Кроме этих двух реакций нам нужно будет добавить еще и реакцию на присоединение модели к блоку
+<span class="cpp"><span id="light_ref3"><a href="RDS_COMPM_ATTACHBLOCK.htm" title="А.3.4.1. RDS_COMPM_ATTACHBLOCK &ndash; подключение модели к блоку">RDS_COMPM_ATTACHBLOCK</a></span></span>. Дело в том, что, даже если модель не нужно компилировать заново,
+при присоединении ее к блоку структура переменных этого блока должна быть приведена в соответствие со
+структурой, описанной в файле модели. Если этого не сделать, скомпилированная модель не сможет работать с
+этим блоком до тех пор, пока пользователь не изменит файл модели и модулю не придется опять
+компилировать ее.</p>
+
+<p>Нам нужно решить, где мы будем размещать DLL, полученные в результате компиляции наших моделей, и какие
+имена мы будем им давать. Поскольку тексты автоматически компилируемых моделей мы храним в отдельных файлах,
+причем каждую модель &ndash; в отдельном файле, имеет смысл помещать файл скомпилированной DLL в одну
+папку с файлом модели и давать ему имя, отличающееся от имени модели только расширением. Таким образом, из файла
+&laquo;<span class="file">testmodel.txt</span>&raquo; получится библиотека &laquo;<span class="file">testmodel.dll</span>&raquo;, находящаяся в
+той же папке. Библиотеки имеет смысл размещать в одной папке с моделями еще и потому, что, раз
+пользователь смог сохранить файл модели в этой папке, запись в эту папку ему разрешена, и мы сможем переписать
+туда же скомпилированный файл DLL.</p>
+
+<p><span id="ref4">Прежде</span>
+чем мы включим реакцию на два упомянутых выше вызова в наш модуль, напишем несколько вспомогательных
+функций. Для того, чтобы проверять, нужно ли компилировать модель, мы будем сравнивать время последней записи
+в файл модели с временем последней записи в файл DLL, получающийся в результате ее компиляции. Если запись в
+файл модели производилась позже записи в DLL, значит, модель изменена уже после последней компиляции, и
+ее необходимо компилировать снова. Таким образом, нам понадобится функция, определяющая время последней записи
+заданного файла:</p>
+
+<pre class="cpp">  <span class="rem">// Получить время последней записи в файл</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <span id="light_ref4">GetFileLastWrite</span>(<span class="kw">char</span> *filename,FILETIME *pLastWrite)
+  { HANDLE file;
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok=TRUE;
+
+    <span class="rem">// Открываем файл для чтения</span>
+    file=<span id="light_ref5">CreateFile</span>(filename,GENERIC_READ,FILE_SHARE_READ,
+      NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+    <span class="kw">if</span>(file==INVALID_HANDLE_VALUE) <span class="rem">// К файлу нет доступа</span>
+      <span class="kw">return</span> FALSE;
+
+    <span class="kw">if</span>(pLastWrite)
+      { <span class="rem">// Файл открыт - получаем время изменения</span>
+        ok=<span id="light_ref6">GetFileTime</span>(file,NULL,NULL,pLastWrite);
+      }
+    <span id="light_ref7">CloseHandle</span>(file);
+    <span class="kw">return</span> ok;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В эту функцию передается имя файла <span class="cpp">filename</span>, время изменения которого нужно получить,
+и указатель <span class="cpp">pLastWrite</span> на структуру Windows <span class="cpp">FILETIME</span>, в
+которую функция должна записать это время. Функция возвращает <span class="cpp">TRUE</span>, если ей удалось
+считать время, и <span class="cpp">FALSE</span> в случае возникновения ошибок (например, если файла не
+существует). Фактически, функция состоит из трех вызовов функций Windows API:
+<span class="cpp">CreateFile</span> для открытия файла (время изменения можно получить только у открытого файла),
+<span class="cpp">GetFileTime</span> для получения времени его изменения, и
+<span class="cpp">CloseHandle</span> для его закрытия. Мы не будем рассматривать ее более подробно.</p>
+
+<p><span id="ref8">На</span>
+базе этой функции мы сделаем еще одну, которая будет проверять, нужно ли компилировать модель. В нее
+будут передаваться имена файлов модели и DLL с полными путями, а она будет сравнивать
+их времена изменения.</p>
+
+<pre class="cpp">  <span class="rem">// Проверить необходимость компиляции DLL</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <span id="light_ref8">CheckDllTime</span>(<span class="kw">char</span> *modelfile,<span class="kw">char</span> *dllfile)
+  { FILETIME modeltime,dlltime;
+    <span class="rem">// Получаем время изменения DLL</span>
+    <span class="kw">if</span>(!<a class="hidden" href="#ref4" title="Функция получения времени последней записи в файл">GetFileLastWrite</a>(dllfile,&amp;dlltime))
+      <span class="kw">return</span> FALSE; <span class="rem">// Файла DLL, вероятно, нет</span>
+
+    <span class="rem">// Получаем время изменения файла модели</span>
+    <span class="kw">if</span>(!<a class="hidden" href="#ref4" title="Функция получения времени последней записи в файл">GetFileLastWrite</a>(modelfile,&amp;modeltime))
+      <span class="kw">return</span> FALSE; <span class="rem">// Нет доступа к файлу модели - ошибка</span>
+
+    <span class="rem">// Если modeltime&lt;=dlltime, можно не компилировать</span>
+    <span class="kw">return</span> <span id="light_ref9">CompareFileTime</span>(&amp;modeltime,&amp;dlltime)&lt;=<span class="const">0</span>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Эта функция будет возвращать <span class="cpp">TRUE</span>, если компиляция не требуется, и
+<span class="cpp">FALSE</span>, если ее нужно провести. В параметре <span class="cpp">modelfile</span> передается
+имя файла модели, а в <span class="cpp">dllfile</span> &ndash; имя файла DLL, оба имени должны содержать
+полные пути. Времена изменения этих файлов записываются в переменные <span class="cpp">modeltime</span> и
+<span class="cpp">dlltime</span> соответственно. Если время изменения DLL определить не удалось, вероятнее всего,
+файл DLL просто еще не существует, то есть модель еще ни разу не компилировалась &ndash; в этом случае функция
+возвращает <span class="cpp">FALSE</span>: компиляция необходима. Неудача при определении времени изменения
+файла модели сигнализирует о какой-то ошибке, причины которой не ясны (например, файл модели может быть
+открыт другой программой с исключительным доступом). В этом случае функция тоже возвращает <span class="cpp">FALSE</span>:
+лучше попытаться скомпилировать модель лишний раз, чем игнорировать ее изменение, которое не удалось
+определить из-за ошибки. Наконец, если оба времени изменения определены, они сравниваются друг с другом функцией
+Windows API <span class="cpp">CompareFileTime</span>. Если время изменения модели <span class="cpp">modeltime</span>
+окажется меньшим времени изменения DLL <span class="cpp">dlltime</span>, функция вернет
+<span class="cpp">TRUE</span>, поскольку в это случае компиляция не нужна. В противном случае функция вернет
+<span class="cpp">FALSE</span>: модель изменена позднее DLL, и DLL устарела.</p>
+
+<p><span id="ref10">Нам</span>
+также потребуется функция, которая запустит заданный EXE-файл с заданными параметрами командной строки
+и дождется его завершения &ndash; мы используем ее для запуска компилятора и редактора связей. Причем, поскольку
+в настройках блока в параметрах командной строки мы решили использовать символические константы
+&laquo;$INCLUDE$&raquo;, &laquo;$OBJFILE$&raquo; и &laquo;$DLLFILE$&raquo;, не поддерживаемые RDS,
+нам либо нужно заменять эти константы на их реальные значения перед передачей командной строки в нашу
+функцию, либо делать это внутри нее. Последнее удобней, поскольку нам нужно вызывать два разных исполняемых
+файла (компилятор и редактор связей) с разными параметрами командной строки, и если мы будем заменять в
+этих параметрах константы на их значения вне функции запуска, нам придется повторить один и тот
+же фрагмент программы два раза. Таким образом, лучше производить замену внутри функции, для чего мы будем,
+кроме имени исполняемого файла и строки параметров, передавать в нее два массива: массив имен констант и массив их
+значений. Возвращать эта функция будет логическое значение: <span class="cpp">TRUE</span> при успешном запуске и
+<span class="cpp">FALSE</span> при ошибке.</p>
+
+<pre class="cpp">  <span class="rem">// Запуск программы и ожидание ее завершения</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <span id="light_ref10">RunAndWait</span>(
+      <span class="kw">char</span> *path,       <span class="rem">// Имя EXE-файла</span>
+      <span class="kw">char</span> *parameters, <span class="rem">// Параметры командной строки</span>
+      <span class="kw">char</span> **search,    <span class="rem">// Массив имен констант</span>
+      <span class="kw">char</span> **replace)   <span class="rem">// Массив значений констант</span>
+  { <span class="kw">char</span> *cmd,*commandline,*tempdir;
+    STARTUPINFO startup; <span class="rem">// Структура параметров запуска процесса</span>
+    PROCESS_INFORMATION info; <span class="rem">// Структура описания процесса</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok=TRUE;
+
+    <span class="rem">// Формирование полной командной строки</span>
+    cmd=<span id="light_ref11"><a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span>(<span class="str">"\""</span>,path,FALSE);
+    <span id="light_ref12"><a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a></span>(&amp;cmd,<span class="str">"\" "</span>,FALSE);
+    <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;cmd,parameters,FALSE);
+    <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;cmd,<span class="str">" "</span>,FALSE); <span class="rem">// Пробел (на всякий случай)</span>
+    <span class="rem">// В cmd теперь - команда запуска, символические константы</span>
+    <span class="rem">// в ней еще не обработаны</span>
+
+    <span class="rem">// Заменяем все константы на их значения</span>
+    commandline=<span id="light_ref13"><a class="hidden" href="rdsStringReplace.htm" title="А.5.4.13. rdsStringReplace &ndash; замена фрагментов строки">rdsStringReplace</a></span>(cmd,search,replace,
+                  -<span class="const">1</span>,<span id="light_ref14"><a class="hidden" href="rdsStringReplace.htm#light_ref2" title="RDS_SRF_STDPATHS">RDS_SRF_STDPATHS</a></span>);
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(cmd); <span class="rem">// cmd больше не нужна</span>
+
+    <span class="rem">// В commandline - полная командная строка запуска программы</span>
+    <span class="kw">if</span>(commandline==NULL)
+      <span class="kw">return</span> FALSE;
+
+    <span class="rem">// Получение имени временной папки RDS без '&#92;'</span>
+    tempdir=<span id="light_ref15"><a class="hidden" href="rdsTransformFileName.htm" title="А.5.4.14. rdsTransformFileName &ndash; преобразование имени файла">rdsTransformFileName</a></span>(
+              <span id="light_ref16"><a class="hidden" href="rdsGetSystemPath.htm" title="А.5.2.25. rdsGetSystemPath &ndash; получить системную строку">rdsGetSystemPath</a></span>(<span id="light_ref17"><a class="hidden" href="rdsGetSystemPath.htm#light_ref29" title="RDS_GSPTEMPPATH">RDS_GSPTEMPPATH</a></span>),
+              <span id="light_ref18"><a class="hidden" href="rdsTransformFileName.htm#light_ref2" title="RDS_TFN_EXCLUDEPATHBS">RDS_TFN_EXCLUDEPATHBS</a></span>,NULL,NULL);
+
+    <span class="rem">// Заполнение структуры STARTUPINFO</span>
+    <span id="light_ref19">ZeroMemory</span>(&amp;startup,<span class="kw">sizeof</span>(STARTUPINFO));
+    startup.cb=<span class="kw">sizeof</span>(STARTUPINFO);
+
+    <span class="rem">// Запуск процесса</span>
+    <span class="kw">if</span>(!<span id="light_ref20">CreateProcess</span>(NULL,commandline,NULL,NULL,FALSE,
+          <span class="const">0</span>,NULL,tempdir,&amp;startup,&amp;info))
+      ok=FALSE; <span class="rem">// Запустить не получилось</span>
+
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Ждем завершения процесса</span>
+        <span id="light_ref21">WaitForSingleObject</span>(info.hProcess,INFINITE);
+        <span class="rem">// Процесс завершен - закрываем полученные дескрипторы</span>
+        CloseHandle(info.hThread);
+        CloseHandle(info.hProcess);
+      }
+
+    <span class="rem">// Освобождаем все динамические строки</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(commandline);
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(tempdir);
+    <span class="kw">return</span> ok;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В параметре <span class="cpp">path</span> в эту функцию передается полный путь к запускаемому EXE-файлу,
+в параметре <span class="cpp">parameters</span> &ndash; строка его параметров (объединение этих двух
+строк даст полную командную строку для запуска программы). В параметре <span class="cpp">search</span> передается
+указатель на массив символических констант, которые нужно заменить в командной строке (он должен завершаться значением
+<span class="cpp">NULL</span>), а в параметре <span class="cpp">replace</span> &ndash; массив значений этих
+констант. Два последних параметра подобраны так, чтобы их можно было без изменений передать в сервисную функцию
+RDS <span class="cpp"><a href="rdsStringReplace.htm" title="А.5.4.13. rdsStringReplace &ndash; замена фрагментов строки">rdsStringReplace</a></span>, которая занимается поиском и заменой в строках. Эта функция
+описана следующим образом:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsStringReplace.htm" title="А.5.4.13. rdsStringReplace &ndash; замена фрагментов строки">rdsStringReplace</a>(
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> string,   <span class="rem">// исходная строка</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> *search,  <span class="rem">// массив строк для поиска</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> *replace, <span class="rem">// массив строк для замены</span>
+    <span class="kw">int</span> count,      <span class="rem">// размер массива search или -1</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> flags);   <span class="rem">// флаги</span></pre>
+
+<p>Она ищет в строке <span class="cpp">string</span> все вхождения элементов массива
+<span class="cpp">search</span>, заменяет их на элементы массива <span class="cpp">replace</span> с тем же
+индексом, и возвращает динамически сформированную строку, получившуюся в результате этих замен (как обычно,
+ее нужно освобождать функцией <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>). В параметре <span class="cpp">count</span> передается
+число элементов в массиве <span class="cpp">search</span> или &minus;1, если массив завершается константой
+<span class="cpp">NULL</span>: в этом случае функция самостоятельно определит его размер. Параметр
+<span class="cpp">flags</span> может быть произвольной комбинацией битовых флагов
+<span class="cpp"><a href="rdsStringReplace.htm#light_ref2" title="RDS_SRF_STDPATHS">RDS_SRF_STDPATHS</a></span> (заменять в строке стандартные символические константы путей RDS
+на их значения) и <span class="cpp"><span id="light_ref22"><a href="rdsStringReplace.htm#light_ref1" title="RDS_SRF_IGNORECASE">RDS_SRF_IGNORECASE</a></span></span> (не учитывать регистр символов при поиске).
+Естественно, для нормальной работы этой функции размер массива <span class="cpp">replace</span> должен быть равен
+размеру массива <span class="cpp">search</span>, или может быть на единицу меньше, если последний элемент
+<span class="cpp">search</span> равен <span class="cpp">NULL</span>. Если, например,
+выполнить следующую программу:</p>
+
+<pre class="cpp">  <span class="kw">char</span> *names[]={<span class="str">"_PI_VAL_"</span>,<span class="str">"$PI$"</span>,NULL};
+  <span class="kw">char</span> *values[]={<span class="str">"3.1415926"</span>,<span class="str">"Пи"</span>};
+  <span class="kw">char</span> *result=<a class="hidden" href="rdsStringReplace.htm" title="А.5.4.13. rdsStringReplace &ndash; замена фрагментов строки">rdsStringReplace</a>(
+                 <span class="str">"Значение $PI$ равно _PI_VAL_"</span>,
+                 names,values,-<span class="const">1</span>,<span class="const">0</span>);
+  <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(result,<span class="str">"Результат"</span>,<a class="hidden" href="rdsMessageBox.htm#light_ref7" title="MB_OK">MB_OK</a>);
+  <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(result);</pre>
+
+<p class="noindent">то функция <span class="cpp"><a href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a></span> выведет сообщение
+&laquo;Значение Пи равно 3.1415926&raquo;.</p>
+
+<p>Вернемся к функции <span class="cpp"><a href="#ref10" title="Запуск программы и ожидание ее завершения">RunAndWait</a></span>. Сначала из параметров <span class="cpp">path</span> и
+<span class="cpp">parameters</span> нам нужно сформировать команду запуска программы
+<span class="cpp">path</span> с параметрами командной строки <span class="cpp">parameters</span>. Для этого мы
+функциями <span class="cpp"><a href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span> и <span class="cpp"><a href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a></span> (они уже
+неоднократно рассматривались ранее) формируем динамическую строку
+<span class="cpp">cmd</span> вида
+&laquo;&lt;<i>двойная кавычка</i>&gt;+<span class="cpp">path</span>+&lt;<i>двойная кавычка и пробел</i>&gt;+<span class="cpp">parameters</span>+&lt;<i>пробел</i>&gt;&raquo;.
+Поскольку в пути к EXE-файлу запускаемой программы могут содержаться пробелы, мы заключаем его в двойные кавычки
+&ndash; так принято в Windows. Путь к исполняемому файлу и строку параметров мы разделяем пробелом, и в конец строки
+добавляем еще один пробел (практика показывает, что без этого пробела некоторые программы работают неправильно).
+Затем получившуюся строку мы обрабатываем функцией <span class="cpp"><a class="hidden" href="rdsStringReplace.htm" title="А.5.4.13. rdsStringReplace &ndash; замена фрагментов строки">rdsStringReplace</a></span>, чтобы заменить
+в ней все символические константы (как стандартные для RDS, так и переданные нами в массиве
+<span class="cpp">search</span>) на их значения. В результате мы получаем динамическую строку
+<span class="cpp">commandline</span>. После ее получения мы освобождаем строку
+<span class="cpp">cmd</span> &ndash; она больше не нужна.</p>
+
+<p>Затем мы формируем еще одну динамическую строку, содержащую путь к временной папке RDS без
+завершающего этот путь символа &laquo;\&raquo;. Для этого мы вызываем функцию
+<span class="cpp"><a href="rdsGetSystemPath.htm" title="А.5.2.25. rdsGetSystemPath &ndash; получить системную строку">rdsGetSystemPath</a></span> с параметром <span class="cpp"><a href="rdsGetSystemPath.htm#light_ref29" title="RDS_GSPTEMPPATH">RDS_GSPTEMPPATH</a></span> (она вернет указатель на
+строку во внутренней памяти RDS, содержащую путь к временной папке), а затем обрабатываем возвращенное ей
+значение функцией <span class="cpp"><a href="rdsTransformFileName.htm" title="А.5.4.14. rdsTransformFileName &ndash; преобразование имени файла">rdsTransformFileName</a></span> с параметром <span class="cpp"><a href="rdsTransformFileName.htm#light_ref2" title="RDS_TFN_EXCLUDEPATHBS">RDS_TFN_EXCLUDEPATHBS</a></span>.
+Эта функция предназначена для обработки имен файлов и путей и всегда возвращает динамическую строку, так
+что нужно будет не забыть освободить ее в конце. Параметр <span class="cpp"><a class="hidden" href="rdsTransformFileName.htm#light_ref2" title="RDS_TFN_EXCLUDEPATHBS">RDS_TFN_EXCLUDEPATHBS</a></span>
+указывает ей на необходимость удалить в конце переданного ей имени символ &laquo;\&raquo;, если, конечно,
+он там присутствует. Мы могли бы удалить его и не пользуясь сервисными функциями RDS, но
+так текст функции получается короче.</p>
+
+<p>После этого мы подготавливаем структуру параметров запуска <span class="cpp">STARTUPINFO</span>, необходимую для
+запуска процесса (вся подготовка заключается в занесении в поле <span class="cpp">cb</span> размера этой структуры
+и обнулении всех остальных ее полей &ndash; параметры запуска нам не нужны) и вызываем функцию Windows API
+<span class="cpp">CreateProcess</span>, передавая ей командную строку для запуска
+<span class="cpp">commandline</span> и путь к папке <span class="cpp">tempdir</span> (эта папка станет
+текущей папкой процесса). <span class="cpp">CreateProcess</span> запустит программу, указанную в
+<span class="cpp">commandline</span> (если это возможно, иначе она немедленно вернет
+<span class="cpp">FALSE</span>), запишет в структуру <span class="cpp">info</span> типа
+<span class="cpp">PROCESS_INFORMATION</span>, указатель на которую передан в ее последнем параметре,
+дескрипторы запущенного процесса и его потока, и вернет нам управление. Нам нужно дождаться окончания работы запущенной
+программы, поэтому мы вызываем функцию Windows API <span class="cpp">WaitForSingleObject</span>, передавая ей
+дескриптор запущенного процесса <span class="cpp">info.hProcess</span> и константу
+<span class="cpp">INFINITE</span> (бесконечность) в качестве времени ожидания. Эта функция вернет управление
+только после завершения указанного в ее параметре процесса.</p>
+
+<p>Дождавшись завершения запущенной программы, мы закрываем дескрипторы процесса и потока,
+возвращенные нам функцией <span class="cpp">CreateProcess</span> (мы обязаны это сделать), освобождаем
+созданные динамические строки и возвращаем логическую переменную <span class="cpp">ok</span> (если
+программу запустить не удалось, она будет иметь значение <span class="cpp">FALSE</span>).</p>
+
+<p>Теперь все вспомогательные функции готовы, и мы можем ввести в функцию модуля новые реакции. Для этого
+<span class="changes">добавим</span> в
+класс <span class="cpp">TCAutoCompData</span> три новых функции-члена:</p>
+
+<pre class="cpp">  <span class="rem">// Класс личной области данных модуля автокомпиляции</span>
+  <span class="kw">class</span> TCAutoCompData
+  { <span class="kw">private</span>:
+      <span class="rem">// &hellip; без изменений &hellip;</span>
+
+<div class="changes">      <span class="rem">// Сформировать в файле исходный текст программы</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> WriteSourceCode(HANDLE file,<span class="kw">char</span> *name,
+             <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> varset,<span class="kw">char</span> *prog);
+      <span class="rem">// Загрузить и скомпилировать одну модель</span>
+      <span class="kw">void</span> LoadAndProcessModel(<a class="hidden" href="RDS_COMPMODELDATA.htm" title="А.3.3. RDS_COMPMODELDATA &ndash; структура данных модели">RDS_COMPMODELDATA</a> *data,
+             <span class="kw">int</span> fileset,<a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> varsonly);</div>
+      <span class="rem">// Сообщение об ошибке в модели</span>
+      <span class="kw">static</span> <span class="kw">void</span> ModelErrorMsg(<span class="kw">char</span> *modelname,<span class="kw">char</span> *errortext);
+    <span class="kw">public</span>:
+<div class="changes">      <span class="rem">// Подготовиться к компиляции модели</span>
+      <span class="kw">void</span> PrepareToCompileModel(<a class="hidden" href="RDS_COMPM_PREPARE.htm#ref1" title="Структура RDS_COMPPREPAREDATA">RDS_COMPPREPAREDATA</a> *param);
+      <span class="rem">// Компилировать модели</span>
+      <span class="kw">void</span> CompileModels(<a class="hidden" href="RDS_COMPM_COMPILE.htm#ref3" title="Структура RDS_COMPILEDATA">RDS_COMPILEDATA</a> *param);
+      <span class="rem">// Связать блок с моделью</span>
+      <span class="kw">void</span> AttachBlock(<a class="hidden" href="RDS_COMPM_ATTACHBLOCK.htm#ref1" title="Структура RDS_COMPBLOCKOPDATA">RDS_COMPBLOCKOPDATA</a> *param);</div>
+      <span class="rem">// &hellip; далее без изменений &hellip;</span>
+  };
+  <span class="rem">//=========================================</span></pre>
+
+<p>Функции <span class="cpp">PrepareToCompileModel</span> и <span class="cpp">CompileModels</span> будут вызываться
+из функции модуля при ее вызове с параметрами <span class="cpp"><a class="hidden" href="RDS_COMPM_PREPARE.htm" title="А.3.4.16. RDS_COMPM_PREPARE &ndash; подготовка модели к компиляции">RDS_COMPM_PREPARE</a></span> и
+<span class="cpp"><a class="hidden" href="RDS_COMPM_COMPILE.htm" title="А.3.4.6. RDS_COMPM_COMPILE &ndash; компиляция моделей">RDS_COMPM_COMPILE</a></span> соответственно. Из функции <span class="cpp">CompileModels</span>
+мы будем вызывать для каждой компилируемой модели функцию
+<span class="cpp">LoadAndProcessModel</span>, кроме того, формирование исходного текста компилируемой библиотеки
+мы для удобства вынесем в функцию <span class="cpp">WriteSourceCode</span>. При присоединении модели к
+каждому блоку (в реакции на <span class="cpp"><a class="hidden" href="RDS_COMPM_ATTACHBLOCK.htm" title="А.3.4.1. RDS_COMPM_ATTACHBLOCK &ndash; подключение модели к блоку">RDS_COMPM_ATTACHBLOCK</a></span>) мы будем вызывать функцию
+<span class="cpp">AttachBlock</span> &ndash; в ней мы присвоим блоку структуру переменных модели, если это
+необходимо.</p>
+
+<p>Внутрь оператора <span class="cpp">switch</span> в функции модуля нужно добавить следующие метки
+<span class="cpp">case</span>:</p>
+
+<pre class="cpp">        <span class="rem">// Подготовка к компиляции</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_COMPM_PREPARE.htm" title="А.3.4.16. RDS_COMPM_PREPARE &ndash; подготовка модели к компиляции">RDS_COMPM_PREPARE</a>:
+          data-&gt;PrepareToCompileModel((<a class="hidden" href="RDS_COMPM_PREPARE.htm#ref2" title="Указатель на RDS_COMPPREPAREDATA">RDS_PCOMPPREPAREDATA</a>)ExtParam);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Компиляция моделей</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_COMPM_COMPILE.htm" title="А.3.4.6. RDS_COMPM_COMPILE &ndash; компиляция моделей">RDS_COMPM_COMPILE</a>:
+          data-&gt;CompileModels((<a class="hidden" href="RDS_COMPM_COMPILE.htm#ref4" title="Указатель на RDS_COMPILEDATA">RDS_PCOMPILEDATA</a>)ExtParam);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Присоединение модели к блоку</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_COMPM_ATTACHBLOCK.htm" title="А.3.4.1. RDS_COMPM_ATTACHBLOCK &ndash; подключение модели к блоку">RDS_COMPM_ATTACHBLOCK</a>:
+          data-&gt;AttachBlock((<a class="hidden" href="RDS_COMPM_ATTACHBLOCK.htm#ref2" title="Указатель на RDS_COMPBLOCKOPDATA">RDS_PCOMPBLOCKOPDATA</a>)ExtParam);
+          <span class="kw">break</span>;</pre>
+
+<p><span id="ref23">Функция</span>
+<span class="cpp">PrepareToCompileModel</span> должна проверить, требуется ли компиляция модели, указанной
+в ее параметре, и передать в блок имя DLL и имя функции блока, которые получатся в результате компиляции:</p>
+
+<pre class="cpp">  <span class="rem">// Подготовиться к компиляции модели</span>
+  <span class="kw">void</span> TCAutoCompData::<span id="light_ref23">PrepareToCompileModel</span>(
+        <span id="light_ref24"><a class="hidden" href="RDS_COMPM_PREPARE.htm#ref1" title="Структура RDS_COMPPREPAREDATA">RDS_COMPPREPAREDATA</a></span> *param)
+  { <span class="kw">char</span> *modelpath,*dllpath;
+
+    <span class="rem">// Выясняем, нужно ли перекомпилировать DLL</span>
+    <span class="kw">if</span>(param-&gt;Rebuild) <span class="rem">// Принудительно компилировать все</span>
+      param-&gt;Model-&gt;Valid=FALSE;
+    <span class="kw">else</span> <span class="rem">// Компилировать при необходимости</span>
+      { <span class="rem">// Время последней записи DLL должно быть не меньше</span>
+        <span class="rem">// времени записи текста модели</span>
+
+        <span class="rem">// Полный путь к файлу модели</span>
+        modelpath=<span id="light_ref25"><a class="hidden" href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a></span>(
+                    param-&gt;Model-&gt;ModelName,NULL,NULL);
+        <span class="rem">// Полный путь к файлу DLL</span>
+        dllpath=<a class="hidden" href="rdsTransformFileName.htm" title="А.5.4.14. rdsTransformFileName &ndash; преобразование имени файла">rdsTransformFileName</a>(
+                  modelpath,<span id="light_ref26"><a class="hidden" href="rdsTransformFileName.htm#light_ref1" title="RDS_TFN_CHANGEEXT">RDS_TFN_CHANGEEXT</a></span>,<span class="str">".dll"</span>,NULL);
+        <span class="rem">// Сравниваем времена последней записи</span>
+        param-&gt;Model-&gt;Valid=<a class="hidden" href="#ref8" title="Функция проверки необходимости компиляции DLL">CheckDllTime</a>(modelpath,dllpath);
+        <span class="rem">// Освобождаем строки</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(modelpath);
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(dllpath);
+      }
+
+    <span class="rem">// Получаем имя DLL с сокращенным путем для записи</span>
+    <span class="rem">// в параметры блока</span>
+    dllpath=<a class="hidden" href="rdsTransformFileName.htm" title="А.5.4.14. rdsTransformFileName &ndash; преобразование имени файла">rdsTransformFileName</a>(
+              param-&gt;Model-&gt;ModelName,<a class="hidden" href="rdsTransformFileName.htm#light_ref1" title="RDS_TFN_CHANGEEXT">RDS_TFN_CHANGEEXT</a>,<span class="str">".dll"</span>,NULL);
+
+    <span class="rem">// Записываем в параметры блоков библиотеку и функцию в ней,</span>
+    <span class="rem">// которые получатся в результате компиляции</span>
+    <span id="light_ref27"><a class="hidden" href="rdscompSetModelFunction.htm" title="А.5.34.13. rdscompSetModelFunction &ndash; установить имена DLL и функции скомпилированной модели">rdscompSetModelFunction</a></span>(param-&gt;Model-&gt;Model,dllpath,Exported);
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(dllpath);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В эту функцию передается указатель <span class="cpp">param</span> на структуру
+<span class="cpp"><a href="RDS_COMPM_PREPARE.htm#ref1" title="Структура RDS_COMPPREPAREDATA">RDS_COMPPREPAREDATA</a></span> с двумя полями: указателем на структуру данных модели
+<span class="cpp">Model</span> и признаком принудительной компиляции всех моделей
+<span class="cpp">Rebuild</span>. Функция должна установить <span class="cpp">Model-&gt;Valid</span> в
+<span class="cpp">TRUE</span>, если данной модели не требуется компиляция, и в
+<span class="cpp">FALSE</span>, если компиляция требуется.</p>
+
+<p>Если поле <span class="cpp">param-&gt;Rebuild</span> истинно (пользователь приказал заново скомпилировать
+все модели), <span class="cpp">param-&gt;Model-&gt;Valid</span> устанавливается в
+<span class="cpp">FALSE</span> &ndash; модель нужно компилировать. В противном случае мы должны сравнить времена
+последнего изменения файлов модели и DLL &ndash; если модель изменена позднее, DLL нужно компилировать заново.
+Для этого мы сначала преобразуем имя модели <span class="cpp">param-&gt;Model-&gt;ModelName</span>, которое является
+относительным путем к ее файлу, в полный путь <span class="cpp">modelpath</span> функцией
+<span class="cpp"><a href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a></span>. Затем, заменяя расширение у файла модели на
+&laquo;.dll&raquo; вызовом функции <span class="cpp"><a href="rdsTransformFileName.htm" title="А.5.4.14. rdsTransformFileName &ndash; преобразование имени файла">rdsTransformFileName</a></span> с параметром
+<span class="cpp"><a href="rdsTransformFileName.htm#light_ref1" title="RDS_TFN_CHANGEEXT">RDS_TFN_CHANGEEXT</a></span>, мы получаем имя файла DLL с полным путем
+<span class="cpp">dllpath</span> (и <span class="cpp">modelpath</span>, и <span class="cpp">dllpath</span>
+&ndash; динамически строки, поэтому их нужно будет освободить функцией <span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>). Получив
+оба пути, мы передаем их в написанную ранее <span class="cpp"><a href="#ref8" title="Функция проверки необходимости компиляции DLL">CheckDllTime</a></span>, которая сравнит времена изменения
+этих файлов и вернет <span class="cpp">FALSE</span>, если модель изменена позднее библиотеки. Возвращенное ей
+значение мы присваиваем <span class="cpp">param-&gt;Model-&gt;Valid</span>.</p>
+
+<p>Независимо от того, требуется модели компиляция или нет, в конце функции мы настраиваем блок на работу с
+нужной библиотекой и функцией. Если пользователь, например, подключает к блоку новую автоматически компилируемую
+модель, которой в данный момент не требуется компиляция (файл модели старше файла DLL), в параметрах блока на
+данный момент еще не установлены библиотека и функция модели, и модуль автокомпиляции все равно должен сообщить
+блоку, с какой библиотекой и какой функцией он теперь будет работать. Для этого мы преобразуем имя модели
+в имя файла DLL <span class="cpp">dllpath</span> заменой расширения при помощи вызова
+<span class="cpp"><a class="hidden" href="rdsTransformFileName.htm" title="А.5.4.14. rdsTransformFileName &ndash; преобразование имени файла">rdsTransformFileName</a></span>. В данном случае мы берем имя файла модели не с полным путем,
+а с относительным (<span class="cpp">param-&gt;Model-&gt;ModelName</span>), чтобы получившееся имя библиотеки
+тоже содержало относительные пути. Таким образом, например, если файл модели находится в одной папке со схемой,
+в которой используется эта модель, в параметрах блока имя модели не будет содержать пути вообще, и имя файла
+DLL блока, полученное из имени модели, тоже не будет содержать пути. Именно это нам и нужно: при переносе всей
+папки со схемой, моделями и полученными из них файлами DLL, схема не утратит работоспособности, поскольку все
+пути в параметрах блоков &ndash; относительные.</p>
+
+<p>После того, как мы получили имя файла DLL, в котором будет находиться экспортированная функция модели этого
+блока, мы настраиваем все блоки, использующие данную автоматически компилируемую модель, на работу с этой
+библиотекой и этой функцией вызовом сервисной функции <span class="cpp"><a href="rdscompSetModelFunction.htm" title="А.5.34.13. rdscompSetModelFunction &ndash; установить имена DLL и функции скомпилированной модели">rdscompSetModelFunction</a></span>, в первом
+параметре которой передается идентификатор данной модели (<span class="cpp">param-&gt;Model-&gt;Model</span>), во втором
+&ndash; сформированное нами имя библиотеки с относительными путями (<span class="cpp">dllpath</span>), в третьем
+&ndash; имя экспортированной функции (поле <span class="cpp">Exported</span> класса личной области нашего модуля,
+которое мы сделали одним из настраиваемых параметров). После этого мы освобождаем динамическую строку
+<span class="cpp">dllpath</span> и завершаем функцию <span class="cpp">PrepareToCompileModel</span>.</p>
+
+<p><span id="ref28">Функция</span>
+<span class="cpp">CompileModels</span>, в которой мы будем компилировать модели, в
+структуре данных которых поле
+<span class="cpp">Valid</span> имеет значение <span class="cpp">FALSE</span>, будет достаточно простой,
+поскольку собственно компиляцию модели мы вынесли в отдельную функцию
+<span class="cpp"><a href="#ref52" title="Загрузить и скомпилировать одну модель">LoadAndProcessModel</a></span>. Здесь же мы просто будем перебирать в цикле все модели:</p>
+
+<pre class="cpp">  <span class="rem">// Компилировать все модели</span>
+  <span class="kw">void</span> TCAutoCompData::<span id="light_ref28">CompileModels</span>(<span id="light_ref29"><a class="hidden" href="RDS_COMPM_COMPILE.htm#ref3" title="Структура RDS_COMPILEDATA">RDS_COMPILEDATA</a></span> *param)
+  {
+    <span class="rem">// Проверяем необходимые параметры</span>
+    <span class="kw">if</span>(CompPath==NULL || LinkPath==NULL ||
+       IncludePath==NULL || LibPath==NULL)
+      <span class="kw">return</span>; <span class="rem">// Компиляция невозможна</span>
+
+    <span class="rem">// В цикле перебираем все модели из param-&gt;InvalidModels</span>
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;param-&gt;IMCount;i++)
+      { <span class="kw">int</span> tempset;
+        <span class="rem">// Создаем новый набор временных файлов</span>
+        tempset=<span id="light_ref30"><a class="hidden" href="rdsTMPCreateFileSet.htm" title="А.5.19.2. rdsTMPCreateFileSet &ndash; создать набор временных файлов">rdsTMPCreateFileSet</a></span>();
+        <span class="rem">// Компилируем модель</span>
+        <a class="hidden" href="#ref52" title="Загрузить и скомпилировать одну модель">LoadAndProcessModel</a>(param-&gt;InvalidModels[i],tempset,FALSE);
+        <span class="rem">// Удаляем все созданные в процессе временные файлы</span>
+        <span id="light_ref31"><a class="hidden" href="rdsTMPDeleteFileSet.htm" title="А.5.19.4. rdsTMPDeleteFileSet &ndash; удалить набор временных файлов">rdsTMPDeleteFileSet</a></span>(tempset);
+      }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В параметре <span class="cpp">param</span> этой функции передается указатель на структуру
+<span class="cpp"><a href="RDS_COMPM_COMPILE.htm#ref3" title="Структура RDS_COMPILEDATA">RDS_COMPILEDATA</a></span>. В ней нас будут интересовать два поля: массив указателей на
+структуры данных моделей <span class="cpp">InvalidModels</span> и его размер
+<span class="cpp">IMCount</span>. При вызове модуля для компиляции RDS включает в этот массив только
+те модели, которые требуют компиляции, поэтому нам не нужно вручную проверять поле
+<span class="cpp">Valid</span> в их структурах данных. Таким образом, нам просто нужно вызвать
+<span class="cpp"><a class="hidden" href="#ref52" title="Загрузить и скомпилировать одну модель">LoadAndProcessModel</a></span> для каждой модели, указатель на структуру данных
+(<span class="cpp"><a href="RDS_COMPMODELDATA.htm" title="А.3.3. RDS_COMPMODELDATA &ndash; структура данных модели">RDS_COMPMODELDATA</a></span>) которой находится в массиве <span class="cpp">param-&gt;InvalidModels</span>.
+Однако, для некоторого облегчения написания функции компиляции модели
+<span class="cpp"><a class="hidden" href="#ref52" title="Загрузить и скомпилировать одну модель">LoadAndProcessModel</a></span>, перед ее вызовом мы создаем набор временных файлов сервисной
+функцией RDS <span class="cpp"><a href="rdsTMPCreateFileSet.htm" title="А.5.19.2. rdsTMPCreateFileSet &ndash; создать набор временных файлов">rdsTMPCreateFileSet</a></span>, а после него удаляем все временные файлы этого
+набора функцией <span class="cpp"><a href="rdsTMPDeleteFileSet.htm" title="А.5.19.4. rdsTMPDeleteFileSet &ndash; удалить набор временных файлов">rdsTMPDeleteFileSet</a></span>, при этом идентификатор созданного набора мы передаем
+в функцию <span class="cpp"><a class="hidden" href="#ref52" title="Загрузить и скомпилировать одну модель">LoadAndProcessModel</a></span>, чтобы она могла с ним работать. Остановимся на
+этих функциях для работы с временными файлами подробнее.</p>
+
+<p><span id="ref32">В</span>
+процессе компиляции нам придется создать на диске <span id="light_ref32">некоторое количество
+дополнительных файлов</span>: для работы компилятора нужно сформировать в каком-либо файле исходный
+текст библиотеки на языке C, компилятор преобразует его в объектный файл и т.д. После завершения компиляции все
+эти файлы желательно удалить, чтобы они зря не занимали место на диске (лучше не оставлять после себя
+&laquo;мусор&raquo;). Значит, нам нужно запоминать где-то имена всех созданных нами файлов, а потом,
+когда эти файлы уже не нужны, удалять их. В RDS есть специальные сервисные функции, которые позволяют
+автоматизировать этот процесс &ndash; ими мы и будем пользоваться. Эти функции, кроме того, позволяют решить
+проблему подбора имен для временных файлов. Конечно, мы можем заложить в нашу программу жестко заданные имена
+файлов: например, исходный текст библиотеки, который будет обрабатываться компилятором, мы можем всегда формировать
+в файле &laquo;<span class="file">source.cpp</span>&raquo; в <a href="um_2_18.htm#pic4" title="Окно настроек: вкладка папки">стандартной папке</a>
+временных файлов RDS &ndash; кажется, что там он никому не будет мешать. Однако, представим себе, что
+на одной машине запущено две копии RDS, и им обеим одновременно пришлось заняться компиляцией своих
+моделей. Обе копии попытаются записать в папку файл с одним и тем же именем, что приведет к конфликту. К
+счастью, мы можем предоставить выбор имени для файла сервисной функции RDS &ndash; она подберет такое
+имя, которое не совпадает ни с одним файлом в заданной папке, причем она сразу создаст файл с этим именем
+нулевого размера, чтобы ни одна другая программа не смогла &laquo;захватить&raquo; это имя и помешать нам
+использовать этот файл. Нам останется только открыть его для записи и сформировать в нем исходный
+текст библиотеки.</p>
+
+<p>Все временные файлы, с которыми работает RDS, объединены в наборы, каждый из которых имеет целый
+идентификатор. Прежде чем начать работать с временными файлами, нужно вызвать функцию
+<span class="cpp"><a class="hidden" href="rdsTMPCreateFileSet.htm" title="А.5.19.2. rdsTMPCreateFileSet &ndash; создать набор временных файлов">rdsTMPCreateFileSet</a></span>, которая вернет уникальный, нигде в данный момент не
+используемый, идентификатор набора. Этот идентификатор используется в вызовах всех остальных функций работы
+с временными файлами.</p>
+
+<p>Для того, чтобы подобрать имя для временного файла и создать файл нулевого размера,
+&laquo;заняв&raquo; таким образом это имя, вызывается функция
+<span class="cpp"><span id="light_ref33"><a class="hidden" href="rdsTMPCreateEmptyFile.htm" title="А.5.19.1. rdsTMPCreateEmptyFile &ndash; создать временный файл">rdsTMPCreateEmptyFile</a></span></span>:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsTMPCreateEmptyFile.htm" title="А.5.19.1. rdsTMPCreateEmptyFile &ndash; создать временный файл">rdsTMPCreateEmptyFile</a>(
+    <span class="kw">int</span> setid,    <span class="rem">// Идентификатор набора временных файлов</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> name);  <span class="rem">// Желаемое имя с путем</span></pre>
+
+<p>В параметре <span class="cpp">setid</span> передается идентификатор набора, к которому будет относиться
+создаваемый файл, а в параметре <span class="cpp">name</span> &ndash; его желаемое имя с указанием пути
+(можно использовать как полные пути, так и относительные, с
+<a href="rdsGetFullFilePath.htm#ref1" title="Символические обозначения стандартных путей">символическими константами</a> RDS). Если файл с именем
+<span class="cpp">name</span> в данный момент не существует, функция оставит это имя без изменений, если
+же такой файл уже есть, она изменит его имя, сохранив путь и расширение и сделав это имя уникальным в
+данной папке. Подобрав имя, функция создаст пустой файл, запомнит его имя во внутренней памяти
+RDS и вернет указатель на это запомненное имя с полным путем. Поскольку функция не создает динамических
+строк, результат ее возврата не нужно освобождать в вызвавшей программе.</p>
+
+<p>Если имя для файла подбирать не нужно, можно просто добавить заданное имя к списку временных файлов
+набора функцией <span class="cpp"><span id="light_ref34"><a href="rdsTMPRememberFileName.htm" title="А.5.19.5. rdsTMPRememberFileName &ndash; запомнить файл как временный">rdsTMPRememberFileName</a></span></span>. Она может быть полезна в тех случаях,
+когда временные файлы создаются какой-либо другой программой (например, компилятором), но мы знаем их имена
+и хотим удалить их по окончании работы. В эту функцию тоже можно передать имя с относительным путем,
+она возвращает указатель на запомненное во внутренней памяти RDS имя с полным путем.</p>
+
+<p>По окончании работы с временными файлами можно удалить их все одним вызовом функции
+<span class="cpp"><a href="rdsTMPDeleteFileSet.htm" title="А.5.19.4. rdsTMPDeleteFileSet &ndash; удалить набор временных файлов">rdsTMPDeleteFileSet</a></span>, в которую передается идентификатор удаляемого набора.
+Зная полное имя временного файла, можно удалить только этот файл и с диска, и из набора функцией
+<span class="cpp"><span id="light_ref35"><a href="rdsTMPDeleteFile.htm" title="А.5.19.3. rdsTMPDeleteFile &ndash; удалить временный файл">rdsTMPDeleteFile</a></span></span>, однако, следует помнить, что даже после удаления всех файлов
+набора вызовами <span class="cpp"><a class="hidden" href="rdsTMPDeleteFile.htm" title="А.5.19.3. rdsTMPDeleteFile &ndash; удалить временный файл">rdsTMPDeleteFile</a></span>, пустой набор все равно останется в памяти,
+и его нужно будет удалить вызовом <span class="cpp"><a class="hidden" href="rdsTMPDeleteFileSet.htm" title="А.5.19.4. rdsTMPDeleteFileSet &ndash; удалить набор временных файлов">rdsTMPDeleteFileSet</a></span>. Также следует учитывать,
+что при завершении RDS или загрузке новой схемы все временные файлы всех наборов удаляются автоматически,
+поэтому нет способа не удалять файл, объявленный временным при помощи функций
+<span class="cpp"><a class="hidden" href="rdsTMPCreateEmptyFile.htm" title="А.5.19.1. rdsTMPCreateEmptyFile &ndash; создать временный файл">rdsTMPCreateEmptyFile</a></span> или <span class="cpp"><a class="hidden" href="rdsTMPRememberFileName.htm" title="А.5.19.5. rdsTMPRememberFileName &ndash; запомнить файл как временный">rdsTMPRememberFileName</a></span>.</p>
+
+<p>Возвращаясь к функции <span class="cpp"><a class="hidden" href="#ref28" title="Компилировать все модели">CompileModels</a></span>, можно видеть, что, вызывая в цикле функцию
+<span class="cpp"><a class="hidden" href="#ref52" title="Загрузить и скомпилировать одну модель">LoadAndProcessModel</a></span>, мы передаем ей не только указатель на структуру данных
+компилируемой модели <span class="cpp">param-&gt;InvalidModels[i]</span> и идентификатор созданного для нее
+набора временных файлов <span class="cpp">tempset</span>, но еще и значение <span class="cpp">FALSE</span>
+в третьем параметре. Этот третий параметр функции <span class="cpp"><a class="hidden" href="#ref52" title="Загрузить и скомпилировать одну модель">LoadAndProcessModel</a></span> мы будем
+использовать для ограничения ее работы: если он равен <span class="cpp">FALSE</span>, функция должна будет
+скомпилировать модель и присвоить всем блокам, обслуживаемым моделью, ее структуру переменных, если же параметр
+будет равен <span class="cpp">TRUE</span>, функция должна будет только присвоить блокам структуру переменных,
+не компилируя модель. Это ограничение позволит нам использовать одну и ту же функцию и для компиляции модели в
+реакции <span class="cpp"><a href="RDS_COMPM_COMPILE.htm" title="А.3.4.6. RDS_COMPM_COMPILE &ndash; компиляция моделей">RDS_COMPM_COMPILE</a></span>, и для установки структуры переменных блока в реакции
+<span class="cpp"><a href="RDS_COMPM_ATTACHBLOCK.htm" title="А.3.4.1. RDS_COMPM_ATTACHBLOCK &ndash; подключение модели к блоку">RDS_COMPM_ATTACHBLOCK</a></span>.</p>
+
+<p><span id="ref36">Прежде</span>
+чем заняться функцией <span class="cpp"><a class="hidden" href="#ref52" title="Загрузить и скомпилировать одну модель">LoadAndProcessModel</a></span>, напишем сначала функцию
+формирования исходного текста компилируемой библиотеки <span class="cpp">WriteSourceCode</span>. Будем
+считать, что файл, в который нужно записать исходный текст, уже открыт на запись, а файл модели
+уже считан и разобран на структуру переменных блока и текст реакции на такт моделирования. Эта функция
+будет довольно объемной из-за большого размера исходного текста, который она формирует.</p>
+
+<pre class="cpp">  <span class="rem">// Сформировать в файле исходный текст программы</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> TCAutoCompData::<span id="light_ref36">WriteSourceCode</span>(
+      HANDLE file,        <span class="rem">// дескриптор открытого файла</span>
+      <span class="kw">char</span> *name,         <span class="rem">// имя модели (для сообщения)</span>
+      <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> varset, <span class="rem">// набор переменных</span>
+      <span class="kw">char</span> *prog)         <span class="rem">// исходный текст реакции</span>
+  { BOOL ok;
+    <span id="light_ref37"><a class="hidden" href="RDS_VARDESCRIPTION.htm#ref1" title="Структура RDS_VARDESCRIPTION">RDS_VARDESCRIPTION</a></span> vdescr;
+    <span class="kw">char</span> *undef=NULL;
+
+    <span class="rem">// Начальные описания и тип главной функции DLL</span>
+    ok=<a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,
+      <span class="str">"#include &lt;windows.h&gt;\r\n"</span>
+      <span class="str">"#include &lt;stdlib.h&gt;\r\n"</span>
+      <span class="str">"#include &lt;math.h&gt;\r\n"</span>
+      <span class="str">"#include &lt;RdsDef.h&gt;\r\n"</span>
+      <span class="str">"#define RDS_SERV_FUNC_BODY GetServiceFunc\r\n"</span>
+      <span class="str">"#include &lt;RdsFunc.h&gt;\r\n"</span>
+      <span class="str">"double _HugeDouble;\r\n\r\n"</span> <span class="rem">// значение ошибки</span>
+      <span class="str">"int WINAPI "</span>);
+    <span class="rem">// Имя главной функции DLL (из настроек модуля)</span>
+    ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,DllMainName);
+    <span class="rem">// </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Тело главной функции DLL</span></a>
+    ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,
+      <span class="str">"(HINSTANCE </span><span class="rem">/*hinst*/</span><span class="str">,unsigned long reason,"</span>
+      <span class="str">"void *</span><span class="rem">/*lpReserved*/</span><span class="str">)\r\n"</span>
+      <span class="str">"{ if(reason==DLL_PROCESS_ATTACH)\r\n"</span>
+      <span class="str">"    { if(!RDS_SERV_FUNC_BODY())\r\n"</span>
+      <span class="str">"        { MessageBox(NULL,\"Нет сервисных функций RDS\",\""</span>);
+    <span class="rem">// Имя модели в сообщении об ошибке</span>
+    ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,name);
+    <span class="rem">// Продолжение главной функции DLL</span>
+    ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,<span class="str">"\",MB_OK | MB_ICONERROR);\r\n"</span>
+      <span class="str">"          return 0;\r\n"</span>
+      <span class="str">"        }\r\n"</span>
+      <span class="str">"      else\r\n"</span>
+      <span class="str">"        </span><a class="hidden" href="rdsGetHugeDouble.htm" title="А.5.2.22. rdsGetHugeDouble &ndash; получение значения-индикатора математической ошибки"><span class="str">rdsGetHugeDouble</span></a><span class="str">(&amp;_HugeDouble);\r\n"</span>
+      <span class="str">"    }\r\n"</span>
+      <span class="str">"  return 1;\r\n"</span>
+      <span class="str">"}\r\n\r\n"</span>);
+
+    <span class="rem">// Заголовок функции блока (из настроек)</span>
+    ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,ModelFuncHdr);
+    <span class="rem">// Продолжение функции блока и проверка типов переменных</span>
+    ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,
+      <span class="str">"(int CallMode,</span><a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA"><span class="str">RDS_PBLOCKDATA</span></a><span class="str"> BlockData,</span><a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)"><span class="str">LPVOID</span></a><span class="str"> ExtParam)\r\n"</span>
+      <span class="str">"{ switch(CallMode)\r\n"</span>
+      <span class="str">"    { case </span><span id="light_ref38"><a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока"><span class="str">RDS_BFM_VARCHECK</span></a></span><span class="str">:\r\n"</span>
+      <span class="str">"        if(strcmp((char*)ExtParam,\""</span>);
+    <span class="rem">// Строка типа переменных блока (из varset)</span>
+    ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,
+      <a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(varset,<span id="light_ref39"><a class="hidden" href="RDS_HVAR_GETTYPESTRING.htm" title="А.5.25.27. Команда RDS_HVAR_GETTYPESTRING &ndash; получить строку типа всей структуры переменных">RDS_HVAR_GETTYPESTRING</a></span>,<span class="const">0</span>));
+    <span class="rem">// Завершение проверки типа переменных</span>
+    ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,
+      <span class="str">"\")) return </span><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG"><span class="str">RDS_BFR_BADVARSMSG</span></a><span class="str">;\r\n"</span>
+      <span class="str">"        break;\r\n"</span>);
+
+    <span class="rem">// Такт моделирования</span>
+    ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,
+      <span class="str">"      case </span><span id="light_ref40"><a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета"><span class="str">RDS_BFM_MODEL</span></a></span><span class="str">:\r\n"</span>);
+
+    <span class="rem">// Макрос для начала дерева переменных</span>
+    ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,<span class="str">"#define _pVarDataStart "</span>
+      <span class="str">" ((</span><a class="hidden" href="app_ids.htm#light_ref12" title="Однобайтовая переменная"><span class="str">BYTE</span></a><span class="str">*)(BlockData-&gt;VarData))\r\n"</span>);
+    <span class="rem">// Макросы для переменных блока</span>
+    vdescr.servSize=<span class="kw">sizeof</span>(vdescr);
+    <span class="kw">if</span>(<span id="light_ref41"><a class="hidden" href="rdsVSGetVarDescription.htm" title="А.5.25.14. rdsVSGetVarDescription &ndash; получить описание переменной">rdsVSGetVarDescription</a></span>(varset,-<span class="const">1</span>,&amp;vdescr))
+      { <span class="rem">// В vdescr теперь - описание всей структуры переменных блока</span>
+        <span class="kw">char</span> *type,*soff;
+        <span class="kw">int</span> offset=<span class="const">0</span>;
+        <span class="kw">int</span> n=vdescr.StructFields; <span class="rem">// Число полей</span>
+
+        <span class="rem">// Записываем макрос для каждой переменной</span>
+        <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;n;i++)
+          <span class="kw">if</span>(<a class="hidden" href="rdsVSGetVarDescription.htm" title="А.5.25.14. rdsVSGetVarDescription &ndash; получить описание переменной">rdsVSGetVarDescription</a>(varset,i,&amp;vdescr))
+            { <span class="rem">// Получили описание i-й переменной блока</span>
+              <span class="kw">switch</span>(vdescr.Type) <span class="rem">// Тип переменной</span>
+                { <span class="kw">case</span> <span id="light_ref42"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref6" title="RDS_VARTYPE_SIGNAL">RDS_VARTYPE_SIGNAL</a></span>:
+                  <span class="kw">case</span> <span id="light_ref43"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref7" title="RDS_VARTYPE_LOGICAL">RDS_VARTYPE_LOGICAL</a></span>:
+                  <span class="kw">case</span> <span id="light_ref44"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref8" title="RDS_VARTYPE_CHAR">RDS_VARTYPE_CHAR</a></span>:
+                    type=<span class="str">"char"</span>; <span class="kw">break</span>;
+                  <span class="kw">case</span> <span id="light_ref45"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref9" title="RDS_VARTYPE_SHORT">RDS_VARTYPE_SHORT</a></span>:
+                    type=<span class="str">"short int"</span>; <span class="kw">break</span>;
+                  <span class="kw">case</span> <span id="light_ref46"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref10" title="RDS_VARTYPE_INT">RDS_VARTYPE_INT</a></span>:
+                    type=<span class="str">"int"</span>; <span class="kw">break</span>;
+                  <span class="kw">case</span> <span id="light_ref47"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref11" title="RDS_VARTYPE_FLOAT">RDS_VARTYPE_FLOAT</a></span>:
+                    type=<span class="str">"float"</span>; <span class="kw">break</span>;
+                  <span class="kw">case</span> <span id="light_ref48"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref12" title="RDS_VARTYPE_DOUBLE">RDS_VARTYPE_DOUBLE</a></span>:
+                    type=<span class="str">"double"</span>; <span class="kw">break</span>;
+                  <span class="kw">default</span>: <span class="rem">// Тип не поддерживается</span>
+                    <span class="rem">// Смещение к следующей переменной</span>
+                    offset+=vdescr.DataSize;
+                    <span class="kw">continue</span>;
+                }
+              <span class="kw">if</span>(i==<span class="const">0</span> &amp;&amp; vdescr.Type!=<a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref6" title="RDS_VARTYPE_SIGNAL">RDS_VARTYPE_SIGNAL</a>)
+                <span class="kw">break</span>; <span class="rem">// Первая переменная - не сигнал</span>
+                       <span class="rem">// Продолжать не имеет смысла</span>
+              ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,<span class="str">"#define "</span>);
+              <span class="rem">// Имя переменной</span>
+              ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,vdescr.Name);
+              ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,<span class="str">" (*(("</span>);
+              ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,type);
+              ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,<span class="str">"*)(_pVarDataStart+"</span>);
+              <span class="rem">// Смещение к переменной (offset) в виде строки</span>
+              soff=<span id="light_ref49"><a class="hidden" href="rdsItoA.htm" title="А.5.4.11. rdsItoA &ndash; преобразование целого числа в строку">rdsItoA</a></span>(offset,<span class="const">10</span>,<span class="const">0</span>);
+              ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,soff);
+              <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(soff);
+              ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,<span class="str">")))\r\n"</span>);
+              <span class="rem">// Смещение к следующей переменной</span>
+              offset+=vdescr.DataSize;
+              <span class="rem">// Добавление к undef директивы отмены этого макроса</span>
+              <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;undef,<span class="str">"#undef "</span>,FALSE);
+              <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;undef,vdescr.Name,FALSE);
+              <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;undef,<span class="str">"\r\n"</span>,FALSE);
+            } <span class="rem">// rdsVSGetVarDescription(varset,i,...))</span>
+      } <span class="rem">// if(rdsVSGetVarDescription(...)</span>
+
+    <span class="rem">// Вставляем текст пользователя</span>
+    ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,<span class="str">"{\r\n"</span>);
+    ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,prog);
+    ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,<span class="str">"\r\n}\r\n"</span>);
+
+    <span class="rem">// Отмена макросов переменных</span>
+    <span class="kw">if</span>(undef!=NULL)
+      { ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,undef);
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(undef);
+      }
+    <span class="rem">// Отмена макроса начала дерева переменных</span>
+    ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,<span class="str">"#undef _pVarDataStart\r\n"</span>);
+
+    <span class="rem">// Завершение функции модели</span>
+    ok=ok &amp;&amp; <a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a>(file,
+      <span class="str">"        break;\r\n"</span>
+      <span class="str">"    } &#92;&#92; switch\r\n"</span>
+      <span class="str">"  return </span><a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE"><span class="str">RDS_BFR_DONE</span></a><span class="str">;\r\n"</span>
+      <span class="str">"}\r\n"</span>
+      );
+
+    <span class="kw">return</span> ok;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В параметре <span class="cpp">file</span> этой функции передается дескриптор открытого для записи
+файла, в который мы будем писать исходный текст, в параметре <span class="cpp">name</span> &ndash;
+указатель на строку имени модели, которая нужна будет нам для вывода сообщения об ошибке (пользователь
+должен знать, в какой модели произошла ошибка), в параметре <span class="cpp">varset</span> &ndash;
+идентификатор вспомогательного объекта RDS, содержащего считанную из модели структуру переменных,
+и, наконец, в параметре <span class="cpp">prog</span> &ndash; указатель на текст реакции на
+такт моделирования.</p>
+
+<p>Прежде всего, нам нужно записать директивы включения заголовочных файлов, необходимых для компиляции модели,
+и главную функцию DLL &ndash; то есть, все то, что мы до сих пор писали вручную в примерах моделей блоков.
+Для этого мы вызываем функцию <span class="cpp"><a href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a></span>, передавая ей текст, содержащий все указанные
+строки программы, разделенные возвратом каретки и переводом строки (&laquo;\r\n&raquo;), вплоть до
+имени главной функции DLL. Имя главной функции мы сделали параметром модуля, поэтому в качестве него
+мы записываем в файл поле <span class="cpp">DllMainName</span> нашего класса. Затем мы записываем в файл
+параметры и тело главной функции (они не зависят от параметров модуля), пока не дойдем до вывода сообщения о
+невозможности получения доступа к сервисным функциям RDS. Заголовком этого сообщения должно быть имя
+модели, поэтому его мы записываем в файл из параметра <span class="cpp">name</span>. Потом мы снова записываем
+большой фрагмент текста, не зависящий от параметров модуля и модели, включающий последний параметр функции
+<span class="cpp">MessageBox</span>, чтение значения, используемое математическими функциями для индикации
+ошибки, сервисной функцией <span class="cpp"><a href="rdsGetHugeDouble.htm" title="А.5.2.22. rdsGetHugeDouble &ndash; получение значения-индикатора математической ошибки">rdsGetHugeDouble</a></span>, и завершение главной функции DLL. Заголовок
+функции модели блока мы опять берем из настроек модуля: он находится в поле <span class="cpp">ModelFuncHdr</span>.
+Затем опять следует фиксированный фрагмент текста, до тех пор, пока мы не дойдем до формирования реакции модели
+на вызов проверки типов переменных <span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>: строку типа переменных, с
+которой нужно сравнить полученную формируемой нами функцией модели строку, мы должны получить из набора
+переменных модели <span class="cpp">varset</span>. Для этого мы вызываем функцию получения строки объекта
+<span class="cpp"><a href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a></span>, передавая ей идентификатор объекта <span class="cpp">varset</span> и
+константу <span class="cpp"><a href="RDS_HVAR_GETTYPESTRING.htm" title="А.5.25.27. Команда RDS_HVAR_GETTYPESTRING &ndash; получить строку типа всей структуры переменных">RDS_HVAR_GETTYPESTRING</a></span> (функция вернет указатель на строку во внутренней памяти
+объекта, поэтому освобождать эту строку нам не придется). Полученную строку мы записываем в файл,
+за ней снова следует фиксированный фрагмент текста: завершение реакции <span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>
+и начало реакции на такт моделирования <span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>. Теперь нам нужно записать текст модели,
+переданный в параметре <span class="cpp">prog</span>, но сначала нужно сформировать
+<a href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока">макросы для доступа к статическим переменным</a>, чтобы в тексте реакции можно было
+использовать имена этих переменных.</p>
+
+<p>Перед записью макроса для самой первой переменной мы должны, как обычно, ввести вспомогательное
+макроопределение для указателя на начало дерева переменных блока, приведенного к какому-либо однобайтовому типу
+(во предыдущих примерах мы почти всегда называли этот макрос &laquo;<span class="cpp">pStart</span>&raquo;). Конечно, можно было
+бы обойтись и без него, выполняя это приведение внутри каждого макроса переменной, но при этом макроопределение
+становится длинным и сложным для понимания (слишком много скобок и приведений типов друг за другом). В данном
+случае понятность макроса нам не важна &ndash; формируемый нами текст не предназначен для чтения человеком, однако,
+поскольку раньше мы использовали такой вспомогательный макрос, будем использовать его и сейчас, чтобы записываемый
+функцией <span class="cpp"><a class="hidden" href="#ref36" title="Сформировать в файле исходный текст программы">WriteSourceCode</a></span> текст было проще сопоставить с примерами моделей,
+которыми мы занимались раньше. Мы записываем в файл следующую строчку:</p>
+
+<pre class="cpp">  <span class="preproc">#define _pVarDataStart ((</span><a class="hidden" href="app_ids.htm#light_ref12" title="Однобайтовая переменная"><span class="preproc">BYTE</span></a><span class="preproc">*)(BlockData-&gt;VarData))</span></pre>
+
+<p>Теперь мы сможем обращаться к любой переменной блока, отсчитывая от
+<span class="cpp">pVarDataStart</span> заданное число байтов.</p>
+
+<p>В отличие от строки типа, макросы для переменных мы не можем получить из объекта <span class="cpp">varset</span>
+одним вызовом. Придется перебрать все его переменные, формируя макрос для каждой из них вручную. Для этого нам
+понадобится структура описания переменной <span class="cpp">vdescr</span> типа
+<span class="cpp"><a href="RDS_VARDESCRIPTION.htm#ref1" title="Структура RDS_VARDESCRIPTION">RDS_VARDESCRIPTION</a></span>, в поле <span class="cpp">servSize</span> которой нужно занести
+ее собственный размер, чтобы сервисные функции RDS смогли проверить, ту ли структуру мы
+просим заполнить.</p>
+
+<p>Чтобы перебрать все переменные объекта <span class="cpp">varset</span>, нам, прежде всего, нужно узнать
+их число и получить идентификатор содержащейся в этом объекте структуры, полями которой и являются эти переменные.
+Для этого мы заполняем <span class="cpp">vdescr</span> описанием внутренней структуры переменных объекта,
+вызывая сервисную функцию <span class="cpp"><a href="rdsVSGetVarDescription.htm" title="А.5.25.14. rdsVSGetVarDescription &ndash; получить описание переменной">rdsVSGetVarDescription</a></span> и передавая ей идентификатор объекта
+<span class="cpp">varset</span>, &minus;1 в качестве номера переменной (так мы получим не описание одной
+из переменных объекта, а описание всей его структуры переменных) и указатель на заполняемую структуру
+<span class="cpp">&amp;vdescr</span>. Если функция вернет <span class="cpp">TRUE</span>, в поле
+<span class="cpp">vdescr.StructFields</span> будет находиться общее число переменных в объекте <span class="cpp">varset</span>.
+Мы переписываем его во вспомогательную переменную <span class="cpp">n</span> и используем ее как условие
+завершения цикла, в котором мы перебираем переменные объекта. Поскольку в этом цикле мы будем получать описание
+каждой переменной через ту же самую структуру <span class="cpp">vdescr</span>, мы не можем использовать поле
+<span class="cpp">vdescr.StructFields</span> в качестве условия завершения цикла &ndash; после первого же вызова
+<span class="cpp"><a class="hidden" href="rdsVSGetVarDescription.htm" title="А.5.25.14. rdsVSGetVarDescription &ndash; получить описание переменной">rdsVSGetVarDescription</a></span> в цикле в этом поле окажется другое значение. Именно поэтому
+перед циклом мы переписываем его в <span class="cpp">n</span>. Для того, чтобы вставлять в макросы смещение
+к переменной от начала дерева, мы вводим вспомогательную переменную <span class="cpp">offset</span> и
+присваиваем ей нулевое значение &ndash; в цикле мы будем каждый раз добавлять к ней размер очередной
+переменной.</p>
+
+<p>В цикле мы получаем описание <span class="cpp">i</span>-й переменной объекта, и, в зависимости от ее типа
+<span class="cpp">vdescr.Type</span>, записываем в <span class="cpp">type</span> указатель на строку,
+в которой находится описание типа этой переменной в синтаксисе языка C. Для типа
+<span class="cpp"><a href="RDS_BFM_VARCHECK.htm#light_ref12" title="RDS_VARTYPE_DOUBLE">RDS_VARTYPE_DOUBLE</a></span> ('D') это будет строка &laquo;double&raquo;, для
+<span class="cpp"><a href="RDS_BFM_VARCHECK.htm#light_ref10" title="RDS_VARTYPE_INT">RDS_VARTYPE_INT</a></span> ('I') &ndash; &laquo;int&raquo;, и т.д. Если переменная не относится ни
+к одному из простых типов (в этом случае мы попадем на метку <span class="cpp">default</span> оператора
+<span class="cpp">switch</span>), мы добавляем к <span class="cpp">offset</span> размер этой переменной и переходим
+к началу цикла &ndash; наши модели не поддерживают такие переменные, и макросы для них не нужны.</p>
+
+<p>Если счетчик цикла <span class="cpp">i</span> равен нулю, значит, сейчас мы будем записывать в файл макрос
+для самой первой переменной блока. Эта переменная обязательно должна быть сигналом, поскольку наши модели
+предназначены для работы только с простыми блоками, структура переменных которых всегда начинается с
+<a href="pm_2_5_2.htm#light_ref3" title="Сигналы запуска и готовности">двух сигналов</a>. Если тип первой переменной
+<span class="cpp">vdescr.Type</span> отличается от <span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref6" title="RDS_VARTYPE_SIGNAL">RDS_VARTYPE_SIGNAL</a></span>, мы выходим
+из цикла записи макросов оператором <span class="cpp">break</span> &ndash; модель не предназначена для работы
+с такой структурой переменных, и продолжать не имеет смысла.</p>
+
+<p>Далее в теле цикла мы формируем макроопределение для переменной <span class="cpp">i</span>. Для этого мы
+записываем в файл конструкцию вида</p>
+
+<pre class="cpp">  <span class="preproc">#define </span><i><span class="preproc">vdescr.Name</span></i><span class="preproc"> (*((</span><i><span class="preproc">type</span></i><span class="preproc">*)(_pVarDataStart+</span><i><span class="preproc">offset</span></i><span class="preproc">)))</span></pre>
+
+<p>Здесь <span class="cpp"><i>vdescr.Name</i></span>, <span class="cpp"><i>type</i></span> и
+<span class="cpp"><i>offset</i></span> &ndash; значения соответствующих переменных нашей функции (для
+записи в файл целое число <span class="cpp">offset</span> предварительно переводится в строку функцией
+<span class="cpp"><a href="rdsItoA.htm" title="А.5.4.11. rdsItoA &ndash; преобразование целого числа в строку">rdsItoA</a></span>, эта строка затем освобождается вызовом <span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>).
+После этого мы добавляем к <span class="cpp">offset</span> размер текущей переменной
+<span class="cpp">vdescr.DataSize</span> (таким образом <span class="cpp">offset</span> становится смещением к
+следующей переменной). Далее мы добавляем к динамической строке <span class="cpp">undef</span> (в начале функции
+мы присвоили ей <span class="cpp">NULL</span>) директиву для отмены только что записанного макроса. Когда
+мы запишем в файл текст реакции на такт моделирования и нам понадобится отменить все введенные макросы, нам
+не нужно будет снова перебирать все переменные объекта <span class="cpp">varset</span> &ndash; нам достаточно будет
+просто записать в файл строку <span class="cpp">undef</span>.</p>
+
+<p>Записав в файл макросы для всех простых переменных объекта <span class="cpp">varset</span>, мы вставляем в
+него текст реакции на такт моделирования из параметра <span class="cpp">prog</span>, окружив его фигурными
+скобками (так мы даем пользователю возможность описывать свои вспомогательные переменные в тексте реакции),
+после чего записываем строку отмены макросов <span class="cpp">undef</span>, если она не пустая, и освобождаем
+занятую ей память. Затем мы записываем в файл директиву отмены макроса
+<span class="cpp">_pVarDataStart</span>, дописываем завершающие строки функции модели, включая оператор
+<span class="cpp">return</span>, и возвращаем значение логической переменной <span class="cpp">ok</span>, в которую
+все это время записывали результат вызова функции <span class="cpp"><a class="hidden" href="pm_4_3.htm#ref26" title="Записать строку текста в файл">WriteString</a></span>. Таким образом, если
+при записи текста в файл произойдет ошибка, функция <span class="cpp"><a class="hidden" href="#ref36" title="Сформировать в файле исходный текст программы">WriteSourceCode</a></span> вернет
+<span class="cpp">FALSE</span>.</p>
+
+<p>Если обработать этой функцией пример модели из <a href="pm_4_3.htm#ref5" title="Пример файла автокомпилируемой модели">&sect;4.3</a>
+(для определенности будем считать, что он находится в файле &laquo;<span class="file">testmodel.txt</span>&raquo; &ndash;
+имя модели передается в функцию <span class="cpp"><a class="hidden" href="#ref36" title="Сформировать в файле исходный текст программы">WriteSourceCode</a></span> и используется в сообщении об
+ошибке), то, при параметрах модуля по умолчанию получится следующий текст программы (фрагменты
+текста, зависящие от модели и параметров модуля автокомпиляции, выделены <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  #include <windows.h>
+  #include <stdlib.h>
+  #include <math.h>
+  #include <RdsDef.h>
+  #define RDS_SERV_FUNC_BODY GetServiceFunc
+  #include <RdsFunc.h>
+  double _HugeDouble;
+
+  int WINAPI <span class="changes"><a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a></span>(HINSTANCE /*hinst*/,
+        unsigned long reason,void */*lpReserved*/)
+  { if(reason==DLL_PROCESS_ATTACH)
+      { if(!RDS_SERV_FUNC_BODY())
+          { MessageBox(NULL,"Нет сервисных функций RDS",
+                       <span class="changes">"testmodel.txt"</span>,MB_OK | MB_ICONERROR);
+            return 0;
+          }
+        else
+          <a class="hidden" href="rdsGetHugeDouble.htm" title="А.5.2.22. rdsGetHugeDouble &ndash; получение значения-индикатора математической ошибки">rdsGetHugeDouble</a>(&_HugeDouble);
+      }
+    return 1;
+  }
+
+  <span class="changes">extern "C" __declspec(dllexport) int <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> autocompModelFunc</span>(
+      int CallMode,<a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { switch(CallMode)
+      { case RDS_BFM_VARCHECK:
+          if(strcmp((char*)ExtParam,"{SSDDD}"))
+            return <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+          break;
+        case <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+  #define _pVarDataStart  ((<a class="hidden" href="app_ids.htm#light_ref12" title="Однобайтовая переменная">BYTE</a>*)(BlockData->VarData))
+  <span class="changes">#define Start (*((char*)(_pVarDataStart+0))) </span>
+  <span class="changes">#define Ready (*((char*)(_pVarDataStart+1))) </span>
+  <span class="changes">#define x1 (*((double*)(_pVarDataStart+2)))  </span>
+  <span class="changes">#define x2 (*((double*)(_pVarDataStart+10))) </span>
+  <span class="changes">#define y (*((double*)(_pVarDataStart+18)))  </span>
+  {
+  <span class="changes">y=x1+x2;</span>
+  }
+  <span class="changes">#undef Start </span>
+  <span class="changes">#undef Ready </span>
+  <span class="changes">#undef x1    </span>
+  <span class="changes">#undef x2    </span>
+  <span class="changes">#undef y     </span>
+  #undef _pVarDataStart
+          break;
+      } // switch
+    return <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }</pre>
+
+<p>Этот текст мало чем отличается от исходных текстов простых моделей, которые мы до сих пор писали вручную.</p>
+
+<p><span id="ref50">При</span>
+работе с компилятором и редактором связей, которые будут преобразовывать сформированный функцией
+<span class="cpp"><a class="hidden" href="#ref36" title="Сформировать в файле исходный текст программы">WriteSourceCode</a></span> текст программы в работоспособную библиотеку, нам нужно будет
+проверять, удалось ли компилятору создать объектный файл, а редактору связей &ndash; файл DLL. Для проверки
+наличия этих файлов и получения их размера мы напишем вспомогательную функцию
+<span class="cpp">ReadFileSize</span>, которая, получив имя файла с полным путем, вернет младшие четыре байта
+его размера (файлы, размер которых не умещается в четырехбайтовое беззнаковое целое, нас
+не интересуют):</p>
+
+<pre class="cpp">  <span class="rem">// Получить размер файла по его имени</span>
+  <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> <span id="light_ref50">ReadFileSize</span>(<span class="kw">char</span> *filename)
+  { HANDLE f;
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> size;
+    <span class="rem">// Открываем файл на чтение</span>
+    f=CreateFile(filename,GENERIC_READ,<span class="const">0</span>,NULL,OPEN_EXISTING,<span class="const">0</span>,NULL);
+    <span class="kw">if</span>(f==INVALID_HANDLE_VALUE) <span class="rem">// Ошибка – нет файла</span>
+      <span class="kw">return</span> <span class="const">0</span>;
+    <span class="rem">// Получаем размер файла</span>
+    size=<span id="light_ref51">GetFileSize</span>(f,NULL);
+    <span class="rem">// Закрываем файл</span>
+    CloseHandle(f);
+    <span class="kw">return</span> size;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p><span id="ref52">Теперь</span>
+мы можем, наконец, написать функцию <span class="cpp">LoadAndProcessModel</span>, которая будет загружать
+файл модели, вызывать <span class="cpp"><a class="hidden" href="#ref36" title="Сформировать в файле исходный текст программы">WriteSourceCode</a></span>, после чего запускать компилятор с редактором
+связей.</p>
+
+<pre class="cpp">  <span class="rem">// Загрузить и скомпилировать одну модель</span>
+  <span class="kw">void</span> TCAutoCompData::<span id="light_ref52">LoadAndProcessModel</span>(
+      <span id="light_ref53"><a class="hidden" href="RDS_COMPMODELDATA.htm" title="А.3.3. RDS_COMPMODELDATA &ndash; структура данных модели">RDS_COMPMODELDATA</a></span> *data, <span class="rem">// структура данных модели</span>
+      <span class="kw">int</span> fileset,             <span class="rem">// набор временных файлов</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> varsonly)           <span class="rem">// только установка переменных</span>
+  { <span class="kw">char</span> *modeltext,*dllpath,*aux;
+    <span class="kw">char</span> *vars,*prog;
+    <span class="kw">char</span> *st_srcfile,*st_dllfile,*st_objfile;
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> varset;
+    <span id="light_ref54"><a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a></span> bdescr;
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok=TRUE;
+    <span class="rem">// Массивы для автоматической замены строк</span>
+    <span class="kw">char</span> *search[]={<span class="str">"$INCLUDE$"</span>, <span class="rem">// 0</span>
+                    <span class="str">"$LIB$"</span>,     <span class="rem">// 1</span>
+                    <span class="str">"$CPPFILE$"</span>, <span class="rem">// 2</span>
+                    <span class="str">"$OBJFILE$"</span>, <span class="rem">// 3</span>
+                    <span class="str">"$DLLFILE$"</span>, <span class="rem">// 4</span>
+                    NULL};
+    <span class="kw">char</span> *replace[<span class="kw">sizeof</span>(search)/<span class="kw">sizeof</span>(<span class="kw">char</span>*)];
+
+    bdescr.servSize=<span class="kw">sizeof</span>(bdescr);
+
+    <span class="rem">// Читаем весь файл модели в память</span>
+    modeltext=<a class="hidden" href="pm_4_3.htm#ref28" title="Загрузка текстового файла в память">ReadTextFile</a>(data-&gt;ModelName,<span class="const">0</span>);
+    <span class="kw">if</span>(modeltext==NULL) <span class="rem">// Ошибка чтения</span>
+      { <a class="hidden" href="pm_4_3.htm#ref8" title="Вывод сообщения об ошибке в модели">ModelErrorMsg</a>(data-&gt;ModelName,<span class="str">"Ошибка чтения файла модели"</span>);
+        <span class="kw">return</span>;
+      }
+
+    <span class="rem">// Файл модели считан в modeltext - разбиваем на секции vars и prog</span>
+    <span class="kw">if</span>(!<a class="hidden" href="pm_4_3.htm#ref48" title="Разбить текст модели на описание переменных и текст программы">ProcessModelText</a>(modeltext,&amp;vars,&amp;prog))
+      { <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(modeltext);
+        <a class="hidden" href="pm_4_3.htm#ref8" title="Вывод сообщения об ошибке в модели">ModelErrorMsg</a>(data-&gt;ModelName,
+            <span class="str">"В файле нет необходимых секций"</span>);
+        <span class="kw">return</span>;
+      }
+
+    <span class="rem">// Создаем объект для работы с переменными</span>
+    varset=<span id="light_ref55"><a class="hidden" href="rdsVSCreateEditor.htm" title="А.5.25.1. rdsVSCreateEditor &ndash; создать объект-редактор переменных">rdsVSCreateEditor</a></span>();
+
+    <span class="rem">// Записываем в объект получившийся текст описания переменных</span>
+    <span class="kw">if</span>(!<span id="light_ref56"><a class="hidden" href="rdsVSCreateByDescr.htm" title="А.5.25.9. rdsVSCreateByDescr &ndash; заполнить набор переменных по тексту описания">rdsVSCreateByDescr</a></span>(varset,vars))
+      { <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(modeltext);
+        <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(varset);
+        <a class="hidden" href="pm_4_3.htm#ref8" title="Вывод сообщения об ошибке в модели">ModelErrorMsg</a>(data-&gt;ModelName,
+            <span class="str">"Ошибка в секции описания переменных"</span>);
+        <span class="kw">return</span>;
+      }
+
+    <span class="rem">// Копируем переменные во все блоки, к которым подключена модель</span>
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;data-&gt;NBlocks;i++)
+      { <span class="rem">// Берем очередной блок в списке блоков модели</span>
+        <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block=<span id="light_ref57"><a class="hidden" href="rdscompGetModelBlock.htm" title="А.5.34.4. rdscompGetModelBlock &ndash; обслуживаемый моделью блок по номеру">rdscompGetModelBlock</a></span>(data-&gt;Model,i,&amp;bdescr);
+        <span class="kw">if</span>(block==NULL) <span class="kw">continue</span>;
+        <span class="kw">if</span>(bdescr.BlockType!=<span id="light_ref58"><a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#light_ref7" title="RDS_BTSIMPLEBLOCK">RDS_BTSIMPLEBLOCK</a></span>)
+          <span class="kw">continue</span>; <span class="rem">// Только для простых блоков</span>
+        <span class="rem">// Записываем переменные в блок</span>
+        <span id="light_ref59"><a class="hidden" href="rdsVSApplyToBlock.htm" title="А.5.25.8. rdsVSApplyToBlock &ndash; создать структуру переменных блока">rdsVSApplyToBlock</a></span>(varset,block,NULL);
+      }
+
+    <span class="kw">if</span>(varsonly)
+      { <span class="rem">// Нужно только установить переменные, компилировать не нужно</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(modeltext);
+        <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(varset);
+        <span class="kw">return</span>;
+      }
+
+    <span class="rem">// Формирование исходного текста компилируемой библиотеки</span>
+    st_srcfile=<a class="hidden" href="rdsTMPCreateEmptyFile.htm" title="А.5.19.1. rdsTMPCreateEmptyFile &ndash; создать временный файл">rdsTMPCreateEmptyFile</a>(fileset,<span class="str">"$TEMP$&#92;&#92;model.cpp"</span>);
+    <span class="rem">// В st_srcfile - указатель на имя созданного временного</span>
+    <span class="rem">// файла (строка имени находится во внутренней памяти RDS)</span>
+    <span class="kw">if</span>(st_srcfile)
+      { HANDLE file=CreateFile(st_srcfile,GENERIC_WRITE,
+            <span class="const">0</span>,NULL,CREATE_ALWAYS,<span class="const">0</span>,NULL);
+        <span class="kw">if</span>(file==INVALID_HANDLE_VALUE) <span class="rem">// Ошибка</span>
+          ok=FALSE;
+        <span class="kw">else</span>
+          { <span class="rem">// Записываем в файл исходный текст программы</span>
+            ok=<a class="hidden" href="#ref36" title="Сформировать в файле исходный текст программы">WriteSourceCode</a>(file,data-&gt;ModelName,varset,prog);
+            CloseHandle(file);
+          }
+      }
+    <span class="kw">if</span>(!ok)
+      <a class="hidden" href="pm_4_3.htm#ref8" title="Вывод сообщения об ошибке в модели">ModelErrorMsg</a>(data-&gt;ModelName,
+        <span class="str">"Невозможно создать файл исходного текста"</span>);
+
+    <span class="rem">// Текст модели и cписок переменных больше не нужны</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(modeltext);
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(varset);
+
+    <span class="rem">// Создание временных файлов .obj и .dll</span>
+    st_objfile=<a class="hidden" href="rdsTMPCreateEmptyFile.htm" title="А.5.19.1. rdsTMPCreateEmptyFile &ndash; создать временный файл">rdsTMPCreateEmptyFile</a>(fileset,<span class="str">"$TEMP$&#92;&#92;model.obj"</span>);
+    st_dllfile=<a class="hidden" href="rdsTMPCreateEmptyFile.htm" title="А.5.19.1. rdsTMPCreateEmptyFile &ndash; создать временный файл">rdsTMPCreateEmptyFile</a>(fileset,<span class="str">"$TEMP$&#92;&#92;model.dll"</span>);
+
+    <span class="rem">// Занесение различных путей в список замены replace</span>
+    replace[<span class="const">0</span>]=IncludePath; <span class="rem">// "$INCLUDE$"</span>
+    replace[<span class="const">1</span>]=LibPath;     <span class="rem">// "$LIB$"</span>
+    replace[<span class="const">2</span>]=st_srcfile;  <span class="rem">// "$CPPFILE$"</span>
+    replace[<span class="const">3</span>]=st_objfile;  <span class="rem">// "$OBJFILE$"</span>
+    replace[<span class="const">4</span>]=st_dllfile;  <span class="rem">// "$DLLFILE$"</span>
+
+    <span class="rem">// Запуск компилятора</span>
+    <span class="kw">if</span>(ok)
+      { <span class="kw">if</span>(<a class="hidden" href="#ref10" title="Запуск программы и ожидание ее завершения">RunAndWait</a>(CompPath,CompParams,search,replace))
+          { <span class="rem">// Проверяем наличие .obj</span>
+            <span class="kw">if</span>(<a class="hidden" href="#ref50" title="Получить размер файла по его имени">ReadFileSize</a>(st_objfile)==<span class="const">0</span>) <span class="rem">// Нулевого размера</span>
+              { ok=FALSE;
+                <a class="hidden" href="pm_4_3.htm#ref8" title="Вывод сообщения об ошибке в модели">ModelErrorMsg</a>(data-&gt;ModelName,
+                    <span class="str">"Объектный файл не создан - в тексте модели есть ошибки"</span>);
+              }
+          }
+        <span class="kw">else</span> <span class="rem">// Ошибка запуска</span>
+          { ok=FALSE;
+            <a class="hidden" href="pm_4_3.htm#ref8" title="Вывод сообщения об ошибке в модели">ModelErrorMsg</a>(data-&gt;ModelName,
+                <span class="str">"Ошибка запуска компилятора"</span>);
+          }
+      }
+
+    <span class="rem">// Запуск редактора связей</span>
+    <span class="kw">if</span>(ok)
+      { <span class="kw">if</span>(<a class="hidden" href="#ref10" title="Запуск программы и ожидание ее завершения">RunAndWait</a>(LinkPath,LinkParams,search,replace))
+          { <span class="rem">// Проверяем наличие .dll</span>
+            <span class="kw">if</span>(<a class="hidden" href="#ref50" title="Получить размер файла по его имени">ReadFileSize</a>(st_dllfile)==<span class="const">0</span>) <span class="rem">// Нулевого размера</span>
+              { ok=FALSE;
+                <a class="hidden" href="pm_4_3.htm#ref8" title="Вывод сообщения об ошибке в модели">ModelErrorMsg</a>(data-&gt;ModelName,
+                    <span class="str">"Файл DLL не создан - в модели есть ошибки"</span>);
+              }
+          }
+        <span class="kw">else</span> <span class="rem">// Ошибка запуска</span>
+          { ok=FALSE;
+            <a class="hidden" href="pm_4_3.htm#ref8" title="Вывод сообщения об ошибке в модели">ModelErrorMsg</a>(data-&gt;ModelName,
+                <span class="str">"Ошибка запуска редактора связей"</span>);
+          }
+      }
+
+    <span class="rem">// Удаляем файлы tds и lib, созданные редактором связей</span>
+    aux=<a class="hidden" href="rdsTransformFileName.htm" title="А.5.4.14. rdsTransformFileName &ndash; преобразование имени файла">rdsTransformFileName</a>(st_dllfile,
+          <a class="hidden" href="rdsTransformFileName.htm#light_ref1" title="RDS_TFN_CHANGEEXT">RDS_TFN_CHANGEEXT</a>,<span class="str">".tds"</span>,NULL);
+    <span id="light_ref60">DeleteFile</span>(aux); <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(aux);
+    aux=<a class="hidden" href="rdsTransformFileName.htm" title="А.5.4.14. rdsTransformFileName &ndash; преобразование имени файла">rdsTransformFileName</a>(st_dllfile,
+          <a class="hidden" href="rdsTransformFileName.htm#light_ref1" title="RDS_TFN_CHANGEEXT">RDS_TFN_CHANGEEXT</a>,<span class="str">".lib"</span>,NULL);
+    DeleteFile(aux); <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(aux);
+
+    <span class="rem">// Полный путь к файлу DLL (куда ссылается блок)</span>
+    dllpath=<a class="hidden" href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a>(data-&gt;CompDllName,NULL,NULL);
+    <span class="rem">// Копируем созданный во временной директории файл DLL в папку модели</span>
+    <span class="kw">if</span>(ok)
+      { ok=<span id="light_ref61">CopyFile</span>(st_dllfile,dllpath,FALSE);
+        <span class="kw">if</span>(!ok)
+          <a class="hidden" href="pm_4_3.htm#ref8" title="Вывод сообщения об ошибке в модели">ModelErrorMsg</a>(data-&gt;ModelName,
+            <span class="str">"Ошибка копирования полученного файла DLL"</span>);
+      }
+
+    <span class="rem">// Освобождаем строку пути к DLL</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(dllpath);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В эту функцию передается указатель на
+<a href="pm_4_1.htm#ref9" title="Структура RDS_COMPMODELDATA">структуру данных</a> модели <span class="cpp">data</span>, идентификатор
+набора временных файлов <span class="cpp">fileset</span> (набор мы создали в функции
+<span class="cpp"><a href="#ref28" title="Компилировать все модели">CompileModels</a></span> перед вызовом <span class="cpp">LoadAndProcessModel</span>) и логический
+параметр <span class="cpp">varsonly</span>, принимающий значение
+<span class="cpp">TRUE</span>, если нам нужно только установить структуру переменных в блоках, использующих эту
+модель. В самом начале функции мы описываем массивы строк <span class="cpp">search</span> и
+<span class="cpp">replace</span>, которые мы будем использовать для замены символических констант, введенных
+нами в командных строках компилятора и редактора связи, на их реальные значения. Эти массивы будут передаваться в
+написанную нами вспомогательную функцию <span class="cpp"><a href="#ref10" title="Запуск программы и ожидание ее завершения">RunAndWait</a></span>, в которой они используются в вызове
+<span class="cpp"><a href="rdsStringReplace.htm" title="А.5.4.13. rdsStringReplace &ndash; замена фрагментов строки">rdsStringReplace</a></span>. Массив <span class="cpp">search</span> мы сразу инициализируем указателями
+на имена используемых нами констант, завершая его значением <span class="cpp">NULL</span>, а массив
+<span class="cpp">replace</span> пока оставляем пустым &ndash; указатели на значения констант мы запишем в
+него позже. Число элементов в массиве <span class="cpp">replace</span> мы делаем равным числу элементов массива
+<span class="cpp">search</span>, вычисляя его как размер <span class="cpp">search</span> в байтах
+(<span class="cpp">sizeof(search)</span>), деленный на размер одного элемента
+(<span class="cpp">sizeof(char*)</span>).</p>
+
+<p>Сначала мы считываем в память файл модели, имя которой находится в параметре
+<span class="cpp">data-&gt;ModelName</span>, функцией <span class="cpp"><a href="pm_4_3.htm#ref28" title="Загрузка текстового файла в память">ReadTextFile</a></span>, и записываем возвращенный
+ей указатель на динамически отведенную область памяти с загруженным текстом вы переменную
+<span class="cpp">modeltext</span>. Мы написали эту функцию так, чтобы в нее можно было передавать имя файла с
+относительными путями и символическими константами, каким является имя модели в нашем модуле автокомпиляции,
+поэтому нам не нужно предварительно обрабатывать эти имя функцией <span class="cpp"><a href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a></span>.
+Считанный текст мы разбиваем на секцию описания переменных <span class="cpp">vars</span> и секцию реакции
+на такт моделирования <span class="cpp">prog</span>, создаем объект для работы с переменными
+<span class="cpp">varset</span> и формируем в нем набор переменных, указанных в секции <span class="cpp">vars</span>.
+Теперь текст модели разобран &ndash; можно приступать к установке переменных блоков, формированию текста программы
+на языке C и его компиляции.</p>
+
+<p>Сначала мы должны скопировать в каждый блок, к которому присоединена данная модель, переменные из объекта
+<span class="cpp">varset</span>. Блоки, обслуживаемые моделью, мы перебираем в цикле
+<span class="cpp">for</span> со счетчиком <span class="cpp">i</span>, изменяющимся от 0 до
+<span class="cpp">data-&gt;NBlocks</span> (в этом поле структуры данных модели всегда хранится общее
+число блоков с этой моделью). В цикле мы получаем идентификатор <span class="cpp">i</span>-го блока модели
+функцией <span class="cpp"><a href="rdscompGetModelBlock.htm" title="А.5.34.4. rdscompGetModelBlock &ndash; обслуживаемый моделью блок по номеру">rdscompGetModelBlock</a></span>, которая попутно заполняет структуру описания этого
+блока <span class="cpp">bdescr</span>, и, если этот блок &ndash; простой (его тип
+<span class="cpp"><a href="RDS_BLOCKDESCRIPTION.htm#light_ref7" title="RDS_BTSIMPLEBLOCK">RDS_BTSIMPLEBLOCK</a></span>), копируем в него структуру переменных объекта
+<span class="cpp">varset</span> функцией <span class="cpp"><a href="rdsVSApplyToBlock.htm" title="А.5.25.8. rdsVSApplyToBlock &ndash; создать структуру переменных блока">rdsVSApplyToBlock</a></span>.</p>
+
+<p>После того, как всем блокам присвоена структура переменных модели, мы проверяем, не равен ли
+<span class="cpp">TRUE</span> параметр <span class="cpp">varsonly</span>. Если это так, функция
+<span class="cpp">LoadAndProcessModel</span> вызвана только для установки переменных блоков, и записывать
+текст программы DLL и вызывать компилятор не нужно. В этом случае мы уничтожаем все созданные динамические
+строки и объекты и немедленно завершаем функцию.</p>
+
+<p>Теперь нам нужно сформировать исходный текст DLL с функцией модели блока согласно разобранному файлу
+модели и параметрам модуля автокомпиляции. После компиляции этот файл нужно будет удалить, поэтому мы
+воспользуемся встроенным в RDS механизмом работы с
+<a href="#ref32" title="Временные файлы при компиляции">временными файлами</a> &ndash; создадим пустой временный файл вызовом функции
+<span class="cpp"><a href="rdsTMPCreateEmptyFile.htm" title="А.5.19.1. rdsTMPCreateEmptyFile &ndash; создать временный файл">rdsTMPCreateEmptyFile</a></span>, передав ей идентификатор набора временных файлов из параметра
+<span class="cpp">fileset</span> и имя создаваемого файла &laquo;<span class="file">$TEMP$\model.cpp</span>&raquo;. Эта функция
+преобразует константу &laquo;$TEMP$&raquo; в путь к папке временных файлов RDS и, если там нет файла с
+именем &laquo;<span class="file">model.cpp</span>&raquo;, создаст пустой файл с этим именем. Если такой файл там уже есть,
+функция автоматически изменит имя файла так, чтобы оно было уникальным. В любом случае, функция вернет указатель
+на строку с полным путем к созданному файлу, которую мы запишем в переменную
+<span class="cpp">st_srcfile</span>. Эта строка находится во внутренней памяти RDS и нам не нужно освобождать
+ее вызовом <span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>. Созданный таким образом файл будет автоматически удален при
+удалении набора <span class="cpp">fileset</span> (мы делаем это в функции
+<span class="cpp"><a class="hidden" href="#ref28" title="Компилировать все модели">CompileModels</a></span> после вызова <span class="cpp">LoadAndProcessModel</span>) или
+при завершении RDS.</p>
+
+<p>Создав пустой временный файл, мы открываем его для записи вызовом функции Windows API
+<span class="cpp">CreateFile</span> и формируем в нем исходный текст программы DLL вспомогательной функцией
+<span class="cpp"><a href="#ref36" title="Сформировать в файле исходный текст программы">WriteSourceCode</a></span>. После этого мы можем освободить память, занимаемую загруженным текстом
+модели <span class="cpp">modeltext</span> и удалить объект <span class="cpp">varset</span>, содержащий набор переменных
+модели &ndash; они нам больше не потребуются.</p>
+
+<p>Теперь мы имеем файл с текстом модели блока на языке C, который нам нужно скомпилировать. Для этого нам
+предстоит вызвать компилятор, который преобразует исходный текст в объектный файл, а затем &ndash; редактор
+связей, который преобразует объектный файл в исполняемый файл DLL и создаст еще пару вспомогательных файлов. Эти
+файлы нам тоже нужно будет удалить после компиляции, кроме того, для объектного и исполняемого файлов нужно
+подобрать уникальные имена, отсутствующие в данный момент в папке временных файлов RDS. Мы делаем два
+вызова функции <span class="cpp"><a class="hidden" href="rdsTMPCreateEmptyFile.htm" title="А.5.19.1. rdsTMPCreateEmptyFile &ndash; создать временный файл">rdsTMPCreateEmptyFile</a></span>: один &ndash; для объектного файла, для
+которого мы предлагаем имя &laquo;<span class="file">$TEMP$\model.obj</span>&raquo;, другой &ndash; для исполняемого
+(&laquo;<span class="file">$TEMP$\model.dll</span>&raquo;). Теперь <span class="cpp">st_objfile</span> указывает на полный путь
+к объектному файлу, а <span class="cpp">st_dllfile</span> &ndash; на полный путь к DLL,
+которую должен создать редактор связей.</p>
+
+<p>На данный момент мы уже знаем значения всех символических констант, которые мы разрешаем пользователю
+указывать в командной строке, поэтому мы заносим их в массив <span class="cpp">replace</span>. В нулевой
+и первый элементы массива записываются указатели на пути к папкам заголовков и библиотек компилятора из параметров
+модуля <span class="cpp">IncludePath</span> и <span class="cpp">LibPath</span>, а в три оставшихся элемента
+&ndash; указатели на пути к созданным нами файлу исходного текста, объектному файлу и исполняемому файлу DLL
+(<span class="cpp">st_srcfile</span>, <span class="cpp">st_objfile</span> и <span class="cpp">st_dllfile</span>
+соответственно).</p>
+
+<p>Для запуска компилятора мы вызываем вспомогательную функцию <span class="cpp"><a class="hidden" href="#ref10" title="Запуск программы и ожидание ее завершения">RunAndWait</a></span>, передавая
+ей путь к исполняемому файлу компилятора из параметра модуля <span class="cpp">CompPath</span>, его командную
+строку с символическими константами <span class="cpp">CompParams</span>, а также массивы для поиска
+и замены символических констант <span class="cpp">search</span> и <span class="cpp">replace</span>. Если
+<span class="cpp"><a class="hidden" href="#ref10" title="Запуск программы и ожидание ее завершения">RunAndWait</a></span> вернула <span class="cpp">TRUE</span>, значит, компилятор был успешно
+запущен и уже завершил работу (функция <span class="cpp"><a class="hidden" href="#ref10" title="Запуск программы и ожидание ее завершения">RunAndWait</a></span> ждет завершения процесса) &ndash;
+при этом мы проверяем размер объектного файла <span class="cpp">st_objfile</span>, который должен быть создан
+в результате компиляции. Если этот файл отсутствует или имеет нулевой размер, значит, компилятору не удалось
+его создать. При правильных настройках модуля это будет означать наличие ошибок в тексте модели, о чем
+мы сообщаем пользователю. Если объектный файл имеет ненулевой размер, мы точно так же вызываем редактор связей,
+после чего проверяем наличие и размер исполняемого файла <span class="cpp">st_dllfile</span>. Если редактор связей
+успешно создал этот файл, нам нужно скопировать его в ту же папку, в которой находится файл модели, и дать
+ему имя, отличающееся от имени файла модели только расширением &laquo;.dll&raquo;. Но сначала мы удаляем
+вспомогательные файлы, имеющие то же имя, что и файл DLL, но с расширениями &laquo;.tds&raquo; и
+&laquo;.lib&raquo;. Для этого мы заменяем в <span class="cpp">st_dllfile</span> расширение вызовом
+<span class="cpp"><a href="rdsTransformFileName.htm" title="А.5.4.14. rdsTransformFileName &ndash; преобразование имени файла">rdsTransformFileName</a></span> с параметром <span class="cpp"><a href="rdsTransformFileName.htm#light_ref1" title="RDS_TFN_CHANGEEXT">RDS_TFN_CHANGEEXT</a></span>, удаляем файл
+с получившимся именем и освобождаем строку имени вызовом <span class="cpp">rdsFree</span>. Можно было бы добавить
+имена этих файлов в набор <span class="cpp">fileset</span> и положиться на механизм удаления временных файлов, но
+нам все равно пришлось бы вызывать <span class="cpp"><a class="hidden" href="rdsTransformFileName.htm" title="А.5.4.14. rdsTransformFileName &ndash; преобразование имени файла">rdsTransformFileName</a></span> для получения имени
+файла (имена этих файлов жестко определяются редактором связей и не должны подбираться по уникальности), поэтому
+лучше сразу удалить их вызовом <span class="cpp">DeleteFile</span>.</p>
+
+<p>Файл DLL, созданный в результате компиляции, имеет имя <span class="cpp">st_dllfile</span>. Относительный
+путь к файлу DLL блока, установленный нами в реакции модуля на
+<span class="cpp"><a class="hidden" href="RDS_COMPM_PREPARE.htm" title="А.3.4.16. RDS_COMPM_PREPARE &ndash; подготовка модели к компиляции">RDS_COMPM_PREPARE</a></span>, находится в поле
+<span class="cpp">CompDllName</span> структуры данных модели <span class="cpp"></span>. Мы преобразуем
+этот относительный путь в полный путь <span class="cpp">dllpath</span> вызовом
+<span class="cpp"><a class="hidden" href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a></span>, после чего функцией Windows API копируем
+<span class="cpp">st_dllfile</span> в <span class="cpp">dllpath</span> и освобождаем динамическую строку
+<span class="cpp">dllpath</span>. Теперь библиотека с моделью блока сформирована и помещена в нужную
+папку с нужным именем, и RDS подключит ее к блоку, как только модуль автокомпиляции вернет управление.</p>
+
+<p><span id="ref62">Нам</span>
+осталось написать функцию <span class="cpp">AttachBlock</span>, которая вызывается из реакции
+<span class="cpp"><a href="RDS_COMPM_ATTACHBLOCK.htm" title="А.3.4.1. RDS_COMPM_ATTACHBLOCK &ndash; подключение модели к блоку">RDS_COMPM_ATTACHBLOCK</a></span> при подключении модели к блоку. В ней мы должны,
+при необходимости, скопировать в блок переменные модели, иначе, если мы присоединяем к новому блоку модель,
+не требующую в данный момент компиляции, блок останется со старой структурой переменных.</p>
+
+<pre class="cpp">  <span class="rem">// Связать блок с моделью</span>
+  <span class="kw">void</span> TCAutoCompData::<span id="light_ref62">AttachBlock</span>(<span id="light_ref63"><a class="hidden" href="RDS_COMPM_ATTACHBLOCK.htm#ref1" title="Структура RDS_COMPBLOCKOPDATA">RDS_COMPBLOCKOPDATA</a></span> *param)
+  {
+    <span class="rem">// Если модель устанавливается пользователем вручную,</span>
+    <span class="rem">// нужно поменять у блока структуру переменных</span>
+    <span class="kw">if</span>(param-&gt;AttachReason==<span id="light_ref64"><a class="hidden" href="RDS_COMPM_ATTACHBLOCK.htm#light_ref8" title="RDS_COMP_AR_MANUALSET">RDS_COMP_AR_MANUALSET</a></span>)
+      <a class="hidden" href="#ref52" title="Загрузить и скомпилировать одну модель">LoadAndProcessModel</a>(param-&gt;Model,-<span class="const">1</span>,TRUE);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Здесь мы поступаем просто: если модель подключена к блоку пользователем вручную (параметр
+<span class="cpp">param-&gt;AttachReason</span> имеет значение <span class="cpp"><a href="RDS_COMPM_ATTACHBLOCK.htm#light_ref8" title="RDS_COMP_AR_MANUALSET">RDS_COMP_AR_MANUALSET</a></span>), мы
+вызываем функцию <span class="cpp"><a class="hidden" href="#ref52" title="Загрузить и скомпилировать одну модель">LoadAndProcessModel</a></span> для модели
+<span class="cpp">param-&gt;Model</span> со значением &minus;1 вместо идентификатора набора временных файлов и
+<span class="cpp">TRUE</span> в последнем параметре <span class="cpp">varsonly</span>. При таком сочетании параметров
+функция загрузит файл указанной модели, скопирует во все обслуживаемые ей блоки структуру переменных, описанную
+в этом файле, после чего завершится без вызова компилятора. Конечно, нам нужно переписать структуру переменных
+только в один блок, идентификатор которого передается в <span class="cpp">param-&gt;Block</span>, но, чтобы не
+усложнять <span class="cpp"><a class="hidden" href="#ref52" title="Загрузить и скомпилировать одну модель">LoadAndProcessModel</a></span>, мы обработаем все блоки. Это не приведет
+к сколько-нибудь существенным задержкам.</p>
+
+<p>Может возникнуть вопрос: почему мы копируем переменные модели в блок только при ручном подключении? Дело
+в том, что во всех остальных случаях подключения модели к блоку &ndash; при загрузке блока из файла, вставке
+из буфера обмена и т.п. &ndash; структура переменных блока уже должна быть правильной, ведь на момент сохранения
+блока или его копирования в буфер модель уже была подключена, а значит, она уже установила в блоке правильные
+переменные. Можно придумать ситуацию, в которой это будет не так: например, если мы сохраним схему с блоком,
+к которому подключена модель, а потом заменим файл модели и соответствующий ей скомпилированный файл DLL
+на другие, то на момент загрузки схемы переменные блока не будут соответствовать подключаемой модели, причем
+модель не будет требовать компиляции. Однако, ничего страшного при этом не произойдет: формируемые нами модели
+содержат стандартную проверку типов переменных <span class="cpp"><a href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span>, и при неправильной
+структуре переменных модель просто откажется работать, пока пользователь не скомпилирует ее заново.</p>
+
+<p>Если бы мы вызывали <span class="cpp"><a class="hidden" href="#ref52" title="Загрузить и скомпилировать одну модель">LoadAndProcessModel</a></span> при каждом подключении модели к блоку,
+это привело бы к существенному замедлению загрузки схемы, потому что при этом каждый раз загружался бы файл
+модели. Выбранный нами вариант позволяет добиться некоторого компромисса между удобством и надежностью без
+сильного усложнения модуля автокомпиляции. Для того, чтобы структура переменных блока всегда соответствовала
+подключаемой модели, можно было бы создать для модели личную область данных и загружать туда описание
+переменных из файла модели при ее подключении к самому первому блоку, а для последующих подключений использовать
+уже загруженные данные (тогда файл загружался бы только один раз), но это существенно усложнило бы модуль,
+поэтому в данном примере мы не будем этого делать.</p>
+
+<p>Теперь мы имеем работоспособный настраиваемый модуль автоматической компиляции, позволяющий задавать
+структуру переменных блока и его реакцию на такт моделирования. При внесении изменений в модель этот модуль будет
+автоматически вызывать указанный в его параметрах компилятор и заменять DLL блоков на новую. Компилятор будет
+вызываться в отдельном окне консоли, как
+на <a href="#pic1" title="Окно консоли вызванного компилятора">рис.&nbsp;138</a>.
+После внесения изменений в модель компилятор будет вызываться при переходе в режим
+<a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a> или <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a>, при загрузке
+схемы, использующей измененные модели, или по команде пользователя.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/Autocomp_compiler.png" width="765" height="466" alt="Окно консоли вызванного компилятора" />
+<p id="light_pic1">Рис.&nbsp;138. Окно консоли вызванного компилятора</p>
+</div></div>
+
+
+<p>На самом деле, созданный нами модуль подходит только для создания очень простых моделей. В нем
+не хватает многих возможностей &ndash; в частности, работы с
+<a href="pm_1_5.htm#light_ref14" title="тип переменной: матрица">матрицами</a>, <a href="pm_1_5.htm#light_ref12" title="тип переменной: строка">строками</a>
+и <a href="pm_2_6_1.htm" title="&sect;2.6.1. Использование динамических переменных">динамическими переменными</a>.
+<a href="um_3_1.htm" title="&sect;3.1. Принцип действия стандартного модуля автокомпиляции">Входящие в комплект RDS</a>
+модули для работы с основными компиляторами языка C++ поддерживают динамические переменные,
+<a href="pm_2_8_1.htm" title="&sect;2.8.1. Способы хранения параметров блока">сохранение и загрузку</a> параметров блоков,
+<a href="pm_2_7_1.htm" title="&sect;2.7.1. Функция настройки блока и открытие модальных окон">окна настройки</a>, реакцию на
+<a href="pm_2_13_1.htm" title="&sect;2.13.1. Общие принципы вызова функций блоков">функции</a>
+и т.п. Все это можно добавить и в наш модуль за счет усложнения пользовательского интерфейса редактора модели
+и функции формирования текста компилируемой DLL, но, поскольку созданный нами модуль предназначен только
+для иллюстрации основных приемов создания модулей автоматической компиляции, мы не будем этого делать.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_4_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="disbutton">&gt;&gt;</span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_4_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

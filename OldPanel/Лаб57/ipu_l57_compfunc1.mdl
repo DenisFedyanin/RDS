@@ -1,0 +1,450 @@
+$BC55MODEL 0.0.0 2016.2.13.13.1.3 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$VARS
+  signal name "Start" in run default 1
+  signal name "Ready" out default 0
+  double name "x0" in menu run default "0"
+  double name "xmin" in menu run default "0"
+  double name "xmax" in menu run default "100"
+  double name "dx" in menu run default "10"
+  signal name "x0_chg" default 1
+  signal name "xdiap_chg" default 1
+  double name "y0" in menu run default "0"
+  double name "ymin" in menu run default "0"
+  double name "ymax" in menu run default "100"
+  double name "dy" in menu run default "10"
+  signal name "y0_chg" default 1
+  signal name "ydiap_chg" default 1
+  double name "z0" in menu run default "0"
+  double name "zmin" in menu run default "0"
+  double name "zmax" in menu run default "100"
+  double name "dz" in menu run default "10"
+  signal name "z0_chg" default 1
+  signal name "zdiap_chg" default 1
+  matrix double name "FX" out menu default "[ ] 0"
+  matrix double name "FY" out menu default "[ ] 0"
+  matrix double name "FZ" out menu default "[ ] 0"
+  logical name "FX_en" default 0
+  logical name "FY_en" default 0
+  logical name "FZ_en" default 0
+  matrix double oneindex name "A" in menu run default "[ ] 0"
+  signal name "ArrayChanged" default 1
+  matrix double oneindex name "A_old" default "[ ] 0"
+  double name "old_xmin" default "?"
+  double name "old_xmax" default "?"
+  double name "old_dx" default "?"
+  double name "old_ymin" default "?"
+  double name "old_ymax" default "?"
+  double name "old_dy" default "?"
+  double name "old_zmin" default "?"
+  double name "old_zmax" default "?"
+  double name "old_dz" default "?"
+  double name "old_x0" default "?"
+  double name "old_y0" default "?"
+  double name "old_z0" default "?"
+$AUTO
+  "x0","x0_chg"
+  "xmin","xdiap_chg"
+  "xmax","xdiap_chg"
+  "dx","xdiap_chg"
+  "y0","y0_chg"
+  "ymin","ydiap_chg"
+  "ymax","ydiap_chg"
+  "dy","ydiap_chg"
+  "z0","z0_chg"
+  "zmin","zdiap_chg"
+  "zmax","zdiap_chg"
+  "dz","zdiap_chg"
+  "FX","FX_en"
+  "FY","FY_en"
+  "FZ","FZ_en"
+  "A","ArrayChanged"
+$PARAM
+  int name "FuncId" default "-1"
+  double name "setup_x0" default "0"
+  double name "setup_xmin" default "0"
+  double name "setup_xmax" default "100"
+  double name "setup_dx" default "10"
+  BOOL name "in_x0" default "TRUE"
+  BOOL name "in_xdiap" default "TRUE"
+  BOOL name "in_dx" default "TRUE"
+  double name "setup_y0" default "0"
+  double name "setup_ymin" default "0"
+  double name "setup_ymax" default "100"
+  double name "setup_dy" default "10"
+  BOOL name "in_y0" default "TRUE"
+  BOOL name "in_ydiap" default "TRUE"
+  BOOL name "in_dy" default "TRUE"
+  double name "setup_z0" default "0"
+  double name "setup_zmin" default "0"
+  double name "setup_zmax" default "100"
+  double name "setup_dz" default "10"
+  BOOL name "in_z0" default "TRUE"
+  BOOL name "in_zdiap" default "TRUE"
+  BOOL name "in_dz" default "TRUE"
+$LINKS
+  auto "ipu_l57_funcset_xyz.cpp"
+  manual "ipu_l57_acfunc1.cpp"
+  manual "ipu_l57_funcset_xyz.cpp"
+$CUSTOMERR
+|В одном из описаний функций обнаружена ошибка: видимо, текст функции написан не в синтаксисе языка C. Пожалуйста, проверьте все описания в настройках блока или откройте редактор модели и изучите ошибки, выданные компилятором.
+$ENDDECL
+$MODEL
+XTextFuncArg Arguments;
+BOOL arraychanged=FALSE;
+
+// Исходно запрещаем работу всех выходов
+FX_en=FY_en=FZ_en=0;
+Ready=0;
+
+if(ArrayChanged)
+  { // Проверяем реальное изменение массива
+    if(A.Size()!=A_old.Size()) // Изменился размер
+      arraychanged=TRUE;
+    else // Размер тот же
+      for(int i=0;i<A.Size();i++)
+        if(A[i]!=A_old[i])
+          { arraychanged=TRUE;
+            break;
+          } 
+    if(arraychanged)
+      A_old=A;
+  }
+
+// Параметры
+if(A.IsEmpty())
+  Arguments.Params.Setup(NULL);
+else
+  Arguments.Params.Setup(A.GetBuffer(),A.Size());
+
+// Вычисление FX
+if(y0_chg || z0_chg || xdiap_chg || arraychanged)
+  { double vmin,vmax,dv;
+    if(in_xdiap) { vmin=xmin; vmax=xmax; }
+    else { vmin=setup_xmin; vmax=setup_xmax;}
+    dv=in_dx?dx:setup_dx;
+    if(vmin!=old_xmin || vmax!=old_xmax || dv!=old_dx || old_y0!=y0 || old_z0!=z0)
+      { CalcOutput(FX,0,vmin,vmax,dv,Arguments);
+        old_xmin=vmin; old_xmax=vmax; old_dx=dv;
+        FX_en=1;
+        Ready=1;
+      }
+  }
+
+// Вычисление FY
+if(x0_chg || z0_chg || ydiap_chg || arraychanged)
+  { double vmin,vmax,dv;
+    if(in_ydiap) { vmin=ymin; vmax=ymax; }
+    else { vmin=setup_ymin; vmax=setup_ymax;}
+    dv=in_dy?dy:setup_dy;
+    if(vmin!=old_ymin || vmax!=old_ymax || dv!=old_dy || old_x0!=x0 || old_z0!=z0)
+      { CalcOutput(FY,1,vmin,vmax,dv,Arguments);
+        old_ymin=vmin; old_ymax=vmax; old_dy=dv;
+        FY_en=1;
+        Ready=1;
+      }
+  }
+
+// Вычисление FZ
+if(x0_chg || y0_chg || zdiap_chg || arraychanged)
+  { double vmin,vmax,dv;
+    if(in_zdiap) { vmin=zmin; vmax=zmax; }
+    else { vmin=setup_zmin; vmax=setup_zmax;}
+    dv=in_dz?dz:setup_dz;
+    if(vmin!=old_zmin || vmax!=old_zmax || dv!=old_dz || old_x0!=x0 || old_y0!=y0)
+      { CalcOutput(FZ,2,vmin,vmax,dv,Arguments);
+        old_zmin=vmin; old_zmax=vmax; old_dz=dv;
+        FZ_en=1;
+        Ready=1;
+      }
+  }
+
+old_x0=x0; old_y0=y0; old_z0=z0;
+
+// Сбрасываем сигналы срабатывания связей
+x0_chg=y0_chg=z0_chg=0;
+xdiap_chg=ydiap_chg=zdiap_chg=0;
+ArrayChanged=0;
+
+$SETUP
+XTextFile file;
+XTextString str;
+
+BOOL autocomp=(rdscompGetBlockModelData(rdsbcppBlockData->Block)!=NULL);
+
+RDS_HOBJECT win=rdsFORMCreate(TRUE,-1,-1,"Вычисление функции");
+BOOL res;
+if(!win)
+  return;
+
+// Читаем список функций из файла
+file.Setup_ReadFuncFile(SETUPFILE,autocomp,ListFunc,win);
+
+// Вкладка выбора функции
+rdsFORMAddTab(win,1,"Функция");
+file.Setup_AddFuncSelectFields(win,NULL,1,1,FuncId,autocomp,XTF_ALLBUTTONS);
+
+// Вкладка X
+rdsFORMAddTab(win,3," X");
+SetupVar(win,3,100,"x",setup_x0,setup_xmin,setup_xmax,setup_dx,
+         in_x0,in_xdiap,in_dx);
+
+// Вкладка Y
+rdsFORMAddTab(win,4," Y");
+SetupVar(win,4,200,"y",setup_y0,setup_ymin,setup_ymax,setup_dy,
+         in_y0,in_ydiap,in_dy);
+
+// Вкладка Z
+rdsFORMAddTab(win,5," Z");
+SetupVar(win,5,300,"z",setup_z0,setup_zmin,setup_zmax,setup_dz,
+         in_z0,in_zdiap,in_dz);
+
+// Открываем окно
+res=rdsFORMShowModalServ(win,WinCallback);
+
+if(res)
+  { // Ищем Num функции
+    FuncId=file.FuncNumByIndex(rdsGetObjectInt(win,1,RDS_FORMVAL_VALUE),FuncId);
+
+    // Сохраняем файл, если он изменился
+    if(autocomp)
+      file.Setup_WriteFuncFile(SETUPFILE,SETUPBAK);
+
+     // Вкладка X
+     ReadSetupVar(win,100,setup_x0,setup_xmin,setup_xmax,setup_dx,
+                  in_x0,in_xdiap,in_dx);
+     // Вкладка Y
+     ReadSetupVar(win,200,setup_y0,setup_ymin,setup_ymax,setup_dy,
+                  in_y0,in_ydiap,in_dy);
+     // Вкладка Z
+     ReadSetupVar(win,300,setup_z0,setup_zmin,setup_zmax,setup_dz,
+                  in_z0,in_zdiap,in_dz);
+     // Взводим сигналы для пересчета всего
+     x0_chg=y0_chg=z0_chg=1;
+     xdiap_chg=ydiap_chg=zdiap_chg=1;
+     Start=1;
+ }
+
+rdsDeleteObject(win);
+Result=res?1:0;
+
+$GLOBAL
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <RdsComp.h>
+
+#define SETUPFILE "ipu_l57_acfunc1.cpp"
+#define SETUPBAK  "ipu_l57_acfunc1.bak"
+
+//======= Доп. классы и функции (фиксированные) =======
+#include "ipu_l57_funcset_xyz.cpp"
+//=====================================================
+$CLASSEXT
+// Функция обратного вызова окна настройки
+void RDSCALL WinCallback(RDS_HOBJECT win,RDS_PFORMSERVFUNCDATA data)
+{ XTextFile *file=(XTextFile*)rdsGetObjectPtr(win,0,NULL);
+  if(file)
+    file->Setup_WindowCallback(win,data);
+}
+//---------------------------------------------------
+
+// Заполнить поля ввода для диапазона и значения переменной
+void SetupVar(RDS_HOBJECT win,int tab,int basefield,char *var,
+               double v0,double vmin,double vmax,double dv,
+               BOOL in_v0,BOOL in_vdiap,BOOL in_dv)
+{ int id=basefield;
+  XTextString str;
+
+  rdsFORMAddEdit(win,tab,id,RDS_FORMCTRL_MULTILABEL|RDS_FORMFLAG_LINE,
+                 "Следующие параметры можно зафиксировать в "
+                 "настройках блока, а не читать с его входов:",0);
+  rdsSetObjectInt(win,id,RDS_FORMVAL_MLHEIGHT,34);
+  rdsSetObjectInt(win,id,RDS_FORMVAL_MLABELBEVEL,0);
+
+  id++;
+  str.Assign("Фиксировать значение ");
+  str.AddString(var);
+  str.AddString("0:");
+  rdsFORMAddEdit(win,tab,id,RDS_FORMCTRL_EDIT|RDS_FORMFLAG_CHECK,
+                 str.c_str(),80);
+  rdsSetObjectDouble(win,id,RDS_FORMVAL_VALUE,v0);
+  rdsSetObjectInt(win,id,RDS_FORMVAL_CHECK,!in_v0);
+
+  id++;
+  str.Assign("Фиксировать диапазон ");
+  str.AddString(var);
+  str.AddString("min...");
+  str.AddString(var);
+  str.AddString("max:");
+  rdsFORMAddEdit(win,tab,id,RDS_FORMCTRL_RANGEEDIT|RDS_FORMFLAG_CHECK,
+                 str.c_str(),160);
+  rdsSetObjectDouble(win,id,RDS_FORMVAL_VALUE,vmin);
+  rdsSetObjectDouble(win,id,RDS_FORMVAL_RANGEMAX,vmax);
+  rdsSetObjectInt(win,id,RDS_FORMVAL_CHECK,!in_vdiap);
+
+  id++;
+  str.Assign("Фиксировать шаг d");
+  str.AddString(var);
+  str.AddString(":");
+  rdsFORMAddEdit(win,tab,id,RDS_FORMCTRL_EDIT|RDS_FORMFLAG_CHECK,
+                 str.c_str(),80);
+  rdsSetObjectDouble(win,id,RDS_FORMVAL_VALUE,dv);
+  rdsSetObjectInt(win,id,RDS_FORMVAL_CHECK,!in_dv);
+}
+//---------------------------------------------------
+
+// Считать поля ввода для диапазона и значения переменной
+void ReadSetupVar(RDS_HOBJECT win,int basefield,
+                  double &v0,double &vmin,double &vmax,double &dv,
+                  BOOL &in_v0,BOOL &in_vdiap,BOOL &in_dv)
+{ int id=basefield+1;
+
+  v0=rdsGetObjectDouble(win,id,RDS_FORMVAL_VALUE);
+  in_v0=(rdsGetObjectInt(win,id,RDS_FORMVAL_CHECK)==0);
+
+  id++;
+  vmin=rdsGetObjectDouble(win,id,RDS_FORMVAL_VALUE);
+  vmax=rdsGetObjectDouble(win,id,RDS_FORMVAL_RANGEMAX);
+  in_vdiap=(rdsGetObjectInt(win,id,RDS_FORMVAL_CHECK)==0);
+
+  id++;
+  dv=rdsGetObjectDouble(win,id,RDS_FORMVAL_VALUE);
+  in_dv=(rdsGetObjectInt(win,id,RDS_FORMVAL_CHECK)==0);
+}
+//---------------------------------------------------
+
+// Собственно функция
+double SelectedFunc(int id,const XTextFuncArg &arguments)
+{ double f=0.0;
+
+  #define x (arguments.xval)
+  #define y (arguments.yval)
+  #define z (arguments.zval)
+  #define A (arguments.Params)
+
+  try
+    {
+
+  #if 0
+  
+    #define L57F_CASECALC id
+    #include "ipu_l57_acfunc1.cpp"
+    #undef L57F_CASECALC
+
+  #else
+  
+    #define L57F_IFCALC id
+    #include "ipu_l57_acfunc1.cpp"
+    #undef L57F_IFCALC
+
+  #endif
+    }
+  catch(...)
+    { f=rdsbcppHugeDouble; }
+  return f;
+
+  #undef x
+  #undef y
+  #undef z
+  #undef A
+}
+//-----------------------------------------------------------------------
+
+// Вычислить выходную матрицу
+void rdsbcppBlockClass::CalcOutput(RDSBCPP_VT_FX &M,
+                                   int varnum,
+                                   double vmin,double vmax,double dv,
+                                   XTextFuncArg &arg)
+{ BOOL bad;
+  double _x0,_y0,_z0; 
+  int n;
+  // Нулевая точка с входа или из настроек
+  _x0=in_x0?x0:setup_x0;
+  _y0=in_y0?y0:setup_y0;
+  _z0=in_z0?z0:setup_z0;
+
+  // Проверки
+  if(vmin==rdsbcppHugeDouble || vmax==rdsbcppHugeDouble || 
+     dv==rdsbcppHugeDouble || dv<=0.0 || vmax<=vmin)
+    bad=TRUE;
+  else switch(varnum)
+    { case 0: // x
+        bad=(_y0==rdsbcppHugeDouble || _z0==rdsbcppHugeDouble);
+        break;
+      case 1: // y  
+        bad=(_x0==rdsbcppHugeDouble || _z0==rdsbcppHugeDouble);
+        break;
+      case 2: // z
+        bad=(_x0==rdsbcppHugeDouble || _y0==rdsbcppHugeDouble);
+        break;
+      default:
+        bad=TRUE;
+    }
+  if(!bad)
+    { // Переменные имеют допустимые значения
+      try
+        { double d=(vmax-vmin)/dv;
+          n=1+(int)(d); 
+          bad=n<2;
+        }
+      catch(...)
+        { bad=TRUE; }
+    }
+  if(bad)
+    { M.Resize(0,0,FALSE); 
+      return;
+    }
+  // Можно вычислять
+  M.Resize(n,2,FALSE);
+  for(int i=0;i<n;i++)
+    { double v,f;
+      v=(i==(n-1)?vmax:(vmin+i*dv));
+      switch(varnum)
+        { case 0: // x
+            arg.xval=v; arg.yval=_y0; arg.zval=_z0;
+            f=SelectedFunc(FuncId,arg/*v,_y0,_z0*/);
+            break;
+          case 1: // y  
+            arg.xval=_x0; arg.yval=v; arg.zval=_z0;
+            f=SelectedFunc(FuncId,arg/*_x0,v,_z0*/);
+            break;
+          case 2: // z
+            arg.xval=_x0; arg.yval=_y0; arg.zval=v;
+            f=SelectedFunc(FuncId,arg/*_x0,_y0,v*/);
+            break;
+        }
+      M[i][0]=v;
+      M[i][1]=f;
+    }
+}
+//-----------------------------------------------------------------------
+
+// Функция перечисления функций
+#define L57F_LIST ListFunc
+#include "ipu_l57_acfunc1.cpp"
+#undef L57F_LIST
+
+$CLASSDEF
+void CalcOutput(RDSBCPP_VT_FX &M,
+                int varnum,
+                double vmin,double vmax,double dv,
+                XTextFuncArg &arg);
+                
+$OPTIONS
+  tabs $MODEL $SETUP $GLOBAL $CLASSEXT $CLASSDEF
+  window pos 45 150 size 1214 871 hdiv 337 vdiv 375 fdiv 352
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 0
+  ignorewarnings 1
+  customerrmsg 1
+  autoreadonlyeditor 1
+  genvartypemacros 1
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

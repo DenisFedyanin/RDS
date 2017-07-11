@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_4">А.5.4. Отведение памяти и преобразование строк</a></p>
+<div class="level"><p>А.5.4.1. <span class="cpp">rdsAddToDynStr</span> &ndash; добавление строки к динамически отведенной строке</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsUnlockBlockData.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsAllocate.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsAddToDynStr">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4>А.5.4. Отведение памяти и преобразование строк</h4>
+<p class="abstract">Описываются функции управления памятью, которые можно использовать для работы с областями памяти, создаваемыми и уничтожаемыми RDS &ndash; в частности, динамически отводимыми строками. Вместе с ними описываются и другие функции, формирующие в результате своей работы динамические строки или преобразующие строки в числа.</p>
+<h5>А.5.4.1. <span class="cpp">rdsAddToDynStr</span> &ndash; добавление строки к динамически отведенной строке</h5>
+
+
+<p>Функция <span class="cpp">rdsAddToDynStr</span> добавляет строку в конец динамически созданной
+другими функциями строки.</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsAddToDynStr(
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> *pString,   <span class="rem">// Указатель на указатель на динамическую строку</span>
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> AddStr,     <span class="rem">// Добавляемая строка</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> NullEmpty    <span class="rem">// Можно ли возвращать NULL</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_VpSSB</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">pString</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a>*</i></span>)</dt>
+  <dd>Указатель на переменную типа <span class="cpp"><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></span> (или, в терминах языка C,
+  <span class="cpp">char*</span>), в которой содержится указатель на динамическую строку, в конец которой
+  нужно добавить новую. После выполнения функции старая динамическая строка освобождается, а в
+  эту переменную запишется указатель на новую строку, полученную объединением старой строки с <span class="cpp">AddStr</span>.
+  <span class="cpp">pString</span> не может иметь значение <span class="cpp">NULL</span> (в этом случае
+  функция немедленно завершится), но в переменной, на которую указывает <span class="cpp">pString</span>,
+  вполне может находиться <span class="cpp">NULL</span> вместо указателя на динамическую строку. В этом случае
+  старая динамическая строка будет считаться пустой, и новая строка будет динамической копией параметра
+  <span class="cpp">AddStr</span>.</dd>
+
+  <dt><span class="cpp">AddStr</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку, которую нужно добавить в конец строки <span class="cpp">*pString</span>. Это
+  может быть указатель на статическую или динамическую строку &ndash; для работы функции это не важно,
+  в отличие от <span class="cpp">*pString</span>, эта строка никак не изменяется в процессе выполнения
+  функции. Если передать в этом параметре <span class="cpp">NULL</span>, это будет считаться добавлением к
+  <span class="cpp">*pString</span> пустой строки.</dd>
+
+  <dt><span class="cpp">NullEmpty</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если вместо пустой строки функция должна записывать в
+  <span class="cpp">*pString</span> значение <span class="cpp">NULL</span>, и <span class="cpp">FALSE</span>, если
+  она должна будет динамически отвести в памяти пустую строку (то есть массив <span class="cpp">char</span> из
+  единственного символа с нулевым кодом) и записать в <span class="cpp">*pString</span> указатель на нее.</dd>
+</dl>
+
+<p class="apphdr">Примечания</p>
+<p>Функция <span class="cpp">rdsAddToDynStr</span> введена в набор сервисных функций RDS только
+для улучшения читаемости программ, работающих с динамическими строками &ndash; ее можно полностью заменить
+последовательными вызовами <span class="cpp"><a href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span> и <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p>Первый параметр этой функции (<span class="cpp">pString</span>)
+<span class="emph">всегда</span> должен содержать указатель на переменную, в которой содержится
+указатель на динамически отведенную сервисными функциями RDS строку. Если эта строка будет статической,
+при работе функции возникнут серьезные ошибки, поскольку после объединения строк она попытается
+освободить старую строку вызовом <span class="cpp">rdsFree</span>, что приведет к непредсказуемым последствиям.</p>
+
+<p>Фактически, внутри функции <span class="cpp">rdsAddToDynStr</span> находится конструкция следующего вида:</p>
+
+<pre class="cpp">  <span class="kw">void</span> rdsAddToDynStr(<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> *pString,<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> AddStr,<a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> NullEmpty)
+  { <span class="kw">char</span> *oldstr=*pString;
+    *pString=<a href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a>(*pString,AddStr,NullEmpty);
+    <a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(oldstr);
+  }</pre>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции <span class="cpp">rdsAddToDynStr</span> приведен
+в <a href="pm_2_11.htm" title="&sect;2.11. Отображение всплывающих подсказок к блокам">&sect;2.11 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span>,
+<span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsUnlockBlockData.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsAllocate.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsAddToDynStr">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

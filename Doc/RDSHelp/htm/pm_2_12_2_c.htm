@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.12.2. Захват мыши, реакция на перемещение курсора</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_12">&sect;2.12. Реакция блоков на действия пользователя</a></p>
+<div class="level"><p>&sect;2.12.2. Захват мыши, реакция на перемещение курсора</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_12_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_3.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_12_2.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделью блока,
+изображающего двухкоординатную рукоятку, которую пользователь может
+перемещать мышью.</p>
+
+<pre class="cpp">  <span class="rem">// Реакция на перемещение курсора мыши (п.2.12.2)</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+  <span class="rem">//====== Класс личной области данных ======</span>
+  <span class="kw">class</span> TSimpleJoystick
+  { <span class="kw">private</span>:
+      <span class="rem">// Центр круга (рукоятки) до начала перетаскивания</span>
+      <span class="kw">int</span> OldHandleX,OldHandleY;
+      <span class="rem">// Координаты курсора на момент начала перетаскивания</span>
+      <span class="kw">int</span> OldMouseX,OldMouseY;
+    <span class="kw">public</span>:
+      <span class="rem">// Настроечные параметры блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> BorderColor;       <span class="rem">// Цвет рамки блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> FieldColor;        <span class="rem">// Цвет прямоугольника</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> HandleColor;       <span class="rem">// Цвет круга в покое</span>
+      <a class="hidden" href="app_ids.htm#light_ref13" title="Цвет Windows API">COLORREF</a> MovingHandleColor; <span class="rem">// Цвет круга при таскании</span>
+      <span class="kw">int</span> HandleSize;             <span class="rem">// Диаметр круга</span>
+
+      <span class="rem">// Реакция на нажатие кнопки мыши</span>
+      <span class="kw">int</span> MouseDown(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,<span class="kw">double</span> x,<span class="kw">double</span> y,DWORD *pFlags);
+      <span class="rem">// Реакция на перемещение курсора мыши</span>
+      <span class="kw">void</span> MouseMove(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,<span class="kw">double</span> *px,<span class="kw">double</span> *py);
+      <span class="rem">// Рисование изображения блока</span>
+      <span class="kw">void</span> Draw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw,<span class="kw">double</span> x,<span class="kw">double</span> y,BOOL moving);
+
+      <span class="rem">// Конструктор класса</span>
+      TSimpleJoystick(<span class="kw">void</span>)
+        { BorderColor=<span class="const">0</span>;          <span class="rem">// Черная рамка</span>
+          FieldColor=<span class="const">0xffffff</span>;    <span class="rem">// Белое поле</span>
+          HandleColor=<span class="const">0xff0000</span>;   <span class="rem">// Синий круг</span>
+          MovingHandleColor=<span class="const">0xff</span>; <span class="rem">// Красный при таскании</span>
+          HandleSize=<span class="const">20</span>;          <span class="rem">// Диаметр круга</span>
+        };
+  };
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Рисование изображения блока</span>
+  <span class="kw">void</span> TSimpleJoystick::Draw(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> draw,
+                             <span class="kw">double</span> x,<span class="kw">double</span> y,BOOL moving)
+  { <span class="kw">int</span> hx,hy,cx,cy;
+    <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> r;
+    <span class="kw">int</span> hR=HandleSize*draw-&gt;DoubleZoom/<span class="const">2</span>; <span class="rem">// Радиус круга-рукоятки</span>
+
+    <span class="rem">// Если размер блока - нулевой, рисовать негде</span>
+    <span class="kw">if</span>(draw-&gt;Height==<span class="const">0</span> || draw-&gt;Width==<span class="const">0</span>)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Рисование поля блока</span>
+    <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref12" title="PS_SOLID">PS_SOLID</a>,<span class="const">1</span>,BorderColor,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref18" title="R2_COPYPEN">R2_COPYPEN</a>);
+    <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,FieldColor);
+    <a class="hidden" href="rdsXGRectangle.htm" title="А.5.18.18. rdsXGRectangle &ndash; прямоугольник">rdsXGRectangle</a>(draw-&gt;Left,draw-&gt;Top,
+                   draw-&gt;Left+draw-&gt;Width,draw-&gt;Top+draw-&gt;Height);
+
+    <span class="rem">// Вычисление центра прямоугольника блока</span>
+    cx=draw-&gt;Left+draw-&gt;Width/<span class="const">2</span>;
+    cy=draw-&gt;Top+draw-&gt;Height/<span class="const">2</span>;
+
+    <span class="rem">// Вычисление координат центра круга-рукоятки</span>
+    hx=cx+x*draw-&gt;Width/<span class="const">2</span>;
+    hy=cy-y*draw-&gt;Height/<span class="const">2</span>;
+
+    <span class="rem">// Установка области отсечения</span>
+    r.left=draw-&gt;Left+<span class="const">1</span>;
+    r.top=draw-&gt;Top+<span class="const">1</span>;
+    r.right=draw-&gt;Left+draw-&gt;Width-<span class="const">1</span>;
+    r.bottom=draw-&gt;Top+draw-&gt;Height-<span class="const">1</span>;
+    <a class="hidden" href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a>(&amp;r);
+
+    <span class="rem">// Линии перекрестия</span>
+    <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(cx,draw-&gt;Top);
+    <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(cx,draw-&gt;Top+draw-&gt;Height);
+    <a class="hidden" href="rdsXGMoveTo.htm" title="А.5.18.14. rdsXGMoveTo &ndash; установить текущую точку рисования">rdsXGMoveTo</a>(draw-&gt;Left,cy);
+    <a class="hidden" href="rdsXGLineTo.htm" title="А.5.18.13. rdsXGLineTo &ndash; отрезок прямой">rdsXGLineTo</a>(draw-&gt;Left+draw-&gt;Width,cy);
+
+    <span class="rem">// Рисование круга (цвет зависит от параметра moving)</span>
+    <a class="hidden" href="rdsXGSetPenStyle.htm" title="А.5.18.25. rdsXGSetPenStyle &ndash; установить стиль линии">rdsXGSetPenStyle</a>(<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref4" title="RDS_GFSTYLE">RDS_GFSTYLE</a>,<a class="hidden" href="rdsXGSetPenStyle.htm#light_ref11" title="PS_NULL">PS_NULL</a>,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>);
+    <a class="hidden" href="rdsXGSetBrushStyle.htm" title="А.5.18.20. rdsXGSetBrushStyle &ndash; установить стиль заливки">rdsXGSetBrushStyle</a>(<span class="const">0</span>,<a class="hidden" href="rdsXGSetBrushStyle.htm#light_ref6" title="RDS_GFS_SOLID">RDS_GFS_SOLID</a>,
+                       moving?MovingHandleColor:HandleColor);
+    <a class="hidden" href="rdsXGEllipse.htm" title="А.5.18.6. rdsXGEllipse &ndash; эллипс или окружность">rdsXGEllipse</a>(hx-hR,hy-hR,hx+hR+<span class="const">1</span>,hy+hR+<span class="const">1</span>);
+
+    <span class="rem">// Отмена отсечения</span>
+    <a class="hidden" href="rdsXGSetClipRect.htm" title="А.5.18.21. rdsXGSetClipRect &ndash; установить область отсечения">rdsXGSetClipRect</a>(NULL);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Реакция на нажатие кнопки мыши</span>
+  <span class="kw">int</span> TSimpleJoystick::MouseDown(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,
+                                 <span class="kw">double</span> x,<span class="kw">double</span> y,DWORD *pFlags)
+  { <span class="kw">int</span> hx,hy,cx,cy,
+        hR=HandleSize*mouse-&gt;DoubleZoom/<span class="const">2</span>; <span class="rem">// Радиус круга</span>
+
+    <span class="rem">// Если размер - нулевой, реакция не имеет смысла</span>
+    <span class="kw">if</span>(mouse-&gt;Height==<span class="const">0</span> || mouse-&gt;Width==<span class="const">0</span>)
+      <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+    <span class="rem">// Если нажата не левая кнопка, перетаскивать не надо</span>
+    <span class="rem">// Разрешаем в этом случае вызов контекстного меню блока</span>
+    <span class="kw">if</span>(mouse-&gt;Button!=<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a>)
+      <span class="kw">return</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm#light_ref2" title="RDS_BFR_SHOWMENU">RDS_BFR_SHOWMENU</a>;
+
+    <span class="rem">// Координаты цента блока</span>
+    cx=mouse-&gt;Left+mouse-&gt;Width/<span class="const">2</span>;
+    cy=mouse-&gt;Top+mouse-&gt;Height/<span class="const">2</span>;
+    <span class="rem">// Координаты центра круга-рукоятки</span>
+    hx=cx+x*mouse-&gt;Width/<span class="const">2</span>;
+    hy=cy-y*mouse-&gt;Height/<span class="const">2</span>;
+
+    <span class="rem">// Проверка попадания курсора в круг</span>
+    <span class="kw">if</span>(abs(mouse-&gt;x-hx)&lt;=hR &amp;&amp; abs(mouse-&gt;y-hy)&lt;=hR)
+      { <span class="rem">// Курсор попал в круг</span>
+        <span class="rem">// Запоминаем координаты центр круга на момент</span>
+        <span class="rem">// начала перетаскивания</span>
+        OldHandleX=hx;
+        OldHandleY=hy;
+        <span class="rem">// Координаты курсора на начало перетаскивания</span>
+        OldMouseX=mouse-&gt;x;
+        OldMouseY=mouse-&gt;y;
+        <span class="rem">// Взводим флаг захвата мыши</span>
+        *pFlags|=<a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>;
+      }
+    <span class="rem">// Курсор не попал в рукоятку - захватывать мышь</span>
+    <span class="rem">// и подготавливать перетаскивание не нужно</span>
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Реакция на перемещение курсора мыши</span>
+  <span class="kw">void</span> TSimpleJoystick::MouseMove(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse,
+                                  <span class="kw">double</span> *px,<span class="kw">double</span> *py)
+  { <span class="kw">int</span> hx,hy,cx,cy;
+
+    <span class="rem">// Если размер - нулевой, реакция не имеет смысла</span>
+    <span class="kw">if</span>(mouse-&gt;Height==<span class="const">0</span> || mouse-&gt;Width==<span class="const">0</span>)
+      { *px=*py=<span class="const">0</span>.<span class="const">0</span>;
+        <span class="kw">return</span>;
+      }
+
+    <span class="rem">// Новые координаты центра рукоятки</span>
+    hx=OldHandleX+(mouse-&gt;x-OldMouseX);
+    hy=OldHandleY+(mouse-&gt;y-OldMouseY);
+
+    <span class="rem">// Координаты центра блока</span>
+    cx=mouse-&gt;Left+mouse-&gt;Width/<span class="const">2</span>;
+    cy=mouse-&gt;Top+mouse-&gt;Height/<span class="const">2</span>;
+
+    <span class="rem">// По новым координатам центра рукоятки вычисляем соответствующие</span>
+    <span class="rem">// им вещественные значения выходов, ограничивая их</span>
+    <span class="rem">// диапазоном [-1...1]</span>
+    *px=<span class="const">2.0</span>*(hx-cx)/mouse-&gt;Width;
+    <span class="kw">if</span>(*px&gt;<span class="const">1.0</span>) *px=<span class="const">1.0</span>;
+    <span class="kw">else</span> <span class="kw">if</span>(*px&lt;-<span class="const">1.0</span>) *px=-<span class="const">1.0</span>;
+    *py=-<span class="const">2.0</span>*(hy-cy)/mouse-&gt;Height;
+    <span class="kw">if</span>(*py&gt;<span class="const">1.0</span>) *py=<span class="const">1.0</span>;
+    <span class="kw">else</span> <span class="kw">if</span>(*py&lt;-<span class="const">1.0</span>) *py=-<span class="const">1.0</span>;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция модели блока</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> SimpleJoystick(<span class="kw">int</span> CallMode,
+            <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+            <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define x      (*((double *)(pStart+2)))</span>
+  <span class="preproc">#define y      (*((double *)(pStart+10)))</span>
+    <span class="rem">// Вспомогательная переменная - указатель на личную область,</span>
+    <span class="rem">//приведенный к правильному типу</span>
+    TSimpleJoystick *data=(TSimpleJoystick*)(BlockData-&gt;BlockData);
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+       <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          BlockData-&gt;BlockData=<span class="kw">new</span> TSimpleJoystick();
+          <span class="kw">break</span>;
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+        <span class="rem">// Проверка допустимости типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSDD}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+        <span class="rem">// Нажатие кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a>:
+          <span class="kw">return</span> data-&gt;MouseDown((<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam,x,y,
+            &amp;(BlockData-&gt;Flags));
+        <span class="rem">// Отпускание кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEUP.htm" title="А.2.6.11. RDS_BFM_MOUSEUP &ndash; отпускание кнопки мыши">RDS_BFM_MOUSEUP</a>:
+          <span class="rem">// Снятие захвата мыши</span>
+          <a class="hidden" href="RDS_SETFLAG.htm" title="А.5.2.4. Макрос RDS_SETFLAG &ndash; установка битового флага">RDS_SETFLAG</a>(BlockData-&gt;Flags,<a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>,FALSE);
+          <span class="kw">break</span>;
+        <span class="rem">// Перемещение курсора мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEMOVE.htm" title="А.2.6.10. RDS_BFM_MOUSEMOVE &ndash; перемещение курсора мыши">RDS_BFM_MOUSEMOVE</a>:
+          <span class="rem">// Проверка: включен ли захват мыши</span>
+          <span class="kw">if</span>(BlockData-&gt;Flags &amp; <a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>)	<span class="rem">// Включен</span>
+            { <span class="rem">// Вызываем функцию реакции</span>
+              data-&gt;MouseMove((<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam,&amp;x,&amp;y);
+              Ready=<span class="const">1</span>; <span class="rem">// Взводим сигнал готовности</span>
+            }
+          <span class="kw">break</span>;
+        <span class="rem">// Рисование</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_DRAW.htm" title="А.2.6.3. RDS_BFM_DRAW &ndash; рисование внешнего вида блока">RDS_BFM_DRAW</a>:
+          data-&gt;Draw((<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a>)ExtParam,x,y,
+          BlockData-&gt;Flags &amp; <a class="hidden" href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">RDS_MOUSECAPTURE</a>);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef y</span>
+  <span class="preproc">#undef x</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_12_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_3.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

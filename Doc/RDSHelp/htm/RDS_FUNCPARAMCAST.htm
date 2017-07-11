@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.13.1. Макрос RDS_FUNCPARAMCAST &ndash; приведение параметра функции к нужному типу</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_13">А.5.13. Вызов функций блоков</a></p>
+<div class="level"><p>А.5.13.1. Макрос <span class="cpp">RDS_FUNCPARAMCAST</span> &ndash; приведение параметра функции к нужному типу</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsStopBlockTimer.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_FUNCPARAMPVOID.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_FUNCPARAMCAST">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4>А.5.13. Вызов функций блоков</h4>
+<p class="abstract">Описываются функции и макросы, предназначенные для вызова моделей блоков из моделей других блоков (см. <a href="pm_index.htm#light_htm:pm_2_13" title="&sect;2.13. Вызов функций блоков">&sect;2.13 руководства программиста</a>).</p>
+<h5>А.5.13.1. Макрос <span class="cpp">RDS_FUNCPARAMCAST</span> &ndash; приведение параметра функции к нужному типу</h5>
+
+
+<p>Макрос <span class="cpp">RDS_FUNCPARAMCAST</span> предназначен для приведения поля
+<span class="cpp">Data</span> структуры параметров функции
+<span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span>, которое является указателем общего вида, к указанному
+в параметре типу.</p>
+
+<pre class="cpp">  RDS_FUNCPARAMCAST(
+      pFuncData,    <span class="rem">// Указатель на </span><a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA"><span class="rem">RDS_FUNCTIONCALLDATA</span></a>
+      Type          <span class="rem">// Тип, к указателю на который приводится поле Data</span>
+  )</pre>
+
+<p class="apphdr">Определение</p>
+<pre class="cpp">  <span class="preproc">#define RDS_FUNCPARAMCAST(pFuncData,Type) \</span>
+<span class="preproc">      ((Type*)(((</span><a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA"><span class="preproc">RDS_PFUNCTIONCALLDATA</span></a><span class="preproc">)(pFuncData))->Data))</span></pre>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span id="ref1"><span class="cpp">pFuncData</span>&emsp;(<span class="cpp"><i>указатель на RDS_FUNCTIONCALLDATA</i></span>)</span></dt>
+  <dd>Указатель на структуру данных вызываемой функции
+  <span id="light_ref1"><span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span></span>. Этот параметр
+  не обязательно должен иметь тип &laquo;<span class="cpp">RDS_FUNCTIONCALLDATA*</span>&raquo;, он может быть и указателем
+  произвольного типа (<span class="cpp">void*</span>), поскольку внутри макроса он явно приводится
+  к нужному типу. В нем, например, можно передать значение третьего параметра
+  (<span class="cpp">ExtParam</span>) функции модели блока при реакции на событие
+  <span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span> &ndash; несмотря на то, что он имеет тип
+  <span class="cpp">void*</span>, в нем всегда передается указатель на структуру данных функции.</dd>
+
+  <dt><span class="cpp">Type</span>&emsp;(<span class="cpp"><i>имя типа</i></span>)</dt>
+  <dd>Имя типа, к указателю на который будет приведено поле <span class="cpp">Data</span> указанной в первом параметре структуры.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Значение поля <span class="cpp">Data</span> структуры данных функции, приведенное к указанному типу.</p>
+
+<p class="apphdr">Примечания</p>
+<p>В структуре данных функции <span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span> поле
+<span class="cpp">Data</span>, являющееся указателем на параметры функции, для универсальности имеет тип
+&laquo;указатель общего вида&raquo;, то есть <span class="cpp"><a href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a></span>. Макрос
+<span class="cpp">RDS_FUNCPARAMCAST</span> позволяет в некоторых случаях упростить приведение этого
+указателя к нужному типу. На практике, в большинстве случаев, в его применении нет острой необходимости
+&ndash; все приведения типов всегда можно записать вручную.</p>
+
+<p class="apphdr">Пример</p>
+
+<p>Допустим, в глобальной переменной <span class="cpp">FuncId</span> находится идентификатор какой-либо функции
+(см. <span class="cpp"><a href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a></span>), параметром которой является указатель на некую структуру
+<span class="cpp">TMyStruct</span>:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;    <span class="rem">// Размер структуры для проверки</span>
+    <span class="kw">int</span> IntField;
+    <span class="kw">double</span> DoubleField;
+  } TMyStruct;</pre>
+
+<p class="noindent">Вызов этой функции может выглядеть, например, так:</p>
+
+<pre class="cpp">  TMyStruct str;
+  str.servSize=<span class="kw">sizeof</span>(str);
+  str.IntField=<span class="const">1</span>;
+  <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block=...    <span class="rem">// Идентификатор вызываемого блока</span>
+  <a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(Block,FuncId,&str);</pre>
+
+<p class="noindent">Реакция на вызов этой функции в модели блока может выглядеть так:</p>
+
+<pre class="cpp">  <span class="rem">// Модель блока</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>) <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> Model(
+      <span class="kw">int</span> CallMode,              <span class="rem">// Событие</span>
+      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,  <span class="rem">// Данные блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)           <span class="rem">// Дополнительные параметры</span>
+  { <span class="kw">switch</span>(CallMode)
+      {
+        ...
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a>: <span class="rem">// Вызов функции</span>
+         <span class="kw">if</span>(((<a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a>)ExtParam)->Function==FuncId)
+           { <span class="kw">if</span>(RDS_FUNCPARAMCAST(ExtParam,TMyStruct)->servSize==<span class="kw">sizeof</span>(TMyStruct))
+               { <span class="rem">// Выполнение функции</span>
+                 RDS_FUNCPARAMCAST(ExtParam,TMyStruct)->DoubleField=
+                   RDS_FUNCPARAMCAST(ExtParam,TMyStruct)->IntField*<span class="const">2</span>;
+               }
+           }
+        <span class="kw">break</span>;
+        ...
+      }
+  }</pre>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span>,
+<span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm#ref1" title="Структура RDS_FUNCTIONCALLDATA">RDS_FUNCTIONCALLDATA</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsStopBlockTimer.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_FUNCPARAMPVOID.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_FUNCPARAMCAST">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

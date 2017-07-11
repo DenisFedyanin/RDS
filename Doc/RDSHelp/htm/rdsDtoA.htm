@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.4.5. rdsDtoA &ndash; преобразование вещественного числа в строку</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_4">А.5.4. Отведение памяти и преобразование строк</a></p>
+<div class="level"><p>А.5.4.5. <span class="cpp">rdsDtoA</span> &ndash; преобразование вещественного числа в строку</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsAtoI.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsDynStrCat.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsDtoA">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.4. Отведение памяти и преобразование строк</h4>
+<h5>А.5.4.5. <span class="cpp">rdsDtoA</span> &ndash; преобразование вещественного числа в строку</h5>
+
+
+<p>Функция <span class="cpp">rdsDtoA</span> преобразует вещественное число двойной точности в динамическую строку
+с его символьным представлением.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsDtoA(
+      <span class="kw">double</span> Val,     <span class="rem">// Вещественное число</span>
+      <span class="kw">int</span> Dec,        <span class="rem">// Число знаков дробной части</span>
+      <span class="kw">int</span> *pLength    <span class="rem">// Возвращаемая длина строки</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_SDIpI</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Val</span>&emsp;(<span class="cpp"><i>double</i></span>)</dt>
+  <dd>Вещественное число, преобразуемое в строку.</dd>
+
+  <dt><span class="cpp">Dec</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Число десятичных знаков в дробной части числа. Можно вместо числа знаков передать значение &minus;1,
+  тогда число знаков дробной части будет автоматически подобрано так, чтобы отбросить
+  все незначащие нули справа.</dd>
+
+  <dt><span class="cpp">pLength</span>&emsp;(<span class="cpp"><i>int*</i></span>)</dt>
+  <dd>Указатель на целую переменную, в которую функция должна записать длину получившейся строки.
+  Если вызывающей программе не нужна длина строки, в этом параметре можно передать <span class="cpp">NULL</span>.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Указатель на созданную в динамической памяти строку с символьным представлением переданного числа.
+Для отделения дробной части всегда используется десятичная точка. В случае ошибки преобразования возвращается
+<span class="cpp">NULL</span>. Если в параметре <span class="cpp">Val</span> передано специальное значение-индикатор
+ошибки (см. функцию <span class="cpp"><a href="rdsGetHugeDouble.htm" title="А.5.2.22. rdsGetHugeDouble &ndash; получение значения-индикатора математической ошибки">rdsGetHugeDouble</a></span>), созданная строка будет состоять из единственного
+символа вопросительного знака.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Динамическая строка, созданная функцией <span class="cpp">rdsDtoA</span>, должна быть
+<span class="emph">обязательно</span> освобождена функцией <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции <span class="cpp">rdsDtoA</span> приведен
+в <a href="pm_2_11.htm" title="&sect;2.11. Отображение всплывающих подсказок к блокам">&sect;2.11 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsAtoD.htm" title="А.5.4.3. rdsAtoD &ndash; преобразование строки в вещественное число">rdsAtoD</a></span>,
+<span class="cpp"><a href="rdsGetHugeDouble.htm" title="А.5.2.22. rdsGetHugeDouble &ndash; получение значения-индикатора математической ошибки">rdsGetHugeDouble</a></span>,
+<span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsAtoI.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsDynStrCat.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsDtoA">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

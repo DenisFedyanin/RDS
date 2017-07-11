@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.2.16. rdsFindCmdParam &ndash; найти номер параметра командной строки</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_2">А.5.2. Управление работой RDS и функции общего назначения</a></p>
+<div class="level"><p>А.5.2.16. <span class="cpp">rdsFindCmdParam</span> &ndash; найти номер параметра командной строки</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsExecuteCommand.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsGetAppInstance.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsFindCmdParam">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.2. Управление работой RDS и функции общего назначения</h4>
+<h5>А.5.2.16. <span class="cpp">rdsFindCmdParam</span> &ndash; найти номер параметра командной строки</h5>
+
+
+<p>Функция <span class="cpp">rdsFindCmdParam</span> ищет в командной строке запуска RDS параметр с заданным
+именем и возвращает его порядковый номер.</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsFindCmdParam(
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Param,          <span class="rem">// Текст параметра</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> CaseSensitive    <span class="rem">// Искать с учетом регистра</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_ISB</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Param</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Слово, которое нужно найти в командной строке.</dd>
+
+  <dt><span class="cpp">CaseSensitive</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span>, если слово <span class="cpp">Param</span> нужно искать с учетом регистра
+  символов, <span class="cpp">FALSE</span> в противном случае.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Порядковый номер слова в списке параметров, или &minus;1, если такого слова не было в командной строке.
+Нумерация начинается с нуля.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Функция <span class="cpp">rdsFindCmdParam</span> работает с параметрами командной строки, использовавшейся для
+запуска RDS с одновременной загрузкой схемы, или со списком параметров, переданных в сервисную функцию
+<span class="cpp"><a href="rdsExecuteCommand.htm" title="А.5.2.15. rdsExecuteCommand &ndash; выполнить общесистемную команду">rdsExecuteCommand</a></span> для выполнения команд загрузки схемы
+<span class="cpp"><a href="rdsExecuteCommand.htm#light_ref3" title="RDS_SYSCMD_LOADFILE">RDS_SYSCMD_LOADFILE</a></span> и <span class="cpp"><a href="rdsExecuteCommand.htm#light_ref5" title="RDS_SYSCMD_LOADTEMPLATE">RDS_SYSCMD_LOADTEMPLATE</a></span>. Если схема
+загружена из пользовательского интерфейса RDS (например, при помощи пункта меню
+&laquo;<span class="menu">файл | загрузить</span>&raquo;), список параметров будет пустым.</p>
+
+<p>Одним параметром командной строки считается либо слово, отделенное от остальных слов командной строки пробелами,
+либо текст, заключенный в двойные кавычки. В список, доступный сервисным функциям, попадают только параметры
+командной строки, не разобранные RDS. Например, слово &laquo;/run&raquo;, указывающее
+RDS, что в загруженной схеме необходимо немедленно запустить расчет, в этот список не попадет, так же как
+и само имя файла загружаемой схемы.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsGetCmdParamCount.htm" title="А.5.2.20. rdsGetCmdParamCount &ndash; число слов в командной строке RDS">rdsGetCmdParamCount</a></span>,
+<span class="cpp"><a href="rdsGetCmdParam.htm" title="А.5.2.19. rdsGetCmdParam &ndash; параметр командной строки по номеру">rdsGetCmdParam</a></span>,
+<a href="app_index.htm#light_htm:app_v" title="Приложение В. Параметры командной строки RDS">параметры командной строки RDS</a>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsExecuteCommand.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsGetAppInstance.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsFindCmdParam">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.11.3. rdsGetTextWordDyn &ndash; извлечение слова из текста</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_11">А.5.11. Разбор текста</a></p>
+<div class="level"><p>А.5.11.3. <span class="cpp">rdsGetTextWordDyn</span> &ndash; извлечение слова из текста</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsGetTextWord.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsReadColorText.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsGetTextWordDyn">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.11. Разбор текста</h4>
+<h5>А.5.11.3. <span class="cpp">rdsGetTextWordDyn</span> &ndash; извлечение слова из текста</h5>
+
+
+<p>Функция <span class="cpp">rdsGetTextWordDyn</span> считывает из переданной в параметрах
+строки очередное слово и возвращает его в виде динамически созданной строки.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsGetTextWordDyn(
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Start,         <span class="rem">// Начало текста</span>
+      <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> *pNextWord,    <span class="rem">// Возврат – следующее слово</span>
+      <span class="kw">char</span> *pSym,          <span class="rem">// Вид слова</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> LowerCase       <span class="rem">// Перевести в нижний регистр</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_SSpSpCB</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Start</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на начало текста (<span class="cpp">char*</span>), из которого нужно извлечь слово.
+  Все пробелы и табуляции перед словом будут пропущены.</dd>
+
+  <dt><span class="cpp">pNextWord</span>&emsp;(<span class="cpp"><i>LPSTR*</i></span>)</dt>
+  <dd>Указатель на переменную типа <span class="cpp">char*</span>, в которую будет записан указатель на
+  начало следующего слова. Если вызывающей программе оно не нужно, в этом параметре можно
+  передать <span class="cpp">NULL</span>.</dd>
+
+  <dt><span class="cpp">pSym</span>&emsp;(<span class="cpp"><i>char*</i></span>)</dt>
+  <dd>Указатель на переменную типа <span class="cpp">char</span>, в которую будет записан
+  <a href="rdsGetTextWord.htm#ref1" title="Вид считанного функций rdsGetTextWord слова">вид считанного слова</a>,
+  или <span class="cpp">NULL</span>, если вызывающей программе не нужен вид слова. От вида слова зависит его
+  предварительная обработка внутри функции, от него также может зависеть реакция на это слово вызвавшей функцию
+  программы.</dd>
+
+  <dt><span class="cpp">LowerCase</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a></i></span>)</dt>
+  <dd><span class="cpp">TRUE</span> &ndash; считанное слово нужно перевести в нижний регистр (за
+  исключением считанных строк в кавычках &ndash; их регистр никогда не изменяется).
+  <span class="cpp">FALSE</span> &ndash; считанное слово возвращается как есть.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Указатель (<span class="cpp">char*</span>) на созданную в динамической памяти строку, содержащую
+считанное слово, или <span class="cpp">NULL</span>, если эта строка пустая (текст закончился).</p>
+
+<p class="apphdr">Примечания</p>
+<p>Функция <span class="cpp">rdsGetTextWordDyn</span> полностью аналогична функции
+<span class="cpp"><a href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a></span>, за исключением того, что последняя возвращает указатель на
+считанное слово во внутреннем буфере RDS, а эта функция формирует из считанного слова динамическую
+строку, которая <span class="emph">обязательно</span> должна быть освобождена вызовом
+<span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>. Принципы разбора текста и смысл параметров у
+этих двух функций полностью совпадают.</p>
+
+<p>Функция <span class="cpp">rdsGetTextWordDyn</span> обычно используется в тех случаях, когда
+необходимо сначала выделить из текста несколько слов, а потом уже их анализировать.
+<span class="cpp">rdsGetTextWord</span> для этого не годится, поскольку каждый ее вызов приводит к
+изменению строки во внутреннем буфере и, следовательно, к потере предыдущего выделенного из текста слова.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsGetTextWord.htm" title="А.5.11.2. rdsGetTextWord &ndash; извлечение слова из текста">rdsGetTextWord</a></span>,
+<span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>,
+<span class="cpp"><a href="RDS_BFM_LOADTXT.htm" title="А.2.5.5. RDS_BFM_LOADTXT &ndash; загрузка данных блока в текстовом формате">RDS_BFM_LOADTXT</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsGetTextWord.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsReadColorText.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsGetTextWordDyn">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

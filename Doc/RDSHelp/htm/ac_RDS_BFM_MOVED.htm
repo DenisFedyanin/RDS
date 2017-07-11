@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.8.9.3. Блок перемещен</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8_9">&sect;3.8.9. Внешний вид блока</a></p>
+<div class="level"><p>&sect;3.8.9.3. Блок перемещен</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_RESIZING.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_DRAW.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_MOVED">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</h3>
+<h4 class="off">&sect;3.8.9. Внешний вид блока</h4>
+<h5>&sect;3.8.9.3. Блок перемещен</h5>
+
+
+<p>Это событие возникает после любого изменения положения блока на рабочем поле подсистемы, то есть после
+его <a href="um_2_6.htm#ref7" title="Перемещение блока мышью">перетаскивания</a>
+пользователем, после задания его координат в
+<a href="um_2_9_1.htm#pic5" title="Вкладка внешний вид окна параметров простого блока при выбранном изображении картинкой (картинка отсутствует)">окне параметров блока</a>, после вызова одной из
+сервисных функций для перемещения блока (например,
+функции <span class="cpp"><a href="rdsMoveBlock.htm" title="А.5.6.40. rdsMoveBlock &ndash; переместить блок">rdsMoveBlock</a></span>) и т.п. Реакция на него может использоваться для
+синхронного перемещения группы блоков при перемещении одного из них или для сообщения куда-либо
+новых координат блока. Отменить перемещение блока, реагируя на это событие, нельзя.</p>
+
+<p>Текст реакции на событие перемещения блока вводится
+на вкладке &laquo;<span class="menu"><a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">события</a></span>&raquo; левой панели редактора модели: раздел
+&laquo;<span class="menu">внешний вид блока</span>&raquo;, подраздел
+&laquo;<span class="menu">блок перемещен</span>&raquo;.
+<span id="ref1">В</span> классе блока для нее создается функция с именем
+<span class="cpp" id="light_ref1">rdsbcppBlockMoved</span> следующего вида:</p>
+
+<pre class="cpp">  // Блок перемещен
+  void rdsbcppBlockClass::rdsbcppBlockMoved(<a class="hidden" href="RDS_BFM_MOVED.htm#ref2" title="Указатель на RDS_MOVEDATA">RDS_PMOVEDATA</a> MoveData)
+  {
+    <span class="changes"><i>&nbsp;&hellip; пользовательский текст реакции &hellip;&nbsp;</i></span>
+  }</pre>
+
+<p><span id="ref2">Параметр</span> функции <span class="cpp">MoveData</span> &ndash;
+это указатель на структуру описания события
+<span class="cpp" id="light_ref2"><a class="hidden" href="RDS_BFM_MOVED.htm#ref1" title="Структура RDS_MOVEDATA">RDS_MOVEDATA</a></span>:</p>
+
+<pre class="cpp">  typedef struct {
+    int MoveReason;  // Причина перемещения
+    int OldX,OldY;   // Старые координаты точки привязки
+    int NewX,NewY;   // Новые координаты точки привязки
+  } <a class="hidden" href="RDS_BFM_MOVED.htm#ref1" title="Структура RDS_MOVEDATA">RDS_MOVEDATA</a>;
+  typedef <a class="hidden" href="RDS_BFM_MOVED.htm#ref1" title="Структура RDS_MOVEDATA">RDS_MOVEDATA</a> *<a class="hidden" href="RDS_BFM_MOVED.htm#ref2" title="Указатель на RDS_MOVEDATA">RDS_PMOVEDATA</a>;</pre>
+
+<p>Поля структуры имеют следующий смысл:</p>
+
+<dl>
+  <dt><span class="cpp">MoveReason</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+    <dd>Одна из стандартных констант, указывающих на причину перемещения, то есть изменения координат, блока:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref3">RDS_MR_SET</span></span></td>
+          <td>Координаты блока установлены непосредственно, то есть введены пользователем с клавиатуры в
+          окне параметров или установлены одной
+          из сервисных функций.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref4">RDS_MR_DRAG</span></span></td>
+          <td>Пользователь &laquo;перетащил&raquo; блок мышью.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref5">RDS_MR_KEYBOARD</span></span></td>
+          <td>Пользователь переместил выделенный блок нажатиями курсорных клавиш.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref6">RDS_MR_UNDOREDO</span></span></td>
+          <td>Положение блока изменилось из-за отмены пользователем сделанного перемещения или из-за
+          повтора ранее отмененного перемещения.</td>
+        </tr>
+      </table>
+    </div></div>
+    </dd>
+
+  <dt><span class="cpp">OldX</span>,&nbsp;<span class="cpp">OldY</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Горизонтальная и вертикальная координаты <a href="um_2_9_1.htm#ref12" title="Точка привязки блока">точки привязки</a> блока до перемещения,
+  значения даны для масштаба подсистемы 100% (для блоков с <a href="um_1_2.htm#light_ref22">векторной картинкой</a>
+  точка привязки &ndash; это положение начала координат этой картинки, для всех остальных
+  &ndash; левый верхний угол прямоугольной области, занимаемой блоком).</dd>
+
+  <dt><span class="cpp">NewX</span>,&nbsp;<span class="cpp">NewY</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Координаты точки привязки блока после перемещения в масштабе 100%.</dd>
+</dl>
+
+<p class="noindent">При написании моделей блоков без использования модуля автокомпиляции перемещению блока соответствует
+константа RDS <span class="cpp"><a href="RDS_BFM_MOVED.htm" title="А.2.7.4. RDS_BFM_MOVED &ndash; перемещение блока">RDS_BFM_MOVED</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_RESIZING.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_DRAW.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_MOVED">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

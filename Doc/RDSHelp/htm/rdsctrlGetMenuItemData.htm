@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>Б.3.4.18. rdsctrlGetMenuItemData &ndash; получить данные пункта меню</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b_3">Б.3. Б.3 Функции библиотеки RdsCtrl.dll</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_b_3_4">Б.3.4. Функции общего назначения</a></p>
+<div class="level"><p>Б.3.4.18. <span class="cpp">rdsctrlGetMenuItemData</span> &ndash; получить данные пункта меню</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsctrlGetBlockVarValue.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsctrlGetMode.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsctrlGetMenuItemData">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll</h2>
+<h3 class="off">Б.3. Б.3 Функции библиотеки RdsCtrl.dll</h3>
+<h4 class="off">Б.3.4. Функции общего назначения</h4>
+<h5>Б.3.4.18. <span class="cpp">rdsctrlGetMenuItemData</span> &ndash; получить данные пункта меню</h5>
+
+
+<p>Функция <span class="cpp">rdsctrlGetMenuItemData</span> возвращает указатель на структуру данных пункта
+меню с заданным номером, считанную из управляемой копии RDS последним вызовом
+<span class="cpp"><a href="rdsctrlReadBlockMenuItems.htm" title="Б.3.4.23. rdsctrlReadBlockMenuItems &ndash; считать пункты меню блока в память">rdsctrlReadBlockMenuItems</a></span>.</p>
+
+<pre class="cpp">  <a class="hidden" href="RDSCTRL_MENUITEM.htm#ref2" title="Указатель на RDSCTRL_MENUITEM">RDSCTRL_PMENUITEM</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsctrlGetMenuItemData(
+    <span class="kw">int</span> Link,      <span class="rem">// Идентификатор связи</span>
+    <span class="kw">int</span> ItemNum    <span class="rem">// Номер пункта меню</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDSCTRL_MiII</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Link</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Идентификатор связи с RDS, присвоенный ей при создании функцией
+  <span class="cpp"><a href="rdsctrlCreateLink.htm" title="Б.3.2.3. rdsctrlCreateLink &ndash; создать связь с RDS">rdsctrlCreateLink</a></span>.</dd>
+
+  <dt><span class="cpp">ItemNum</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Порядковый номер пункта меню, считанного в память.</dd>
+</dl>
+
+<p class="apphdr"><span id="ref1">Возвращаемое значение</span></p>
+<p>Указатель на структуру данных пункта меню
+<span id="light_ref1" class="cpp"><a href="RDSCTRL_MENUITEM.htm#ref1" title="Структура RDSCTRL_MENUITEM">RDSCTRL_MENUITEM</a></span> во внутренней памяти
+&laquo;<span class="file">RdsCtrl.dll</span>&raquo;, или <span class="cpp">NULL</span>, если в памяти нет пункта меню с
+номером <span class="cpp">ItemNum</span>.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Для того, чтобы узнать, какие пункты тот или иной блок добавил в контекстное или главное меню
+RDS, управляющее приложение сначала считывает полный список этих пунктов в память
+&laquo;<span class="file">RdsCtrl.dll</span>&raquo; вызовом <span class="cpp">rdsctrlReadBlockMenuItems</span>, а затем перебирает
+их по одному вызовами <span class="cpp">rdsctrlGetMenuItemData</span>. Данные пунктов меню хранятся в
+памяти &laquo;<span class="file">RdsCtrl.dll</span>&raquo; независимо для каждой связи, поэтому вызов
+<span class="cpp">rdsctrlGetMenuItemData(Link,n)</span> возвращает указатель на пункт меню номер <span class="cpp">n</span>
+из набора, считанного вызовом <span class="cpp">rdsctrlReadBlockMenuItems</span> именно для связи
+<span class="cpp">Link</span>. Пункты контекстного меню нумеруются начиная с нуля в порядке своего
+расположения в меню, порядок пунктов главного меню определяется внутренней логикой RDS. Каждый вызов
+<span class="cpp">rdsctrlReadBlockMenuItems</span> очищает список загруженных пунктов и считывает из RDS новые.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции <span class="cpp">rdsctrlGetMenuItemData</span> приведен в
+<a href="pm_3_6_5.htm" title="&sect;3.6.5. Работа с контекстным меню блока">&sect;3.6.5 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsctrlCreateLink.htm" title="Б.3.2.3. rdsctrlCreateLink &ndash; создать связь с RDS">rdsctrlCreateLink</a></span>,
+<span class="cpp"><a href="RDSCTRL_MENUITEM.htm#ref1" title="Структура RDSCTRL_MENUITEM">RDSCTRL_MENUITEM</a></span>,
+<span class="cpp"><a href="rdsctrlReadBlockMenuItems.htm" title="Б.3.4.23. rdsctrlReadBlockMenuItems &ndash; считать пункты меню блока в память">rdsctrlReadBlockMenuItems</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsctrlGetBlockVarValue.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsctrlGetMode.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsctrlGetMenuItemData">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

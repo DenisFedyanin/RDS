@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.12.4. Реакция блоков на клавиатуру</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_12">&sect;2.12. Реакция блоков на действия пользователя</a></p>
+<div class="level"><p>&sect;2.12.4. Реакция блоков на клавиатуру</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_12_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_12_4_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.12. Реакция блоков на действия пользователя</h3>
+<h4>&sect;2.12.4. Реакция блоков на клавиатуру</h4>
+<p class="abstract">Рассматривается реакция модели блока на нажатие и отпускание клавиш. В один из рассмотренных ранее
+                примеров добавляется возможность увеличивать и уменьшать значение выхода блока нажатием клавиш.</p>
+
+
+<p>При необходимости, модель блока может обрабатывать события нажатия и отпускания клавиш &ndash;
+<span class="cpp"><span id="light_ref1"><a href="RDS_BFM_KEYDOWN.htm" title="А.2.6.5. RDS_BFM_KEYDOWN &ndash; нажатие клавиши">RDS_BFM_KEYDOWN</a></span></span> и <span class="cpp"><span id="light_ref2"><a href="RDS_BFM_KEYUP.htm" title="А.2.6.6. RDS_BFM_KEYUP &ndash; отпускание клавиши">RDS_BFM_KEYUP</a></span></span> соответственно. Как
+и в случае
+<a href="pm_2_12_1.htm" title="&sect;2.12.1. Реакция на мышь">реакции на мышь</a>, реакция блока на клавиатуру возможна только в
+режимах <a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a> и <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a>, в режиме
+<a href="pm_1_3.htm#ref1" title="Режим редактирования">редактирования</a> информация о нажатии и отпускании клавиш в модель не передается.
+Для того, чтобы модель блока могла среагировать на одно из клавиатурных событий, должны одновременно выполниться
+два условия:</p>
+
+<ul>
+  <li><a href="um_2_3.htm" title="&sect;2.3. Элементы и меню окна подсистемы">окно подсистемы</a>, в которой находится блок, должно иметь
+  фокус ввода (быть самым верхним окном, при условии, что RDS &ndash; активное приложение);</li>
+  <li>в <a href="pm_1_4.htm#pic3" title="Параметры блока &ndash; модель и реакции">параметрах блока</a> должна быть разрешена
+  реакция на клавиатуру.</li>
+</ul>
+
+<p class="noindent">В RDS нет понятия &laquo;текущего блока&raquo; или
+&laquo;блока, имеющего фокус ввода&raquo;. При нажатии или отпускании какой-либо клавиши поочередно вызываются
+модели всех блоков в активном окне подсистемы, для которых разрешена реакция на клавиатуру. Порядок вызова моделей
+определяется внутренней логикой RDS, и ни разработчик, ни пользователь не могут на него повлиять.
+Единственное, что может сделать модель блока &ndash; это, среагировав на интересующее ее сочетание клавиш,
+сообщить RDS о том, что событие уже обработано, и дальнейший вызов моделей не требуется. При этом
+RDS не только прекращает перебирать и вызывать блоки, которым разрешена реакция на клавиатуру, но
+и не выполняет пункт главного меню, которому соответствует нажатая комбинация клавиш (если, конечно,
+такой имеется). Например, пункту главного меню RDS меню
+&laquo;<span class="menu">расчет | стоп</span>&raquo; соответствует  клавиша <span class="keys">F7</span>, поэтому нажатие этой
+клавиши обычно останавливает запущенный расчет. Однако, если в активном в данный момент окне подсистемы
+будет находиться блок, модель которого среагирует на нажатие <span class="keys">F7</span> и сообщит RDS,
+что событие обработано, расчет остановлен не будет. Таким образом, обработка клавиатуры моделями блоков имеет
+приоритет над стандартными реакциями RDS. Тем не менее, если в окне подсистемы будет два блока,
+обрабатывающих нажатие одной и той же клавиши и сообщающих RDS об успешной обработке события, нельзя
+заранее сказать, модель которого из блоков будет выполнена.</p>
+
+<p>Реакция на нажатие и отпускание клавиш используется в моделях блоков реже, чем реакция на мышь.
+Как правило, такие реакции используются для включения и выключения различных кнопок, подачи команд и т.п.
+На клавиатуру могут реагировать все блоки активной подсистемы, независимо от видимости и активности слоя,
+на котором они расположены, что позволяет скрыть от пользователя логику обработки клавиатуры в подсистеме.
+Однако, следует помнить, что при закрытии окна подсистемы или уходе его с переднего плана блоки этой
+подсистемы перестают реагировать на клавиатуру, поэтому для вызова каких-либо общесистемных функций
+такие реакции непригодны. Если разработчику необходимо сделать так, чтобы модель блока реагировала
+на нажатие какой-либо комбинации клавиш независимо от того, открыто ли окно подсистемы с этим блоком и
+имеет ли это окно фокус, он может добавить в модель регистрацию дополнительного пункта системного меню и
+связать с этим пунктом &laquo;горячую клавишу&raquo;. При этом нажатие этой клавиши будет вызывать модель
+блока для реакции на добавленный пункт меню. Механизм регистрации пунктов системного меню и реакции
+на них описан в <a href="pm_2_12_7.htm" title="&sect;2.12.7. Добавление пунктов в системное меню RDS">&sect;2.12.7</a>.</p>
+
+<p>В <a href="pm_2_12_1.htm#ref2" title="Пример блока, реагирующего на щелчки мыши">&sect;2.12.1</a> описан блок, увеличивающий и уменьшающий значение своего
+выхода при щелчках левой кнопкой мыши на его изображении. Добавим в него похожую реакцию на клавиатуру:
+нажатие одной клавиши (или сочетания клавиш) будет увеличивать значение выхода на единицу, нажатие другой &ndash;
+уменьшать. Причем клавиши, на которые реагирует блок, мы сделаем настраиваемыми.</p>
+
+<p>Чтобы было где хранить коды клавиш, на которые реагирует блок, создадим для него
+<a href="pm_1_4.htm#ref8" title="Личная область данных блока">личную область данных</a>, как всегда оформив ее в виде класса:</p>
+
+<pre class="cpp">  <span class="rem">//====== Класс личной области данных ======</span>
+  <span class="kw">class</span> TPlusMinusData
+  { <span class="kw">public</span>:
+      <span class="kw">int</span> KeyPlus;       <span class="rem">// Клавиша увеличения</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> ShiftsPlus;  <span class="rem">// и ее флаги</span>
+      <span class="kw">int</span> KeyMinus;      <span class="rem">// Клавиша уменьшения</span>
+      <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> ShiftsMinus; <span class="rem">// и ее флаги</span>
+
+      <span class="kw">int</span> Setup(<span class="kw">void</span>);    <span class="rem">// Функция настройки клавиш</span>
+      <span class="kw">void</span> SaveBin(<span class="kw">void</span>); <span class="rem">// Сохранение параметров</span>
+      <span class="kw">int</span> LoadBin(<span class="kw">void</span>);  <span class="rem">// Загрузка параметров</span>
+
+      <span class="rem">// Конструктор класса</span>
+      TPlusMinusData(<span class="kw">void</span>)
+        { KeyPlus=ShiftsPlus=KeyMinus=ShiftsMinus=<span class="const">0</span>;};
+  };
+  <span class="rem">//=========================================</span></pre>
+
+<p>В классе содержатся два поля для клавиши увеличения значения
+(<span class="cpp">KeyPlus</span>, <span class="cpp">ShiftsPlus</span>) и два поля для клавиши уменьшения
+(<span class="cpp">KeyMinus</span>, <span class="cpp">ShiftsMinus</span>). Каждое сочетание клавиш, на которые
+будет реагировать блок, задается двумя целыми числами: первое (<span class="cpp">KeyPlus</span>, <span class="cpp">KeyMinus</span>)
+содержит код клавиши, второе (<span class="cpp">ShiftsPlus</span>, <span class="cpp">ShiftsMinus</span>) &ndash;
+флаги, указывающие на состояние клавиш <span class="keys">Ctrl</span>, <span class="keys">Alt</span> и
+<span class="keys">Shift</span>. Например, для того, чтобы блок увеличил значение выхода при нажатии сочетания
+клавиш <span class="keys">Ctrl</span>&nbsp;+&nbsp;<span class="keys">Alt</span>&nbsp;+&nbsp;<span class="keys">F1</span>, в поле <span class="cpp">KeyPlus</span> необходимо записать стандартную константу
+API Windows <span class="cpp">VK_F1</span>, а в <span class="cpp">ShiftsPlus</span> &ndash; объединенные битовым
+&laquo;ИЛИ&raquo; флаги <span class="cpp"><span id="light_ref3"><a href="RDS_BFM_KEYDOWN.htm#light_ref10" title="RDS_KCTRL">RDS_KCTRL</a></span></span> и <span class="cpp"><span id="light_ref4"><a href="RDS_BFM_KEYDOWN.htm#light_ref9" title="RDS_KALT">RDS_KALT</a></span></span>, описанные в
+&laquo;<span class="file">RdsDef.h</span>&raquo;. Нулевое значение поля флагов указывает на то, что блок должен реагировать
+на нажатие клавиши без <span class="keys">Ctrl</span>, <span class="keys">Alt</span> и
+<span class="keys">Shift</span>. Нулевое значение кода клавиши не соответствует ни одной клавише клавиатуры, поэтому
+может использоваться как признак отсутствия реакции: оно никогда не совпадет с каким-либо кодом.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/KbdPlusMinusSetup.png" width="273" height="139" alt="Задание сочетаний клавиш" />
+<p id="light_pic1">Рис.&nbsp;79. Задание сочетаний клавиш</p>
+</div></div>
+
+
+<p>Для того, чтобы пользователь мог задать сочетания клавиш, на которые должен реагировать блок,
+в класс включена функция настройки <span class="cpp">Setup</span>. Вводить числовые коды клавиш и
+флагов неудобно, поэтому в этой функции мы будем пользоваться
+<a href="app_a_fields.htm#light_ref10" title="RDS_FORMCTRL_HOTKEY">специальными полями ввода</a> для задания клавиш: при попадании в
+них курсора пользователь может просто нажать нужное сочетание клавиш, и оно отобразится в поле ввода
+в понятном ему виде. Например,
+на <a href="#pic1" title="Задание сочетаний клавиш">рис.&nbsp;79</a>
+для увеличения и уменьшения значения выхода блока заданы сочетания клавиш
+<span class="keys">Ctrl</span>&nbsp;+&nbsp;<span class="keys">цифр.8</span> и
+<span class="keys">Ctrl</span>&nbsp;+&nbsp;<span class="keys">цифр.2</span> соответственно (клавиши &laquo;8&raquo; и &laquo;2&raquo;, в данном случае,
+взяты с цифрового блока клавиатуры, где они соответствуют
+курсорным стрелкам вверх и вниз). Нажатие клавиши <span class="keys">Backspace</span> в таком поле
+ввода приведет к обнулению кода клавиши и, таким образом, к отмене реакции (в поле при этом будет написано слово
+&laquo;нет&raquo;).</p>
+
+<p>С использованием полей для ввода кодов клавиш функция <span class="cpp">Setup</span> будет иметь следующий вид:</p>
+
+<pre class="cpp">  <span class="rem">// Функция задания клавиш</span>
+  <span class="kw">int</span> TPlusMinusData::Setup(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window; <span class="rem">// Идентификатор вспомогательного объекта</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;            <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="rem">// Создание окна</span>
+    window=<span id="light_ref5"><a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a></span>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Плюс/минус"</span>);
+    <span class="rem">// Добавление полей ввода</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">1</span>,<span id="light_ref6"><a class="hidden" href="app_a_fields.htm#light_ref10" title="RDS_FORMCTRL_HOTKEY">RDS_FORMCTRL_HOTKEY</a></span>,
+                   <span class="str">"Клавиша увеличения:"</span>,<span class="const">80</span>);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<a class="hidden" href="app_a_fields.htm#light_ref10" title="RDS_FORMCTRL_HOTKEY">RDS_FORMCTRL_HOTKEY</a>,
+                   <span class="str">"Клавиша уменьшения:"</span>,<span class="const">80</span>);
+    <span class="rem">// Занесение исходных значений кодов клавиш в поля ввода</span>
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">1</span>,<span id="light_ref7"><a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a></span>,KeyPlus);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">1</span>,<span id="light_ref8"><a class="hidden" href="RDS_FORMVAL_HKSHIFTS.htm" title="А.5.28.16. Команда RDS_FORMVAL_HKSHIFTS &ndash; состояние Ctrl, Alt и Shift в поле ввода кода клавиши">RDS_FORMVAL_HKSHIFTS</a></span>,ShiftsPlus);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,KeyMinus);
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_HKSHIFTS.htm" title="А.5.28.16. Команда RDS_FORMVAL_HKSHIFTS &ndash; состояние Ctrl, Alt и Shift в поле ввода кода клавиши">RDS_FORMVAL_HKSHIFTS</a>,ShiftsMinus);
+    <span class="rem">// Открытие окна</span>
+    ok=<span id="light_ref9"><a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Нажата кнопка OK - запись кодов клавиш в класс</span>
+        KeyPlus=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        ShiftsPlus=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_HKSHIFTS.htm" title="А.5.28.16. Команда RDS_FORMVAL_HKSHIFTS &ndash; состояние Ctrl, Alt и Shift в поле ввода кода клавиши">RDS_FORMVAL_HKSHIFTS</a>);
+        KeyMinus=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        ShiftsMinus=<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_HKSHIFTS.htm" title="А.5.28.16. Команда RDS_FORMVAL_HKSHIFTS &ndash; состояние Ctrl, Alt и Shift в поле ввода кода клавиши">RDS_FORMVAL_HKSHIFTS</a>);
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="rem">// Возвращаемое значение</span>
+    <span class="kw">return</span> ok?<a class="hidden" href="RDS_BFM_SETUP.htm#light_ref1" title="RDS_BFR_MODIFIED">RDS_BFR_MODIFIED</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Для задания кодов клавиш используется новый тип поля ввода <span class="cpp"><a href="app_a_fields.htm#light_ref10" title="RDS_FORMCTRL_HOTKEY">RDS_FORMCTRL_HOTKEY</a></span>. Поскольку
+каждому сочетанию клавиш соответствует два целых числа (код клавиши и флаги), данные в это поле ввода
+заносятся двумя вызовами функции <span class="cpp"><a href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a></span>: с обычной константой
+<span class="cpp"><a href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a></span> заносится код клавиши, а с константой
+<span class="cpp"><a href="RDS_FORMVAL_HKSHIFTS.htm" title="А.5.28.16. Команда RDS_FORMVAL_HKSHIFTS &ndash; состояние Ctrl, Alt и Shift в поле ввода кода клавиши">RDS_FORMVAL_HKSHIFTS</a></span> &ndash; флаги. Чтение данных также производится двумя вызовами
+<span class="cpp"><a href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a></span> с теми же константами. В остальном эта функция ничем не отличается
+от других функций настройки, уже рассматривавшихся ранее.</p>
+
+<p><span id="ref10">Для</span>
+сохранения и загрузки заданных пользователем клавиш (будет не очень хорошо, если ему придется
+каждый раз после загрузки схемы настраивать клавиши заново) будем использовать функции
+<span class="cpp">SaveBin</span> и <span class="cpp">LoadBin</span> соответственно. Как видно из их
+названий, на сей раз мы будем сохранять и загружать данные не в текстовом, а в
+двоичном формате. Недостатки двоичного формата описаны в
+<a href="pm_2_8_1.htm" title="&sect;2.8.1. Способы хранения параметров блока">&sect;2.8.1</a>, но для данного простого блока его вполне можно использовать.
+Для того чтобы сделать формат более гибким и оставить возможность, при необходимости, легко изменить или
+дополнить его, <span id="light_ref10">будем использовать &laquo;теговую&raquo; запись</span>:
+перед каждой группой данных (в
+данном случае &ndash; перед парой целых чисел, описывающих сочетание клавиш) будем записывать байт,
+значение которого будет указывать на назначение следующих за ним данных. В конце запишем нулевой байт,
+который будет означать конец данных. Функция сохранения параметров будет такой:</p>
+
+<pre class="cpp">  <span class="rem">// Сохранение параметров</span>
+  <span class="kw">void</span> TPlusMinusData::SaveBin(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref12" title="Однобайтовая переменная">BYTE</a> tag; <span class="rem">// Переменная для байта тега</span>
+
+    tag=<span class="const">1</span>; <span class="rem">// Тег 1 - клавиша увеличения</span>
+    <span id="light_ref11"><a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a></span>(&amp;tag,<span class="kw">sizeof</span>(tag));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;KeyPlus,<span class="kw">sizeof</span>(KeyPlus));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;ShiftsPlus,<span class="kw">sizeof</span>(ShiftsPlus));
+
+    tag=<span class="const">2</span>; <span class="rem">// Тег 2 - клавиша уменьшения</span>
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;KeyMinus,<span class="kw">sizeof</span>(KeyMinus));
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;ShiftsMinus,<span class="kw">sizeof</span>(ShiftsMinus));
+
+    tag=<span class="const">0</span>; <span class="rem">// Тег 0 - конец данных</span>
+    <a class="hidden" href="rdsWriteBlockData.htm" title="А.5.10.4. rdsWriteBlockData &ndash; записать данные блока в двоичном формате">rdsWriteBlockData</a>(&amp;tag,<span class="kw">sizeof</span>(tag));
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Если в будущем потребуется добавить в этот блок новые параметры, или изменить формат хранения
+кодов клавиш, нужно будет записывать новые группы данных с новыми тегами (3, 4, 5 и т.д.). Такая
+запись позволяет не терять совместимости со старым форматом.</p>
+
+<p>Напишем теперь функцию загрузки для этого формата:</p>
+
+<pre class="cpp">  <span class="rem">// Загрузка параметров</span>
+  <span class="kw">int</span> TPlusMinusData::LoadBin(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref12" title="Однобайтовая переменная">BYTE</a> tag;
+
+    <span class="kw">for</span>(;;) <span class="rem">// Цикл до тех пор, пока данные не кончатся</span>
+      { <span class="rem">// Читаем байт тега</span>
+        <span class="kw">if</span>(!<span id="light_ref12"><a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a></span>(&amp;tag,<span class="kw">sizeof</span>(tag)))
+          <span class="kw">break</span>; <span class="rem">// Тег не считан - данные кончились</span>
+        <span class="rem">// Анализируем считанный тег</span>
+        <span class="kw">switch</span>(tag)
+          { <span class="kw">case</span> <span class="const">0</span>: <span class="rem">// Конец данных блока</span>
+              <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>; <span class="rem">// Загрузка успешно завершена</span>
+            <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Данные клавиши увеличения</span>
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;KeyPlus,<span class="kw">sizeof</span>(KeyPlus));
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;ShiftsPlus,<span class="kw">sizeof</span>(ShiftsPlus));
+              <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Данные клавиши уменьшения</span>
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;KeyMinus,<span class="kw">sizeof</span>(KeyMinus));
+              <a class="hidden" href="rdsReadBlockData.htm" title="А.5.10.1. rdsReadBlockData &ndash; считать данные блока в двоичном формате">rdsReadBlockData</a>(&amp;ShiftsMinus,<span class="kw">sizeof</span>(ShiftsMinus));
+              <span class="kw">break</span>;
+            <span class="kw">default</span>: <span class="rem">// Неопознанный тег</span>
+              <span class="kw">return</span> <span id="light_ref13">RDS_BFR_ERROR</span>; <span class="rem">// Сообщаем RDS об ошибке</span>
+          }
+      }
+    <span class="rem">// Данные кончились до тега 0 - сообщаем об ошибке</span>
+    <span class="kw">return</span> RDS_BFR_ERROR;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Внутри этой функции находится цикл <span class="cpp">for(;;)</span> без явного условия завершения,
+в теле которого первым делом из данных блока читается один байт &ndash; это должен быть байт тега. Если
+байт считать не удалось, значит, данные блока неожиданно закончились, и цикл завершается оператором
+<span class="cpp"></span> (при этом функция возвращает <span class="cpp">RDS_BFR_ERROR</span>, сообщая
+RDS об ошибке). В противном случае считанный байт анализируется оператором <span class="cpp">switch</span>, и,
+если его значение &ndash; 1 или 2, из данных блока читаются два целых поля класса, описывающие клавишу увеличения
+или уменьшения соответственно. Если считан тег 0, значит, на этом данные блока завершаются &ndash;
+функция возвращает <span class="cpp"><a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a></span>. Если же считанный байт имеет какое-либо
+другое значение, функция вернет <span class="cpp">RDS_BFR_ERROR</span> &ndash; тег не опознан,
+в формате записи, реализованном в функции <span class="cpp">SaveBin</span> он не предусмотрен,
+и загрузка данных невозможна.</p>
+
+<p>Если в будущем мы добавим новые данные и соответствующие им новые теги в функцию <span class="cpp">SaveBin</span>,
+в функцию <span class="cpp">LoadBin</span> нужно будет просто добавить новые метки
+<span class="cpp">case</span> и команды загрузки новых данных после них.</p>
+
+<p>Описывая данный формат записи, следует сделать одно, довольно очевидное, замечание. В качестве тега
+мы здесь используем один байт, поэтому всего может быть 256 различных тегов. Что же делать, если,
+в процессе модернизации блока, нам потребуется записывать больше различных групп данных? В этом случае
+одно какое-либо значение тега (например, 255) нужно использовать в качестве префикса, за которым будет
+следовать новый тег. Таким образом, первые 255 параметров (включая тег конца данных) будут иметь
+однобайтовые теги 0&hellip;254, а следующие за ними &ndash; двухбайтовые: (255,0), (255,1), и т.д.
+Впрочем, в данном блоке нам вряд ли когда-либо понадобятся более 256 параметров.</p>
+
+<p>Теперь, когда класс личной области данных блока и его функции описаны, внесем соответствующие
+<span class="changes">изменения</span> в функцию модели:</p>
+
+<pre class="cpp">  <span class="rem">// Увеличение/уменьшение значения по щелчку </span><span class="changes"><span class="rem">и клавишам</span></span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> PlusMinus(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define v      (*((int *)(pStart+2)))</span>
+    <span class="rem">// Вспомогательная — указатель на структуру события мыши</span>
+    <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse;
+<div class="changes">    <span class="rem">// Вспомогательная — указатель на структуру события клавиатуры</span>
+    <span id="light_ref14"><a class="hidden" href="RDS_BFM_KEYDOWN.htm#ref3" title="Указатель на RDS_KEYDATA">RDS_PKEYDATA</a></span> key;
+    <span class="rem">// Указатель на личную область данных блока,приведенный к</span>
+    <span class="rem">// правильному типу</span>
+    TPlusMinusData *data=(TPlusMinusData*)(BlockData-&gt;BlockData);</div>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSI}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Реакция на нажатие кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a>:
+          <span class="rem">// Приведение ExtParam к нужному типу</span>
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam;
+          <span class="kw">if</span>(mouse-&gt;Button==<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a>)
+            { <span class="rem">// Нажата левая кнопка</span>
+              <span class="rem">// Проверяем, есть ли у блока картинка (получаем описание блока)</span>
+              <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a> descr;
+              descr.servSize=<span class="kw">sizeof</span>(descr);
+              <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(BlockData-&gt;Block,&amp;descr);
+              <span class="kw">if</span>(descr.Flags &amp; <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#light_ref15" title="RDS_BDF_HASPICTURE">RDS_BDF_HASPICTURE</a>)
+                { <span class="rem">// Картинка есть – определяем идентификатор элемента под курсором</span>
+                  <span class="kw">int</span> id=<a class="hidden" href="rdsGetMouseObjectId.htm" title="А.5.6.31. rdsGetMouseObjectId &ndash; элемент векторной картинки блока под курсором мыши">rdsGetMouseObjectId</a>(mouse);
+                  v+=id;
+                }
+              <span class="kw">else</span> <span class="kw">if</span>(mouse-&gt;y&lt;mouse-&gt;Top+mouse-&gt;Height/<span class="const">2</span>)
+                v++; <span class="rem">// В верхней половине блока - увеличиваем</span>
+              <span class="kw">else</span>
+                v--; <span class="rem">// В нижней половине блока — уменьшаем</span>
+              <span class="rem">// Взводим сигнал готовности</span>
+              Ready=<span class="const">1</span>;
+            }
+          <span class="kw">break</span>;
+
+<div class="changes">        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>: <span class="rem">// Инициализация</span>
+          BlockData-&gt;BlockData=<span class="kw">new</span> TPlusMinusData();
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>: <span class="rem">// Очистка данных</span>
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>: <span class="rem">// Настройка параметров</span>
+          <span class="kw">return</span> data-&gt;Setup();
+        <span class="kw">case</span> <span id="light_ref15"><a class="hidden" href="RDS_BFM_SAVEBIN.htm" title="А.2.5.6. RDS_BFM_SAVEBIN &ndash; запись данных блока в двоичном формате">RDS_BFM_SAVEBIN</a></span>: <span class="rem">// Сохранение параметров</span>
+          data-&gt;SaveBin();
+          <span class="kw">break</span>;
+        <span class="kw">case</span> <span id="light_ref16"><a class="hidden" href="RDS_BFM_LOADBIN.htm" title="А.2.5.4. RDS_BFM_LOADBIN &ndash; загрузка данных блока в двоичном формате">RDS_BFM_LOADBIN</a></span>: <span class="rem">// Загрузка параметров</span>
+          <span class="kw">return</span> data-&gt;LoadBin();
+
+        <span class="rem">// Реакция на нажатие клавиши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_KEYDOWN.htm" title="А.2.6.5. RDS_BFM_KEYDOWN &ndash; нажатие клавиши">RDS_BFM_KEYDOWN</a>:
+          <span class="rem">// Приведение ExtParam к нужному типу</span>
+          key=(<a class="hidden" href="RDS_BFM_KEYDOWN.htm#ref3" title="Указатель на RDS_KEYDATA">RDS_PKEYDATA</a>)ExtParam;
+          <span class="rem">// Сравнение нажатой клавиши с клавишами уменьшения и увеличения</span>
+          <span class="kw">if</span>(key-&gt;KeyCode==data-&gt;KeyPlus &amp;&amp;
+             key-&gt;Shift==data-&gt;ShiftsPlus)
+            { v++; Ready=<span class="const">1</span>; }
+          <span class="kw">else</span> <span class="kw">if</span>(key-&gt;KeyCode==data-&gt;KeyMinus &amp;&amp;
+                  key-&gt;Shift==data-&gt;ShiftsMinus)
+            { v--; Ready=<span class="const">1</span>; }
+          <span class="kw">break</span>;</div>
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef v</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Добавленные в модель реакции на события инициализации (<span class="cpp"><a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span>), очистки данных
+(<span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span>), а также настройки (<span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>), загрузки
+(<span class="cpp"><a href="RDS_BFM_SAVEBIN.htm" title="А.2.5.6. RDS_BFM_SAVEBIN &ndash; запись данных блока в двоичном формате">RDS_BFM_SAVEBIN</a></span>) и сохранения (<span class="cpp"><a href="RDS_BFM_LOADBIN.htm" title="А.2.5.4. RDS_BFM_LOADBIN &ndash; загрузка данных блока в двоичном формате">RDS_BFM_LOADBIN</a></span>) параметров стандартны
+и уже неоднократно описывались ранее. Рассмотрим подробнее реакцию модели на нажатие клавиши: в этом случае
+она вызывается в режиме <span class="cpp"><a href="RDS_BFM_KEYDOWN.htm" title="А.2.6.5. RDS_BFM_KEYDOWN &ndash; нажатие клавиши">RDS_BFM_KEYDOWN</a></span>.</p>
+
+<p><span id="ref17">При</span>
+каждом вызове модели для реакции на нажатие или отпускание клавиши ей передается указатель на структуру
+<span id="light_ref17" class="cpp"><a href="RDS_BFM_KEYDOWN.htm#ref2" title="Структура RDS_KEYDATA">RDS_KEYDATA</a></span>, описывающую произошедшее событие:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="kw">int</span> KeyCode;      <span class="rem">// Код клавиши (Windows API)</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Repeat;      <span class="rem">// При нажатии: нажатие из-за автоповтора</span>
+    <span class="kw">int</span>  RepeatCount; <span class="rem">// При Repeat==TRUE - число повторенных</span>
+                      <span class="rem">// с прошлого вызова</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Shift;      <span class="rem">// Флаги клавиатуры (RDS_M*, RDS_K*)</span>
+    <span class="kw">int</span> KeyEvent;     <span class="rem">// Причина вызова - RDS_BFM_KEYDOWN или</span>
+                      <span class="rem">// RDS_BFM_KEYUP</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Handled;     <span class="rem">// Возвращаемый параметр - событие обработано</span>
+  } <a class="hidden" href="RDS_BFM_KEYDOWN.htm#ref2" title="Структура RDS_KEYDATA">RDS_KEYDATA</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_BFM_KEYDOWN.htm#ref2" title="Структура RDS_KEYDATA">RDS_KEYDATA</a> *<a class="hidden" href="RDS_BFM_KEYDOWN.htm#ref3" title="Указатель на RDS_KEYDATA">RDS_PKEYDATA</a>;</pre>
+
+<p>Нас будут интересовать поля <span class="cpp">KeyCode</span> и <span class="cpp">Shift</span>, содержащие код
+нажатой клавиши и флаги состояния
+<span class="keys">Ctrl</span>-<span class="keys">Shift</span>-<span class="keys">Alt</span> соответственно.
+Они сравниваются с кодами клавиш и флагами в параметрах блока, и, при совпадении с одной из пар чисел,
+значение выхода блока увеличивается или уменьшается на 1, после чего взводится сигнал готовности
+<span class="cpp"><a href="um_1_4.htm#ref27" title="Сигнал готовности блока">Ready</a></span>, чтобы новое значение передалось по связям.</p>
+
+<p>Если бы мы хотели сообщить RDS, что нажатие клавиши обработано, и дальнейшие реакции не требуются,
+мы могли бы присвоить полю <span class="cpp"></span> структуры <span class="cpp"><a class="hidden" href="RDS_BFM_KEYDOWN.htm#ref2" title="Структура RDS_KEYDATA">RDS_KEYDATA</a></span> значение
+<span class="cpp"></span>, либо вернуть из функции модели не константу
+<span class="cpp"><a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a></span>, как обычно, а
+<span class="cpp"><span id="light_ref18"><a href="RDS_BFM_KEYDOWN.htm#light_ref1" title="RDS_BFR_STOP">RDS_BFR_STOP</a></span></span> (или любое другое ненулевое значение). Но нам этого не требуется,
+наоборот, для данной модели лучше, чтобы обработка клавиатуры продолжалась и после реакции. В этом
+случае несколько блоков, настроенные на одну и ту же клавишу, одновременно изменят значения своих выходов при
+ее нажатии.</p>
+
+<p>Для проверки работы измененной модели необходимо разрешить в параметрах всех блоков, к которым она
+подключена, реакцию на клавиатуру и вызов функции настройки
+(<a href="#pic2" title="Включение реакции на клавиатуру в параметрах блока">рис.&nbsp;80</a>).
+Затем необходимо в настройках этих блоков задать клавиши для увеличения и уменьшения значений
+(см. <a href="#pic1" title="Задание сочетаний клавиш">рис.&nbsp;79</a>). К выходам блоков следует подключить
+какие-либо индикаторы. Теперь, если расчет запущен, и окно подсистемы, в которой находятся эти блоки,
+находится на переднем плане (имеет фокус), нажатие на клавиши, указанные в настройках блоков,
+будет приводить к изменению значений на подключенных к этим блокам индикаторах. Причем если несколько
+блоков настроены на использование одной и той же клавиши, их значения будут изменяться одновременно. Нужно еще
+раз подчеркнуть, что все это будет происходить только в том случае, если окно подсистемы будет на
+переднем плане. Если самым верхним будет другое окно (не обязательно окно другой подсистемы &ndash;
+это может быть главное окно RDS, окно
+<a href="um_2_12.htm#pic2" title="Окно редактора слоев: вкладки конфигурации (а) и слои (б)">редактора слоев</a> и т.п.), то блоки не будут
+реагировать на клавиатуру.</p>
+
+<div class="pic"><div class="container" id="pic2">
+<img src="../img/KbdPlusMinusParam.png" width="657" height="423" alt="Включение реакции на клавиатуру в параметрах блока" />
+<p id="light_pic2">Рис.&nbsp;80. Включение реакции на клавиатуру в параметрах блока</p>
+</div></div>
+
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_12_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

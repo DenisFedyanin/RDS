@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.2.2. Главная функция DLL</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2">А.2. События блока и связанные с ними описания</a></p>
+<div class="level"><p>А.2.2. Главная функция DLL</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="app_a_2_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BLOCKDATA.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:DllEntryPoint">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.2. События блока и связанные с ними описания</h3>
+<h4>А.2.2. Главная функция DLL</h4>
+
+
+<p>Динамически подключаемая библиотека (DLL) с функциями моделей блоков RDS, как и любая другая DLL в
+Windows, должна иметь главную функцию (точку входа), которая вызывается при загрузке библиотеки в память
+и ее выгрузке. Чаще всего эта функция имеет имя <span class="cpp">DllEntryPoint</span> (имя главной функции
+DLL обычно указывается в описании используемого для создания библиотек компилятора). В главной функции
+обычно выполняются действия, общие для всех моделей блоков в данной библиотеке:</p>
+
+<ul>
+  <li>получение доступа к сервисным функциям RDS;</li>
+  <li>регистрация функций блоков;</li>
+  <li>проверка соответствия версии RDS версии библиотеки, если это необходимо.</li>
+</ul>
+
+<p>Эти действия не обязательно выполнять именно в главной функции DLL &ndash; она просто предоставляет для
+них удобное место вызова. Написание главной функции DLL подробно рассмотрено в
+<a href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков">&sect;2.2 руководства программиста</a>.</p>
+
+<p><span id="ref1">Главная</span> функция DLL имеет следующий вид:</p>
+
+<pre class="cpp">  <span class="kw">int</span> WINAPI DllEntryPoint(
+    <span id="light_ref1"><a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a></span> hinst,      <span class="rem">// Дескриптор модуля DLL</span>
+    <span class="kw">unsigned</span> <span class="kw">long</span> reason, <span class="rem">// Причина вызова главной функции</span>
+    <span class="kw">void</span> *lpReserved      <span class="rem">// Зарезервировано</span>
+  );</pre>
+
+<p class="apphdr">Параметры функции</p>
+
+<dl>
+  <dt><span class="cpp">hinst</span>&emsp;(<span class="cpp"><i>HINSTANCE</i></span>)</dt>
+  <dd><span id="ref2">Дескриптор</span>
+  модуля загруженной DLL. Его можно использовать для доступа к различным ресурсам (изображениям,
+  строкам и т.п.), хранящимся в файле DLL вместе с функциями, а также для определения пути к файлу DLL функцией
+  Windows API <span class="cpp" id="light_ref2">GetModuleFileName</span>.</dd>
+
+  <dt><span class="cpp">reason</span>&emsp;(<span class="cpp"><i>unsigned long</i></span>)</dt>
+  <dd>Причина вызова главной функции DLL (одна из четырех констант Windows API):
+    <div class="tableleft"><div class="tcont">
+    <table class="list">
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref3">DLL_PROCESS_ATTACH</span></span></td>
+        <td>Процесс (в данном случае &ndash; &laquo;<span class="file">rds.exe</span>&raquo;) загрузил данную DLL в память. Обычно в
+        этот момент выполняются все действия по инициализации глобальных переменных, с которыми работают
+        функции этой DLL.</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp">DLL_THREAD_ATTACH</span></td>
+        <td>Процесс создал новый поток (в DLL с моделями блоков обычно не используется).</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp">DLL_THREAD_DETACH</span></td>
+        <td>Поток завершился (в DLL с моделями блоков обычно не используется).</td>
+      </tr>
+      <tr>
+        <td class="term"><span class="cpp"><span id="light_ref4">DLL_PROCESS_DETACH</span></td>
+        <td>Процесс выгружает данную DLL из памяти. В этот момент выполняются действия по очистке глобальных данных,
+        если это необходимо.</td>
+      </tr>
+    </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp">lpReserved</span>&emsp;(<span class="cpp"><i>void*</i></span>)</dt>
+  <dd>Указывает на способ загрузки или выгрузки библиотеки. При создании DLL с моделями блоков или модулями
+  автоматической компиляции для RDS этот параметр не используется.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемые значения</p>
+
+<p>При вызове главной функции при загрузке DLL в память процесса (при этом параметр reason равен
+<span class="cpp">DLL_PROCESS_ATTACH</span>) возврат ненулевого значения сигнализирует об успешности
+инициализации, возврат нулевого &ndash; об ошибках. В остальных случаях возвращаемое значение не используется.</p>
+
+<p class="apphdr">Пример</p>
+
+<p>Главная функция, обеспечивающая моделям блоков доступ ко всем сервисным функциям
+RDS с помощью макросов из файла
+<a href="pm_2_2.htm#ref11" title="Использование RdsFunc.h">&laquo;<span class="file">RdsFunc.h</span>&raquo;</a>.</p>
+
+<pre class="cpp">  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">// Главная функция DLL</span>
+  <span class="kw">int</span> WINAPI DllEntryPoint(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,MB_OK);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }</pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="app_a_2_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BLOCKDATA.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:DllEntryPoint">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

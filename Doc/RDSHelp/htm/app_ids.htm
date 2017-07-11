@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.1. Идентификаторы объектов и вспомогательные типы</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p>А.1. Идентификаторы объектов и вспомогательные типы</p>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="disbutton">&lt;&lt;</span>
+<span class="button"><a href="app_a_2_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:app_ids">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1>Приложения</h1>
+<h2>Приложение А. Функции, константы и структуры RDS</h2>
+<p class="abstract">Описываются сервисные функции, экспортированные из модуля &laquo;<span class="file">rds.exe</span>&raquo;, используемые в них структуры и константы. Применение этих функций для создании моделей блоков описывается в <a href="pm_index.htm#light_htm:pm_2" title="Глава 2. Создание моделей блоков">главе 2 руководства программиста</a>, для создания модулей автоматической компиляции моделей &ndash; в <a href="pm_index.htm#light_htm:pm_4" title="Глава 4. Создание модулей автоматической компиляции">главе 4</a> там же.</p>
+<h3>А.1. Идентификаторы объектов и вспомогательные типы</h3>
+
+
+<p>Схема в RDS состоит из множества различных объектов: блоков, связей, переменных, таймеров и т.п.
+Каждый из таких объектов имеет уникальный идентификатор, который нужно указывать в сервисных функциях для
+ссылки на конкретный объект, с которым нужно произвести то или иное действие. Большинство этих идентификаторов
+представляют собой указатели на какие-либо данные (тип <span class="cpp">LPVOID</span> Windows API), но, для
+лучшей читаемости исходных текстов программ, в файле &laquo;<span class="file">RdsDef.h</span>&raquo; для них оператором
+<span class="cpp">typedef</span> введены специальные типы:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Тип</th>
+    <th>Объект</th>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref1">RDS_BHANDLE</span></span></td>
+    <td>Блок в схеме, независимо от его <a href="pm_1_2.htm#ref2" title="Типы блоков в RDS">типа</a>
+   (простой блок, подсистема, внешний вход или выход, ввод шины). Используется во всех сервисных функциях,
+   получающих или устанавливающих параметры блоков. Модель блока всегда имеет доступ к идентификатору своего блока
+   и его <a href="pm_1_2.htm#ref7" title="Родительская подсистема">родительской подсистемы</a> через
+   структуру данных блока <span class="cpp"><a href="RDS_BLOCKDATA.htm" title="А.2.3. RDS_BLOCKDATA &ndash; структура данных блока">RDS_BLOCKDATA</a></span>.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref2">RDS_CHANDLE</span></span></td>
+    <td><a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">Связь</a> или
+    <a href="um_2_8.htm" title="&sect;2.8. Использование шин">шина</a> в схеме. Используется во всех сервисных функциях, получающих или
+    устанавливающих параметры связей и шин.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref3">RDS_TIMERID</span></span></td>
+    <td>Программируемый таймер блока. Используется в
+    <a href="app_index.htm#light_htm:app_a_5_12" title="А.5.12. Таймеры блоков">функциях работы с таймерами</a>, в реакциях на событие
+    <span class="cpp"><a href="RDS_BFM_TIMER.htm" title="А.2.4.16. RDS_BFM_TIMER &ndash; срабатывание таймера блока">RDS_BFM_TIMER</a></span> и <span class="cpp"><a href="RDS_BFM_WINREFRESH.htm" title="А.2.6.21. RDS_BFM_WINREFRESH &ndash; обновление окон блока">RDS_BFM_WINREFRESH</a></span>.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref4">RDS_MENUITEM</span></span></td>
+    <td>Пункт системного или контекстного меню, добавленный моделью блока. Используется в
+    <a href="app_index.htm#light_htm:app_a_5_17" title="А.5.17. Системное меню и контекстное меню блока">сервисных функциях работы с меню</a>.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref5">RDS_VHANDLE</span></span></td>
+    <td><a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">Статическая</a>
+    или <a href="pm_1_6.htm#ref1" title="Динамическая переменная">динамическая</a>
+    переменная блока. Используется в некоторых сервисных функциях для получения описания переменных и их
+    редактирования. Для доступа к значениям переменных, как правило, не используется
+    (см. <a href="pm_index.htm#light_htm:pm_2_5" title="&sect;2.5. Статические переменные блоков">&sect;2.5</a> и <a href="pm_index.htm#light_htm:pm_2_6" title="&sect;2.6. Динамические переменные">&sect;2.6 руководства программиста</a>).</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref6">RDS_HOBJECT</span></span></td>
+    <td><a href="app_a_objects.htm" title="А.5.22.1. Использование вспомогательных объектов RDS">Вспомогательный объект</a>
+    RDS. Вспомогательные объекты служат для различных целей: редактирования связей, разбора текста,
+    открытия окон и т.п., но все они имеют этот тип.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref7">RDS_NETSTATION</span></span></td>
+    <td>Одна из машин с запущенной копией RDS, подключенная к серверу. Используется для указания машины при
+    отправке данных по сети конкретному блоку функцией <span class="cpp"><a href="rdsNetSendData.htm" title="А.5.20.4. rdsNetSendData &ndash; передача данных конкретному блоку канала">rdsNetSendData</a></span> и в реакциях на события
+    <span class="cpp"><a href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">RDS_BFM_NETDATARECEIVED</a></span> и <span class="cpp"><a href="RDS_BFM_NETERROR.htm" title="А.2.8.5. RDS_BFM_NETERROR &ndash; ошибка при работе с сетью">RDS_BFM_NETERROR</a></span>.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref8">RDS_NETBLOCK</span></span></td>
+    <td>Блок на одной из машин с запущенной копией RDS, подключенной к серверу. Используется для указания
+    блока при отправке данных по сети конкретному блоку функцией <span class="cpp"><a href="rdsNetSendData.htm" title="А.5.20.4. rdsNetSendData &ndash; передача данных конкретному блоку канала">rdsNetSendData</a></span> и в реакциях
+    на события <span class="cpp"><a href="RDS_BFM_NETDATARECEIVED.htm" title="А.2.8.3. RDS_BFM_NETDATARECEIVED &ndash; получение данных блоком">RDS_BFM_NETDATARECEIVED</a></span> и <span class="cpp"><a href="RDS_BFM_NETERROR.htm" title="А.2.8.5. RDS_BFM_NETERROR &ndash; ошибка при работе с сетью">RDS_BFM_NETERROR</a></span>. Не взаимозаменяем
+    с <span class="cpp">RDS_BHANDLE</span> &ndash; последний может использоваться только в качестве идентификатора
+    блока в пределах одной схемы на одной машине.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref9">RDS_COMPHANDLE</span></td>
+    <td>Модуль автоматической компиляции. Используется в
+    <a href="app_index.htm#light_htm:app_a_5_34" title="А.5.34. Функции поддержки автоматической компиляции моделей">сервисных функциях</a>,
+    работающих с автокомпилируемой моделью, для указания конкретного модуля.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref10">RDS_MODELHANDLE</span></td>
+    <td>Автоматически компилируемая модель. Используется в
+    <a href="app_index.htm#light_htm:app_a_5_34" title="А.5.34. Функции поддержки автоматической компиляции моделей">сервисных функциях</a>, работающих с автокомпилируемой моделью,
+    для указания конкретной модели.</td>
+  </tr>
+</table>
+</div></div>
+
+<p>Для взаимодействия с Windows API многие сервисные функции и структуры RDS работают со значениями следующих,
+стандартных для Windows, типов:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Тип</th>
+    <th>Объект</th>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref11">BOOL</span></span></td>
+    <td>Логическое значение, может принимать значения <span class="cpp">TRUE</span> (истина) или
+    <span class="cpp">FALSE</span> (ложь). Этот тип эквивалентен стандартному типу C
+    &laquo;<span class="cpp">int</span>&raquo;.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref12">BYTE</span></span></td>
+    <td>Целая переменная, занимающая один байт. Этот тип эквивалентен стандартному типу C
+    &laquo;<span class="cpp">unsigned char</span>&raquo;. Может принимать значения от 0 до 255.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref13">COLORREF</span></span></td>
+    <td>Тридцатидвухбитное целое число, описывающее цвет. Младший байт числа содержит интенсивность красного канала
+    (в диапазоне от 0 до 255), второй байт &ndash; интенсивность зеленого, третий байт &ndash; интенсивность синего,
+    четвертый (старший) байт всегда нулевой. Таким образом, число 0xFF0000 соответствует синему цвету, 0xFFFFFF
+    &ndash; белому, 0 &ndash; черному.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref14">DWORD</span></span></td>
+    <td>Тридцатидвухбитное беззнаковое целое число (<span class="cpp">unsigned long</span>). Может принимать значения
+    от 0 до 4294967295. В RDS достаточно часто используется для хранения различных битовых флагов
+    или размеров областей памяти.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref15">HBITMAP</span></span></td>
+    <td>Дескриптор загруженного в память растрового рисунка. В RDS используется только в функции
+    <span class="cpp"><a href="rdsRegisterWindow.htm" title="А.5.2.31. rdsRegisterWindow &ndash; регистрация немодального окна">rdsRegisterWindow</a></span>.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref16">HDC</span></span></td>
+    <td>Контекст устройства (device context) Windows. Контексты устройств используются в графических функциях
+    Windows API для указания объекта (например, окна), на котором производится построение изображения.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref17">HINSTANCE</span></span></td>
+    <td>Дескриптор загруженного в память модуля, например, DLL. Фактически, это базовый адрес модуля, но в
+    функциях Windows API он часто используется просто как идентификатор этого модуля.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref18">HWND</span></span></td>
+    <td>Дескриптор окна Windows. Такие дескрипторы используются в функциях Windows API, выполняющих
+    различные действия с окнами.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref19">LOGFONT</span></span></td>
+    <td>Структура, содержащая описание шрифта Windows. Ее поля подробно описаны в руководстве по Windows API. В
+    RDS она используется не очень широко.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref20">LPSTR</span></span></td>
+    <td>Указатель на строку восьмибитных символов, завершающуюся нулевым байтом. Этот тип эквивалентен стандартному
+    типу C &laquo;<span class="cpp">char*</span>&raquo;.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref21">LPVOID</span></span></td>
+    <td>Указатель на некоторый объект в памяти без уточнения типа этого объекта. Этот тип эквивалентен стандартному
+    типу C &laquo;<span class="cpp">void*</span>&raquo;.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref22">POINT</span></span></td>
+    <td>Структура, описывающая точку с двумя целыми координатами (поля <span class="cpp">x</span> и <span class="cpp">y</span>).</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref23">RECT</span></span></td>
+    <td>Структура, описывающая прямоугольник через целые координаты его левой верхней
+    (поля <span class="cpp">left</span> и <span class="cpp">top</span>) и правой нижней
+    (поля <span class="cpp">right</span> и <span class="cpp">bottom</span>) точек.</td>
+  </tr>
+</table>
+</div></div>
+
+<p>В сервисных функциях и структурах RDS также используются следующие обозначения-синонимы для
+стандартных типов Windows и языка C:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+  <tr>
+    <th>Описание&nbsp;в&nbsp;RDS</th>
+    <th>Стандартное описание</th>
+    <th>Назначение</th>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref24">RDSCALL</span></span></td>
+    <td><span class="cpp">CALLBACK</span>&nbsp;(в&nbsp;Windows&nbsp;API),<br />
+    <span class="cpp">__stdcall</span>&nbsp;(в&nbsp;Borland&nbsp;С++)</td>
+    <td>Тип вызова всех сервисных функций RDS и всех функций обратного вызова, используемых в моделях блоков и
+    модулях автокомпиляции. Аргументы функции передаются в стеке справа налево, стек освобождается вызванной функцией.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref25">RDS_SHORT</span></span></td>
+    <td><span class="cpp">short&nbsp;int</span></td>
+    <td>Двухбайтовое целое число со знаком. В RDS предусмотрен такой тип переменных блока, больше этот тип
+    нигде не используется.</td>
+  </tr>
+  <tr>
+    <td><span class="cpp"><span id="light_ref26">RDS_PCOLORREF</span></span></td>
+    <td><span class="cpp">COLORREF*</span>, <span class="cpp">LPCOLORREF</span></td>
+    <td>Указатель на тридцатидвухбитное число, описывающее цвет
+    (<span class="cpp"><a href="#light_ref13" title="Цвет Windows API">COLORREF</a></span>).</td>
+  </tr>
+</table>
+</div></div>
+
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="disbutton">&lt;&lt;</span>
+<span class="button"><a href="app_a_2_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:app_ids">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

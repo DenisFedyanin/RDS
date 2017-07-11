@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.34.12. rdscompSetBlockModel &ndash; подключить модель к блоку</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_34">А.5.34. Функции поддержки автоматической компиляции моделей</a></p>
+<div class="level"><p>А.5.34.12. <span class="cpp">rdscompSetBlockModel</span> &ndash; подключить модель к блоку</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdscompSetAltModelName.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdscompSetModelFunction.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdscompSetBlockModel">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.34. Функции поддержки автоматической компиляции моделей</h4>
+<h5>А.5.34.12. <span class="cpp">rdscompSetBlockModel</span> &ndash; подключить модель к блоку</h5>
+
+
+<p>Функция <span class="cpp">rdscompSetBlockModel</span> подключает к указанному блоку
+автоматически компилируемую модель с указанными параметрами.</p>
+
+<pre class="cpp">  <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdscompSetBlockModel(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block        <span class="rem">// Идентификатор блока</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> CompModuleName,    <span class="rem">// DLL модуля автокомпиляции</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> CompModuleFunc,    <span class="rem">// Функция модуля автокомпиляции</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> ModelName,         <span class="rem">// Имя модели</span>
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> AltModelName       <span class="rem">// Альтернативное имя модели</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_IBhSSSS</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Block</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a></i></span>)</dt>
+  <dd>Идентификатор блока, к которому подключается модель.</dd>
+
+  <dt><span class="cpp">CompModuleName</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Указатель на строку с именем файла DLL, в которой находится
+  <a href="um_1_8.htm" title="&sect;1.8. Автоматическая компиляция моделей блоков">модуль автокомпиляции</a>, который будет обслуживать
+  подключаемую модель. Имя файла может содержать
+  <a href="rdsGetFullFilePath.htm#ref1" title="Символические обозначения стандартных путей">символические обозначения</a>
+  стандартных папок RDS. Если в имени файла нет пути, он будет считаться находящимся в
+  одной папке с загруженной схемой. Для отключения автокомпилируемой модели от блока в этом параметре
+  можно передать <span class="cpp">NULL</span> (остальные параметры при этом игнорируются).</dd>
+
+  <dt><span id="ref1"><span class="cpp">CompModuleFunc</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</span></dt>
+  <dd>Указатель на строку с именем функции модуля автокомпиляции, экспортированной из файла
+  <span class="cpp">CompModuleName</span>. RDS будет использовать эту строку для поиска этой функции в DLL,
+  передавая ее в параметре функции Windows API <span id="light_ref1" class="cpp">GetProcAddress</span>.</dd>
+
+  <dt><span class="cpp">ModelName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку с именем подключаемой модели.</dd>
+
+  <dt><span class="cpp">AltModelName</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Указатель на строку с <a href="RDS_COMPMODELDATA.htm#ref4" title="Альтернативное имя модели">альтернативным именем</a> подключаемой модели, или
+  <span class="cpp">NULL</span>, если у модели нет альтернативного имени.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Одна из констант <span class="cpp">RDS_FRESULT_*</span>, указывающая на результат выполнения функции:</p>
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref2">RDS_FRESULT_OK</span></span></td>
+          <td>Модель подключена.</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref3">RDS_FRESULT_ERROR</span></span></td>
+          <td>Ошибка (нет указанного файла DLL, не экспортирована указанная функция и т.п.).</td>
+        </tr>
+        <tr>
+          <td class="term"><span class="cpp"><span id="light_ref4">RDS_FRESULT_DELAYED</span></span></td>
+          <td>Выполнение функции отложено.</td>
+        </tr>
+      </table>
+    </div></div>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция информирует RDS о необходимости подключить к блоку <span class="cpp">Block</span> новую
+автоматически компилируемую модель или отключить ее совсем (для этого в
+<span class="cpp">CompModuleName</span> передается <span class="cpp">NULL</span>).</p>
+
+<p>Если в момент вызова функции RDS находится в режиме расчета, функция вызвана из какой-либо реакции блока
+<span class="cpp">Block</span> или модуля, обслуживающего именно эту модель, подключение новой модели будет отложено
+до завершения очередного такта расчета или соответствующей реакции, при этом функция вернет константу
+<span class="cpp">RDS_FRESULT_DELAYED</span>.</p>
+
+<p>Наиболее часто встречающееся применение этой функции &ndash; добавление в редактор модели возможности
+выделения одного из блоков и подключения к нему альтернативной версии модели, изменения в которой не будут
+влиять на остальные блоки.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdscompSetAltModelName.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdscompSetModelFunction.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdscompSetBlockModel">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

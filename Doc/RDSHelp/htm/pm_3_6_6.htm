@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.6.6. Вывод всплывающих подсказок</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3">Глава 3. Управление RDS из других приложений</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3_6">&sect;3.6. Отображение схемы RDS в собственном окне приложения</a></p>
+<div class="level"><p>&sect;3.6.6. Вывод всплывающих подсказок</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_3_6_5.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_4_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_6_6">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_3_6_6_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 3. Управление RDS из других приложений</h2>
+<h3 class="off">&sect;3.6. Отображение схемы RDS в собственном окне приложения</h3>
+<h4>&sect;3.6.6. Вывод всплывающих подсказок</h4>
+<p class="abstract">В рассматриваемый пример программы добавляется вывод всплывающих подсказок, текст и 
+                параметры которых определяются блоками отображаемой схемы.</p>
+
+
+<p>Теперь займемся выводом всплывающей подсказки. Часть функций, отвечающих за ее вывод, уже готова: в функции
+<span class="cpp">CreateControls</span> мы создали
+<a href="pm_3_6_1.htm#ref14" title="Создание окна для всплывающей подсказки">окно для показа подсказки</a>, присвоив его дескриптор глобальной переменной
+<span class="cpp">ToolTip</span>, и две области, для которых будет выводиться подсказка. Одна область связана
+с кнопкой &laquo;<span class="menu">Открыть</span>&raquo;, и для нее всегда будет выводится текст
+&laquo;Загрузить схему&raquo; &ndash; мы сделали ее просто для иллюстрации работы с подсказками. Вторая
+область, которой мы дали идентификатор <span class="cpp">VIEWPORTTIP_ID</span>, пока не имеет размера &ndash;
+мы будем постоянно подстраивать ее размеры под текущее состояние порта вывода, а текст подсказки будем получать у
+RDS. На этом следует остановиться подробнее.</p>
+
+<p>Число блоков, изображаемых в <a href="pm_3_6_1.htm" title="&sect;3.6.1. Общие принципы работы с портом вывода">порте вывода</a>, их положение и размеры
+зависят от выбранного пользователем масштаба и положения полос прокрутки, поэтому мы не можем заранее задать
+для каждого блока схемы фиксированную область всплывающей подсказки. Вместо этого мы создадим одну область
+подсказки на весь порт вывода и будем менять ее размеры при перемещении курсора мыши. В переменной
+<span class="cpp">LastToolTipRect</span> типа <span class="cpp"><a href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a></span> мы будем хранить координаты
+прямоугольной области последней выведенной подсказки (сразу после создания окна мы делаем этот прямоугольник
+пустым). Как только курсор мыши покидает область <span class="cpp">LastToolTipRect</span>, мы будем расширять
+эту область подсказки до размеров всего порта вывода, а как только будет выведена очередная подсказка,
+мы уменьшим область ее действия вместе с <span class="cpp">LastToolTipRect</span> до полученных из
+RDS размеров (обычно это размеры изображения блока, который отобразил подсказку).</p>
+
+<p>Исходно и область действия подсказки, и <span class="cpp">LastToolTipRect</span> пусты, поэтому, как
+только курсор мыши сдвинется, вызовется функция <span class="cpp">AdjustToolTipRect</span>, и область
+действия подсказки будет расширена на весь порт вывода &ndash; таким образом, если курсор задержится над
+портом достаточное время, Windows запросит текст подсказки у нашей программы, послав ее окну сообщение
+<span class="cpp">WM_NOTIFY</span> с параметром <span class="cpp">TTN_NEEDTEXT</span>. Процедура главного окна
+при этом вызовет еще не написанную нами функцию <span class="cpp">GetTooltip</span>, которая должна запросить у
+RDS текст подсказки для данной точки порта вывода и передать его Windows для отображения. Кроме того,
+если в данной точке находится блок, выводящий подсказку, эта функция уменьшит зону действия подсказки до
+его размеров и скопирует ее в <span class="cpp">LastToolTipRect</span>. Теперь зона подсказки ограничена
+изображением блока, и подсказка останется на экране до тех пор, пока либо не окончится время ее отображения, либо
+курсор мыши не покинет указанную область. Как только курсор выйдет за пределы изображения блока, то
+есть покинет прямоугольник <span class="cpp">LastToolTipRect</span>, сработает проверка в реакции на сообщение
+<span class="cpp">WM_MOUSEMOVE</span> в процедуре главного окна, и зона действия подсказки снова расширится
+на весь порт вывода, подготавливая таким образом программу к выводу новой подсказки. При выводе подсказки для
+другого блока зона действия снова сожмется до его размеров, и т.д. Это &ndash; не самый лучший и надежный
+способ организации вывода разных подсказок для одной обрасти окна, но для целей данного примера он
+вполне подходит. В реальной управляющей программе разработчик может выводить подсказки так, как ему удобно,
+тем более, что современные среды разработки обычно предоставляют для этого набор удобных функций.</p>
+
+<p>Сейчас нам нужно написать функцию <span class="cpp">GetTooltip</span>, которая запрашивает у
+RDS текст всплывающей подсказки и настраивает некоторые ее параметры:</p>
+
+<pre class="cpp">  <span class="rem">// Запрос у RDS параметров всплывающей подсказки</span>
+  <span class="kw">void</span> GetTooltip(TOOLTIPTEXT *tiptext)
+  { <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> CanShow;
+    TOOLINFO ti;
+    <span class="kw">int</span> left,top,right,bottom,reshowtimeout,hidetimeout;
+    <span class="rem">// Инициализация переданной структуры</span>
+    tiptext-&gt;hinst=NULL;
+    tiptext-&gt;lpszText=NULL;
+    tiptext-&gt;szText[<span class="const">0</span>]=<span class="const">0</span>;
+
+    <span class="rem">// Проверяем наличие связи с RDS и существование порта</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Запрашиваем у RDS подсказку для точки (LastX,LastY)</span>
+    CanShow=<span id="light_ref1"><a class="hidden" href="rdsctrlVPPopupHint.htm" title="Б.3.7.16. rdsctrlVPPopupHint &ndash; получить текст всплывающей подсказки">rdsctrlVPPopupHint</a></span>(RdsLink,Viewport,
+        LastX,LastY,
+        &amp;HintString,
+        &amp;left,&amp;top,&amp;right,&amp;bottom,
+        &amp;reshowtimeout,&amp;hidetimeout);
+    <span class="rem">// Теперь текст подсказки записан в глобальную переменную</span>
+    <span class="rem">// HintString. Переменная должна существовать и после</span>
+    <span class="rem">// завершения этой функции, поэтому она сделана глобальной.</span>
+
+    <span class="kw">if</span>(CanShow &amp;&amp; (!HintString.IsEmpty())) <span class="rem">// Есть подсказка</span>
+      { <span class="rem">// Заносим указатель на текст подсказки в структуру</span>
+        tiptext-&gt;lpszText=HintString.c_str;
+        <span class="rem">// Настраиваем время, через которое подсказка скроется</span>
+        SendMessage(ToolTip,TTM_SETDELAYTIME,
+          (WPARAM)TTDT_AUTOPOP,(LPARAM)hidetimeout);
+        <span class="rem">// Настраиваем время повторного вывода подсказки</span>
+        SendMessage(ToolTip,TTM_SETDELAYTIME,
+          (WPARAM)TTDT_RESHOW,(LPARAM)reshowtimeout);
+        <span class="rem">// Настраиваем новый прямоугольник подсказки</span>
+        ti.cbSize=<span class="kw">sizeof</span>(ti);
+        ti.hwnd=MainWin;
+        ti.uId=VIEWPORTTIP_ID;
+        ti.rect.left=left;
+        ti.rect.top=top;
+        ti.rect.right=right;
+        ti.rect.bottom=bottom;
+        SendMessage(ToolTip,TTM_NEWTOOLRECT,<span class="const">0</span>,(LPARAM)(&amp;ti));
+        <span class="rem">// Запоминаем последний прямоугольник подсказки</span>
+        CopyRect(&amp;LastToolTipRect,&amp;(ti.rect));
+      }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В эту функцию передается указатель на структуру <span class="cpp">tiptext</span>, в которую она должна
+записать либо сам текст подсказки в поле <span class="cpp">szText</span>, либо указатель на этот текст,
+размещенный где-то еще, в поле <span class="cpp">lpszText</span>. Поскольку
+<span class="cpp">szText</span> &ndash; это массив из восьмидесяти символов, а мы заранее не знаем,
+какого размера текст нам вернет RDS, мы будем писать текст подсказки в глобальную переменную
+<span class="cpp">HintString</span> типа <span class="cpp"><a href="pm_3_3.htm#ref3" title="Вспомогательный класс для хранения строк">TDynString</a></span>, а в поле
+<span class="cpp">tiptext-&gt;lpszText</span> запишем указатель на внутренний динамический массив символов этой
+переменной. Нам нужно, чтобы текст подсказки не исчез после завершения функции
+<span class="cpp">GetTooltip</span>, поэтому переменную <span class="cpp">HintString</span> мы сделали глобальной.</p>
+
+<p>Для запроса текста и параметров подсказки в конкретной точке порта вывода мы используем функцию
+<span class="cpp"><a href="rdsctrlVPPopupHint.htm" title="Б.3.7.16. rdsctrlVPPopupHint &ndash; получить текст всплывающей подсказки">rdsctrlVPPopupHint</a></span>:</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <a class="hidden" href="rdsctrlVPPopupHint.htm" title="Б.3.7.16. rdsctrlVPPopupHint &ndash; получить текст всплывающей подсказки">rdsctrlVPPopupHint</a>(
+    <span class="kw">int</span> Link,                 <span class="rem">// Идентификатор связи с RDS</span>
+    <span class="kw">int</span> VPort,                <span class="rem">// Идентификатор порта вывода</span>
+    <span class="kw">int</span> x,<span class="kw">int</span> y,              <span class="rem">// Точка порта вывода</span>
+    <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> hintstr,           <span class="rem">// Объект для возврата текста</span>
+    <span class="kw">int</span> *pleft,<span class="kw">int</span> *ptop,     <span class="rem">// Левый верхний и правый</span>
+    <span class="kw">int</span> *pright,<span class="kw">int</span> *pbottom, <span class="rem">// нижний углы области подсказки</span>
+    <span class="kw">int</span> *preshowtimeout,      <span class="rem">// Интервал повторного вывода, мс</span>
+    <span class="kw">int</span> *phidetimeout);       <span class="rem">// Интервал скрытия, мс</span></pre>
+
+<p>В параметрах <span class="cpp">x</span> и <span class="cpp">y</span> этой функции передаются координаты
+точки порта вывода, для которой запрашивается подсказка. Windows не передает координаты курсора при
+запросе текста подсказки, однако, при перемещении курсора мы все время запоминаем его текущие координаты в
+глобальных переменных <span class="cpp">LastX</span> и <span class="cpp">LastY</span>, поэтому в качестве
+координат точки запроса подсказки мы можем использовать значения этих переменных. В качестве объекта для
+возврата текста подсказки мы передаем указатель на глобальную переменную <span class="cpp">HintString</span>
+(зарегистрированная нами <a href="pm_3_1.htm#light_ref4" title="Возврат строк в RdsCtrl.dll">функция возврата строк</a>
+работает именно с классом <span class="cpp"><a href="pm_3_3.htm#ref3" title="Вспомогательный класс для хранения строк">TDynString</a></span>), координаты прямоугольника подсказки мы записываем
+в переменные <span class="cpp">left</span>, <span class="cpp">top</span>, <span class="cpp">right</span> и
+<span class="cpp">bottom</span>, а интервалы повторного вывода подсказки после выхода курсора из
+прямоугольника (<span class="cpp">left</span>,<span class="cpp">top</span>) &ndash;
+(<span class="cpp">right</span>,<span class="cpp">bottom</span>) и интервал автоматического скрытия подсказки
+&ndash; в переменные <span class="cpp">reshowtimeout</span> и <span class="cpp">hidetimeout</span> соответственно
+(оба интервала возвращаются в миллисекундах). Функция <span class="cpp"><a class="hidden" href="rdsctrlVPPopupHint.htm" title="Б.3.7.16. rdsctrlVPPopupHint &ndash; получить текст всплывающей подсказки">rdsctrlVPPopupHint</a></span>
+возвращает уникальный идентификатор блока, выводящего подсказку, или 0, если в данной точке порта вывода
+нет блока либо блок, находящийся там, подсказку не выводит. Сам идентификатор нам не нужен,
+нам нужно только знать, выводится подсказка или нет, поэтому результат возврата функции мы присваиваем
+логической переменной <span class="cpp">CanShow</span>.</p>
+
+<p>Если значение <span class="cpp">CanShow</span> истинно, и строка подсказки
+<span class="cpp">HintString</span> не пустая, мы передаем текст и параметры подсказки в Windows. Текст,
+то есть указатель на внутренний массив символов переменной <span class="cpp">HintString</span>, мы записываем
+в структуру <span class="cpp">tiptext</span> &ndash; Windows обработает этот текст, когда наша функция
+завершится. Временные интервалы подсказки и границы ее прямоугольника мы передаем окну подсказки
+<span class="cpp">ToolTip</span> при помощи вызовов <span class="cpp">SendMessage</span> с соответствующими
+параметрами (используемые для этого структуры и константы подробно рассмотрены в литературе по Windows API).
+Кроме того, полученные от RDS границы прямоугольника подсказки мы копируем в глобальную переменную
+<span class="cpp">LastToolTipRect</span>, чтобы при перемещении курсора можно было определить момент, когда
+он выйдет за пределы этого прямоугольника, и подготовиться к выводу новой подсказки.</p>
+
+<p>Реализованный нами способ имеет один не очень очевидный недостаток: так можно выводить только
+однострочные подсказки, а блоки RDS часто выдают подсказки, состоящие из нескольких строк текста.
+Такая подсказка в нашей программе будет выглядеть как длинная строка со специальными символами в тех местах,
+где должны были бы быть переводы строк. Вывод многострочных подсказок выходит за рамки этого текста и
+не связан с организацией взаимодействия управляющей программы и RDS, поэтому мы
+не будем его рассматривать.</p>
+
+<p>Теперь наша программа выполняет необходимый минимум функций: она может рисовать подсистему в
+своем окне, обеспечивает реакцию блоков на мышь и клавиатуру, вывод контекстных меню и всплывающих подсказок.
+В большинстве случаев для работы со схемами этого достаточно.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_3_6_5.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_4_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_6_6">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

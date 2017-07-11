@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.12.1. Реакция на мышь</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_12">&sect;2.12. Реакция блоков на действия пользователя</a></p>
+<div class="level"><p>&sect;2.12.1. Реакция на мышь</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_11.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_2.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_12_1_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3>&sect;2.12. Реакция блоков на действия пользователя</h3>
+<p class="abstract">Рассматриваются различные способы организации взаимодействия блоков схемы с пользователем: реакция на
+            мышь и клавиатуру, добавление новых пунктов в контекстное меню блока и системное меню RDS. Отдельно описываются
+            реакции на действия пользователя при редактировании схемы: добавление блоков, их удаление, изменение их
+            размеров и т.п.</p>
+<h4>&sect;2.12.1. Реакция на мышь</h4>
+<p class="abstract">Рассматриваются возможные реакции модели блока на действия пользователя мышью.
+                Приводится пример блока, позволяющего щелчками по верхней и нижней части его изображения увеличивать и уменьшать
+                значение его выхода. Затем в модель блока добавляется реакция на щелчки по активным элементам векторной
+                картинки.</p>
+
+
+<p>Основной способ организовать взаимодействия схемы с пользователем &ndash; это разрешить некоторым блокам схемы
+(рукояткам, кнопкам, полям ввода и т.п.) реагировать на нажатие и отпускание кнопок мыши и перемещение ее
+курсора. В <a href="pm_1_3.htm#ref1" title="Режим редактирования">режиме редактирования</a>
+мышь используется для <a href="um_2_6.htm#ref7" title="Перемещение блока мышью">перетаскивания блоков</a>, рисования
+<a href="um_2_7_1.htm" title="&sect;2.7.1. Общие принципы создания связей">связей</a>
+и прочих действий по изменению схемы, поэтому RDS позволяет моделям блоков реагировать на мышь
+только в режимах <a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a> и
+<a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a>.
+<span id="ref1">Для</span>
+того, чтобы модель блока вызывалась в этих случаях,
+должны одновременно выполниться три условия:</p>
+
+<ul>
+  <li>курсор мыши должен находиться в пределах изображения блока (точнее,
+  его <span id="light_ref1">описывающего прямоугольника</span>);</li>
+  <li>блок должен находиться на <a href="um_2_12.htm" title="&sect;2.12.1. Использование слоев">слое</a>,
+  для которого разрешено редактирование;</li>
+  <li>в <a href="pm_1_4.htm#pic3" title="Параметры блока &ndash; модель и реакции">параметрах блока</a> должна
+  быть разрешена реакция на мышь.</li>
+</ul>
+
+<p>Из первого условия есть исключение: при необходимости, установив
+<a href="RDS_BLOCKDATA.htm#light_ref10" title="Флаг захвата мыши">специальный флаг</a>
+в структуре данных блока <span class="cpp"><a href="RDS_BLOCKDATA.htm#ref3" title="Структура RDS_BLOCKDATA">RDS_BLOCKDATA</a></span>, модель может захватить мышь,
+чтобы получать информацию о перемещениях курсора даже после того, как он покинет пределы изображения блока
+(подобный пример будет рассмотрен в <a href="pm_2_12_2.htm#ref2" title="Пример модели двухкоординатной рукоятки">&sect;2.12.2</a>).
+Отключение редактирования слоя не только запрещает пользователю перемещать блоки и менять
+их параметры в режиме редактирования, но и блокирует реакции их моделей на мышь в режимах моделирования
+и расчета. Это позволяет, например, сделать какую-либо группу полей ввода отладочной, и защитить их
+от случайного изменения. Разрешение или запрещение реакции на мышь в параметрах блока позволяет,
+например, использовать блоки с одной и той же моделью и как индикаторы, и как поля ввода.</p>
+
+<p><span id="ref2">В</span>
+<a href="pm_2_10_4.htm#ref3" title="Пример вывода изображения OpenGL на панель блока">примере блока</a>, создающего панель в окне подсистемы,
+уже встречалась реакция модели на двойной щелчок мышью по изображению блока, но там
+она играла только вспомогательную роль, поэтому ей было уделено мало внимания. Теперь более
+подробно рассмотрим обработку нажатия кнопки мыши на простом примере:
+<span id="light_ref2">создадим блок, который будет увеличивать значение своего целого выхода
+&laquo;<span class="rdsvar">v</span>&raquo; на единицу при каждом щелчке левой кнопкой мыши по верхней части его изображения,
+и уменьшать его на единицу при каждом щелчке по нижней части</span>.</p>
+
+<p>Блоку нужен единственный целый выход, поэтому структура переменных блока будет выглядеть следующим образом:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">v</td>
+<td class="center">int</td>
+<td class="center">4</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Модель блока будет достаточно простой:</p>
+
+<pre class="cpp">  <span class="rem">// Увеличение/уменьшение значения по щелчку</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> PlusMinus(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  {
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start  (*((char *)(pStart)))</span>
+  <span class="preproc">#define Ready  (*((char *)(pStart+1)))</span>
+  <span class="preproc">#define v      (*((int *)(pStart+2)))</span>
+    <span class="rem">// Вспомогательная — указатель на структуру события мыши</span>
+    <span id="light_ref3"><a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a></span> mouse;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Проверка типа статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSI}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Реакция на нажатие кнопки мыши</span>
+        <span class="kw">case</span> <span id="light_ref4"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>:
+          <span class="rem">// Приведение ExtParam к нужному типу</span>
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam;
+          <span class="kw">if</span>(mouse-&gt;Button==<span id="light_ref5"><a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a></span>)
+            { <span class="rem">// Нажата левая кнопка</span>
+              <span class="kw">if</span>(mouse-&gt;y&lt;mouse-&gt;Top+mouse-&gt;Height/<span class="const">2</span>)
+                v++; <span class="rem">// В верхней половине блока - увеличиваем</span>
+              <span class="kw">else</span>
+                v--; <span class="rem">// В нижней половине блока — уменьшаем</span>
+              <span class="rem">// Взводим сигнал готовности</span>
+              Ready=<span class="const">1</span>;
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef v</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Кроме стандартной проверки типа переменных,блок реагирует еще только на одно событие:
+нажатие какой-либо кнопки мыши <span class="cpp"><a href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span>. При вызове модели в этом режиме в
+параметре <span class="cpp">ExtParam</span> передается указатель на структуру
+<span class="cpp"><span id="light_ref6"><a href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a></span></span>, описывающую произошедшее событие:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="kw">int</span> x,y;           <span class="rem">// Координаты курсора мыши на рабочем поле</span>
+    <span class="kw">int</span> BlockX,BlockY; <span class="rem">// Координаты точки привязки блока с учетом</span>
+                       <span class="rem">// связи с переменными</span>
+    <span class="kw">int</span> Left,Top;      <span class="rem">// Верхний левый угол зоны блока</span>
+    <span class="kw">int</span> Width,Height;  <span class="rem">// Ширина и высота зоны блока</span>
+    <span class="kw">int</span> IntZoom;       <span class="rem">// Масштаб окна подсистемы в процентах</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Button;      <span class="rem">// Кнопка мыши (константа RDS_M*)</span>
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> Shift;       <span class="rem">// Флаги клавиш (RDS_M*, RDS_K*)</span>
+    <span class="kw">double</span> DoubleZoom; <span class="rem">// Масштаб в долях единицы</span>
+    <span class="kw">int</span> MouseEvent;    <span class="rem">// Причина вызова (константа RDS_BFM_MOUSE*)</span>
+  } <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a> *<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>;</pre>
+
+<p>Для упрощения доступа к полям этой структуры указатель на нее, приведенный к нужному типу,
+записывается во вспомогательную переменную <span class="cpp">mouse</span>.</p>
+
+<p>Сейчас нас в этой структуре будут интересовать координаты курсора (<span class="cpp">x</span>,<span class="cpp">y</span>),
+координаты и размеры описывающего прямоугольника блока в текущем масштабе
+(<span class="cpp">Left</span>, <span class="cpp">Top</span>, <span class="cpp">Width</span> и
+<span class="cpp">Height</span>), а также нажатая кнопка (<span class="cpp">Button</span>). Увеличивать и
+уменьшать выход блока нужно только при щелчках левой кнопки, поэтому, прежде всего, поле
+<span class="cpp">mouse-&gt;Button</span> сравнивается с константой
+<span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a></span>, обозначающей левую кнопку мыши. Далее модель сравнивает вертикальную координату
+мыши <span class="cpp">mouse-&gt;y</span> с вертикальной координатой центра описывающего прямоугольника блока
+<span class="cpp">mouse-&gt;Top+mouse-&gt;Height/2</span> (координата верхней границы плюс половина высоты).
+Если координата курсора меньше этого значения, значит, щелчок пришелся на верхнюю часть блока, и значение
+выхода нужно увеличить. В противном случае значение уменьшается &ndash; щелчок пришелся на нижнюю часть.
+После этого <a href="um_1_4.htm#ref27" title="Сигнал готовности блока">сигналу готовности блока</a>
+<span class="cpp">Ready</span> присваивается единица, чтобы в ближайшем такте расчета сработали связи,
+присоединенные к выходу блока <span class="cpp">v</span>.</p>
+
+<p>Для проверки работы созданной модели необходимо разрешить реакцию на мышь в
+<a href="pm_1_4.htm#pic3" title="Параметры блока &ndash; модель и реакции">параметрах блока</a>, к которому она подключена
+(<a href="#pic1" title="Включение реакции на мышь в параметрах блока">рис.&nbsp;73</a>),
+и присоединить к его выходу числовой индикатор.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/MousePlusMinus.png" width="657" height="423" alt="Включение реакции на мышь в параметрах блока" />
+<p id="light_pic1">Рис.&nbsp;73. Включение реакции на мышь в параметрах блока</p>
+</div></div>
+
+
+<p>В качестве изображения блока можно выбрать прямоугольник с двумя текстовыми строчками
+&laquo;+1&raquo; и &laquo;&ndash;1&raquo;, расположенными друг под другом. В режиме расчета при
+щелчке по верхней части блока значение индикатора, соединенного с выходом блока, будет увеличиваться,
+а при щелчке по верхней &ndash; уменьшаться.</p>
+
+<p><span id="ref7">Модель</span>
+этого блока получилась достаточно простой &ndash; мы обходимся без класса личной области данных,
+и все действия выполняем непосредственно в функции модели, внутри
+<a href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока">макроопределений для статических переменных</a>.
+Здесь, однако, <span id="light_ref7">следует внимательно следить за возможными конфликтами
+имен макросов переменных и используемых в функции имен переменных и полей структур</span>.
+Представим себе, что выход данного блока мы назвали бы не <span class="cpp">v</span>, а
+<span class="cpp">y</span>. Это простое, на первый взгляд, переименование приведет к тому, что
+компиляция функции станет невозможной. Дело в том, что у используемой в модели структуры
+<span class="cpp"><a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a></span> есть поле с точно таким же именем &ndash;
+&laquo;<span class="cpp">y</span>&raquo;. При обработке текста программы препроцессором языка C имя
+&laquo;<span class="cpp">y</span>&raquo; будет воспринято как макроопределение и раскрыто, в результате чего выражение
+&laquo;<span class="cpp">mouse-&gt;y</span>&raquo; будет преобразовано в
+&laquo;<span class="cpp">mouse-&gt;(*((int*)(pStart+2)))</span>&raquo;, которое, естественно, не будет понято компилятором.
+Ошибки, выданные компилятором при разборе такого выражения, могут показаться программисту, особенно
+начинающему, довольно странными, тем более, что в тексте компилируемой программы написано, на первый взгляд,
+правильное выражение <span class="cpp">mouse-&gt;y</span>, а результат работы препроцессора обычно в
+явном виде нигде не отображается. Для того, чтобы избежать подобных проблем, в более-менее сложных моделях
+блоков имеет смысл выносить все действия за пределы главной функции модели с ее макроопределениями, оформляя
+эти действия как обычные функции или функции-члены класса
+<a href="pm_1_4.htm#ref8" title="Личная область данных блока">личной области данных</a>.</p>
+
+<div class="picright"><div class="container" id="pic2">
+<img src="../img/MousePlusMinusPict.png" width="315" height="508" alt="Ввод идентификатора элемента картинки" />
+<p id="light_pic2">Рис.&nbsp;74. Ввод идентификатора<br />элемента картинки</p>
+</div></div>
+
+
+<p>Созданный нами блок можно использовать в качестве простейшего органа управления для увеличения
+и уменьшения какого-либо параметра схемы. При этом его работа не будет зависеть от его внешнего вида:
+как бы он ни выглядел, щелчок по его верхней части будет увеличивать параметр, щелчок по нижней &ndash;
+уменьшать. Можно, например, написать в прямоугольнике с текстом не &laquo;+1&raquo; и
+&laquo;&ndash;1&raquo;, а &laquo;увеличить&raquo; и &laquo;уменьшить&raquo;, или задать блоку
+векторную картинку со стрелками вверх и вниз. Однако, модель блока написана так, что эти стрелки или надписи
+обязательно должны располагаться друг под другом, одна &ndash; в верхней половине прямоугольника блока,
+другая &ndash; в нижней. Чтобы разместить их, например, слева и справа, придется переделывать модель.</p>
+
+<p><span id="ref8">Чтобы</span>
+сделать блок более гибким, можно <span id="light_ref8">проверять, в какой конкретный элемент
+<a href="pm_1_4.htm#light_ref4" title="Векторная картинка блока">векторной картинки</a>
+попал курсор мыши</span> (если, конечно у блока есть картинка). RDS позволяет присваивать каждому
+элементу картинки какое-либо целое число, и модель блока, вызвав одну из специальных сервисных функций,
+может получить число, соответствующее элементу по заданным координатам или под курсором мыши. Если
+присвоить элементам картинки, символизирующим увеличение параметра (например, стрелке вверх) одно число,
+а символизирующим уменьшение (стрелке вниз) &ndash; другое, модель сможет правильно реагировать на щелчки
+по этим элементам, независимо от того, как они расположены.</p>
+
+<p>Будем присваивать частям картинки, щелчок по которым должен привести к увеличению и уменьшению переменной
+&laquo;<span class="rdsvar">v</span>&raquo;, числа-идентификаторы 1 и &minus;1 соответственно. Все остальные элементы картинки будут
+иметь идентификатор 0 (он присваивается по умолчанию). При отсутствии у блока векторной картинки модель будет
+вести себя, как и раньше: щелчок по верхней части изображения будет увеличивать &laquo;<span class="rdsvar">v</span>&raquo;, щелчок
+по нижней &ndash; уменьшать. Поместим на картинку блока
+(<a href="#pic2" title="Ввод идентификатора элемента картинки">рис.&nbsp;74</a>) вытянутый по горизонтали белый прямоугольник
+(идентификатор 0), в левой части которого будет находиться зеленый квадрат (идентификатор 1) с наложенным
+на него треугольником, направленным вверх (идентификатор 1), а в правой &ndash; красный квадрат (идентификатор &minus;1)
+с направленным вниз треугольником (идентификатор &minus;1). Идентификаторы квадрата и наложенного на него
+треугольника должны совпадать, чтобы оба элемента воспринимались моделью блока как единое целое.</p>
+
+<p>Теперь внесем изменения в модель блока. В реакцию на событие <span class="cpp"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span> нужно добавить
+проверку наличия у блока векторной картинки, и, если она есть, считывание идентификатора ее элемента,
+на который пришелся щелчок левой кнопкой (изменения выделены <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">        <span class="rem">// Реакция на нажатие кнопки мыши</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a>:
+          <span class="rem">// Приведение ExtParam к нужному типу</span>
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam;
+          <span class="kw">if</span>(mouse-&gt;Button==<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref4" title="RDS_MLEFTBUTTON">RDS_MLEFTBUTTON</a>)
+            { <span class="rem">// Нажата левая кнопка</span>
+            <span class="changes">  <span class="rem">// Проверяем, есть ли у блока картинка (получаем описание блока)  </span></span>
+            <span class="changes">  <span id="light_ref9"><a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a></span> descr;                                       </span>
+            <span class="changes">  descr.servSize=<span class="kw">sizeof</span>(descr);                                     </span>
+            <span class="changes">  <span id="light_ref10"><a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a></span>(BlockData-&gt;Block,&amp;descr);                  </span>
+            <span class="changes">  <span class="kw">if</span>(descr.Flags &amp; <span id="light_ref11"><a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#light_ref15" title="RDS_BDF_HASPICTURE">RDS_BDF_HASPICTURE</a></span>)                              </span>
+            <span class="changes">    { <span class="rem">// Картинка есть – определяем идентификатор                   </span></span>
+            <span class="changes">      <span class="rem">// элемента под курсором                                      </span></span>
+            <span class="changes">      <span class="kw">int</span> id=<span id="light_ref12"><a class="hidden" href="rdsGetMouseObjectId.htm" title="А.5.6.31. rdsGetMouseObjectId &ndash; элемент векторной картинки блока под курсором мыши">rdsGetMouseObjectId</a></span>(mouse);                            </span>
+            <span class="changes">      <span class="kw">switch</span>(id)                                                    </span>
+            <span class="changes">        { <span class="kw">case</span> <span class="const">1</span>:  v++; <span class="kw">break</span>;                                      </span>
+            <span class="changes">          <span class="kw">case</span> -<span class="const">1</span>: v--; <span class="kw">break</span>;                                      </span>
+            <span class="changes">        }                                                           </span>
+            <span class="changes">    }                                                               </span>
+            <span class="changes">  <span class="kw">else</span> </span><span class="kw">if</span>(mouse-&gt;y&lt;mouse-&gt;Top+mouse-&gt;Height/<span class="const">2</span>)
+                v++;	<span class="rem">// В верхней половине блока - увеличиваем</span>
+              <span class="kw">else</span>
+                v--;	<span class="rem">// В нижней половине блока — уменьшаем</span>
+              <span class="rem">// Взводим сигнал готовности</span>
+              Ready=<span class="const">1</span>;
+            }
+          <span class="kw">break</span>;</pre>
+
+<p>Убедившись, что нажата левая кнопка мыши, модель запрашивает у RDS описание блока, который она обслуживает.
+Для этого используется уже знакомая нам по примерам структура <span class="cpp"><a href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a></span> &ndash;
+ранее мы <a href="pm_2_6_3.htm#light_ref8" title="Пример передачи данных через динамическую переменную">использовали</a> ее для получения текста
+<a href="um_1_2.htm#ref20" title="Комментарий блока">комментария блока</a>. В служебное поле <span class="cpp">servSize</span> этой
+структуры записывается ее размер (так RDS контролирует правильность переданного параметра), после чего
+вызывается сервисная функция <span class="cpp"><a href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a></span>, которая записывает описание блока,
+идентификатор которого передан в первом параметре функции, в структуру, указатель на которую передается во
+втором. Нас интересует битовый флаг <span class="cpp"><a href="RDS_BLOCKDESCRIPTION.htm#light_ref15" title="RDS_BDF_HASPICTURE">RDS_BDF_HASPICTURE</a></span> поля <span class="cpp">Flags</span>:
+если он взведен, у блока есть векторная картинка. Целая константа <span class="cpp"><a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#light_ref15" title="RDS_BDF_HASPICTURE">RDS_BDF_HASPICTURE</a></span>,
+описанная в &laquo;<span class="file">RdsDef.h</span>&raquo;, имеет единственный единичный бит в позиции интересующего нас
+флага. Выполняя операцию побитового &laquo;ИЛИ&raquo; над полем <span class="cpp">Flags</span> и этой
+константой, мы получим нулевой результат, если флаг сброшен, и не нулевой в противном случае. Таким образом,
+оператор</p>
+
+<pre class="cpp">  <span class="kw">if</span>(descr.Flags & <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#light_ref15" title="RDS_BDF_HASPICTURE">RDS_BDF_HASPICTURE</a>)</pre>
+
+<p class="noindent">выполнится только в том случае, если для блока задана векторная картинка.
+В противном случае будет выполняться старая часть модели (после <span class="cpp">else</span>), определяющая
+попадание курсора в верхнюю/нижнюю половину изображения.</p>
+
+<p>Если картинка у блока есть, модель вызывает сервисную функцию <span class="cpp"><a href="rdsGetMouseObjectId.htm" title="А.5.6.31. rdsGetMouseObjectId &ndash; элемент векторной картинки блока под курсором мыши">rdsGetMouseObjectId</a></span>,
+передавая ей указатель на структуру описания события мыши <span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a></span>. Функция берет из
+этой структуры необходимые ей параметры и возвращает идентификатор элемента картинки блока, находящегося под
+курсором мыши, который присваивается вспомогательной переменной <span class="cpp">id</span>. В данном случае
+<span class="cpp">id</span> может принимать всего три значения: 1 (курсор мыши попал в зеленый квадрат или
+лежащий на нем треугольник), &minus;1 ( курсор попал в красный квадрат или его треугольник) и 0 (курсор
+не попал в указанные элементы). Если <span class="cpp">id</span> равен 1 или &minus;1, выход блока соответственно
+увеличивается или уменьшается на единицу.</p>
+
+<p>Теперь щелчок по зеленому квадрату будет увеличивать выход блока, по красному &ndash; уменьшать. Причем,
+если в редакторе картинки поменять эти квадраты местами, расположить их друг под другом, или вообще в
+произвольных местах картинки, работа блока не нарушится &ndash; модель опознает не какие-то жестко заданные
+области картинки, а идентификаторы ее элементов, где бы они не находились.</p>
+
+<p>Можно пойти еще дальше, и переделать модель следующим образом:</p>
+
+<pre class="cpp">            <span class="kw">if</span>(descr.Flags &amp; <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#light_ref15" title="RDS_BDF_HASPICTURE">RDS_BDF_HASPICTURE</a>)
+              { <span class="rem">// Картинка есть – определяем идентификатор</span>
+                <span class="rem">// элемента под курсором</span>
+                <span class="kw">int</span> id=<a class="hidden" href="rdsGetMouseObjectId.htm" title="А.5.6.31. rdsGetMouseObjectId &ndash; элемент векторной картинки блока под курсором мыши">rdsGetMouseObjectId</a>(mouse);
+              <span class="changes">  v+=id;  </span>
+              }</pre>
+
+<p>Теперь полученное значение идентификатора элемента не анализируется оператором <span class="cpp">switch</span>,
+а сразу прибавляется к выходу блока <span class="cpp">v</span>. При щелчках на элементах с идентификаторами 1 и
+&minus;1 поведение блока не изменится: выход будет увеличиваться или уменьшаться на единицу. При этом такая
+модель позволяет добавить в картинку новые элементы для увеличения или уменьшения выхода на произвольное число.
+Например, если добавить в картинку еще один квадрат с идентификатором 2, щелчок по нему приведет к увеличению
+<span class="cpp">v</span> на 2. Блок с новой моделью может иметь любую картинку с любым расположением и
+количеством активных областей, нажатие на которые будет изменять его выход на число, равное идентификатору области.</p>
+
+<p>Таким образом, из векторной картинки любого блока можно сделать &laquo;пульт&raquo; с кнопками,
+нажатие на которые будет отслеживаться моделью, причем внешний вид этого &laquo;пульта&raquo; ограничен
+только фантазией разработчика.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_11.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_2.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

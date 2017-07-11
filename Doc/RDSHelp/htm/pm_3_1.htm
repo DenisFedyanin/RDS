@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.1. Общие принципы управления RDS</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3">Глава 3. Управление RDS из других приложений</a></p>
+<div class="level"><p>&sect;3.1. Общие принципы управления RDS</p>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_16_2.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_2.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_3_1_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2>Глава 3. Управление RDS из других приложений</h2>
+<p class="abstract">Рассматриваются методы выполнения в RDS различных действий по команде от внешнего 
+        приложения, передачи информации от внешнего приложения блокам схемы и обратно. Использование внешнего управления 
+        позволяет включать RDS в состав более сложных программных комплексов в качестве составной части.</p>
+<h3>&sect;3.1. Общие принципы управления RDS</h3>
+<p class="abstract">Рассматриваются общие принципы использования библиотеки RdsCtrl.dll для управления RDS 
+            из другого приложения Windows. Приводится исходный текст тестовой программы, в которую позже 
+            будут добавлены вызовы для управления RDS и для реакции на различные события, происходящие 
+            в загруженной схеме.</p>
+
+
+<p>До сих пор мы рассматривали непосредственную работу пользователя с RDS: пользователь сам запускает
+программу &laquo;<span class="file">rds.exe</span>&raquo;, сам загружает схему, сам переключает режимы работы, запускает и
+останавливает расчет. Однако, иногда возникает необходимость включить RDS в состав какого-либо
+программного комплекса для выполнения расчетов, демонстрации пользователю анимированной схемы соединения каких-либо
+объектов и т.п. В этом случае главная программа этого комплекса должна иметь возможность управлять работой
+RDS и обмениваться информацией с блоками схемы. Кроме того, при этом часто бывает нужно ограничить какие-либо
+действия пользователя, например, запретить редактирование схемы или переключение режимов.</p>
+
+<p>В состав RDS входит библиотека дистанционного управления RdsCtrl.dll, позволяющая решать перечисленные
+выше задачи. Приложение должно загрузить эту библиотеку в свое адресное пространство, после чего все взаимодействие с
+RDS производится через ее экспортированные функции. Запуск и завершение главной программы RDS
+(&laquo;<span class="file">rds.exe</span>&raquo;) при этом тоже производится через вызов соответствующих функций
+RdsCtrl.dll. Следует помнить, что в память управляющего приложения загружается только библиотека управления
+&ndash; RDS все равно запускается как отдельный процесс, с которым эта библиотека обменивается информацией.
+При этом процесс RDS может завершиться неожиданно для управляющего приложения (из-за какой-либо ошибки,
+или из-за того, что его завершит пользователь). Библиотека не будет автоматически перезапускать процесс
+RDS, но она может информировать об этом приложение, которое, при необходимости, перезапустит
+RDS самостоятельно. вызвав соответствующую функцию библиотеки.</p>
+
+<p><span id="ref1">Общая</span>
+схема работы с библиотекой дистанционного управления такова: сначала приложение загружает эту
+библиотеку (например, функцией Windows API <span id="light_ref1" class="cpp">LoadLibrary</span>)
+и получает доступ к экспортированным из нее функциям. Разумеется, для этого приложение должно знать,
+где именно находится эта библиотека. Обычно она располагается в папке установки RDS, однако, узнать
+путь к этой папке может оказаться не так просто. Дело в том, что RDS, как правило, ничего не записывает в
+системный реестр Windows при установке, поэтому обратиться к реестру и считать оттуда путь к RDS
+управляющее приложение не может. Это &ndash; плата за легкость переноса RDS с машины на машину:
+поскольку главная программа не зависит от реестра, можно просто скопировать все файлы RDS в
+произвольную папку (естественно, с сохранением структуры вложенных папок) и запускать
+&laquo;<span class="file">rds.exe</span>&raquo; оттуда. Но этим же можно воспользоваться и при включении
+RDS в состав программного комплекса: можно разместить &laquo;<span class="file">rds.exe</span>&raquo; и все
+необходимые для работы RDS файлы и папки в одной из внутренних папок самого комплекса,
+тогда главная программа всегда будет знать размещение &laquo;<span class="file">rds.exe</span>&raquo; и RdsCtrl.dll.</p>
+
+<p><span id="ref2">После</span>
+<span id="ref3">того</span>, как библиотека
+RdsCtrl.dll загружена и доступ к ее функциям получен (например, при помощи функции Windows API
+<span class="cpp" id="light_ref2">GetProcAddress</span>), приложение может сообщить библиотеке,
+где находится главный исполняемый файл RDS &ndash; &laquo;<span class="file">rds.exe</span>&raquo;.
+Если &laquo;<span class="file">rds.exe</span>&raquo; и RdsCtrl.dll, как обычно, находятся в одной и той же папке,
+в этом нет необходимости, библиотека найдет этот файл сама. Однако, если библиотека включена в состав
+приложения, а &laquo;<span class="file">rds.exe</span>&raquo;, вместе с остальными файлами RDS, располагается где-то
+в другом месте, приложение должно вызвать функцию
+<span id="light_ref3" class="cpp"><a href="rdsctrlSetPath.htm" title="Б.3.2.9. rdsctrlSetPath &ndash; установить путь к RDS">rdsctrlSetPath</a></span> (все функции
+RdsCtrl.dll имеют префикс &laquo;rdsctrl&raquo;), передав в ее параметре полный путь к
+главному исполняемому файлу RDS.</p>
+
+<p>Если приложению нужно получать от RDS какую-либо информацию (а, чаще всего, это необходимо), оно
+должно зарегистрировать в библиотеке специальную функцию для возврата строк произвольной длины. Основная
+проблема со строками произвольной длины заключается в том, что при вызове какой-либо функции программа не
+может знать, сколько места в памяти займет возвращаемая этой функцией строка, поэтому она не может
+предоставить ей буфер (массив символов), размер которого будет заведомо достаточен для помещения в
+него этой строки. Существуют разные способы решения этой проблемы. Функция, возвращающая строку, может
+сравнить длину строки с размером переданного ей буфера и, если он слишком мал, вернуть вызвавшей программе
+специальный код ошибки, сообщив ей требуемый размер буфера (так устроены некоторые функции Windows API). Этот
+способ требует двойного вызова функции: сначала функции передается какой-то имеющийся по умолчанию буфер,
+а затем, если функция сообщила о недостаточности размера буфера, отводится новый буфер нужного размера и функция
+вызывается еще раз. Это &ndash; работающее, но несколько громоздкое решение. Другой способ заключается в
+том, что память под строку нужного размера можно динамически отводить внутри вызываемой функции и возвращать
+вызвавшей программе указатель на эту строку (так устроены сервисные функции RDS). При этом не
+требуется повторный вызов функции, поскольку она самостоятельно отводит буфер нужного размера, однако
+здесь могут возникнуть проблемы с освобождением отведенной памяти. Освобождать отведенную память нужно функцией
+или оператором, парным к тому, которым память была отведена: например, если память отведена стандартной функцией
+<span class="cpp">malloc</span>, освобождать ее нужно функцией <span class="cpp">free</span>, а если
+оператором <span class="cpp">new</span>, освобождать нужно оператором <span class="cpp">delete</span>.
+Ситуация усугубляется тем, что вызываемая функция может располагаться в библиотеке, которая написана на
+другом языке программирования с использованием механизмов работы с памятью, несовместимых с вызывающей
+программой. В этом случае вызвавшая программа вообще не сможет корректно освободить память отведенную в
+вызванной функции, и в библиотеку нужно будет включать специальную функцию для освобождения памяти. Например,
+в состав сервисных функций RDS включена функция <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span> для освобождения памяти,
+отведенной другими сервисными функциями, и модели блоков должны
+<a href="pm_2_5_4.htm#light_ref1" title="Отведение и освобождение динамических строк в RDS">вызывать именно ее</a>. При этом, во избежание утечек памяти,
+вызвавшая программа не должна забывать освобождать возвращенные строки.</p>
+
+<p><span id="light_ref4">В RdsCtrl.dll используется третий способ возврата строк</span>
+&ndash; может быть, несколько
+более запутанный, но более безопасный. Сразу после загрузки библиотеки приложение вызывает ее функцию
+<span class="cpp"><span id="light_ref5"><a href="rdsctrlSetStringCallback.htm" title="Б.3.2.10. rdsctrlSetStringCallback &ndash; регистрация функции возврата строки">rdsctrlSetStringCallback</a></span></span>, в которую передает указатель на свою
+собственную функцию вида</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции</i>(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ptr,<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> str);</pre>
+
+<p>Здесь <span class="cpp">ptr</span> &ndash; указатель на какой-то объект, который вызывающая программа
+использует для хранения строк, а <span class="cpp">str</span> &ndash; строка, которую нужно присвоить этому
+объекту. После этого во все вызываемые функции передается указатель на такой хранящий строку объект, а они,
+в свою очередь, будут вызывать зарегистрированную функцию для присвоения строки этому объекту. При этом все
+отведение и освобождение памяти производится в вызывающей программе.</p>
+
+<p>Пусть, например, в качестве объекта для присвоения строк используется указатель
+<span class="cpp">char*</span>, который будет указывать на строки, отводимые стандартной функцией
+<span class="cpp">malloc</span> и освобождаемые функцией <span class="cpp">free</span>. Функция для возврата
+строк будет выглядеть так:</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> ReturnString(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ptr,<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> str)
+  { <span class="rem">// Приводим указатель ptr к типу "указатель на char*"</span>
+    <span class="kw">char</span> **pStr=(<span class="kw">char</span>**)ptr;
+    <span class="rem">// Если указатель не передан, не делаем ничего</span>
+    <span class="kw">if</span>(pStr==NULL) <span class="kw">return</span>;
+    <span class="rem">// Если там была строка – освобождаем ее функцией free</span>
+    <span class="kw">if</span>(*pStr) free(*pStr);
+    <span class="rem">// Отводим память нужного размера</span>
+    *pStr=malloc(strlen(str)+<span class="const">1</span>);
+    <span class="rem">// Копируем туда полученную строку</span>
+    strcpy(*pStr,str);
+  }</pre>
+
+<p>Для регистрации этой функции после загрузки RdsCtrl.dll нужно сделать следующий вызов:</p>
+
+<pre class="cpp">  <a class="hidden" href="rdsctrlSetStringCallback.htm" title="Б.3.2.10. rdsctrlSetStringCallback &ndash; регистрация функции возврата строки">rdsctrlSetStringCallback</a>(ReturnString);</pre>
+
+<p>Теперь представим себе, что в библиотеке RdsCtrl.dll есть некоторая функция
+<span class="cpp">rdsctrlSomeFunction</span>, которая возвращает какую-нибудь строку &ndash;
+например, символьное представление целого числа (конечно, в библиотеке нет такой функции, она
+взята просто для примера):</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsctrlSomeFunction(<span class="kw">int</span> value,<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> retstr);</pre>
+
+<p>В эту функцию передается целое число <span class="cpp">value</span> и указатель на объект,
+в который нужно передать возвращаемую строку <span class="cpp">retstr</span>. Вызов этой функции будет выглядеть так:</p>
+
+<pre class="cpp">  <span class="kw">char</span> *buf=NULL; <span class="rem">// Сюда запишется указатель на возвращаемую строку</span>
+  rdsctrlSomeFunction(<span class="const">123</span>,&amp;buf); <span class="rem">// Вызов функции</span>
+  <span class="rem">// &hellip; какие-то действия со строкой buf &hellip;</span>
+  <span class="kw">if</span>(buf) free(buf); <span class="rem">// Освобождение памяти</span></pre>
+
+<p>В данном случае функция <span class="cpp">rdsctrlSomeFunction</span> вызовет зарегистрированную функцию возврата
+строк <span class="cpp">ReturnString</span>, передав ей указатель на объект <span class="cpp">retstr</span>, равный
+<span class="cpp">&amp;buf</span>, и строку &laquo;123&raquo;. Таким образом, в переменной
+<span class="cpp">buf</span> окажется указатель на копию переданной строки, которая потом, после использования,
+будет освобождена функцией <span class="cpp">free</span>.</p>
+
+<p>Теперь допустим, что вызывающая программа использует для работы со строками некоторый класс
+<span class="cpp">String</span>, в котором определена операция присваивания для обычных строк
+<span class="cpp">char*</span> (такие классы часто встречаются в различных библиотеках). В этом случае функция
+возврата строк будет выглядеть так:</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> ReturnString(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ptr,<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> str)
+  { <span class="rem">// Приводим указатель ptr к типу "указатель на String"</span>
+    String *pS=(String*)ptr;
+    <span class="rem">// Если указатель не передан, не делаем ничего</span>
+    <span class="kw">if</span>(pS==NULL) <span class="kw">return</span>;
+    <span class="rem">// Присваиваем строку объекту</span>
+    *pS=str;
+  }</pre>
+
+<p>Вызов функции в этом случае будет выглядеть так:</p>
+
+<pre class="cpp">  String str; <span class="rem">// Объект для хранения строки</span>
+  rdsctrlSomeFunction(<span class="const">123</span>,&amp;str); <span class="rem">// Вызов функции</span>
+  <span class="rem">// &hellip; какие-то действия со строкой str &hellip;</span></pre>
+
+<p>Здесь не нужно освобождать память, об этом должен позаботиться деструктор класса
+<span class="cpp">String</span> (если, конечно, этот класс написан без ошибок).</p>
+
+<p>Таким образом, библиотеке RdsCtrl.dll все равно, каким образом вызывающая программа хранит строки
+переменной длины. Программа должна предоставить библиотеке функцию для присваивания строк каким-то своим
+внутренним объектам, и передавать указатели на эти объекты при вызове функций библиотеки, которые возвращают
+строки.</p>
+
+<p>Разобравшись с используемым способом возврата строк, вернемся собственно к управлению RDS.
+Для управления приложение должно создать одну или несколько связей с RDS при помощи функции
+<span class="cpp"><span id="light_ref6"><a href="rdsctrlCreateLink.htm" title="Б.3.2.3. rdsctrlCreateLink &ndash; создать связь с RDS">rdsctrlCreateLink</a></span></span>. Одна связь используется для запуска одной копии
+&laquo;<span class="file">rds.exe</span>&raquo; и управления ей. Таким образом, приложению необходимо создать столько
+связей, со сколькими схемами одновременно оно собирается работать. Чаще всего в каждый момент времени необходимо
+работать только с одной схемой &ndash; в этом случае достаточно создать одну единственную связь, и загружать в
+соответствующую ей копию RDS разные схемы по мере необходимости. Функция
+<span class="cpp"><a class="hidden" href="rdsctrlCreateLink.htm" title="Б.3.2.3. rdsctrlCreateLink &ndash; создать связь с RDS">rdsctrlCreateLink</a></span> возвращает целый неотрицательный идентификатор связи,
+который потом используется во всех остальных функциях библиотеки для обмена информацией с конкретной копией
+RDS, то есть с конкретной схемой. Создание связи не приводит к немедленному запуску главной программы
+RDS, вместо этого в памяти создаются структуры для хранения различных параметров, которые будут определять
+поведение и внешний вид RDS. Эти параметры хранятся до тех пор, пока связь не будет уничтожена вызовом
+<span class="cpp"><span id="light_ref7"><a href="rdsctrlDeleteLink.htm" title="Б.3.2.4. rdsctrlDeleteLink &ndash; уничтожить связь с RDS">rdsctrlDeleteLink</a></span></span>, или до момента выгрузки RdsCtrl.dll из памяти. Таким образом,
+создав связь и настроив ее параметры, можно после этого много раз запускать и завершать
+&laquo;<span class="file">rds.exe</span>&raquo; без необходимости повторной установки этих параметров. Например, одна
+из функций библиотеки позволяет отключить
+<a href="um_2_1.htm" title="&sect;2.1. Главное окно и главное меню">главное окно</a> RDS. Если сначала вызвать эту функцию для
+созданной связи, а потом запустить RDS через эту связь,
+&laquo;<span class="file">rds.exe</span>&raquo; сразу запустится без главного окна, и будет запускаться без него каждый
+раз при работе через эту связь. Если же сначала запустить RDS, а потом вызвать эту функцию,
+главное окно некоторое время (до срабатывания функции) будет находиться на экране.</p>
+
+<p>После создания связи можно произвольное число раз запускать
+&laquo;<span class="file">rds.exe</span>&raquo; функцией <span class="cpp"><span id="light_ref8"><a href="rdsctrlConnect.htm" title="Б.3.2.2. rdsctrlConnect &ndash; запустить RDS">rdsctrlConnect</a></span></span> и завершать функциями
+<span class="cpp"><span id="light_ref9"><a href="rdsctrlDisconnect.htm" title="Б.3.2.5. rdsctrlDisconnect &ndash; завершить RDS">rdsctrlDisconnect</a></span></span> и
+<span class="cpp"><span id="light_ref10"><a href="rdsctrlClose.htm" title="Б.3.2.1. rdsctrlClose &ndash; завершить RDS">rdsctrlClose</a></span></span>. Функция <span class="cpp"><a class="hidden" href="rdsctrlDisconnect.htm" title="Б.3.2.5. rdsctrlDisconnect &ndash; завершить RDS">rdsctrlDisconnect</a></span> передает
+RDS команду завершения и немедленно возвращает управление вызвавшей программе. Сразу после этого связь,
+для которой была вызвана <span class="cpp"><a class="hidden" href="rdsctrlDisconnect.htm" title="Б.3.2.5. rdsctrlDisconnect &ndash; завершить RDS">rdsctrlDisconnect</a></span>, можно использовать для запуска новой
+копии RDS, даже если предыдущая запущенная копия все еще чем-то занимается. Если приложению необходимо
+дождаться фактического завершения RDS, лучше использовать функцию
+<span class="cpp"><a class="hidden" href="rdsctrlClose.htm" title="Б.3.2.1. rdsctrlClose &ndash; завершить RDS">rdsctrlClose</a></span> &ndash; она вернет управление только после того, как
+&laquo;<span class="file">rds.exe</span>&raquo; доложит о своем завершении.</p>
+
+<p>Иногда возникает необходимость отключиться от управляемой копии RDS, оставив ее работать как
+самостоятельное приложение. В этом случае следует использовать функцию
+<span class="cpp"><span id="light_ref11"><a href="rdsctrlLeave.htm" title="Б.3.2.7. rdsctrlLeave &ndash; прекратить управление RDS">rdsctrlLeave</a></span></span> &ndash; после ее вызова связь, через которую шла работа,
+можно использовать для запуска новой копии RDS, а старая лишается связи с управляющей программой и
+переходит под полный контроль пользователя, которому нужно будет закрыть ее самостоятельно. Следует помнить,
+что восстановить управление этой копией невозможно, как невозможно и получить управление копией
+RDS, запущенной пользователем вручную.</p>
+
+<p>После того, как копия RDS запущена, управляющее приложение может отдавать ей различные команды
+(загружать и сохранять схемы, переключать режимы и т.п.), реагировать на различные события, произошедшие в
+RDS, а также обмениваться информацией с блоками загруженной схемы. Обмен информацией может происходить как
+по инициативе управляющего приложения (приложение передает данные блоку, блок их обрабатывает и возвращает
+результат), так и по инициативе блока (блок вызывает управляющее приложение и передает ему данные). Если
+приложению необходимо реагировать на события, происходящие в RDS, или получать данные, посланные
+блоками, оно должно разрешить для данной связи реакции на события и зарегистрировать в библиотеке функции,
+которые будут автоматически вызываться при наступлении этих событий. Примеры обмена информацией с блоками
+и реакции на события рассмотрены в <a href="pm_3_3.htm" title="&sect;3.3. Вызов функции блока загруженной схемы">&sect;3.3</a>
+и <a href="pm_3_4.htm" title="&sect;3.4. Реакция на события и сообщения от блоков">&sect;3.4</a>.</p>
+
+<p>Управляющее приложение может, при необходимости, отключить некоторые элементы интерфейса пользователя
+RDS. Например, если RDS используется для показа пользователю каких-либо анимированных мнемонических
+схем, не следует давать ему возможность редактировать эти схемы &ndash; для редактирования должен быть
+предусмотрен отдельный режим. В этом случае целесообразно запретить RDS входить в
+<a href="pm_1_3.htm#ref1" title="Режим редактирования">режим редактирования</a>, вызвав для связи, через которую приложение работает с
+этой копией RDS, функцию <span class="cpp"><span id="light_ref12"><a href="rdsctrlEnableEditMode.htm" title="Б.3.3.2. rdsctrlEnableEditMode &ndash; разрешение режима редактирования">rdsctrlEnableEditMode</a></span></span> с параметром <span class="cpp">FALSE</span>.
+Для редактирования схемы (если, например, с приложением начал работать пользователь с более высокими полномочиями)
+можно вызвать <span class="cpp"><a class="hidden" href="rdsctrlEnableEditMode.htm" title="Б.3.3.2. rdsctrlEnableEditMode &ndash; разрешение режима редактирования">rdsctrlEnableEditMode</a></span> с параметром <span class="cpp">TRUE</span>,
+или создать для редактирования схемы новую связь и запустить через нее другую копию RDS, не запрещая
+для нее вход в режим редактирования.</p>
+
+<p><a href="pm_1_2.htm#light_ref4" title="Подсистема">Подсистемы</a>
+<span id="ref13">схем</span>, загруженных в управляемые копии RDS, открываются,
+как обычно, в отдельных окнах. Если внешний вид и функции этих окон не подходят для пользовательского интерфейса
+приложения, оно может выделить одну или несколько прямоугольных областей своих собственных окон и приказать
+RDS отображать в этих областях (в терминологии RdsCtrl.dll они называются
+<span class="emph" id="light_ref13">портами вывода</span>) содержимое конкретных подсистем загруженной схемы.
+При этом, поскольку окна принадлежат управляющему приложению, блоки подсистем не смогут самостоятельно
+реагировать на мышь и клавиатуру и выводить всплывающие подсказки и контекстные меню, подсистемы не
+будут предоставлять пользователю кнопки изменения масштаба и переключения слоев, и т.п. Все это придется
+реализовывать в управляющем приложении: например, при щелчке кнопкой мыши в области порта вывода этот щелчок должен
+быть передан в RDS функцией <span class="cpp"><span id="light_ref14"><a href="rdsctrlViewportMouse.htm" title="Б.3.7.14. rdsctrlViewportMouse &ndash; вызвать в RDS реакцию на мышь">rdsctrlViewportMouse</a></span></span>, для получения текста
+всплывающей подсказки блока по заданным координатам приложение должно будет вызвать
+<span class="cpp"><span id="light_ref15"><a href="rdsctrlVPPopupHint.htm" title="Б.3.7.16. rdsctrlVPPopupHint &ndash; получить текст всплывающей подсказки">rdsctrlVPPopupHint</a></span></span> и вывести подсказку самостоятельно, и т.д. Использование
+порта вывода подробно рассмотрено в <a href="pm_index.htm#light_htm:pm_3_6" title="&sect;3.6. Отображение схемы RDS в собственном окне приложения">&sect;3.6</a>.</p>
+
+<p>Для того, чтобы привести пример работы с библиотекой RdsCtrl.dll, нам потребуется написать отдельное приложение
+Windows, которое и будет управлять RDS при помощи этой библиотеки. Сейчас такие приложения чаще всего
+создают в специализированных средах разработки, таких как Borland C++ Builder или Microsoft Visual C, с
+использованием библиотек (например, VCL или MFC), существенно облегчающих работу с окнами и прочими объектами
+Windows. Здесь мы не будем использовать среды разработки и специализированные библиотеки, чтобы рассматриваемые
+примеры были понятны всем программистам, независимо от того, чем они пользуются. Мы сделаем пример на чистом
+Windows API &ndash; эти функции можно использовать в любом приложении Windows. Пример можно будет компилировать
+любым компилятором с установленными библиотеками SDK &ndash; это стандартные библиотеки разработки, которые
+можно бесплатно загрузить с web-сайта Microsoft.</p>
+
+<p>Прежде всего, нам потребуется &laquo;скелет&raquo; программы, которая будет открывать окно с необходимыми
+нам кнопками и полями ввода. Мы пока не будем загружать RdsCtrl.dll и управлять RDS, вместо этого
+мы введем в нашу программу функции, которые будут вызываться при нажатии кнопок и перед завершением программы, но
+пока оставим эти функции пустыми &ndash; сейчас наша задача просто создать работающее приложение. Текст
+программы будет выглядеть так (функции, которые мы допишем потом, выделены <span class="changes">цветом</span>):</p>
+
+<pre class="cpp">  <span class="rem">// Описания, необходимые для используемого компилятора</span>
+  <span class="rem">// (в других компиляторах они не понадобятся или будут другими)</span>
+  <span class="preproc">#define _WIN32_WINNT 0x0400</span>
+  <span class="preproc">#define WINVER 0x0400</span>
+  <span class="rem">// Необходимые для приложения файлы заголовков</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;Commctrl.h&gt;</span>
+  <span class="preproc">#include &lt;stdio.h&gt;</span>
+
+  <span class="rem">// Идентификаторы кнопок и полей окна программы</span>
+  <span class="preproc">#define IDC_OPENBUTTON  101</span>
+  <span class="preproc">#define IDC_CLOSEBUTTON 102</span>
+  <span class="preproc">#define IDC_LABEL1      103</span>
+  <span class="preproc">#define IDC_LABEL2      104</span>
+  <span class="preproc">#define IDC_LABEL3      105</span>
+  <span class="preproc">#define IDC_BLKNAMEEDIT 106</span>
+  <span class="preproc">#define IDC_VALUEEDIT   107</span>
+  <span class="preproc">#define IDC_STRINGEDIT  108</span>
+  <span class="preproc">#define IDC_CALLBUTTON  109</span>
+  <span class="preproc">#define IDC_STARTBUTTON 110</span>
+  <span class="preproc">#define IDC_STOPBUTTON  111</span>
+  <span class="preproc">#define IDC_FINDBUTTON  112</span>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Буфер для индицируемого программой текста</span>
+  <span class="kw">char</span> buffer[<span class="const">2000</span>]=<span class="str">"Программа запущена"</span>;
+  <span class="rem">// Главное окно программы (для доступа к нему из функций)</span>
+  HWND MainWin;
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция вывода текстового сообщения в окне программы</span>
+  <span class="kw">void</span> DisplayText(<span class="kw">char</span> *text)
+  { RECT rect;
+    <span class="rem">// Определяем размер клиентской области окна</span>
+    GetClientRect(MainWin,&amp;rect);
+    <span class="rem">// Ограничиваем область снизу (ниже будут располагаться кнопки)</span>
+    rect.bottom=<span class="const">30</span>;
+    <span class="kw">if</span>(text) <span class="rem">// Копируем текст в буфер</span>
+      { strncpy(buffer,text,<span class="kw">sizeof</span>(buffer)-<span class="const">1</span>);
+        buffer[<span class="kw">sizeof</span>(buffer)-<span class="const">1</span>]=<span class="const">0</span>; <span class="rem">// Если строка слишком длинная</span>
+      }
+    <span class="kw">else</span>
+      strcpy(buffer,<span class="str">"(NULL)"</span>);
+    <span class="rem">// Указываем Windows, что область rect нужно перерисовать</span>
+    InvalidateRect(MainWin,&amp;rect,TRUE);
+  }
+  <span class="rem">//=========================================</span>
+
+<div class="changes">  <span class="rem">// Функция, вызываемая перед завершением программы</span>
+  <span class="kw">void</span> BeforeExit(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем выгружать RdsCtrl.dll</span>
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Нажатие кнопки "Открыть"</span>
+  <span class="kw">void</span> OpenButtonClick(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем загружать схему в RDS</span>
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Нажатие кнопки "Закрыть"</span>
+  <span class="kw">void</span> CloseButtonClick(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем завершать RDS</span>
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Нажатие кнопки "Вызвать"</span>
+  <span class="kw">void</span> CallBlockClick(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем передавать информацию блоку схемы</span>
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Нажатие кнопки "Старт"</span>
+  <span class="kw">void</span> StartClick(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем запускать расчет</span>
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Нажатие кнопки "Стоп"</span>
+  <span class="kw">void</span> StopClick(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем останавливать расчет</span>
+  }
+  <span class="rem">//=========================================</span></div>
+<div class="changes">  <span class="rem">// Нажатие кнопки "Найти"</span>
+  <span class="kw">void</span> FindFuncClick(<span class="kw">void</span>)
+  { <span class="rem">// Здесь мы будем искать блок, поддерживающий набор функций</span>
+  }
+  <span class="rem">//=========================================</span></div>
+  <span class="rem">// Процедура обработки сообщений главного окна</span>
+  LRESULT CALLBACK MainWndProc(
+        <a class="hidden" href="app_ids.htm#light_ref18" title="Дескриптор окна">HWND</a> hWindow, <span class="rem">// Окно</span>
+        UINT msg,     <span class="rem">// Сообщение</span>
+        WPARAM wParam,LPARAM lParam) <span class="rem">// Параметры</span>
+  { <a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> app;
+    PAINTSTRUCT ps;
+    HDC hDC;
+    RECT rect;
+
+    <span class="kw">switch</span>(msg)
+      { <span class="rem">// Создание окна</span>
+        <span class="kw">case</span> WM_CREATE:
+          <span class="rem">// Запоминаем идентификатор окна в глобальной переменной</span>
+          MainWin=hWindow;
+          <span class="rem">// Получаем идентификатор приложения</span>
+          app=(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a>)GetWindowLong(hWindow,GWL_HINSTANCE);
+          <span class="rem">// Создаем кнопки и поля ввода</span>
+          <span class="rem">// Кнопка "Открыть"</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Открыть"</span>, <span class="rem">// Имя класса и текст</span>
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, <span class="rem">// Стили</span>
+            <span class="const">0</span>,<span class="const">30</span>,<span class="const">100</span>,<span class="const">24</span>,                   <span class="rem">// x,y,ширина,высота</span>
+            hWindow,                       <span class="rem">// Родительское окно</span>
+            (HMENU)IDC_OPENBUTTON,         <span class="rem">// Идентификатор кнопки</span>
+            app,NULL);
+          <span class="rem">// Кнопка "Закрыть"</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Закрыть"</span>,
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            <span class="const">101</span>,<span class="const">30</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,
+            (HMENU)IDC_CLOSEBUTTON,app,NULL);
+          <span class="rem">// Кнопка "Старт"</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Старт"</span>,
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            <span class="const">222</span>,<span class="const">30</span>,<span class="const">90</span>,<span class="const">24</span>,hWindow,
+            (HMENU)IDC_STARTBUTTON,app,NULL);
+          <span class="rem">// Кнопка "Стоп"</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Стоп"</span>,
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            <span class="const">313</span>,<span class="const">30</span>,<span class="const">90</span>,<span class="const">24</span>,hWindow,
+            (HMENU)IDC_STOPBUTTON,app,NULL);
+          <span class="rem">// Надпись "Имя блока"</span>
+          CreateWindow(<span class="str">"STATIC"</span>,<span class="str">"Имя блока:"</span>,
+           WS_VISIBLE | WS_CHILD | SS_LEFTNOWORDWRAP,
+           <span class="const">0</span>,<span class="const">55</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_LABEL1,app,NULL);
+          <span class="rem">// Поле ввода для имени блока</span>
+          CreateWindow(<span class="str">"EDIT"</span>,NULL,
+            WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL,
+            <span class="const">101</span>,<span class="const">55</span>,<span class="const">201</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_BLKNAMEEDIT,app,NULL);
+          <span class="rem">// Надпись "Число"</span>
+          CreateWindow(<span class="str">"STATIC"</span>,<span class="str">"Число:"</span>,
+            WS_VISIBLE | WS_CHILD | SS_LEFTNOWORDWRAP,
+            <span class="const">0</span>,<span class="const">80</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_LABEL3,app,NULL);
+          <span class="rem">// Поле ввода числа</span>
+          CreateWindow(<span class="str">"EDIT"</span>,NULL,WS_VISIBLE | WS_CHILD | WS_BORDER,
+            <span class="const">101</span>,<span class="const">80</span>,<span class="const">201</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_VALUEEDIT,app,NULL);
+          <span class="rem">// Надпись "Строка"</span>
+          CreateWindow(<span class="str">"STATIC"</span>,<span class="str">"Строка:"</span>,
+            WS_VISIBLE | WS_CHILD | SS_LEFTNOWORDWRAP,
+            <span class="const">0</span>,<span class="const">105</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_LABEL2,app,NULL);
+          <span class="rem">// Поле ввода строки</span>
+          CreateWindow(<span class="str">"EDIT"</span>,NULL,
+            WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL,
+            <span class="const">101</span>,<span class="const">105</span>,<span class="const">201</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_STRINGEDIT,app,NULL);
+          <span class="rem">// Кнопка вызова блока</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Вызвать"</span>,
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            <span class="const">303</span>,<span class="const">55</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_CALLBUTTON,app,NULL);
+          <span class="rem">// Кнопка поиска блока</span>
+          CreateWindow(<span class="str">"BUTTON"</span>,<span class="str">"Найти"</span>,
+            WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+            <span class="const">303</span>,<span class="const">105</span>,<span class="const">100</span>,<span class="const">24</span>,hWindow,(HMENU)IDC_FINDBUTTON,app,NULL);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Закрытие окна</span>
+        <span class="kw">case</span> WM_DESTROY:
+        <span class="changes">  <span class="rem">// Выгрузка библиотеки, если она загружена  </span></span>
+        <span class="changes">  BeforeExit();                               </span>
+          PostQuitMessage(<span class="const">0</span>);
+          <span class="kw">return</span> <span class="const">0</span>;
+
+        <span class="rem">// Перерисовка окна</span>
+        <span class="kw">case</span> WM_PAINT:
+          <span class="rem">// Получаем контекст для рисования</span>
+          hDC=BeginPaint(hWindow,&amp;ps);
+          <span class="rem">// Получаем размеры внутреннего прямоугольника</span>
+          GetClientRect(hWindow,&amp;rect);
+          rect.bottom=<span class="const">30</span>; <span class="rem">// Обрезаем снизу</span>
+          <span class="rem">// Выводим текст из buffer</span>
+          DrawText(hDC,buffer,-<span class="const">1</span>,&amp;rect,
+              DT_SINGLELINE | DT_CENTER | DT_VCENTER);
+          <span class="rem">// Завершаем рисование</span>
+          EndPaint(hWindow,&amp;ps);
+          <span class="kw">return</span> <span class="const">0</span>;
+
+        <span class="rem">// Команда от органов управления</span>
+        <span class="kw">case</span> WM_COMMAND:
+          <span class="kw">if</span>(HIWORD(wParam) == BN_CLICKED) <span class="rem">// Нажатие кнопки</span>
+            { <span class="kw">switch</span> (LOWORD(wParam))
+                { <span class="kw">case</span> IDC_OPENBUTTON:  <span class="changes">OpenButtonClick();</span>  <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_CLOSEBUTTON: <span class="changes">CloseButtonClick();</span> <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_CALLBUTTON:  <span class="changes">CallBlockClick();</span>   <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_STARTBUTTON: <span class="changes">StartClick();</span>       <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_STOPBUTTON:  <span class="changes">StopClick();</span>        <span class="kw">break</span>;
+                  <span class="kw">case</span> IDC_FINDBUTTON:  <span class="changes">FindFuncClick();</span>     <span class="kw">break</span>;
+                }
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="rem">// Вызов обработки сообщения по умолчанию</span>
+    <span class="kw">return</span> DefWindowProc(hWindow,msg,wParam,lParam);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Главная функция приложения</span>
+  <span class="kw">int</span> WINAPI WinMain(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> hInstance,
+          <a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> hPrevInstance,
+          PSTR szCmdLine,
+          <span class="kw">int</span> iCmdShow)
+  { <span class="kw">static</span> <span class="kw">char</span> appName[] = <span class="str">"Управление RDS"</span>,
+                className[]=<span class="str">"RDSControlTestWindow"</span>;
+    WNDCLASSEX myWin;
+    <a class="hidden" href="app_ids.htm#light_ref18" title="Дескриптор окна">HWND</a> hWindow;
+    MSG msg;
+
+    <span class="rem">// Создание окна</span>
+    myWin.cbSize=<span class="kw">sizeof</span>(myWin);
+    myWin.style=CS_HREDRAW | CS_VREDRAW;
+    myWin.lpfnWndProc=MainWndProc;
+    myWin.cbClsExtra=<span class="const">0</span>;
+    myWin.cbWndExtra=<span class="const">0</span>;
+    myWin.hInstance=hInstance;
+    myWin.hIcon=<span class="const">0</span>;
+    myWin.hIconSm =<span class="const">0</span>;
+    myWin.hCursor=<span class="const">0</span>;
+    myWin.hbrBackground=(HBRUSH)(COLOR_WINDOW+<span class="const">1</span>);
+    myWin.lpszMenuName=<span class="const">0</span>;
+    myWin.lpszClassName=className;
+    <span class="kw">if</span> (!RegisterClassEx(&amp;myWin)) <span class="kw">return</span> <span class="const">0</span>;
+    hWindow=CreateWindow(className,appName,
+      WS_OVERLAPPEDWINDOW,
+      CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,CW_USEDEFAULT,
+      <span class="const">0</span>,<span class="const">0</span>,hInstance,<span class="const">0</span>);
+    <span class="rem">// Открытие созданного окна</span>
+    ShowWindow(hWindow,iCmdShow);
+    UpdateWindow(hWindow);
+
+    <span class="rem">// Инициализация стандартных компонентов</span>
+    INITCOMMONCONTROLSEX icc;
+    icc.dwSize=<span class="kw">sizeof</span>(icc);
+    icc.dwICC=ICC_WIN95_CLASSES;
+    <span class="kw">if</span>(!InitCommonControlsEx(&amp;icc))
+      DisplayText(<span class="str">"Ошибка InitCommonControlsEx"</span>);
+
+    <span class="rem">// Цикл обработки сообщений приложения</span>
+    <span class="kw">while</span>(GetMessage(&amp;msg,<span class="const">0</span>,<span class="const">0</span>,<span class="const">0</span>))
+      { TranslateMessage(&amp;msg);
+        DispatchMessage(&amp;msg);
+      }
+    <span class="kw">return</span> <span class="const">0</span>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В начале приведенного выше текста мы вводим описания, необходимые для компиляции, и включаем
+стандартные файлы заголовков &laquo;<span class="file">windows.h</span>&raquo; и
+&laquo;<span class="file">commctrl.h</span>&raquo; из комплекта SDK Windows и
+&laquo;<span class="file">stdio.h</span>&raquo; из стандартных библиотек C. Затем мы вводим
+<span class="cpp">define</span>-константы для идентификаторов, которые мы присвоим кнопкам и полям ввода
+нашей программы, и описываем две глобальных переменных: массив символов <span class="cpp">buffer</span>,
+из которого наша программа будет брать текстовые сообщения для вывода в окне, и переменная
+<span class="cpp">MainWin</span>, в которую мы запишем дескриптор главного окна нашей программы после его
+создания, чтобы любая функция могла к нему обращаться. Далее описана функция
+<span class="cpp">DisplayText</span>, которая помещает в массив
+<span class="cpp">buffer</span> переданную строку сообщения и заставляет главное окно программы обновиться при
+первой возможности; за ней следует некоторое количество пустых функций, которые будут вызываться при нажатии
+кнопок в главном окне и перед завершением всего приложения &ndash; мы наполним их содержимым позднее. В конце
+текста описана функция обработки сообщений окна нашей программы <span class="cpp">MainWndProc</span>,
+которая постоянно вызывается в процессе работы приложения, и главная функция приложения
+<span class="cpp">WinMain</span>, которая создает главное окно и организует цикл обработки сообщений.
+Более подробно рассматривать описанные выше функции нашего приложения мы не будем &ndash; желающие могут
+обратиться к литературе по программированию с использованием Windows API. Для нас сейчас важно, что
+скомпилировав этот текст и запустив получившуюся программу, мы получим окно, изображенное
+на <a href="#pic1" title="Главное окно управляющего приложения">рис.&nbsp;121</a>:
+в верхней его части будет выводиться строка из массива <span class="cpp">buffer</span>, в нижней будут
+располагаться различные кнопки и поля ввода. Теперь мы будем постепенно добавлять в это приложение команды
+управления RDS и реакции на события.</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/WinApplicationStart.png" width="415" height="165" alt="Главное окно управляющего приложения" />
+<p id="light_pic1">Рис.&nbsp;121. Главное окно управляющего приложения</p>
+</div></div>
+
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_16_2.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_2.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_1">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

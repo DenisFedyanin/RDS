@@ -1,0 +1,64 @@
+$BC55MODEL 0.0.0 2016.10.12.21.45.2 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$VARS
+  signal name "Start" in menu run default 0
+  signal name "Ready" out menu default 0
+  matrix int name "Y" out menu default "[ ] 0"
+  matrix int name "M" in menu run default "[ ] 0"
+  signal name "Clean" in menu run default 0
+$ENDDECL
+$MODEL
+if ( Clean ) {
+  Clean = 0;
+  Y.Resize(0,0);
+  return;
+}
+
+int Rows = Y.Rows(), Cols = Y.Cols(), YRows = Rows + M.Rows();
+
+// поиск и удаление прошлой заявки
+if( Rows > 0 && Cols > 0 & YRows > Rows ) {
+  int player = M[0][0];
+  int i = 0, j, dif;
+  while ( i < Rows && Y[i][0] != player) i++;
+  if( i < Rows ) {
+    j = i;
+    while( j < Rows && Y[j][0] == player ) j++;
+    // затирание заявок игрока player хвостом матрицы ниже него
+    dif = j - i;
+    for( int k = j ; k < Rows ; k++ ){
+      for( int p = 0 ; p < Cols ; p++ ){
+        Y[k-dif][p] = Y[k][p];
+      }
+    }
+    Rows -= dif;
+    YRows -= dif;
+  }
+}
+
+//
+if( Cols < M.Cols() ) Cols = M.Cols(); 
+Y.Resize( YRows, Cols, true );
+// добавление новых заявок
+for( int i = Rows ; i < YRows ; i++ ){
+  for( int j = 0 ; j < Cols ; j++ ){
+    Y[i][j] = M[i-Rows][j];
+  }
+}
+$OPTIONS
+  tabs $MODEL
+  window pos 732 131 size 1027 846 hdiv 337 vdiv 364 fdiv 341
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 1
+  ignorewarnings 0
+  customerrmsg 0
+  autoreadonlyeditor 0
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

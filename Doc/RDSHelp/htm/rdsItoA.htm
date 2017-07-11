@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.4.11. rdsItoA &ndash; преобразование целого числа в строку</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_4">А.5.4. Отведение памяти и преобразование строк</a></p>
+<div class="level"><p>А.5.4.11. <span class="cpp">rdsItoA</span> &ndash; преобразование целого числа в строку</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsGetRelFilePath.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsProcessText.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsItoA">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.4. Отведение памяти и преобразование строк</h4>
+<h5>А.5.4.11. <span class="cpp">rdsItoA</span> &ndash; преобразование целого числа в строку</h5>
+
+
+<p>Функция <span class="cpp">rdsItoA</span> преобразует тридцатидвухбитное целое число со знаком в
+динамическую строку с его символьным представлением в указанной системе счисления.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsItoA(
+      <span class="kw">int</span> Val,       <span class="rem">// Целое число</span>
+      <span class="kw">int</span> Radix,     <span class="rem">// Система счисления</span>
+      <span class="kw">int</span> MinDigits  <span class="rem">// Минимальное число разрядов</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_SIII</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Val</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd></dd>
+
+  <dt><span class="cpp">Radix</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Система счисления, в которой нужно представить число. Этот параметр может принимать следующие значения:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term">2</td>
+          <td>Число будет представлено в двоичной системе счисления с префиксом
+          &laquo;0b&raquo; (число 3 будет преобразовано в строку &laquo;0b11&raquo;).</td>
+        </tr>
+        <tr>
+          <td class="term">8</td>
+          <td>Число будет представлено в восьмеричной системе счисления с префиксом &laquo;0o&raquo;
+          (число 9 будет преобразовано в строку &laquo;0o11&raquo;).</td>
+        </tr>
+        <tr>
+          <td class="term">10</td>
+          <td>Число будет представлено в десятичной системе счисления без какого-либо префикса
+          (число 123 будет преобразовано в строку &laquo;123&raquo;).</td>
+        </tr>
+        <tr>
+          <td class="term">16</td>
+          <td>Число будет представлено в шестнадцатеричной системе счисления с префиксом &laquo;0x&raquo;
+          (число 31 будет преобразовано в строку &laquo;0x1f&raquo;).</td>
+        </tr>
+      </table>
+    </div></div>
+    Любое другое значение параметра <span class="cpp">Radix</span> будет игнорироваться и число будет
+    преобразовываться в строку с использованием десятичной системы.
+  </dd>
+
+  <dt><span class="cpp">MinDigits</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Минимально допустимое число разрядов в символьном представлении числа. Если после преобразования в
+  указанной системе счисления в числе окажется меньше <span class="cpp">MinDigits</span> разрядов, оно
+  будет дополнено нулями слева. Если в числе окажется больше <span class="cpp">MinDigits</span> разрядов,
+  этот параметр игнорируется.</dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p>Указатель на созданную в динамической памяти строку с символьным представлением переданного числа.
+В случае ошибки преобразования возвращается <span class="cpp">NULL</span>.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Динамическая строка, созданная функцией <span class="cpp">rdsItoA</span>, должна быть
+<span class="emph">обязательно</span> освобождена функцией <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции приведен
+в <a href="pm_4_4.htm" title="&sect;4.4. Компиляция моделей">&sect;4.4 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsAtoI.htm" title="А.5.4.4. rdsAtoI &ndash; преобразование строки в целое число">rdsAtoI</a></span>,
+<span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsGetRelFilePath.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsProcessText.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsItoA">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.16.2. Добавление и удаление блоков и связей</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_16">&sect;2.16. Программное изменение схемы</a></p>
+<div class="level"><p>&sect;2.16.2. Добавление и удаление блоков и связей</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_16_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_16_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="tab"><a href="pm_2_16_2.htm">Текст</a></span>
+<span class="curtab">С++</span>
+</div>
+</div>
+
+<div class="text">
+
+<p>Полный исходный текст на языке C++ для библиотеки (DLL) с моделью блока,
+создающего в своей родительской подсистеме фрагмент схемы по описаниям соединений
+в текстовом файле.</p>
+
+<pre class="cpp">  <span class="rem">// Программное добавление и удаление блоков и связей</span>
+  <span class="preproc">#include &lt;windows.h&gt;</span>
+  <span class="preproc">#include &lt;stdio.h&gt;</span>
+  <span class="preproc">#include &lt;RdsDef.h&gt;</span>
+  <span class="rem">// Подготовка описаний сервисных функций</span>
+  <a class="hidden" href="pm_2_2.htm#ref11" title="Использование RdsFunc.h"><span class="preproc">#define RDS_SERV_FUNC_BODY GetInterfaceFunctions</span></a>
+  <span class="preproc">#include &lt;RdsFunc.h&gt;</span>
+
+  <span class="rem">//========== </span><a class="hidden" href="pm_2_2.htm" title="&sect;2.2. Главная функция DLL и файлы заголовков"><span class="rem">Главная функция DLL</span></a><span class="rem"> ==========</span>
+  <span class="kw">int</span> WINAPI <a class="hidden" href="pm_2_2.htm#ref8" title="Главная функция DLL">DllEntryPoint</a>(<a class="hidden" href="app_ids.htm#light_ref17" title="Дескриптор модуля">HINSTANCE</a> <span class="rem">/*hinst*/</span>,
+                           <span class="kw">unsigned</span> <span class="kw">long</span> reason,
+                           <span class="kw">void</span>* <span class="rem">/*lpReserved*/</span>)
+  { <span class="kw">if</span>(reason==DLL_PROCESS_ATTACH) <span class="rem">// Загрузка DLL</span>
+      { <span class="rem">// Получение доступа к функциям RDS</span>
+        <span class="kw">if</span>(!GetInterfaceFunctions())
+          MessageBox(NULL,<span class="str">"Нет доступа к функциям"</span>,<span class="str">"Ошибка"</span>,<a class="hidden" href="rdsMessageBox.htm#light_ref7" title="MB_OK">MB_OK</a>);
+      }
+    <span class="kw">return</span> <span class="const">1</span>;
+  }
+  <span class="rem">//========= Конец главной функции =========</span>
+
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">// "Обрезание" отрезка по прямоугольнику</span>
+  <span class="rem">// (вспомогательная функция)</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">void</span> ClipLineByRect(
+      <span class="kw">int</span> x1,<span class="kw">int</span> y1,   <span class="rem">// Центр прямоугольника</span>
+      <span class="kw">int</span> w,<span class="kw">int</span> h,     <span class="rem">// Размеры прямоугольника</span>
+      <span class="kw">int</span> x2,<span class="kw">int</span> y2,   <span class="rem">// Конец отрезка</span>
+      <span class="kw">int</span> *px,<span class="kw">int</span> *py) <span class="rem">// Координаты точки на границе</span>
+  { <span class="kw">int</span> xv,yg,xres,yres;
+    <span class="kw">double</span> tv,tg,t;
+    <span class="kw">int</span> status=<span class="const">0</span>; <span class="rem">// Наличие точек пересечения</span>
+
+    <span class="kw">if</span>(x2!=x1) <span class="rem">// Отрезок не строго вертикален</span>
+      { <span class="kw">if</span>(x2&gt;x1) <span class="rem">// Отрезок уходит вправо</span>
+          xv=x1+w/<span class="const">2</span>;
+        <span class="kw">else</span> <span class="rem">// Отрезок уходит влево</span>
+          xv=x1-w/<span class="const">2</span>;
+        <span class="rem">// Параметр точки пересечения с вертикальной прямой</span>
+        tv=((<span class="kw">double</span>)(xv-x1))/((<span class="kw">double</span>)(x2-x1));
+        status=<span class="const">1</span>; <span class="rem">// Есть точка пересечения с вертикалью</span>
+      }
+
+    <span class="kw">if</span>(y2!=y1) <span class="rem">// Отрезок не строго горизонтален</span>
+      { <span class="kw">if</span>(y2&gt;y1) <span class="rem">// Отрезок уходит вниз</span>
+          yg=y1+h/<span class="const">2</span>;
+        <span class="kw">else</span> <span class="rem">// Отрезок уходит вверх</span>
+          yg=y1-h/<span class="const">2</span>;
+        <span class="rem">// Параметр точки пересечения с горизонтальной прямой</span>
+        tg=((<span class="kw">double</span>)(yg-y1))/((<span class="kw">double</span>)(y2-y1));
+        status+=<span class="const">10</span>; <span class="rem">// Есть пересечение с горизонталью</span>
+      }
+
+    <span class="kw">switch</span>(status)
+      { <span class="kw">case</span> <span class="const">0</span>:  <span class="rem">// Ошибка: (x1,y1)==(x2,y2)</span>
+          *px=x1; *py=y1; <span class="kw">return</span>;
+        <span class="kw">case</span> <span class="const">1</span>:  <span class="rem">// Строго горизонтальный отрезок</span>
+          t=tv; <span class="kw">break</span>;
+        <span class="kw">case</span> <span class="const">10</span>: <span class="rem">// Строго вертикальный отрезок</span>
+          t=tg; <span class="kw">break</span>;
+        <span class="kw">default</span>: <span class="rem">// Диагональный отрезок</span>
+         t=(tv&lt;tg)?tv:tg;
+      }
+    <span class="rem">// Вычисление координат по параметру t</span>
+    *px=x1+t*(x2-x1);
+    *py=y1+t*(y2-y1);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Вывод сообщения об ошибке в файле</span>
+  <span class="rem">// (вспомогательная функция)</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">void</span> FileErrorMessage(<span class="kw">int</span> line,      <span class="rem">// Номер строки или 0</span>
+                        <span class="kw">char</span> *file,    <span class="rem">// Имя файла или NULL</span>
+                        <span class="kw">char</span> *message) <span class="rem">// Описание ошибки</span>
+  { <span class="kw">char</span> *msg=NULL; <span class="rem">// Здесь будет формироваться текст</span>
+
+    <span class="kw">if</span>(message) <span class="rem">// Есть текст описания</span>
+      <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;msg,message,FALSE); <span class="rem">// Копируем в msg</span>
+    <span class="kw">if</span>(file) <span class="rem">// Есть имя файла</span>
+      { <span class="rem">// Добавляем к динамической строке msg</span>
+        <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;msg,<span class="str">"\nФайл: "</span>,FALSE);
+        <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;msg,file,FALSE);
+      }
+    <span class="kw">if</span>(line&gt;<span class="const">0</span>) <span class="rem">// Есть номер строки</span>
+      { <span class="kw">char</span> buf[<span class="const">80</span>]; <span class="rem">// Преобразуем в текст и добавляем к msg</span>
+        sprintf(buf,<span class="str">"\nСтрока: %d"</span>,line);
+        <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;msg,buf,FALSE);
+      }
+    <span class="rem">// Выводим сообщение пользователю</span>
+    <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(msg,<span class="str">"Ошибка"</span>,<a class="hidden" href="rdsMessageBox.htm#light_ref7" title="MB_OK">MB_OK</a>|<a class="hidden" href="rdsMessageBox.htm#light_ref5" title="MB_ICONWARNING">MB_ICONWARNING</a>);
+    <span class="rem">// Освобождаем динамическую строку msg</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(msg);
+  }
+  <span class="rem">//=========================================</span>
+
+
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Блок, добавляющий и удаляющий блоки и</span>
+  <span class="rem">// связи в своей подсистеме</span>
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Личная область данных блока</span>
+  <span class="kw">class</span> TLoadGraphData
+  { <span class="kw">public</span>:
+      <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> List; <span class="rem">// Объект-список добавленных блоков и связей</span>
+
+      <span class="rem">// Функция добавления блоков по списку из файла</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> LoadBlocks(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> thisblock,<span class="kw">char</span> *blockfile,
+                      <span class="kw">char</span> *blocklist);
+      <span class="rem">// Функция добавления связей по списку из файла</span>
+      <span class="kw">void</span> LoadConnections(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> thisblock,<span class="kw">char</span> *connlist);
+      <span class="rem">// Функция удаления добавленного</span>
+      <span class="kw">void</span> DeleteByList(<span class="kw">void</span>);
+
+      <span class="rem">// Функция настройки (в нее передаются номера статических</span>
+      <span class="rem">// переменных, в которых хранятся параметры блока)</span>
+      <span class="kw">int</span> Setup(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,<span class="kw">int</span> BlockFileVar,
+                <span class="kw">int</span> BlockLstVar,<span class="kw">int</span> ConnLstVar);
+
+      <span class="rem">// Конструктор класса</span>
+      TLoadGraphData(<span class="kw">void</span>){List=NULL;};
+      <span class="rem">// Деструктор класса</span>
+      ~TLoadGraphData(){<a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(List);};
+  };
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция настройки параметров блока</span>
+  <span class="kw">int</span> TLoadGraphData::Setup(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block, <span class="rem">// Идентификатор блока</span>
+    <span class="kw">int</span> BlockFileVar,  <span class="rem">// Номер переменной с файлом блока</span>
+    <span class="kw">int</span> BlockLstVar,   <span class="rem">// Номер переменной со списком блоков</span>
+    <span class="kw">int</span> ConnLstVar)    <span class="rem">// Номер переменной со списком связей</span>
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window; <span class="rem">// Идентификатор вспомогательного объекта</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;            <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="kw">char</span> *defval;
+
+    <span class="rem">// Создаем окно</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Добавление блоков"</span>);
+
+    <span class="rem">//----- Файл с описанием блока -----</span>
+    <span class="rem">// Значение по умолчанию переменной с номером BlockFileVar</span>
+    defval=<a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a>(Block,BlockFileVar,NULL);
+    <span class="rem">// Поле ввода с возможностью выбора файла</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">1</span>,<a class="hidden" href="app_a_fields.htm#light_ref15" title="RDS_FORMCTRL_OPENDIALOG">RDS_FORMCTRL_OPENDIALOG</a>,
+        <span class="str">"Добавляемых блок:"</span>,<span class="const">300</span>);
+    <span class="rem">// Фильтр имен файлов для поля</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a>,
+        <span class="str">"Файлы блоков (*.blk)|*.blk\nВсе файлы|*.*"</span>);
+    <span class="rem">// Значение поля ввода</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,defval);
+    <span class="rem">// Динамическая строка defval больше не нужна</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(defval);
+
+    <span class="rem">// Список блоков</span>
+    defval=<a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a>(Block,BlockLstVar,NULL);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<a class="hidden" href="app_a_fields.htm#light_ref15" title="RDS_FORMCTRL_OPENDIALOG">RDS_FORMCTRL_OPENDIALOG</a>,
+        <span class="str">"Список блоков:"</span>,<span class="const">300</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a>,
+        <span class="str">"Текстовые файлы (*.txt)|*.txt\nВсе файлы|*.*"</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,defval);
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(defval);
+
+    <span class="rem">// Список связей</span>
+    defval=<a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a>(Block,ConnLstVar,NULL);
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">3</span>,<a class="hidden" href="app_a_fields.htm#light_ref15" title="RDS_FORMCTRL_OPENDIALOG">RDS_FORMCTRL_OPENDIALOG</a>,
+        <span class="str">"Список связей:"</span>,<span class="const">300</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a>,
+        <span class="str">"Текстовые файлы (*.txt)|*.txt\nВсе файлы|*.*"</span>);
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,defval);
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(defval);
+
+    <span class="rem">// Открытие окна</span>
+    ok=<a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Запись значений в переменных блока</span>
+        defval=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(Block,BlockFileVar,defval);
+        defval=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(Block,BlockLstVar,defval);
+        defval=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">3</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(Block,ConnLstVar,defval);
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="kw">return</span> ok?<span class="const">1</span>:<span class="const">0</span>;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Создание блоков по списку</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> TLoadGraphData::LoadBlocks(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> thisblock, <span class="rem">// Идентификатор этого блока</span>
+    <span class="kw">char</span> *blockfile,       <span class="rem">// Файл добавляемого блока</span>
+    <span class="kw">char</span> *blocklist)       <span class="rem">// Файл списка блоков</span>
+  { <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block=NULL;
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> csv;
+    <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a> descr;
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok=TRUE;
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Modified=FALSE; <span class="rem">// Флаг внесения изменений в схему</span>
+    <span class="kw">int</span> line=<span class="const">0</span>; <span class="rem">// Номер строки в списке блоков</span>
+
+    <span class="kw">if</span>(List) <span class="rem">// Уже есть список объектов – очишаем его</span>
+      <a class="hidden" href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a>(List,<a class="hidden" href="RDS_HBCL_CLEAR.htm" title="А.5.24.8. Команда RDS_HBCL_CLEAR &ndash; очистка списка">RDS_HBCL_CLEAR</a>);
+    <span class="kw">else</span> <span class="rem">// Списка нет – создаем новый (пустой)</span>
+      { List=<a class="hidden" href="rdsBCLCreateList.htm" title="А.5.24.1. rdsBCLCreateList &ndash; создать объект для хранения списка блоков и связей">rdsBCLCreateList</a>(NULL,<span class="const">0</span>,FALSE);
+        <span class="rem">// Включаем автоматическое обнуление удаленных блоков и связей</span>
+        <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(List,<a class="hidden" href="RDS_HBCL_AUTODELETE.htm" title="А.5.24.5. Команда RDS_HBCL_AUTODELETE &ndash; отслеживание удаления блоков и связей">RDS_HBCL_AUTODELETE</a>,<span class="const">0</span>,<span class="const">1</span>);
+      }
+
+    <span class="rem">// Получаем описание нашего блока (нужны его родитель и имя)</span>
+    descr.servSize=<span class="kw">sizeof</span>(descr);
+    <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(thisblock,&amp;descr);
+
+    <span class="rem">// Создаем объект для разбора формата CSV</span>
+    csv=<a class="hidden" href="rdsCSVCreate.htm" title="А.5.32.1. rdsCSVCreate &ndash; создать объект для работы с текстом в формате CSV">rdsCSVCreate</a>();
+
+    <span class="rem">// Открываем файл со списком блоков для чтения в csv</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(csv,<a class="hidden" href="RDS_CSV_OPENFILEREAD.htm" title="А.5.32.14. Команда RDS_CSV_OPENFILEREAD &ndash; открыть файл для чтения">RDS_CSV_OPENFILEREAD</a>,<span class="const">0</span>,blocklist);
+
+    <span class="rem">// Проверяем, открылся ли файл</span>
+    <span class="kw">if</span>(!<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(csv,<a class="hidden" href="RDS_CSV_FILEISOPEN.htm" title="А.5.32.8. Команда RDS_CSV_FILEISOPEN &ndash; проверка успешности открытия файла для чтения или записи">RDS_CSV_FILEISOPEN</a>,<span class="const">0</span>))
+      { FileErrorMessage(<span class="const">0</span>,blocklist,
+            <span class="str">"Невозможно открыть список блоков"</span>);
+        <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(csv);
+        <span class="kw">return</span> FALSE;
+      }
+
+    <span class="rem">// Читаем строки файла в цикле</span>
+    <span class="kw">for</span>(;;)
+      { <span class="kw">char</span> *name;
+        <span class="kw">int</span> x,y;
+        <span class="rem">// Читаем очередную строку из файла в строку объекта 0</span>
+        <span class="kw">if</span>(!<a class="hidden" href="rdsCommandObjectEx.htm" title="А.5.22.3. rdsCommandObjectEx &ndash; команда объекту">rdsCommandObjectEx</a>(csv,<a class="hidden" href="RDS_CSV_STRFROMFILE.htm" title="А.5.32.18. Команда RDS_CSV_STRFROMFILE &ndash; считать строку из файла">RDS_CSV_STRFROMFILE</a>,<span class="const">0</span>,NULL))
+          <span class="kw">break</span>; <span class="rem">// Строки в файле кончились</span>
+        line++;
+        name=<a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a>(csv,<span class="const">0</span>,<span class="const">0</span>); <span class="rem">// Имя блока (элемент 0)</span>
+        <span class="kw">if</span>(*name==<span class="const">0</span>) <span class="rem">// Имя блока пустое</span>
+          { FileErrorMessage(line,blocklist,<span class="str">"Пустое имя блока"</span>);
+            ok=FALSE;
+            <span class="kw">break</span>;
+          }
+        <span class="rem">// Читаем из объекта координаты блока (элементы 1 и 2)</span>
+        x=atoi(<a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a>(csv,<span class="const">0</span>,<span class="const">1</span>));
+        y=atoi(<a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a>(csv,<span class="const">0</span>,<span class="const">2</span>));
+        <span class="rem">// Если имя блока, который нужно добавить, совпадает с именем</span>
+        <span class="rem">// нашего блока – переименовываем наш</span>
+        <span class="kw">if</span>(strcmp(name,descr.BlockName)==<span class="const">0</span>)
+          { <span class="rem">// Имена совпали – подбираем новое для нашего</span>
+            <span class="kw">char</span> *newname=<a class="hidden" href="rdsMakeUniqueBlockName.htm" title="А.5.6.39. rdsMakeUniqueBlockName &ndash; создать уникальное имя блока">rdsMakeUniqueBlockName</a>(
+                              descr.Parent,descr.BlockName);
+            <span class="rem">// Переименовываем наш блок и получаем его новое описание</span>
+            <a class="hidden" href="rdsRenameBlock.htm" title="А.5.6.42. rdsRenameBlock &ndash; переименовать блок">rdsRenameBlock</a>(thisblock,newname,&amp;descr);
+            <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(newname); <span class="rem">// Освобождаем строку имени</span>
+            Modified=TRUE;
+          }
+
+        <span class="kw">if</span>(block==NULL) <span class="rem">// Добавляем самый первый блок (из файла)</span>
+          block=<a class="hidden" href="rdsCreateBlockFromFile.htm" title="А.5.6.6. rdsCreateBlockFromFile &ndash; загрузить блок из файла">rdsCreateBlockFromFile</a>(blockfile,descr.Parent,x,y,NULL);
+        <span class="kw">else</span> <span class="rem">// Уже добавляли блок раньше – копируем добавленный</span>
+          block=<a class="hidden" href="rdsDuplicateBlock.htm" title="А.5.6.10. rdsDuplicateBlock &ndash; сделать копию блока">rdsDuplicateBlock</a>(block,descr.Parent,x,y,NULL);
+        <span class="kw">if</span>(block==NULL) <span class="rem">// Ошибка при добавлении блока</span>
+          { FileErrorMessage(line,blocklist,
+                <span class="str">"Не удалось добавить блок"</span>);
+            ok=FALSE;
+            <span class="kw">break</span>;
+          }
+        Modified=TRUE; <span class="rem">// Схема изменилась</span>
+        <span class="rem">// Заносим добавленный блок в список List</span>
+        <a class="hidden" href="rdsBCLAddBlock.htm" title="А.5.24.2. rdsBCLAddBlock &ndash; добавление блока в список">rdsBCLAddBlock</a>(List,block,FALSE);
+        <span class="rem">// Даем добавленному блоку имя, считанное из списка</span>
+        <span class="kw">if</span>(!<a class="hidden" href="rdsRenameBlock.htm" title="А.5.6.42. rdsRenameBlock &ndash; переименовать блок">rdsRenameBlock</a>(block,name,NULL))
+          { FileErrorMessage(line,blocklist,<span class="str">"Повтор имени блока"</span>);
+            ok=FALSE;
+            <span class="kw">break</span>;
+          }
+      } <span class="rem">// for(;;)</span>
+
+    <span class="rem">// Удаляем объект csv (файл закроется автоматически)</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(csv);
+    <span class="kw">if</span>(Modified) <span class="rem">// Добавлены блоки</span>
+      <a class="hidden" href="rdsSetModifiedFlag.htm" title="А.5.2.36. rdsSetModifiedFlag &ndash; установка флага наличия изменений в схеме">rdsSetModifiedFlag</a>(TRUE);
+    <span class="kw">return</span> ok;
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Функция создания связей по списку</span>
+  <span class="kw">void</span> TLoadGraphData::LoadConnections(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> thisblock, <span class="rem">// Идентификатор этого блока</span>
+    <span class="kw">char</span> *connlist)        <span class="rem">// Файл списка связей</span>
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> csv;
+    <a class="hidden" href="RDS_BLOCKDESCRIPTION.htm#ref1" title="Структура RDS_BLOCKDESCRIPTION">RDS_BLOCKDESCRIPTION</a> descr;
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok=TRUE;
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Modified=FALSE;
+    <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> editor=NULL;
+    <a class="hidden" href="RDS_BLOCKDIMENSIONS.htm#ref1" title="Структура RDS_BLOCKDIMENSIONS">RDS_BLOCKDIMENSIONS</a> dim1,dim2;
+    <span class="kw">int</span> line=<span class="const">0</span>; <span class="rem">// Счетчик считанных строк</span>
+
+    <span class="rem">// Заполнение поля размера служебных структур</span>
+    dim1.servSize=<span class="kw">sizeof</span>(dim1);
+    dim2.servSize=<span class="kw">sizeof</span>(dim2);
+
+    <span class="rem">// Получаем описание нашего блока (нужен его родитель)</span>
+    descr.servSize=<span class="kw">sizeof</span>(descr);
+    <a class="hidden" href="rdsGetBlockDescription.htm" title="А.5.6.16. rdsGetBlockDescription &ndash; получить описание блока">rdsGetBlockDescription</a>(thisblock,&amp;descr);
+
+    <span class="rem">// Создаем объект для разбора формата CSV</span>
+    csv=<a class="hidden" href="rdsCSVCreate.htm" title="А.5.32.1. rdsCSVCreate &ndash; создать объект для работы с текстом в формате CSV">rdsCSVCreate</a>();
+
+    <span class="rem">// Открываем файл со списком связей для чтения в csv</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(csv,<a class="hidden" href="RDS_CSV_OPENFILEREAD.htm" title="А.5.32.14. Команда RDS_CSV_OPENFILEREAD &ndash; открыть файл для чтения">RDS_CSV_OPENFILEREAD</a>,<span class="const">0</span>,connlist);
+
+    <span class="rem">// Проверяем, открылся ли файл</span>
+    <span class="kw">if</span>(!<a class="hidden" href="rdsGetObjectInt.htm" title="А.5.22.8. rdsGetObjectInt &ndash; получить целое число">rdsGetObjectInt</a>(csv,<a class="hidden" href="RDS_CSV_FILEISOPEN.htm" title="А.5.32.8. Команда RDS_CSV_FILEISOPEN &ndash; проверка успешности открытия файла для чтения или записи">RDS_CSV_FILEISOPEN</a>,<span class="const">0</span>))
+      { FileErrorMessage(<span class="const">0</span>,connlist,
+            <span class="str">"Невозможно открыть список связей"</span>);
+        <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(csv);
+        <span class="kw">return</span>;
+      }
+
+    <span class="rem">// Читаем строки файла в цикле</span>
+    <span class="kw">for</span>(;;)
+      { <span class="kw">char</span> *name1,*name2,*var1,*var2;
+        <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> block1,block2;
+        <span class="kw">int</span> xc1,xc2,yc1,yc2,pnum1,pnum2,x1,y1,x2,y2;
+        <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> conn;
+        <span class="rem">// Читаем очередную строку из файла в строку объекта 0</span>
+        <span class="kw">if</span>(!<a class="hidden" href="rdsCommandObjectEx.htm" title="А.5.22.3. rdsCommandObjectEx &ndash; команда объекту">rdsCommandObjectEx</a>(csv,<a class="hidden" href="RDS_CSV_STRFROMFILE.htm" title="А.5.32.18. Команда RDS_CSV_STRFROMFILE &ndash; считать строку из файла">RDS_CSV_STRFROMFILE</a>,<span class="const">0</span>,NULL))
+          <span class="kw">break</span>;
+        line++;
+        <span class="rem">// Считываем из строки имена соединяемых блоков и переменных</span>
+        name1=<a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a>(csv,<span class="const">0</span>,<span class="const">0</span>); <span class="rem">// Имя блока 1</span>
+        var1=<a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a>(csv,<span class="const">0</span>,<span class="const">1</span>);  <span class="rem">// Имя переменной 1</span>
+        name2=<a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a>(csv,<span class="const">0</span>,<span class="const">2</span>); <span class="rem">// Имя блока 2</span>
+        var2=<a class="hidden" href="rdsCSVGetItem.htm" title="А.5.32.2. rdsCSVGetItem &ndash; получить элемент текста">rdsCSVGetItem</a>(csv,<span class="const">0</span>,<span class="const">3</span>);  <span class="rem">// Имя переменной 2</span>
+        <span class="kw">if</span>(*name1==<span class="const">0</span> || *name2==<span class="const">0</span> || *var1==<span class="const">0</span> || *var2==<span class="const">0</span>)
+          { FileErrorMessage(line,connlist,
+                <span class="str">"Мало данных в строке связи"</span>);
+            <span class="kw">break</span>;
+          }
+        <span class="rem">// Ищем в подсистеме блоки с указанными именами</span>
+        block1=<a class="hidden" href="rdsGetChildBlockByName.htm" title="А.5.6.21. rdsGetChildBlockByName &ndash; блок подсистемы по имени">rdsGetChildBlockByName</a>(descr.Parent,name1,NULL);
+        block2=<a class="hidden" href="rdsGetChildBlockByName.htm" title="А.5.6.21. rdsGetChildBlockByName &ndash; блок подсистемы по имени">rdsGetChildBlockByName</a>(descr.Parent,name2,NULL);
+        <span class="kw">if</span>(block1==NULL || block2==NULL) <span class="rem">// Какого-то нет</span>
+          { FileErrorMessage(line,connlist,
+                <span class="str">"Не найден один из блоков"</span>);
+            <span class="kw">break</span>;
+          }
+        <span class="rem">// Получаем координаты и размеры блоков</span>
+        <a class="hidden" href="rdsGetBlockDimensions.htm" title="А.5.6.17. rdsGetBlockDimensions &ndash; получить размеры и положение блока (устаревшая)">rdsGetBlockDimensions</a>(block1,&amp;dim1,FALSE);
+        <a class="hidden" href="rdsGetBlockDimensions.htm" title="А.5.6.17. rdsGetBlockDimensions &ndash; получить размеры и положение блока (устаревшая)">rdsGetBlockDimensions</a>(block2,&amp;dim2,FALSE);
+        <span class="rem">// Вычисляем координаты центров блоков</span>
+        xc1=dim1.Left+dim1.Width/<span class="const">2</span>;
+        yc1=dim1.Top+dim1.Height/<span class="const">2</span>;
+        xc2=dim2.Left+dim2.Width/<span class="const">2</span>;
+        yc2=dim2.Top+dim2.Height/<span class="const">2</span>;
+        <span class="rem">// "Обрезаем" прямую по границам первого блока</span>
+        <a class="hidden" href="pm_2_16_2.htm#ref4" title="Функция ClipLineByRect">ClipLineByRect</a>(xc1,yc1,dim1.Width,dim1.Height,xc2,yc2,
+            &amp;x1,&amp;y1);
+        <span class="rem">// "Обрезаем" прямую по границам второго блока</span>
+        <a class="hidden" href="pm_2_16_2.htm#ref4" title="Функция ClipLineByRect">ClipLineByRect</a>(xc2,yc2,dim2.Width,dim2.Height,xc1,yc1,
+            &amp;x2,&amp;y2);
+        <span class="rem">// Создаем или очищаем объект для редактирования связи</span>
+        <span class="kw">if</span>(editor==NULL) <span class="rem">// Нужно создать</span>
+          editor=<a class="hidden" href="rdsCECreateEditor.htm" title="А.5.23.1. rdsCECreateEditor &ndash; создать объект-редактор связи/шины">rdsCECreateEditor</a>();
+        <span class="kw">else</span> <span class="rem">// Очищаем ранее созданный</span>
+          <a class="hidden" href="rdsCommandObject.htm" title="А.5.22.2. rdsCommandObject &ndash; команда объекту">rdsCommandObject</a>(editor,<a class="hidden" href="RDS_HCE_RESET.htm" title="А.5.23.10. Команда RDS_HCE_RESET &ndash; очистка вспомогательного объекта">RDS_HCE_RESET</a>);
+        <span class="rem">// Добавляем в объект editor две точки</span>
+        pnum1=<a class="hidden" href="rdsCEAddBlockPoint.htm" title="А.5.23.3. rdsCEAddBlockPoint &ndash; добавление точки соединения с блоком">rdsCEAddBlockPoint</a>(editor,block1,var1,
+                  x1-dim1.BlockX,y1-dim1.BlockY,FALSE);
+        pnum2=<a class="hidden" href="rdsCEAddBlockPoint.htm" title="А.5.23.3. rdsCEAddBlockPoint &ndash; добавление точки соединения с блоком">rdsCEAddBlockPoint</a>(editor,block2,var2,
+                  x2-dim2.BlockX,y2-dim2.BlockY,FALSE);
+        <span class="rem">// Добавляем соединяющую их линию</span>
+        <a class="hidden" href="rdsCEAddLine.htm" title="А.5.23.7. rdsCEAddLine &ndash; добавление отрезка прямой">rdsCEAddLine</a>(editor,pnum1,pnum2);
+        <span class="rem">// Создаем по данным объекта editor новую связь</span>
+        conn=<a class="hidden" href="rdsCECreateConnBus.htm" title="А.5.23.8. rdsCECreateConnBus &ndash; создание связи или шины по данным объекта">rdsCECreateConnBus</a>(editor,descr.Parent,<a class="hidden" href="RDS_CONNDESCRIPTION.htm#light_ref6" title="RDS_CTCONNECTION">RDS_CTCONNECTION</a>,NULL);
+        <span class="kw">if</span>(conn!=NULL) <span class="rem">// Создание связи удалось</span>
+          { Modified=TRUE;
+            <span class="rem">// Добавляем связь в список</span>
+            <a class="hidden" href="rdsBCLAddConn.htm" title="А.5.24.3. rdsBCLAddConn &ndash; добавление связи или шины в список">rdsBCLAddConn</a>(List,conn,FALSE);
+          }
+        <span class="kw">else</span> <span class="rem">// Ошибка при создании связи</span>
+          { FileErrorMessage(line,connlist,
+                <span class="str">"Не удалось создать связь"</span>);
+            <span class="kw">break</span>;
+          }
+      } <span class="rem">// for(;;)</span>
+
+    <span class="rem">// Удаляем объект csv (файл закроется автоматически)</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(csv);
+    <span class="rem">// Удаляем объект-редактор</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(editor);
+    <span class="kw">if</span>(Modified) <span class="rem">// Добавлены связи</span>
+      <a class="hidden" href="rdsSetModifiedFlag.htm" title="А.5.2.36. rdsSetModifiedFlag &ndash; установка флага наличия изменений в схеме">rdsSetModifiedFlag</a>(TRUE);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Удаление добавленных блоков и связей</span>
+  <span class="kw">void</span> TLoadGraphData::DeleteByList(<span class="kw">void</span>)
+  { <a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a> *conns;
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> *blocks;
+    <span class="kw">int</span> count;
+
+    <span class="kw">if</span>(List==NULL) <span class="rem">// Списка нет</span>
+      <span class="kw">return</span>;
+
+    <span class="rem">// Отключаем автоматическое обнуление удаляемых объектов</span>
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(List,<a class="hidden" href="RDS_HBCL_AUTODELETE.htm" title="А.5.24.5. Команда RDS_HBCL_AUTODELETE &ndash; отслеживание удаления блоков и связей">RDS_HBCL_AUTODELETE</a>,<span class="const">0</span>,<span class="const">0</span>);
+
+    <span class="rem">// Получаем указатель на массив идентификаторов связей и его размер</span>
+    conns=(<a class="hidden" href="app_ids.htm#light_ref2" title="Идентификатор связи">RDS_CHANDLE</a>*)<a class="hidden" href="rdsGetObjectArray.htm" title="А.5.22.5. rdsGetObjectArray &ndash; получить массив из объекта">rdsGetObjectArray</a>(List,<a class="hidden" href="RDS_HBCL_CONNARRAY.htm" title="А.5.24.9. Команда RDS_HBCL_CONNARRAY &ndash; получение массива связей/шин">RDS_HBCL_CONNARRAY</a>,<span class="const">0</span>,&amp;count);
+    <span class="rem">// Удаляем все связи из этого массива</span>
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;count;i++)
+      <a class="hidden" href="rdsDeleteConnection.htm" title="А.5.6.9. rdsDeleteConnection &ndash; удаление связи или шины">rdsDeleteConnection</a>(conns[i]);
+
+    <span class="rem">// Получаем указатель на массив идентификаторов блоков</span>
+    <span class="rem">// и его размер</span>
+    blocks=(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a>*)<a class="hidden" href="rdsGetObjectArray.htm" title="А.5.22.5. rdsGetObjectArray &ndash; получить массив из объекта">rdsGetObjectArray</a>(List,<a class="hidden" href="RDS_HBCL_BLOCKARRAY.htm" title="А.5.24.6. Команда RDS_HBCL_BLOCKARRAY &ndash; получение массива блоков">RDS_HBCL_BLOCKARRAY</a>,<span class="const">0</span>,&amp;count);
+    <span class="rem">// Удаляем все связи из этого массива</span>
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">0</span>;i&lt;count;i++)
+      <a class="hidden" href="rdsDeleteBlock.htm" title="А.5.6.8. rdsDeleteBlock &ndash; удаление блока">rdsDeleteBlock</a>(blocks[i]);
+
+    <span class="rem">// Удаляем объект-список и обнуляем List</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(List);
+    List=NULL;
+    <span class="rem">// Взводим флаг измененности схемы</span>
+    <a class="hidden" href="rdsSetModifiedFlag.htm" title="А.5.2.36. rdsSetModifiedFlag &ndash; установка флага наличия изменений в схеме">rdsSetModifiedFlag</a>(TRUE);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Модель блока</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> LoadGraph(<span class="kw">int</span> CallMode,
+          <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+          <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Приведение указателя на личную область данных </span>
+    <span class="rem">// к правильному типу</span>
+  TLoadGraphData *data=(TLoadGraphData*)(BlockData-&gt;BlockData);
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart    ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start     (*((char *)(pStart)))     </span><span class="rem">// 0</span>
+  <span class="preproc">#define Ready     (*((char *)(pStart+1)))   </span><span class="rem">// 1</span>
+  <span class="preproc">#define BlockFile (*((char **)(pStart+2)))  </span><span class="rem">// 2</span>
+  <span class="preproc">#define BlockList (*((char **)(pStart+6)))  </span><span class="rem">// 3</span>
+  <span class="preproc">#define ConnList  (*((char **)(pStart+10))) </span><span class="rem">// 4</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация модели</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          BlockData-&gt;BlockData=<span class="kw">new</span> TLoadGraphData();
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSAAA}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Настройка параметров блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="kw">return</span> data-&gt;Setup(BlockData-&gt;Block,
+                                <span class="const">2</span>,  <span class="rem">// BlockFile</span>
+                                <span class="const">3</span>,  <span class="rem">// BlockList</span>
+                                <span class="const">4</span>); <span class="rem">// ConnList</span>
+
+        <span class="rem">// Вызов контекстного меню блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CONTEXTPOPUP.htm" title="А.2.6.2. RDS_BFM_CONTEXTPOPUP &ndash; вызов контекстного меню блока">RDS_BFM_CONTEXTPOPUP</a>:
+          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(
+              <span class="str">"Добавить блоки и связи"</span>,<span class="const">0</span>,<span class="const">1</span>,<span class="const">0</span>);
+          <a class="hidden" href="rdsAdditionalContextMenuItemEx.htm" title="А.5.17.2. rdsAdditionalContextMenuItemEx &ndash; добавить временный пункт в контекстное меню блока">rdsAdditionalContextMenuItemEx</a>(
+              <span class="str">"Удалить добавленное"</span>,
+              data-&gt;List==NULL?<a class="hidden" href="rdsChangeMenuItem.htm#light_ref2" title="RDS_MENU_DISABLED">RDS_MENU_DISABLED</a>:<span class="const">0</span>,<span class="const">2</span>,<span class="const">0</span>);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Выбор пункта в контекстном меню</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MENUFUNCTION.htm" title="А.2.6.7. RDS_BFM_MENUFUNCTION &ndash; выбор пользователем пункта меню">RDS_BFM_MENUFUNCTION</a>:
+          <span class="kw">switch</span>(((<a class="hidden" href="RDS_BFM_MENUFUNCTION.htm#ref2" title="Указатель на RDS_MENUFUNCDATA">RDS_PMENUFUNCDATA</a>)ExtParam)-&gt;Function)
+            { <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Добавить блоки и связи</span>
+                <span class="rem">// Подготовка к серьезным изменениям</span>
+                <a class="hidden" href="rdsSetSystemUpdate.htm" title="А.5.2.38. rdsSetSystemUpdate &ndash; разрешить/запретить обновление вспомогательных данных">rdsSetSystemUpdate</a>(FALSE);
+                <span class="kw">if</span>(data-&gt;LoadBlocks(BlockData-&gt;Block,
+                                    BlockFile,BlockList))
+                  data-&gt;LoadConnections(BlockData-&gt;Block,ConnList);
+                <span class="rem">// Серьезные изменения завершены</span>
+                <a class="hidden" href="rdsSetSystemUpdate.htm" title="А.5.2.38. rdsSetSystemUpdate &ndash; разрешить/запретить обновление вспомогательных данных">rdsSetSystemUpdate</a>(TRUE);
+                <span class="kw">break</span>;
+              <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Удалить добавленное</span>
+                <span class="rem">// Подготовка к серьезным изменениям</span>
+                <a class="hidden" href="rdsSetSystemUpdate.htm" title="А.5.2.38. rdsSetSystemUpdate &ndash; разрешить/запретить обновление вспомогательных данных">rdsSetSystemUpdate</a>(FALSE);
+                data-&gt;DeleteByList();
+                <span class="rem">// Серьезные изменения завершены</span>
+                <a class="hidden" href="rdsSetSystemUpdate.htm" title="А.5.2.38. rdsSetSystemUpdate &ndash; разрешить/запретить обновление вспомогательных данных">rdsSetSystemUpdate</a>(TRUE);
+                <span class="kw">break</span>;
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef ConnList</span>
+  <span class="preproc">#undef BlockList</span>
+  <span class="preproc">#undef BlockFile</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_16_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_16_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

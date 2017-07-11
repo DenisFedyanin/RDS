@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.13.6. Регистрация исполнителя функции</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_13">&sect;2.13. Вызов функций блоков</a></p>
+<div class="level"><p>&sect;2.13.6. Регистрация исполнителя функции</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_13_5.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_14_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_6">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_13_6_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.13. Вызов функций блоков</h3>
+<h4>&sect;2.13.6. Регистрация исполнителя функции</h4>
+<p class="abstract">Рассматривается механизм регистрации блока в качестве исполнителя какой-либо функции,
+                позволяющий остальным блокам схемы легко находить его идентификатор и вызывать эту функцию. В
+                приводимом примере один блок регистрируется как исполнитель функции вывода сообщения, а
+                другой выводит сообщение с его помощью.</p>
+
+
+<p>Для того, чтобы вызвать функцию какого-либо блока (не важно, будет ли это
+<a href="pm_2_13_2.htm" title="&sect;2.13.2. Прямой вызов функции одного блока">прямой</a>
+вызов или <a href="pm_2_13_5.htm" title="&sect;2.13.5. Отложенный вызов функций блоков">отложенный</a>), необходимо знать его
+<a href="app_ids.htm#light_ref1" title="Идентификатор блока">идентификатор</a>. Если в блоке реализована какая-либо функция,
+к которой должны обращаться блоки в разных местах схемы, то как они узнают идентификатор блока,
+выполняющего функцию? До сих пор мы вызывали функцию либо у блоков, соединенных связями с вызывающим,
+либо у всех блоков <a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистемы</a>. Можно, конечно, вызвать интересующую
+нас функцию у всех блоков схемы (для
+этого нужно вызвать функцию у блоков
+<a href="pm_1_2.htm#ref5" title="Корневая подсистема">корневой подсистемы</a> и разрешить вызов вложенных в нее подсистем),
+тогда, рано или поздно, она будет вызвана у блока, который ее поддерживает, и он выполнит нужные нам действия.
+Однако, для этого RDS придется перебрать все блоки схемы, что сильно замедлит работу. Кроме
+того, если в схеме окажется несколько блоков, выполняющих интересующую нас функцию, придется принимать
+специальные меры, чтобы только один из этих блоков сработал. Чтобы избежать этих проблем, можно
+воспользоваться механизмом регистрации блока как исполнителя какой-либо функции, тогда
+все блоки схемы смогут получить идентификатор этого блока и вызывать функцию непосредственно у него.</p>
+
+<p>Механизм регистрации исполнителя функции и получения доступа к его идентификатору похож на механизм создания
+<a href="pm_2_6_1.htm" title="&sect;2.6.1. Использование динамических переменных">динамических переменных</a>
+и подписки на них. Блок, поддерживающий
+какую-либо функцию, может зарегистрироваться в RDS как ее исполнитель при помощи вызова
+<span class="cpp"><span id="light_ref1"><a href="rdsRegisterFuncProvider.htm" title="А.5.13.11. rdsRegisterFuncProvider &ndash; регистрация блока как исполнителя функции">rdsRegisterFuncProvider</a></span></span>. RDS будет помнить факт его регистрации до тех пор,
+пока блок не отменит ее вызовом <span class="cpp"><span id="light_ref2"><a href="rdsUnregisterFuncProvider.htm" title="А.5.13.14. rdsUnregisterFuncProvider &ndash; отмена регистрации блока как исполнителя функции">rdsUnregisterFuncProvider</a></span></span> или не будет удален.
+Блок, которому нужен доступ к этой функции, подписывается на информацию о ее исполнителе вызовом
+<span class="cpp"><span id="light_ref3"><a href="rdsSubscribeToFuncProvider.htm" title="А.5.13.13. rdsSubscribeToFuncProvider &ndash; подписка на блок-исполнитель функции">rdsSubscribeToFuncProvider</a></span></span>. Эта функция создает для вызвавшего ее блока структуру
+<span class="cpp"><span id="light_ref4"><a href="RDS_FUNCPROVIDERLINK.htm#ref1" title="Структура RDS_FUNCPROVIDERLINK">RDS_FUNCPROVIDERLINK</a></span></span> и возвращает указатель на нее. В поле
+<span class="cpp">Block</span> этой структуры находится идентификатор ближайшего в иерархии блока,
+зарегистрировавшегося как исполнитель данной функции (это очень похоже на подписку на динамическую переменную с
+поиском по иерархии). RDS постоянно отслеживает регистрацию новых блоков и ее отмену,
+и поддерживает поле <span class="cpp">Block</span> в актуальном состоянии. Если, например, на момент
+подписки в системе не было зарегистрировано и одного исполнителя данной функции, в этом поле будет
+находиться значение <span class="cpp">NULL</span>. Если, со временем, зарегистрируется один из
+блоков в корневой подсистеме, RDS сразу же запишет в поле
+<span class="cpp">Block</span> его идентификатор. Если потом какой-либо из более близких к подписавшемуся
+блоков (например, блок в одной подсистеме с ним) тоже зарегистрируется как исполнитель этой функции,
+в поле <span class="cpp">Block</span> запишется его идентификатор и т.д. Таким образом, подписавшись на
+информацию об исполнителе функции, блок всегда имеет доступ к идентификатору ближайшего такого исполнителя.
+Как и в случае динамических переменных, блок может получать информацию только об исполнителях в
+своей иерархической цепочке: в своей подсистеме, в
+<a href="pm_1_2.htm#ref7" title="Родительская подсистема">родительской</a> подсистеме своей подсистемы и т.д. до корневой подсистемы.
+Об исполнителе в соседней подсистеме блок не узнает.</p>
+
+<p>В качестве примера создадим блок, который будет выводить пользователю сообщение, текст и заголовок которого
+будут передаваться в параметрах функции. Мы зарегистрируем этот блок в качестве исполнителя функции вывода
+сообщения, так что любой блок схемы, находящийся в той же иерархической цепочке, сможет найти его и
+вызвать эту функцию, если ему потребуется сообщить что-то пользователю. Разумеется, гораздо проще было
+бы вместо вызова функции у какого-то блока выводить сообщение при помощи сервисной функции
+<span class="cpp"><span id="light_ref5"><a href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a></span></span>, однако, в дальнейшем мы создадим еще один блок, который также
+будет поддерживать функцию вывода сообщения, но вместо демонстрации этого сообщения пользователю будет записывать
+его в файл. Таким образом, не переделывая модели блоков, которые будут формировать сообщения, мы
+сможем легко менять способ вывода этих сообщений, просто заменяя один блок-исполнитель на другой.</p>
+
+<p><span id="ref6">Прежде</span>
+<span id="ref7">всего</span>,
+<span id="ref8">нам</span>
+нужно придумать имя функции вывода сообщений и описать структуру ее параметров.
+Функцию мы назовем &laquo;<span id="light_ref6">ProgrammersGuide.UserMessage</span>&raquo;,
+а в структуру ее параметров включим поле размера для проверки правильности передачи, указатель на строку
+с текстом сообщения, и целое поле, которое будет определять тип заголовка: 0 &ndash; информационное сообщение,
+1 &ndash; предупреждение, 2 &ndash; сообщение об ошибке.</p>
+
+<pre class="cpp">  <span class="rem">// Функция вывода сообщения</span>
+  <span class="preproc">#define PROGGUIDEMESSAGEFUNC "ProgrammersGuide.UserMessage"</span>
+  <span class="rem">// Структура параметров функции</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> servSize;   <span class="rem">// Размер этой структуры</span>
+    <span class="kw">char</span> *MessageStr; <span class="rem">// Текст сообщения</span>
+    <span class="kw">int</span> Level;        <span class="rem">// Уровень важности (0, 1 или 2)</span>
+  } <span id="light_ref7">TProgGuideMessageFuncParams</span>;
+  <span class="rem">//=========================================</span>
+  <span class="rem">// Глобальная переменная для идентификатора функции</span>
+  <span class="kw">int</span> <span id="light_ref8">MessageFunc</span>=<span class="const">0</span>;
+  <span class="rem">//=========================================</span></pre>
+
+<p>Очевидно, функцию с такой структурой параметров нельзя использовать в
+<a href="pm_2_13_5.htm" title="&sect;2.13.5. Отложенный вызов функций блоков">отложенных вызовах</a> (структура содержит указатель на
+&laquo;постороннюю&raquo; строку), но нам это и не потребуется, мы будем использовать
+только прямой вызов.</p>
+
+<p>Напишем модель блока, который, при вызове этой функции, будет показывать сообщение пользователю:</p>
+
+<pre class="cpp">  <span class="rem">// Блок-исполнитель функции, показывающей сообщение пользователю</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> MessageFuncBlock_Box(<span class="kw">int</span> CallMode,
+        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a> func;
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Регистрируем функцию</span>
+          <span class="kw">if</span>(<a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>==<span class="const">0</span>)
+            <a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(PROGGUIDEMESSAGEFUNC);
+          <span class="rem">// Объявляем этот блок ее исполнителем</span>
+          <a class="hidden" href="rdsRegisterFuncProvider.htm" title="А.5.13.11. rdsRegisterFuncProvider &ndash; регистрация блока как исполнителя функции">rdsRegisterFuncProvider</a>(<a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>,FALSE);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Отменяем регистрацию данного блока как исполнителя</span>
+          <a class="hidden" href="rdsUnregisterFuncProvider.htm" title="А.5.13.14. rdsUnregisterFuncProvider &ndash; отмена регистрации блока как исполнителя функции">rdsUnregisterFuncProvider</a>(<a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов функции</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a>:
+          <span class="rem">// Приводим ExtParam к правильному типу</span>
+          func=(<a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a>)ExtParam;
+          <span class="kw">if</span>(func-&gt;Function==MessageFunc)
+            { <span class="rem">// Вызвана "</span><a class="hidden" href="#ref6" title="Функция блока ProgrammersGuide.GraphPath.Reset"><span class="rem">ProgrammersGuide.UserMessage</span></a><span class="rem">"</span>
+              <a class="hidden" href="#ref7" title="Струкутра TProgGuideMessageFuncParams">TProgGuideMessageFuncParams</a> *params=
+                (<a class="hidden" href="#ref7" title="Струкутра TProgGuideMessageFuncParams">TProgGuideMessageFuncParams</a>*)(func-&gt;Data);
+              <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> icon;
+              <span class="kw">char</span> *caption;
+              <span class="rem">// Проверяем наличие параметров и их размер</span>
+              <span class="kw">if</span>(params==NULL ||
+                 params-&gt;servSize&lt;<span class="kw">sizeof</span>(<a class="hidden" href="#ref7" title="Струкутра TProgGuideMessageFuncParams">TProgGuideMessageFuncParams</a>))
+                <span class="kw">break</span>; <span class="rem">// Параметров нет или неверный размер</span>
+              <span class="rem">// </span><span id="ref9"><span class="rem">В</span></span><span class="rem"> зависимости от уровня важности сообщения</span>
+              <span class="rem">// устанавливаем иконку и заголовок</span>
+              <span class="kw">switch</span>(params-&gt;Level)
+                { <span class="kw">case</span> <span class="const">0</span>:  icon=<a class="hidden" href="rdsMessageBox.htm#light_ref3" title="MB_ICONINFORMATION">MB_ICONINFORMATION</a>;
+                           <span id="light_ref9">caption</span>=<span class="str">"Информация"</span>;
+                           <span class="kw">break</span>;
+                  <span class="kw">case</span> <span class="const">1</span>:  icon=<a class="hidden" href="rdsMessageBox.htm#light_ref5" title="MB_ICONWARNING">MB_ICONWARNING</a>;
+                           caption=<span class="str">"Предупреждение"</span>;
+                           <span class="kw">break</span>;
+                  <span class="kw">default</span>: icon=<a class="hidden" href="rdsMessageBox.htm#light_ref2" title="MB_ICONERROR">MB_ICONERROR</a>;
+                           caption=<span class="str">"Ошибка"</span>;
+                }
+              <span class="rem">// Показываем сообщение пользователю</span>
+              <a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a>(params-&gt;MessageStr,caption,icon | <a class="hidden" href="rdsMessageBox.htm#light_ref7" title="MB_OK">MB_OK</a>);
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Модель получилась не особенно сложной. При ее
+<a href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">инициализации</a>
+мы, как обычно, регистрируем функцию
+&laquo;<a class="hidden" href="#ref6" title="Функция блока ProgrammersGuide.GraphPath.Reset">ProgrammersGuide.UserMessage</a>&raquo; и записываем полученный идентификатор
+в глобальную переменную <span class="cpp"><a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a></span>. Затем мы вызываем
+<span class="cpp"><a class="hidden" href="rdsRegisterFuncProvider.htm" title="А.5.13.11. rdsRegisterFuncProvider &ndash; регистрация блока как исполнителя функции">rdsRegisterFuncProvider</a></span>, объявляя тем самым данный блок исполнителем этой функции.
+В первом параметре <span class="cpp"><a class="hidden" href="rdsRegisterFuncProvider.htm" title="А.5.13.11. rdsRegisterFuncProvider &ndash; регистрация блока как исполнителя функции">rdsRegisterFuncProvider</a></span> передается идентификатор функции
+(<span class="cpp"><a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a></span>), второй параметр важен только при вызове этой сервисной функции
+из моделей подсистем: значение <span class="cpp">TRUE</span> указывает на то, что подсистема предоставляет
+доступ к этой функции только своим внутренним блокам, <span class="cpp">FALSE</span> &ndash; внутренним блокам и
+блокам-соседям по родительской подсистеме. Мы вызываем <span class="cpp"><a class="hidden" href="rdsRegisterFuncProvider.htm" title="А.5.13.11. rdsRegisterFuncProvider &ndash; регистрация блока как исполнителя функции">rdsRegisterFuncProvider</a></span>
+из модели обычного блока, у которого не может быть внутренних блоков, поэтому этот параметр будет проигнорирован
+RDS, и мы можем передать в нем любое значение. В результате этого вызова все блоки, находящиеся в
+одной подсистеме с нашим, а также все блоки, для которых эта подсистема находится в цепочке родителей (блоки
+всех вложенных подсистем, блоки всех подсистем, вложенных во вложенные, и т.д.) смогут получить доступ к
+этой функции, если подпишутся на идентификатор ее исполнителя.</p>
+
+<p>При очистке (событие <span class="cpp"><a href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span>) мы отменяем регистрацию блока-исполнителя
+функции с идентификатором <span class="cpp"><a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a></span> вызовом
+<span class="cpp"><a class="hidden" href="rdsUnregisterFuncProvider.htm" title="А.5.13.14. rdsUnregisterFuncProvider &ndash; отмена регистрации блока как исполнителя функции">rdsUnregisterFuncProvider</a></span>. При этом RDS переключит все подписавшиеся блоки
+на идентификатор другого блока, зарегистрировавшегося как исполнитель этой функции, если, конечно,
+такой имеется в их цепочке родителей. Если такого блока не окажется, вместо идентификатора исполнителя они
+будут получать значение <span class="cpp">NULL</span> до тех пор, пока исполнитель снова не появится.</p>
+
+<p>Наконец, мы должны включить в модель блока реакцию на функцию, исполнителем которой мы его регистрируем.
+В реакции на событие <span class="cpp"><a href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span> мы сравниваем идентификатор вызванной функции с
+<span class="cpp"><a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a></span> и, если они совпали, проверяем наличие (переданный указатель
+на структуру параметров не должен быть равен <span class="cpp">NULL</span>) и правильность (поле
+<span class="cpp">servSize</span> структуры параметров должно быть не меньше ожидаемого размера структуры)
+переданных параметров. Если параметры переданы верно, мы, в зависимости от поля
+<span class="cpp">Level</span> переданной структуры, записываем во вспомогательную переменную переменную
+<span class="cpp">icon</span> одну из стандартных констант Windows API, используемых для указания
+иконок сообщений, а в переменную <span class="cpp">caption</span> &ndash; указатель на строку заголовка окна
+сообщения, соответствующего этой иконке. Затем мы показываем текст, переданный в поле
+<span class="cpp">MessageStr</span> структуры параметров функции, в стандартном окне сообщения при
+помощи сервисной функции <span class="cpp"><a class="hidden" href="rdsMessageBox.htm" title="А.5.5.6. rdsMessageBox &ndash; вывод окна сообщения">rdsMessageBox</a></span>. Здесь мы используем сервисную функцию
+RDS, а не стандартную функцию Windows <span class="cpp">MessageBox</span>, поскольку сервисную функцию
+можно безопасно вызывать при запущенном расчете: при вызове из потока расчета она, в отличие от ее
+&laquo;тезки&raquo; из Windows API, не останавливает работу потока, а возвращает управление немедленно.
+В качестве заголовка окна мы передаем значение переменной <span class="cpp">caption</span>, в качестве флагов,
+влияющих на внешний вид окна &ndash; значение переменной <span class="cpp">icon</span>, объединенное битовым ИЛИ с
+константой <span class="cpp"><a class="hidden" href="rdsMessageBox.htm#light_ref7" title="MB_OK">MB_OK</a></span>. Таким образом, на экране появится окно с переданным
+в параметрах функции текстом, имеющее заголовок и иконку, соответствующие уровню важности сообщения.
+Окно будет иметь единственную кнопку с надписью &laquo;<span class="menu">OK</span>&raquo;.</p>
+
+<p>Теперь напишем пример модели блока, который будет пользоваться этой функцией. Сделаем блок, который, при
+поступлении сигнала на вход, будет выводить сообщение, текст и уровень важности которого будет задаваться
+пользователем в настройках блока. Такой блок можно подключить, например, к сигналу переполнения счетчика,
+или к блоку сравнения, и он выдаст пользователю заранее определенное сообщение при наступлении соответствующего события.
+В качестве входного сигнала для выдачи сообщения мы будем использовать
+<a href="um_1_4.htm#ref25" title="Сигнал запуска блока">стандартный вход запуска модели</a>
+(это всегда первая переменная блока), поэтому в параметрах блока нам нужно будет включить режим
+<a href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">запуска по сигналу</a>
+(если включить режим запуска каждый такт расчета, блок будет постоянно выдавать сообщения, игнорируя вход
+запуска). Текст сообщения и уровень его важности мы будем
+<a href="pm_2_7_4.htm#ref1" title="Хранение параметров в значениях переменных по умолчанию">хранить в значениях по умолчанию</a>
+переменных блока, как мы уже не раз делали. Для этого нам потребуется две переменных: строковая для текста
+и целая для уровня важности. Блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+    <th>Номер</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Show</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">Message</td>
+<td class="center">Строка</td>
+<td class="center">4</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center"></td>
+<td class="center">2</td>
+</tr>
+<tr><td class="center">6</td>
+<td class="vcenter">Type</td>
+<td class="center">int</td>
+<td class="center">4</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+<td class="center">3</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Первую переменную блока, вход запуска модели, мы переименуем в &laquo;<span class="rdsvar">Show</span>&raquo;, чтобы название переменной
+лучше отражало назначение этого входа.</p>
+
+<p>Для вывода сообщения нашему блоку необходимо знать идентификатор блока-исполнителя функции
+&laquo;<a class="hidden" href="#ref6" title="Функция блока ProgrammersGuide.GraphPath.Reset">ProgrammersGuide.UserMessage</a>&raquo;. Как и при подписке на
+динамическую переменную, при подписке на идентификатор блока-исполнителя RDS создает во внутренней
+памяти структуру, содержащую необходимую информацию, и возвращает указатель на нее. Этот указатель необходимо
+где-то хранить на протяжении всего существования нашего блока, поэтому блоку потребуется личная область данных.
+Оформим ее в виде класса, в конструкторе и деструкторе которого будем подписываться на идентификатор
+блока-исполнителя и прекращать эту подписку соответственно:</p>
+
+<pre class="cpp">  <span class="rem">// Личная область данных блока, выводящего сообщение</span>
+  <span class="kw">class</span> TMessageFuncUserData
+  { <span class="kw">public</span>:
+      <span class="rem">// Указатель на структуру подписки</span>
+      <a class="hidden" href="RDS_FUNCPROVIDERLINK.htm#ref2" title="Указатель на RDS_FUNCPROVIDERLINK">RDS_PFUNCPROVIDERLINK</a> Link;
+
+      <span class="rem">// Функция настройки блока</span>
+      <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> Setup(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,<span class="kw">int</span> NumTypeVar,<span class="kw">int</span> NumMessVar);
+
+      <span class="rem">// Конструктор класса</span>
+      TMessageFuncUserData(<span class="kw">void</span>)
+        { <span class="rem">// Регистрируем функцию</span>
+          <span class="kw">if</span>(<a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>==<span class="const">0</span>)
+            <a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(PROGGUIDEMESSAGEFUNC);
+          <span class="rem">// Подписываемся на блок-исполнитель</span>
+          Link=<a class="hidden" href="rdsSubscribeToFuncProvider.htm" title="А.5.13.13. rdsSubscribeToFuncProvider &ndash; подписка на блок-исполнитель функции">rdsSubscribeToFuncProvider</a>(<a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>);
+        };
+      <span class="rem">// Деструктор класса</span>
+      ~TMessageFuncUserData()
+        { <span class="rem">// Прекращаем подписку</span>
+          <a class="hidden" href="rdsUnsubscribeFromFuncProvider.htm" title="А.5.13.15. rdsUnsubscribeFromFuncProvider &ndash; отмена подписки на блок-исполнитель функции">rdsUnsubscribeFromFuncProvider</a>(<a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>);
+        };
+  };
+  <span class="rem">//=========================================</span></pre>
+
+<p>В поле <span class="cpp">Link</span> описанного нами класса будет храниться указатель на
+структуру подписки на блок-исполнитель функции. Структура имеет всего два поля:</p>
+
+<pre class="cpp">  <span class="rem">// Структура подписки на блок-исполнитель функции</span>
+  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block; <span class="rem">// Идентификатор блока-исполнителя</span>
+    <span class="kw">int</span> FuncId;        <span class="rem">// Идентификатор функции</span>
+  } <a class="hidden" href="RDS_FUNCPROVIDERLINK.htm#ref1" title="Структура RDS_FUNCPROVIDERLINK">RDS_FUNCPROVIDERLINK</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_FUNCPROVIDERLINK.htm#ref1" title="Структура RDS_FUNCPROVIDERLINK">RDS_FUNCPROVIDERLINK</a> *<a class="hidden" href="RDS_FUNCPROVIDERLINK.htm#ref2" title="Указатель на RDS_FUNCPROVIDERLINK">RDS_PFUNCPROVIDERLINK</a>;</pre>
+
+<p>В поле <span class="cpp">Block</span> этой структуры всегда находится либо идентификатор ближайшего по
+иерархии блока, зарегистрировавшегося как исполнитель данной функции, либо
+<span class="cpp">NULL</span>, если такого блока нет (RDS всегда поддерживает это поле в
+актуальном состоянии). В поле <span class="cpp">FuncId</span> хранится идентификатор самой функции.
+На самом деле, идентификатор функции нам известен и без этой структуры: не зная его, мы не смогли
+бы подписаться на исполнителя. В структуру он включен только для удобства программирования.</p>
+
+<p>В классе объявлена функция настройки блока, с помощью которой пользователь будет задавать текст и важность
+сообщения. В функцию передается идентификатор данного блока и порядковые номера переменных, в которых
+мы храним параметры (эти номера потребуются нам для получения значений переменных по умолчанию). Тело
+этой функции мы напишем позже.</p>
+
+<p>В конструкторе класса мы регистрируем функцию
+&laquo;<a class="hidden" href="#ref6" title="Функция блока ProgrammersGuide.GraphPath.Reset">ProgrammersGuide.UserMessage</a>&raquo;, если она еще не регистрировалась
+ранее, а затем при помощи вызова <span class="cpp"><a href="rdsSubscribeToFuncProvider.htm" title="А.5.13.13. rdsSubscribeToFuncProvider &ndash; подписка на блок-исполнитель функции">rdsSubscribeToFuncProvider</a></span> подписываемся на ее
+исполнителя. Возвращаемый указатель на структуру <span class="cpp"><a class="hidden" href="RDS_FUNCPROVIDERLINK.htm" title="А.4.11. RDS_FUNCPROVIDERLINK &ndash; подписка на исполнителя функции">RDS_FUNCPROVIDERLINK</a></span> мы
+записываем в поле класса <span class="cpp">Link</span>. Теперь, если нам потребуется вызвать функцию вывода
+сообщения, мы сможем использовать конструкцию вида</p>
+
+<pre class="cpp">  <span class="kw">if</span>(Link!=NULL)
+    <span id="light_ref10"><a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a></span>(Link-&gt;Block,Link-&gt;FuncId,&hellip;);</pre>
+
+<p>Сервисная функция <span class="cpp"><a href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a></span> устроена таким образом, что, если
+вместо идентификатора блока в первом параметре передается значение <span class="cpp">NULL</span>, она
+немедленно завершится, не выполнив никаких действий, поэтому поле
+<span class="cpp">Link-&gt;Block</span> можно не сравнивать с <span class="cpp">NULL</span> перед ее вызовом.
+Однако, со значением <span class="cpp">NULL</span> необходимо сравнить само значение поля
+<span class="cpp">Link</span>, поскольку функция
+<span class="cpp"><a class="hidden" href="rdsSubscribeToFuncProvider.htm" title="А.5.13.13. rdsSubscribeToFuncProvider &ndash; подписка на блок-исполнитель функции">rdsSubscribeToFuncProvider</a></span>, которая вернула нам это значение, возвращает
+<span class="cpp">NULL</span> в случае ошибки (например, если мы вызовем ее из модели корневой подсистемы,
+иерархическая цепочка которой не содержит ни одного блока, поэтому и исполнителя функции искать негде).</p>
+
+<p>В деструкторе класса мы отменяем подписку на исполнителя функции при помощи вызова
+<span class="cpp"><a href="rdsUnsubscribeFromFuncProvider.htm" title="А.5.13.15. rdsUnsubscribeFromFuncProvider &ndash; отмена подписки на блок-исполнитель функции">rdsUnsubscribeFromFuncProvider</a></span>. Технически, можно было бы и не делать этого,
+поскольку при отключении модели от блока все подписки отменяются автоматически, однако явная отмена подписки
+улучшает читаемость текста программы.</p>
+
+<p>Функция модели блока будет иметь следующий вид:</p>
+
+<pre class="cpp">  <span class="rem">// Блок, выводящий сообщение по сигналу</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> ShowMessage(<span class="kw">int</span> CallMode,
+        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Указатель на личную область данных</span>
+    TMessageFuncUserData *data=
+        (TMessageFuncUserData*)(BlockData-&gt;BlockData);
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pShow   ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Show    (*((char *)(pShow)))    </span><span class="rem">// 0</span>
+  <span class="preproc">#define Ready   (*((char *)(pShow+1)))  </span><span class="rem">// 1</span>
+  <span class="preproc">#define Message (*((char **)(pShow+2))) </span><span class="rem">// 2</span>
+  <span class="preproc">#define Type    (*((int *)(pShow+6)))   </span><span class="rem">// 3</span>
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация – создание личной области</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          BlockData-&gt;BlockData=<span class="kw">new</span> TMessageFuncUserData();
+          <span class="kw">break</span>;
+
+          <span class="rem">// Очистка – удаление личной области</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+
+          <span class="rem">// Проверка типов переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSAI}"</span>)?
+              <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+              <span class="rem">// Настройка блока</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="kw">return</span> data-&gt;Setup(BlockData-&gt;Block,<span class="const">3</span>,<span class="const">2</span>)?<span class="const">1</span>:<span class="const">0</span>;
+
+        <span class="rem">// Такт расчета (реакция на сигнал Show)</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a>:
+          <span class="kw">if</span>(data-&gt;Link!=NULL) <span class="rem">// Есть структура подписки</span>
+            { <a class="hidden" href="#ref7" title="Струкутра TProgGuideMessageFuncParams">TProgGuideMessageFuncParams</a> params;
+              <span class="rem">// Готовим структуру параметров функции</span>
+              params.servSize=<span class="kw">sizeof</span>(params);
+              params.MessageStr=Message;
+              params.Level=Type;
+              <span class="rem">// Вызываем функцию по данным подписки</span>
+              <a class="hidden" href="rdsCallBlockFunction.htm" title="А.5.13.7. rdsCallBlockFunction &ndash; прямой вызов функции блока">rdsCallBlockFunction</a>(data-&gt;Link-&gt;Block,
+                data-&gt;Link-&gt;FuncId,&amp;params);
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макрооперделений</span>
+  <span class="preproc">#undef Type</span>
+  <span class="preproc">#undef Message</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Show</span>
+  <span class="preproc">#undef pShow</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>При инициализации и очистке модели мы здесь, как обычно, создаем и уничтожаем личную область данных
+блока (все действия по регистрации функции и подписке выполняются в конструкторе класса, по прекращению подписки
+&ndash; в деструкторе), а при проверке типов переменных &ndash; сравниваем переданную строку со строкой,
+соответствующей используемому нами набору переменных. Реагируя на вызов в режиме
+<span class="cpp"><a href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span>, модель вызывает функцию настройки
+<span class="cpp">Setup</span>, которую нам еще предстоит написать, передавая ей порядковые номера переменных
+<span class="cpp">Type</span> (3) и <span class="cpp">Message</span> (2). Главные действия, ради
+которых, собственно, и создавалась эта модель, производятся в реакции на такт расчета
+<span class="cpp"><a href="RDS_BFM_MODEL.htm" title="А.2.4.9. RDS_BFM_MODEL &ndash; выполнение такта расчета">RDS_BFM_MODEL</a></span>, то есть при поступлении единицы на вход блока <span class="cpp">Show</span>.</p>
+
+<p>Прежде всего, указатель на структуру подписки, запомненный в поле <span class="cpp">Link</span> класса
+личной области данных блока, сравнивается с <span class="cpp">NULL</span> &ndash; равенство укажет на то,
+что подписка на блок-исполнитель функции принципиально невозможна, и вывести сообщение нельзя. Если поле
+<span class="cpp">Link</span> указывает на структуру во внутренней памяти RDS, структура
+<span class="cpp">params</span> заполняется параметрами функции (текст сообщения берется из переменной блока
+<span class="cpp">Message</span>, важность сообщения &ndash; из переменной
+<span class="cpp">Type</span>), после чего у блока, идентификатор которого хранится в
+<span class="cpp">Link-&gt;Params</span>, вызывается функция
+<span class="cpp">Link-&gt;FuncId</span>. В качестве идентификатора функции можно было бы использовать
+и значение глобальной переменной <span class="cpp"><a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a></span>, они, очевидно, будут равны.</p>
+
+<p>Нам осталось только написать функцию настройки параметров блока
+<span class="cpp">Setup</span>, и модель блока будет готова:</p>
+
+<pre class="cpp">  <span class="rem">// Функция настройки блока</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> TMessageFuncUserData::Setup(<a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block,
+            <span class="kw">int</span> NumTypeVar,<span class="kw">int</span> NumMessVar)
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window; <span class="rem">// Объект-окно</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;            <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="kw">char</span> *defval;
+
+    <span class="rem">// Создание окна</span>
+    window=<span id="light_ref11"><a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a></span>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Сообщение"</span>);
+
+    <span class="rem">// Важность сообщения</span>
+    <span class="rem">// Получение значения переменной по умолчанию</span>
+    defval=<span id="light_ref12"><a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a></span>(Block,NumTypeVar,NULL);
+    <span class="rem">// Добавление поля – выпадающий список</span>
+    <span id="light_ref13"><a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a></span>(window,<span class="const">0</span>,<span class="const">1</span>,<span id="light_ref14"><a class="hidden" href="app_a_fields.htm#light_ref5" title="RDS_FORMCTRL_COMBOLIST">RDS_FORMCTRL_COMBOLIST</a></span>,<span class="str">"Тип:"</span>,<span class="const">150</span>);
+    <span class="rem">// Установка списка вариантов</span>
+    <span id="light_ref15"><a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a></span>(window,<span class="const">1</span>,<span id="light_ref16"><a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a></span>,
+            <span class="str">"Информация\nПредупреждение\nОшибка"</span>);
+    <span class="rem">// Установка текущего значения поля</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<span id="light_ref17"><a class="hidden" href="RDS_FORMVAL_ITEMINDEX.htm" title="А.5.28.17. Команда RDS_FORMVAL_ITEMINDEX &ndash; номер варианта, выбранного в выпадающем списке с фиксированными вариантами">RDS_FORMVAL_ITEMINDEX</a></span>,defval);
+    <span class="rem">// Освобождение defval</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(defval);
+
+    <span class="rem">// Текст сообщения</span>
+    <span class="rem">// Получение значения переменной по умолчанию</span>
+    defval=<a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a>(Block,NumMessVar,NULL);
+    <span class="rem">// Добавление поля – многострочное</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<span id="light_ref18"><a class="hidden" href="app_a_fields.htm#light_ref13" title="RDS_FORMCTRL_MULTILINE">RDS_FORMCTRL_MULTILINE</a></span>,<span class="str">"Текст:"</span>,<span class="const">80</span>);
+    <span class="rem">// Установка текущего значения поля</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,defval);
+    <span class="rem">// Установка высоты поля в точках экрана (~3 строки)</span>
+    <a class="hidden" href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a>(window,<span class="const">2</span>,<span id="light_ref19"><a class="hidden" href="RDS_FORMVAL_MLHEIGHT.htm" title="А.5.28.19. Команда RDS_FORMVAL_MLHEIGHT &ndash; высота многострочного поля ввода">RDS_FORMVAL_MLHEIGHT</a></span>,<span class="const">3</span>*<span class="const">24</span>);
+    <span class="rem">// Освобождение defval</span>
+    rdsFree(defval);
+
+    <span class="rem">// Открытие окна</span>
+    ok=<span id="light_ref20"><a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Пользователь нажал OK – запись измененных параметров</span>
+        defval=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_ITEMINDEX.htm" title="А.5.28.17. Команда RDS_FORMVAL_ITEMINDEX &ndash; номер варианта, выбранного в выпадающем списке с фиксированными вариантами">RDS_FORMVAL_ITEMINDEX</a>);
+        <span id="light_ref21"><a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a></span>(Block,NumTypeVar,defval);
+        defval=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(Block,NumMessVar,defval);
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="kw">return</span> ok;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Эта функция похожа на другие функции настройки, которые мы уже не раз делали. Единственное новшество в
+ней &ndash; использование многострочного поля ввода <span class="cpp"><a href="app_a_fields.htm#light_ref13" title="RDS_FORMCTRL_MULTILINE">RDS_FORMCTRL_MULTILINE</a></span> для текста
+сообщения и установка высоты этого поля вызовом
+<span class="cpp"><a href="rdsSetObjectInt.htm" title="А.5.22.11. rdsSetObjectInt &ndash; установить целое число">rdsSetObjectInt</a></span> с константой <span class="cpp"><a href="RDS_FORMVAL_MLHEIGHT.htm" title="А.5.28.19. Команда RDS_FORMVAL_MLHEIGHT &ndash; высота многострочного поля ввода">RDS_FORMVAL_MLHEIGHT</a></span>.</p>
+
+<p>Теперь можно приступать к тестированию модели. Необходимо подключить ее к блоку с указанной выше
+структурой переменных, включить в параметрах этого блока
+<a href="pm_1_4.htm#ref5" title="Запуск модели каждый такт">запуск только по сигналу</a> и разрешить функцию настройки
+(см. <a href="pm_1_4.htm#pic3" title="Параметры блока &ndash; модель и реакции">рис.&nbsp;7</a>). К входу
+&laquo;Show&raquo; блока подключим выход &laquo;Click&raquo; стандартной кнопки (нажатие на
+эту кнопку будет выводить сообщение), а в настройках нашего блока зададим тип (важность) и текст сообщения
+(<a href="#pic1" title="Блок, выводящий сообщение по сигналу, и окно его настройки">рис.&nbsp;90</a>). Нам также понадобится блок-исполнитель функции
+с созданной нами моделью <span class="cpp">MessageFuncBlock_Box</span>: можно разместить его в той
+же подсистеме, что и блок с кнопкой, либо в одной из подсистем в иерархической цепочке, например, в
+корневой. Теперь, если запустить расчет и нажать на кнопку, подключенную к блоку, на экране появится сообщение,
+выведенное блоком-исполнителем (<a href="#pic2" title="Сообщение, выводимое блоком">рис.&nbsp;91</a>).</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/FuncProvider_Subscriber.png" width="409" height="228" alt="Блок, выводящий сообщение по сигналу, и окно его настройки" />
+<p id="light_pic1">Рис.&nbsp;90. Блок, выводящий сообщение по сигналу,<br />и окно его настройки</p>
+</div>
+<div class="container" id="pic2">
+<img src="../img/FuncProvider_Message.png" width="190" height="138" alt="Сообщение, выводимое блоком" />
+<p id="light_pic2">Рис.&nbsp;91. Сообщение,<br />выводимое блоком</p>
+</div>
+</div>
+
+
+<p>Теперь сделаем другой блок-исполнитель для той же самой функции
+&laquo;<a class="hidden" href="#ref6" title="Функция блока ProgrammersGuide.GraphPath.Reset">ProgrammersGuide.UserMessage</a>&raquo;. Вместо немедленной демонстрации сообщения
+пользователю модель блока будет записывать его в файл, имя которого будет задаваться в настройках блока.
+Кроме того, чтобы этот файл не разрастался до бесконечности, сделаем в настройках блока возможность включения
+автоматической очистки этого файла при загрузке схемы. Параметры блока мы будем хранить в значениях
+статических переменных по умолчанию: имя файла &ndash; в строковой переменной
+&laquo;<span class="rdsvar">FileName</span>&raquo;, флаг необходимости очистки при загрузке схемы &ndash; в логической
+&laquo;<span class="rdsvar">ClearOnLoad</span>&raquo;. Блок будет иметь следующую структуру переменных:</p>
+
+<div class="tablecenter"><div class="tcont">
+<table>
+
+  <tr>
+    <th>Смещение</th>
+    <th>Имя</th>
+    <th>Тип</th>
+    <th>Размер</th>
+    <th>Вход/выход</th>
+    <th>Пуск</th>
+    <th>Начальное значение</th>
+    <th>Номер</th>
+  </tr><tr><td class="center">0</td>
+<td class="vcenter">Start</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Вход</td>
+<td class="center">&checkmark;</td>
+<td class="center">0</td>
+<td class="center">0</td>
+</tr>
+<tr><td class="center">1</td>
+<td class="vcenter">Ready</td>
+<td class="center">Сигнал</td>
+<td class="center">1</td>
+<td class="center">Выход</td>
+<td></td>
+<td class="center">0</td>
+<td class="center">1</td>
+</tr>
+<tr><td class="center">2</td>
+<td class="vcenter">FileName</td>
+<td class="center">Строка</td>
+<td class="center">4</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center"></td>
+<td class="center">2</td>
+</tr>
+<tr><td class="center">6</td>
+<td class="vcenter">ClearOnLoad</td>
+<td class="center">Логический</td>
+<td class="center">1</td>
+<td class="center">Внутренняя</td>
+<td></td>
+<td class="center">0</td>
+<td class="center">3</td>
+</tr>
+
+
+</table>
+</div></div>
+
+<p>Сначала напишем функцию настройки блока. В ее параметрах, как и у остальных функций настройки, работающих
+со значениями переменных по умолчанию, необходимо передавать идентификатор блока и порядковые номера
+переменных, с которыми она будет работать:</p>
+
+<pre class="cpp">  <span class="rem">// Функция настройки блока вывода сообщения в файл</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> MessageFuncBlockFileSetup(
+    <a class="hidden" href="app_ids.htm#light_ref1" title="Идентификатор блока">RDS_BHANDLE</a> Block, <span class="rem">// Идентификатор блока</span>
+    <span class="kw">int</span> NumFileVar,    <span class="rem">// Номер переменной имени файла</span>
+    <span class="kw">int</span> NumClearVar)   <span class="rem">// Номер переменной флага очистки</span>
+  { <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> window; <span class="rem">// Идентификатор объекта-окна</span>
+    <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> ok;            <span class="rem">// Пользователь нажал "OK"</span>
+    <span class="kw">char</span> *defval;
+
+    <span class="rem">// Создание окна</span>
+    window=<a class="hidden" href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a>(FALSE,-<span class="const">1</span>,-<span class="const">1</span>,<span class="str">"Запись в файл"</span>);
+
+    <span class="rem">// Поле ввода для имени файла</span>
+    <span class="rem">// Чтение значения переменной по умолчанию</span>
+    defval=<a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a>(Block,NumFileVar,NULL);
+    <span class="rem">// Поле ввода – выбор файла с диалогом сохранения</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">1</span>,<span id="light_ref22"><a class="hidden" href="app_a_fields.htm#light_ref19" title="RDS_FORMCTRL_SAVEDIALOG">RDS_FORMCTRL_SAVEDIALOG</a></span>,<span class="str">"Файл:"</span>,<span class="const">300</span>);
+    <span class="rem">// Фильтр типов файлов для диалога сохранения</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a>,
+      <span class="str">"Текстовые файлы (*.txt)|*.txt\nВсе файлы|*.*"</span>);
+    <span class="rem">// Запись значения в поле ввода</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,defval);
+    <span class="rem">// Освобождение defval</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(defval);
+
+    <span class="rem">// Очистка при загрузке схемы</span>
+    <span class="rem">// Чтение значения переменной по умолчанию</span>
+    defval=<a class="hidden" href="rdsGetBlockVarDefValueStr.htm" title="А.5.14.12. rdsGetBlockVarDefValueStr &ndash; получить значение переменной блока по умолчанию">rdsGetBlockVarDefValueStr</a>(Block,NumClearVar,NULL);
+    <span class="rem">// Поле ввода - флаг</span>
+    <a class="hidden" href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a>(window,<span class="const">0</span>,<span class="const">2</span>,<span id="light_ref23"><a class="hidden" href="app_a_fields.htm#light_ref2" title="RDS_FORMCTRL_CHECKBOX">RDS_FORMCTRL_CHECKBOX</a></span>,
+      <span class="str">"Очищать при загрузке схемы"</span>,<span class="const">0</span>);
+    <span class="rem">// Запись значения в поле ввода</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>,defval);
+    <span class="rem">// Освобождение defval</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(defval);
+
+    <span class="rem">// Открытие окна</span>
+    ok=<a class="hidden" href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a>(window,NULL);
+    <span class="kw">if</span>(ok)
+      { <span class="rem">// Пользователь нажал OK – запись измененных значений</span>
+        defval=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(Block,NumFileVar,defval);
+        defval=<a class="hidden" href="rdsGetObjectStr.htm" title="А.5.22.9. rdsGetObjectStr &ndash; получить строку">rdsGetObjectStr</a>(window,<span class="const">2</span>,<a class="hidden" href="RDS_FORMVAL_VALUE.htm" title="А.5.28.27. Команда RDS_FORMVAL_VALUE &ndash; значение поля">RDS_FORMVAL_VALUE</a>);
+        <a class="hidden" href="rdsSetBlockVarDefValueStr.htm" title="А.5.14.17. rdsSetBlockVarDefValueStr &ndash; установить значение переменной по умолчанию">rdsSetBlockVarDefValueStr</a>(Block,NumClearVar,defval);
+      }
+    <span class="rem">// Уничтожение окна</span>
+    <a class="hidden" href="rdsDeleteObject.htm" title="А.5.22.4. rdsDeleteObject &ndash; удалить объект">rdsDeleteObject</a>(window);
+    <span class="kw">return</span> ok;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<div class="picright"><div class="container" id="pic3">
+<img src="../img/FuncProvider_FileSetup.png" width="391" height="139" alt="Окно настройки с полем выбора файла" />
+<p id="light_pic3">Рис.&nbsp;92. Окно настройки с полем выбора файла</p>
+</div></div>
+
+
+<p><span id="ref24">В</span>
+этой функции мы применяем не встречавшийся раньше тип поля ввода:
+<span id="light_ref24">указание имени файла с кнопкой вызова диалога сохранения</span>
+(тип <span class="cpp"><a href="app_a_fields.htm#light_ref19" title="RDS_FORMCTRL_SAVEDIALOG">RDS_FORMCTRL_SAVEDIALOG</a></span>, см.
+<a href="#pic3" title="Окно настройки с полем выбора файла">рис.&nbsp;92</a>). Кроме имени файла, в него необходимо
+занести список шаблонов имен файлов, доступных пользователю в выпадающем списке в стандартном диалоге сохранения.
+Этот список передается в поле в виде строки обычной сервисной функцией
+<span class="cpp"><a href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a></span> с константой <span class="cpp"><a href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a></span>. Каждый элемент
+выпадающего списка состоит из текста, который видит пользователь, и шаблона имени (с использованием обычных
+метасимволов &laquo;*&raquo; и &laquo;?&raquo;), разделенных символом вертикальной черты
+&laquo;|&raquo;. Можно указать несколько шаблонов, разделив их точкой с запятой. Элементы списка отделяются друг
+от друга символом перевода строки, который в языке C записывается как &laquo;\n&raquo;. В нашем случае
+в списке будет два элемента: &laquo;Текстовые файлы (*.txt)&raquo; (с шаблоном &laquo;*.txt&raquo;) и
+&laquo;Все файлы&raquo; (с шаблоном &laquo;*.*&raquo;). Если бы мы, например, захотели, чтобы при выборе
+в диалоге сохранения варианта &laquo;Текстовые файлы&raquo; отображались файлы не только с расширением
+&laquo;<span class="file">txt</span>&raquo;, но и с расширением &laquo;<span class="file">log</span>&raquo;, вызов установки списка шаблонов
+выглядел бы так:</p>
+
+<pre class="cpp">    <span class="rem">// Фильтр типов файлов для диалога сохранения</span>
+    <a class="hidden" href="rdsSetObjectStr.htm" title="А.5.22.12. rdsSetObjectStr &ndash; установить строку">rdsSetObjectStr</a>(window,<span class="const">1</span>,<a class="hidden" href="RDS_FORMVAL_LIST.htm" title="А.5.28.18. Команда RDS_FORMVAL_LIST &ndash; установка списка вариантов">RDS_FORMVAL_LIST</a>,
+      <span class="str">"Текстовые файлы|*.txt</span><span class="changes"><span class="str">;*.log</span></span><span class="str">\nВсе файлы|*.*"</span>);</pre>
+
+<p>В остальном эта функция не отличается от других функций настройки, которые нам уже приходилось делать.</p>
+
+<p>Теперь напишем модель блока:</p>
+
+<pre class="cpp">  <span class="rem">// Блок-исполнитель функции, выводящий сообщение в файл</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> MessageFuncBlock_File(<span class="kw">int</span> CallMode,
+        <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+        <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a> func;
+    <span class="kw">char</span> *fullpath;
+  <span class="rem">// </span><a class="hidden" href="pm_2_5_1.htm#light_ref9" title="Макросы для статических переменных блока"><span class="rem">Макроопределения для статических переменных</span></a>
+  <span class="preproc">#define pStart      ((char *)(BlockData-&gt;VarData))</span>
+  <span class="preproc">#define Start       (*((char *)(pStart)))    </span><span class="rem">// 0</span>
+  <span class="preproc">#define Ready       (*((char *)(pStart+1)))  </span><span class="rem">// 1</span>
+  <span class="preproc">#define FileName    (*((char **)(pStart+2))) </span><span class="rem">// 2</span>
+  <span class="preproc">#define ClearOnLoad (*((char *)(pStart+6)))  </span><span class="rem">// 3</span>
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Инициализация</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a>:
+          <span class="rem">// Регистрация функции</span>
+          <span class="kw">if</span>(<a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>==<span class="const">0</span>)
+            <a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>=<a class="hidden" href="rdsRegisterFunction.htm" title="А.5.13.12. rdsRegisterFunction &ndash; регистрация функции блока">rdsRegisterFunction</a>(PROGGUIDEMESSAGEFUNC);
+          <span class="rem">// Объявляем данный блок ее исполнителем</span>
+          <a class="hidden" href="rdsRegisterFuncProvider.htm" title="А.5.13.11. rdsRegisterFuncProvider &ndash; регистрация блока как исполнителя функции">rdsRegisterFuncProvider</a>(<a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>,FALSE);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          <span class="rem">// Отмена регистрации блока как исполнителя</span>
+          <a class="hidden" href="rdsUnregisterFuncProvider.htm" title="А.5.13.14. rdsUnregisterFuncProvider &ndash; отмена регистрации блока как исполнителя функции">rdsUnregisterFuncProvider</a>(<a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a>);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Проверка типов статических переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">return</span> strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSAL}"</span>)?
+            <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>:<a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+
+        <span class="rem">// Вызов функции настройки</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a>:
+          <span class="kw">return</span> MessageFuncBlockFileSetup(BlockData-&gt;Block,<span class="const">2</span>,<span class="const">3</span>)?<span class="const">1</span>:<span class="const">0</span>;
+
+        <span class="rem">// Загрузка схемы только что завершилась</span>
+        <span class="kw">case</span> <span id="light_ref25"><a class="hidden" href="RDS_BFM_AFTERLOAD.htm" title="А.2.5.1. RDS_BFM_AFTERLOAD &ndash; завершена загрузка схемы">RDS_BFM_AFTERLOAD</a></span>:
+          <span class="kw">if</span>(ClearOnLoad) <span class="rem">// Включена очистка файла при загрузке</span>
+            { <span class="rem">// Формируем в fullpath полный путь к файлу, т.к.</span>
+              <span class="rem">// введенный пользователем может быть неполным</span>
+              fullpath=<span id="light_ref26"><a class="hidden" href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a></span>(FileName,NULL,NULL);
+              <span class="kw">if</span>(fullpath) <span class="rem">// Полный путь существует</span>
+                { DeleteFile(fullpath); <span class="rem">// Удаляем файл</span>
+                  <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(fullpath);    <span class="rem">// Освобождаем память</span>
+                }
+            }
+          <span class="kw">break</span>;
+
+        <span class="rem">// Вызов функции</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a>:
+          func=(<a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm#ref2" title="Указатель на RDS_FUNCTIONCALLDATA">RDS_PFUNCTIONCALLDATA</a>)ExtParam;
+          <span class="kw">if</span>(func-&gt;Function==MessageFunc)
+            { <span class="rem">// Вызвана наша функция – приводим параметры</span>
+              <span class="rem">// к правильному типу</span>
+              <a class="hidden" href="#ref7" title="Струкутра TProgGuideMessageFuncParams">TProgGuideMessageFuncParams</a> *params=
+                (<a class="hidden" href="#ref7" title="Струкутра TProgGuideMessageFuncParams">TProgGuideMessageFuncParams</a>*)(func-&gt;Data);
+              <span class="kw">char</span> *levelstr,*fullpath;
+              <span class="kw">if</span>(params==NULL ||
+                 params-&gt;servSize&lt;<span class="kw">sizeof</span>(<a class="hidden" href="#ref7" title="Струкутра TProgGuideMessageFuncParams">TProgGuideMessageFuncParams</a>))
+                <span class="kw">break</span>; <span class="rem">// Параметров нет или неверный размер</span>
+              <span class="rem">// Записываем в переменную levelstr строку,</span>
+              <span class="rem">// соотвествующую важности сообщения</span>
+              <span class="kw">switch</span>(params-&gt;Level)
+                { <span class="kw">case</span> <span class="const">0</span>:  levelstr=<span class="str">"Информация"</span>;
+                           <span class="kw">break</span>;
+                  <span class="kw">case</span> <span class="const">1</span>:  levelstr=<span class="str">"Предупреждение"</span>;
+                           <span class="kw">break</span>;
+                  <span class="kw">default</span>: levelstr=<span class="str">"Ошибка"</span>;
+                }
+              <span class="rem">// Формируем в fullpath полный путь к файлу</span>
+              fullpath=<a class="hidden" href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a>(FileName,NULL,NULL);
+              <span class="kw">if</span>(fullpath) <span class="rem">// Полный путь сформирован</span>
+                { HANDLE h;
+                  <span class="rem">// Открываем файл fullpath на запись</span>
+                  h=CreateFile(fullpath,GENERIC_WRITE,<span class="const">0</span>,NULL,
+                               OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
+                  <span class="kw">if</span>(h!=INVALID_HANDLE_VALUE)
+                    { <span class="rem">// Файл открыт</span>
+                      <span class="kw">char</span> buf[<span class="const">100</span>]; <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> temp; SYSTEMTIME time;
+                      <span class="rem">// Перемещаем указатель файла в конец</span>
+                      SetFilePointer(h,<span class="const">0</span>,NULL,FILE_END);
+                      <span class="rem">// Получаем текущую дату и время</span>
+                      GetLocalTime(&amp;time);
+                      <span class="rem">// Формируем строку с датой и временем в buf</span>
+                      sprintf(buf,<span class="str">"%02d-%02d-%04d %02d:%02d:%02d "</span>
+                        <span class="str">"%s: "</span>,time.wDay,time.wMonth,time.wYear,
+                        time.wHour,time.wMinute,time.wSecond,
+                        levelstr);
+                      <span class="rem">// Записываем дату, время и важность</span>
+                      WriteFile(h,buf,strlen(buf),&amp;temp,NULL);
+                      <span class="rem">// Записываем текст сообщения</span>
+                      <span class="kw">if</span>(params-&gt;MessageStr)
+                        WriteFile(h,params-&gt;MessageStr,
+                          strlen(params-&gt;MessageStr),&amp;temp,NULL);
+                      <span class="rem">// Записываем перевод строки</span>
+                      WriteFile(h,<span class="str">"\r\n"</span>,<span class="const">2</span>,&amp;temp,NULL);
+                      <span class="rem">// Закрываем файл</span>
+                      CloseHandle(h);
+                    }
+                  <span class="rem">// Освобождаем память, отведенную под полный путь</span>
+                  <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(fullpath);
+                }
+            }
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  <span class="rem">// Отмена макроопределений</span>
+  <span class="preproc">#undef ClearOnLoad</span>
+  <span class="preproc">#undef FileName</span>
+  <span class="preproc">#undef Ready</span>
+  <span class="preproc">#undef Start</span>
+  <span class="preproc">#undef pStart</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Реакции этой модели на события <span class="cpp"><a class="hidden" href="RDS_BFM_INIT.htm" title="А.2.4.7. RDS_BFM_INIT &ndash; инициализация блока">RDS_BFM_INIT</a></span> и
+<span class="cpp"><a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a></span> в точности совпадают с соответствующими реакциями модели
+<span class="cpp">MessageFuncBlock_Box</span> &ndash; как исполнитель функции
+&laquo;<a class="hidden" href="#ref6" title="Функция блока ProgrammersGuide.GraphPath.Reset">ProgrammersGuide.UserMessage</a>&raquo;, этот блок выполняет те же
+самые действия по регистрации функции и ее отмене. В реакциях на
+<span class="cpp"><a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a></span> и <span class="cpp"><a class="hidden" href="RDS_BFM_SETUP.htm" title="А.2.6.13. RDS_BFM_SETUP &ndash; вызов функции настройки блока">RDS_BFM_SETUP</a></span> тоже
+нет ничего принципиально нового. Две оставшихся реакции мы рассмотрим подробно.</p>
+
+<p>Как только загрузка схемы, в состав которой входит данный блок, завершится, модель блока
+будет вызвана в режиме <span class="cpp"><a href="RDS_BFM_AFTERLOAD.htm" title="А.2.5.1. RDS_BFM_AFTERLOAD &ndash; завершена загрузка схемы">RDS_BFM_AFTERLOAD</a></span>. В этот момент модель должна проверить,
+включена ли в настройках блока очистка файла сообщений при загрузке схемы и, если этот так, стереть этот
+файл. Таким образом, если значение переменной <span class="cpp">ClearOnLoad</span> не нулевое, мы должны удалить
+файл с именем <span class="cpp">FileName</span>. Однако, не все так просто: в переменной
+<span class="cpp">FileName</span> может содержаться только имя файла без пути. Например, если файл
+находится в одной папке со схемой, поле ввода <span class="cpp"><a class="hidden" href="app_a_fields.htm#light_ref19" title="RDS_FORMCTRL_SAVEDIALOG">RDS_FORMCTRL_SAVEDIALOG</a></span>, которое
+мы использовали в окне настройки, автоматически отбросит этот путь, оставив только имя файла. Для удаления
+файла необходимо знать полный путь к нему, поэтому сначала нам необходимо воспользоваться сервисной функцией
+<span class="cpp"><a href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a></span>. Эта функция формирует в динамической памяти строку, содержащую
+полный путь к файлу, имя которого передано в ее первом параметре. Функция автоматически подставляет вместо
+стандартных обозначений путей, используемых в RDS (&laquo;<a href="rdsGetFullFilePath.htm#light_ref2" title="$DLL$">$DLL$</a>&raquo;,
+&laquo;<a href="rdsGetFullFilePath.htm#light_ref5" title="$INI$">$INI$</a>&raquo; и т.д.) реальные пути к соответствующим папкам. Если в имени файла,
+переданном в функцию, отсутствует путь, функция добавит к имени путь по умолчанию, указанный в ее втором
+параметре, либо, если этот параметр равен <span class="cpp">NULL</span>, путь к файлу схемы. Нам нужен
+именно последний вариант, поэтому во втором параметре мы передаем <span class="cpp">NULL</span>. В третьем параметре
+можно передать указатель на целое число, в которое функция запишет длину сформированной строки, но нам
+это не нужно, поэтому третий параметр в вызове <span class="cpp"><a class="hidden" href="rdsGetFullFilePath.htm" title="А.5.4.9. rdsGetFullFilePath &ndash; сокращенный путь к файлу в полный">rdsGetFullFilePath</a></span> тоже равен
+<span class="cpp">NULL</span>.</p>
+
+<p>Указатель на сформированную функцией строку с полным путем к файлу записывается во вспомогательную
+переменную <span class="cpp">fullpath</span>. Если <span class="cpp">fullpath</span> не равен
+<span class="cpp">NULL</span>, то есть если полный путь удалось сформировать, мы удаляем файл функцией
+Windows API <span class="cpp">DeleteFile</span> и освобождаем память, занятую строкой,
+при помощи <span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p>Если у блока вызвана функция (режим <span class="cpp"><a class="hidden" href="RDS_BFM_FUNCTIONCALL.htm" title="А.2.4.6. RDS_BFM_FUNCTIONCALL &ndash; вызов функции блока">RDS_BFM_FUNCTIONCALL</a></span>), и идентификатор этой
+функции совпадает со значением переменной <span class="cpp"><a class="hidden" href="#ref8" title="Глобальная переменная для функции ProgrammersGuide.GraphPath.Reset">MessageFunc</a></span>, в которую мы записали
+идентификатор нашей функции &laquo;<a class="hidden" href="#ref6" title="Функция блока ProgrammersGuide.GraphPath.Reset">ProgrammersGuide.UserMessage</a>&raquo; при регистрации,
+модель проверяет наличие и размер переданной вместе с функцией структуры параметров и завершается, если
+параметров нет или размер недостаточен. В противном случае во вспомогательную переменную
+<span class="cpp">levelstr</span> записывается указатель на строку &laquo;Информация&raquo;,
+&laquo;Предупреждение&raquo; или &laquo;Ошибка&raquo; в зависимости от значения поля
+<span class="cpp">Level</span> переданной структуры параметров (точно так же мы
+<a href="#ref9" title="Заголовок сообщения">выбирали заголовок сообщения</a>
+в модели <span class="cpp">MessageFuncBlock_Box</span>, записывая указатель в переменную
+<span class="cpp">caption</span>). Затем мы уже описанным способом формируем полный путь к файлу,
+в конец которого нам предстоит дописать сообщение. Если путь сформирован, мы открываем этот файл
+на запись функцией Windows API <span class="cpp">CreateFile</span> и перемещаем указатель в его конец
+функцией <span class="cpp">SetFilePointer</span>. Теперь все, что мы запишем в файл, будет добавлено
+после уже имеющихся в нем данных.</p>
+
+<p>Чтобы пользователь мог понять, когда произошло то или иное событие, сообщение о котором записано в файле,
+нам следует добавить к записываемому тексту текущую дату и время. Для этого мы используем функцию Windows API
+<span class="cpp">GetLocalTime</span>, которая заполняет структуру <span class="cpp">time</span> типа
+<span class="cpp">SYSTEMTIME</span>. Затем мы, используя стандартную функцию
+<span class="cpp">sprintf</span> (для ее использования должен быть включен файл заголовков
+&laquo;<span class="file">stdio.h</span>&raquo;), формируем во вспомогательном массиве <span class="cpp">buf</span> строку,
+содержащую дату и время в привычном для пользователя виде, после которых добавлена строка
+<span class="cpp">levelstr</span>, характеризующая важность сообщения. Строка из массива
+<span class="cpp">buf</span> записывается в файл функцией Windows API
+<span class="cpp">WriteFile</span>, за ней записывается текст сообщения, переданный в поле
+<span class="cpp">MessageStr</span> структуры параметров вызванной функции, а за ним &ndash; коды перевода строки
+&laquo;\r\n&raquo;. Затем файл закрывается функцией <span class="cpp">CloseHandle</span>, а память,
+отведенная под строку полного пути <span class="cpp">fullpath</span>, как обычно, освобождается сервисной
+функцией <span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p>Следует отметить, что при ведении какого-либо журнала сообщений, как в нашем случае, лучше всего работать
+именно в таком режиме: открыть файл, дописать в него новое сообщение, и снова закрыть его. Если бы мы
+открыли файл при поступлении первого сообщения, и не закрывали бы его до завершения работы со схемой,
+у пользователя могли бы возникнуть проблемы с доступом к этому файлу, его удалением и т.п. Кроме того,
+если открывать файл только для записи в него очередного сообщения, несколько разных схем смогут работать с
+одним и тем же файлом (кончено, при этом лучше отключить очистку файла при загрузке). Постоянные открытия-закрытия
+будут замедлять работу схемы, но, если сообщения в системе возникают не очень часто, на это можно не обращать
+внимания.</p>
+
+<p>Если теперь заменить блок с моделью <span class="cpp">MessageFuncBlock_Box</span> на блок с только что
+написанной нами моделью, разрешить в его параметрах вызов функции настройки
+(см. <a href="pm_1_4.htm#pic3" title="Параметры блока &ndash; модель и реакции">рис.&nbsp;7</a>) и указать в ней какой-нибудь файл
+для записи сообщений, то при нажатии на кнопку в схеме, изображенной на
+<a href="#pic1" title="Блок, выводящий сообщение по сигналу, и окно его настройки">рис.&nbsp;90</a>, в файл будет записана строка следующего вида:</p>
+
+<pre class="cpp">  04-07-2010 14:30:03 Информация: Нажата кнопка</pre>
+
+<p>Каждое новое нажатие на кнопку будет добавлять в файл новую строку.</p>
+
+<p>Может возникнуть вопрос: зачем нам понадобилось делать новую модель для вывода сообщений в файл? Не
+лучше ли было бы добавить эту возможность в модель <span class="cpp">MessageFuncBlock_Box</span>, и сделать
+в ее настройках возможность выбора &ndash; показывать сообщение пользователю или записывать его в файл? Дело
+в том, что в нашем случае мы имеем доступ к модели <span class="cpp">MessageFuncBlock_Box</span> и можем,
+при желании, переделать ее. Однако, если другому разработчику понадобится реализовать какой-либо другой способ
+обработки сообщений (например, отправлять их по электронной почте), у него будет единственный выход &ndash;
+написать свою собственную модель блока-исполнителя функции
+&laquo;<a class="hidden" href="#ref6" title="Функция блока ProgrammersGuide.GraphPath.Reset">ProgrammersGuide.UserMessage</a>&raquo;. После этого ему достаточно будет
+заменить блок-исполнитель, имеющийся в схеме, на свой, и обработка сообщений в схеме изменится. При этом
+он может разместить свой блок не в корневой подсистеме, а в одной из вложенных, тогда только блоки этой
+подсистемы и входящих в нее дочерних подсистем будут пользоваться новым блоком-исполнителем, а сообщения всех
+остальных блоков будут обрабатываться по-старому.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_13_5.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_14_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_13_6">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.8.6.2. Запись данных блока</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8_6">&sect;3.8.6. Загрузка и запись данных блока и всей схемы</a></p>
+<div class="level"><p>&sect;3.8.6.2. Запись данных блока</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_LOADTXT.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_BEFORESAVE.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_SAVETXT">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</h3>
+<h4 class="off">&sect;3.8.6. Загрузка и запись данных блока и всей схемы</h4>
+<h5>&sect;3.8.6.2. Запись данных блока</h5>
+
+
+<p>Событие записи данных блока возникает при сохранении этого блока в файл вместе со всей схемой, при
+сохранении его в отдельный файл, при копировании его в буфер обмена, а также при записи его во
+вспомогательный буфер отмены операций перед тем, как пользователь изменит параметры этого блока. Реакция
+на запись данных вводится
+на вкладке &laquo;<span class="menu"><a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">события</a></span>&raquo; левой панели редактора модели:
+раздел &laquo;<span class="menu">загрузка и запись данных</span>&raquo;, подраздел
+&laquo;<span class="menu">запись данных блока</span>&raquo;. Не следует путать эту реакцию с реакцией
+на запись состояния блока (см. <a href="ac_RDS_BFM_SAVESTATE.htm" title="&sect;3.8.7.2. Запись состояния блока">&sect;3.8.7.2</a>).</p>
+
+<p>Если у блока есть какие-то сложные параметры, которые невозможно описать средствами редактора модели
+(например, массивы, связные списки и т.п.), в этой реакции модель должна сформировать текст, описывающий
+эти параметры, который она сможет потом разобрать в
+<a href="ac_RDS_BFM_LOADTXT.htm" title="&sect;3.8.6.1. Загрузка данных блока">реакции на загрузку данных</a>. Этот текст передается в
+RDS при помощи специальных сервисных функций, рассмотренных в
+<a href="pm_2_8_3.htm" title="&sect;2.8.3. Сохранение параметров в текстовом формате">&sect;2.8.3</a>, <a href="pm_2_8_4.htm" title="&sect;2.8.4. Поиск ключевых слов с помощью объекта RDS">&sect;2.8.4</a> и
+<a href="pm_2_8_5.htm" title="&sect;2.8.5. Сохранение параметров блока в формате INI-файла">&sect;2.8.5 руководства программиста</a>.</p>
+
+<p>Настроечные параметры, добавленные в модель средствами редактора
+(см. <a href="um_3_6_6.htm" title="&sect;3.6.6. Настроечные параметры блока">&sect;3.6.6</a> и <a href="um_3_7_6.htm" title="&sect;3.7.6. Блоки с настраиваемыми пользователем параметрами">&sect;3.7.6</a>), сохраняются
+и загружаются автоматически, для их сохранения данная реакция не требуется. Тем не менее, в этой реакции
+можно сохранить какие-либо дополнительные параметры &ndash; сформированный для них текст будет передаваться в
+реакцию на загрузку данных при загрузке блока.</p>
+
+<p><span id="ref1">В</span> классе блока для реакции на событие записи данных блока создается функция с
+именем <span class="cpp" id="light_ref1">rdsbcppSaveText</span> без параметров:</p>
+
+<pre class="cpp">  // Запись данных блока в текстовом виде
+  void rdsbcppBlockClass::rdsbcppSaveText(void)
+  {
+    <span class="changes"><i>&nbsp;&hellip; пользовательский текст реакции &hellip;&nbsp;</i></span>
+  }</pre>
+
+<p>При написании моделей блоков без использования модуля автокомпиляции событию записи данных блока соответствует
+константа RDS <span class="cpp"><a href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_LOADTXT.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_BEFORESAVE.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_SAVETXT">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

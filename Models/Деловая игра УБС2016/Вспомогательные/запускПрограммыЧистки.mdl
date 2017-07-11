@@ -1,0 +1,73 @@
+$BC55MODEL 0.0.0 2016.9.5.23.56.0 0
+Модель блока для модуля автокомпиляции RDS BCpp55@Common.dll
+$VARS
+  signal name "Start" in menu run default 0
+  signal name "Ready" out menu default 0
+  string name "command" default ""
+  string name "workdir" in menu default ""
+$ENDDECL
+$GLOBAL
+// Запуск программы и ожидание ее завершения
+BOOL RunAndWait(
+      char *path,       // Имя EXE-файла
+      char *parameters, // Параметры командной строки
+	 char *workdir // рабочая директория
+      )
+{ 
+    char *cmd;
+    // Формирование полной командной строки
+    cmd=rdsDynStrCat( "", path, FALSE);
+    rdsAddToDynStr( &cmd, " ", FALSE);
+    rdsAddToDynStr( &cmd, parameters, FALSE);
+    rdsAddToDynStr( &cmd, " ", FALSE); // Пробел (на всякий случай)
+
+    // В cmd - полная командная строка запуска программы
+    if(cmd==NULL) return FALSE;
+
+    // Заполнение структуры STARTUPINFO
+    STARTUPINFO startup; // Структура параметров запуска процесса
+    PROCESS_INFORMATION info; // Структура описания процесса
+    ZeroMemory(&startup,sizeof(STARTUPINFO));
+    startup.cb=sizeof(STARTUPINFO);
+
+//	rdsMessageBox(cmd, "commandline", MB_OK);
+
+    // Запуск процесса
+    BOOL ok=TRUE;
+    if(!CreateProcess(NULL,cmd,NULL,NULL,FALSE,
+          0,NULL,workdir,&startup,&info))
+      ok=FALSE; // Запустить не получилось
+
+    if(ok)
+      { // Ждем завершения процесса
+        WaitForSingleObject(info.hProcess,INFINITE);
+        // Процесс завершен - закрываем полученные дескрипторы
+        CloseHandle(info.hThread);
+        CloseHandle(info.hProcess);
+      }
+
+    // Освобождаем все динамические строки
+    rdsFree(cmd);
+    return ok;
+  }
+  //=========================================
+$MODEL
+command = "FileMove . .knapsack .cljdata .decision";
+RunAndWait("java",command.c_str(), workdir.c_str());
+$OPTIONS
+  tabs $GLOBAL $MODEL
+  window pos 26 26 size 892 470 hdiv 337 vdiv 171 fdiv 161
+  svc 0 90 1 90 2 90 3 90
+  dvc 0 90 1 90 2 90
+  fnc 0 90 1 90 2 90
+  pvc 0 90 1 90 2 100
+  dvcheck 1
+  indexcheck 1
+  ignorewarnings 0
+  customerrmsg 0
+  autoreadonlyeditor 0
+  genvartypemacros 0
+  matherr 1
+  catchall 0
+  dvstart 1
+  searchlinks auto deep

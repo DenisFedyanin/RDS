@@ -1,0 +1,86 @@
+EXPBLKTXT
+version 1 rev 0 4016.2.7.13.8.3
+
+dllblock name "IpuL57CompFunc2"
+ begin
+  name hidden
+  options sizeable
+  vars
+   begin
+    signal name "Start" in run default 1
+    signal name "Ready" out default 0
+    double name "x0" in menu run default "0"
+    double name "xmin" in menu run default "0"
+    double name "xmax" in menu run default "100"
+    double name "dx" in menu run default "10"
+    signal name "x0_chg" default 1
+    signal name "xdiap_chg" default 1
+    double name "y0" in menu run default "0"
+    double name "ymin" in menu run default "0"
+    double name "ymax" in menu run default "100"
+    double name "dy" in menu run default "10"
+    signal name "y0_chg" default 1
+    signal name "ydiap_chg" default 1
+    double name "z0" in menu run default "0"
+    double name "zmin" in menu run default "0"
+    double name "zmax" in menu run default "100"
+    double name "dz" in menu run default "10"
+    signal name "z0_chg" default 1
+    signal name "zdiap_chg" default 1
+    matrix double name "FX" out menu default "[ ] 0"
+    matrix double name "FY" out menu default "[ ] 0"
+    matrix double name "FZ" out menu default "[ ] 0"
+    logical name "FX_en" default 0
+    logical name "FY_en" default 0
+    logical name "FZ_en" default 0
+   end
+  auto
+   begin
+    var "x0" ctrl "x0_chg"
+    var "xmin" ctrl "xdiap_chg"
+    var "xmax" ctrl "xdiap_chg"
+    var "dx" ctrl "xdiap_chg"
+    var "y0" ctrl "y0_chg"
+    var "ymin" ctrl "ydiap_chg"
+    var "ymax" ctrl "ydiap_chg"
+    var "dy" ctrl "ydiap_chg"
+    var "z0" ctrl "z0_chg"
+    var "zmin" ctrl "zdiap_chg"
+    var "zmax" ctrl "zdiap_chg"
+    var "dz" ctrl "zdiap_chg"
+    var "FX" ctrl "FX_en"
+    var "FY" ctrl "FY_en"
+    var "FZ" ctrl "FZ_en"
+   end
+  layout rect 185 295 fill 16777215 line 0 text "Полуавтокомпилируемое\r\nвычисление трех\r\nфункций" font "Arial" height 13 color 0
+  dll file "ipu_l57_compfunc1.dll" func "rdsbcppBlockEntryPoint" setup "" auto
+  dlldata text
+   rdsbcppsetupparameters
+   begin
+   var FuncId 4
+   var ByRows 0
+   var setup_x0 "0"
+   var setup_xmin "0"
+   var setup_xmax "100"
+   var setup_dx "0.1"
+   var in_x0 1
+   var in_xdiap 1
+   var in_dx 1
+   var setup_y0 "1"
+   var setup_ymin "0"
+   var setup_ymax "100"
+   var setup_dy "10"
+   var in_y0 1
+   var in_ydiap 1
+   var in_dy 1
+   var setup_z0 "0"
+   var setup_zmin "0"
+   var setup_zmax "100"
+   var setup_dz "10"
+   var in_z0 1
+   var in_zdiap 1
+   var in_dz 1
+   end
+  enddlldata
+  autocomp file "$DLL$\\Common.dll" func "SearchComp" model "ipu_l57_compfunc1.mdl"
+ end

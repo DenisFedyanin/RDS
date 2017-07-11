@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.8.10.4. Данные приняты сервером</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="um_index.htm">Описание пользователя</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3">Глава 3. Использование стандартных модулей автокомпиляции</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</a></p>
+<div class="level"><p><a href="um_index.htm#light_htm:um_3_8_10">&sect;3.8.10. Обмен данными по сети</a></p>
+<div class="level"><p>&sect;3.8.10.4. Данные приняты сервером</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_NETDISCONNECT.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_NETERROR.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_NETDATAACCEPTED">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Описание пользователя</h1>
+<h2 class="off">Глава 3. Использование стандартных модулей автокомпиляции</h2>
+<h3 class="off">&sect;3.8. Краткий перечень вводимых в модель описаний и реакций на события</h3>
+<h4 class="off">&sect;3.8.10. Обмен данными по сети</h4>
+<h5>&sect;3.8.10.4. Данные приняты сервером</h5>
+
+
+<p>Это событие возникает при обмене данными по сети в блоке, передавшем данные на сервер, после получения
+сервером этих данных, если блок, передавая данные, запросил такое подтверждение получения. Событие возникает при
+получении данных именно сервером, а не блоком-получателем данных &ndash; серверу еще только предстоит
+отправить данные получателю.
+Стандартный модуль автокомпиляции не автоматизирует передачу данных между блоками по сети, желающие реализовать ее
+могут изучить <a href="pm_index.htm#light_htm:pm_2_15" title="&sect;2.15. Обмен данными по сети">&sect;2.15 руководства программиста</a>.</p>
+
+<p>Текст реакции на подтверждение приема данных вводится
+на вкладке &laquo;<span class="menu"><a href="um_3_6_4.htm" title="&sect;3.6.4. Описания программы и реакции блока на события">события</a></span>&raquo; левой панели редактора модели:
+раздел &laquo;<span class="menu">сеть</span>&raquo;, подраздел &laquo;<span class="menu">данные приняты сервером</span>&raquo;.
+<span id="ref1">В</span> классе блока для нее создается функция с именем
+<span class="cpp" id="light_ref1">rdsbcppNetAccepted</span> следующего вида:</p>
+
+<pre class="cpp">  // Сервер подтверждает получение данных
+  void rdsbcppBlockClass::rdsbcppNetAccepted(<a class="hidden" href="RDS_BFM_NETDATAACCEPTED.htm#ref2" title="Указатель на RDS_NETACCEPTDATA">RDS_PNETACCEPTDATA</a> AccData)
+  {
+    <span class="changes"><i>&nbsp;&hellip; пользовательский текст реакции &hellip;&nbsp;</i></span>
+  }</pre>
+
+<p><span id="ref2">Параметр</span> функции <span class="cpp">AccData</span>
+&ndash; это указатель на структуру
+<span class="cpp" id="light_ref2"><a href="RDS_BFM_NETDATAACCEPTED.htm#ref1" title="Структура RDS_NETACCEPTDATA">RDS_NETACCEPTDATA</a></span>,
+описывающую переданные данные, прием которых подтверждается:</p>
+
+<pre class="cpp">  typedef struct {
+    int ConnId;     // Идентификатор соединения
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Host;     // URL или IP-адрес сервера
+    int Port;       // Порт
+    <a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> Channel;  // Имя канала
+    int Id;         // Принятое целое число
+  } <a class="hidden" href="RDS_BFM_NETDATAACCEPTED.htm#ref1" title="Структура RDS_NETACCEPTDATA">RDS_NETACCEPTDATA</a>;
+  typedef <a class="hidden" href="RDS_BFM_NETDATAACCEPTED.htm#ref1" title="Структура RDS_NETACCEPTDATA">RDS_NETACCEPTDATA</a> *<a class="hidden" href="RDS_BFM_NETDATAACCEPTED.htm#ref2" title="Указатель на RDS_NETACCEPTDATA">RDS_PNETACCEPTDATA</a>;</pre>
+
+<p>Поля структуры имеют следующий смысл:</p>
+<dl>
+  <dt><span class="cpp">ConnId</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Уникальный идентификатор сетевого соединения, возвращенный
+  <a href="app_index.htm#light_htm:app_a_5_20" title="А.5.20. Сетевые функции">сервисной функцией</a> при его создании.</dd>
+
+  <dt><span class="cpp">Host</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a></i></span>)</dt>
+  <dd>Имя (URL) или IP-адрес сервера, с которым установлено соединение.</dd>
+
+  <dt><span class="cpp">Port</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Номер сетевого порта, через который идет обмен данными.</dd>
+
+  <dt><span class="cpp">Channel</span>&emsp;(<span class="cpp"><i>LPSTR</i></span>)</dt>
+  <dd>Имя канала передачи данных, в который были переданы данные.</dd>
+
+  <dt><span class="cpp">Id</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Целый идентификатор переданных данных (произвольное целое число, указанное передавшим данные
+  блоком в вызове одной из функций передачи).</dd>
+
+<p class="noindent">При написании моделей блоков без использования модуля автокомпиляции
+подтверждению получения данных сервером соответствует
+константа RDS <span class="cpp"><a href="RDS_BFM_NETDATAACCEPTED.htm" title="А.2.8.2. RDS_BFM_NETDATAACCEPTED &ndash; получение данных сервером">RDS_BFM_NETDATAACCEPTED</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="ac_RDS_BFM_NETDISCONNECT.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="ac_RDS_BFM_NETERROR.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="um_index.htm#light_htm:ac_RDS_BFM_NETDATAACCEPTED">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

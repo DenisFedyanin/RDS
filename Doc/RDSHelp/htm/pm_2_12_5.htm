@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.12.5. Реакция окон подсистем на мышь и клавиатуру</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2_12">&sect;2.12. Реакция блоков на действия пользователя</a></p>
+<div class="level"><p>&sect;2.12.5. Реакция окон подсистем на мышь и клавиатуру</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_12_4.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_6.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_12_5_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3 class="off">&sect;2.12. Реакция блоков на действия пользователя</h3>
+<h4>&sect;2.12.5. Реакция окон подсистем на мышь и клавиатуру</h4>
+<p class="abstract">Рассматривается возможность реакции модели подсистемы на действия мышью и нажатие и отпускание
+                клавиш в ее окне, если ни один из внутренних блоков не среагировал на это событие. Приводится пример модели
+                подсистемы, которая перемещает окно по курсорным клавишам и меняет свой масштаб по щелчку правой кнопкой
+                мыши.</p>
+
+
+<p>Если на нажатие или отпускание кнопок мыши и перемещение ее курсора не среагировал ни один из
+блоков подсистемы, это событие может обработать модель самой
+<a href="pm_1_2.htm#light_ref4" title="Подсистема">подсистемы</a>
+(если, конечно, у подсистемы есть модель). Точно так же, если была нажата или отпущена какая-либо
+клавиша, и ни один из блоков активной подсистемы не
+<a href="RDS_BFM_KEYDOWN.htm#light_ref1" title="RDS_BFR_STOP">сообщил RDS, что это событие обработано</a>,
+RDS может вызвать соответствующую реакцию модели подсистемы. Разумеется, все это возможно только
+в режимах <a href="pm_1_3.htm#ref2" title="Режим моделирования">моделирования</a> и <a href="pm_1_3.htm#ref3" title="Режим расчета">расчета</a> &ndash;
+в режиме <a href="pm_1_3.htm#ref1" title="Режим редактирования">редактирования</a> RDS не передает информацию о мыши и
+клавиатуре моделям блоков и подсистем. Модели подсистем не участвуют в обработке данных, передающихся по
+связям от блока к блоку, и не вызываются в цикле в режиме расчета, поэтому в схемах они используются не
+так часто. Однако, в некоторых случаях, они могут быть полезны.</p>
+
+<p>В качестве примера создадим модель подсистемы, которая при щелчке правой кнопкой мыши на рабочем поле
+будет переключать масштаб со 100% на 400% и обратно, прокручивая при этом рабочее поле так, чтобы
+точка щелчка пришлась в центр окна. Кроме того, при нажатии курсорных клавиш одновременно с клавишей
+<span class="keys">Shift</span>, окно подсистемы должно перемещаться в направлении нажатой клавиши на
+5 точек экрана.</p>
+
+<p>В целом, модели подсистем выглядят так же, как и модели простых блоков, за исключением
+того, что модель подсистемы не имеет доступа к
+<a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">статическим переменным</a>. Наша модель будет выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Модель подсистемы с реакцией на мышь и клавиатуру</span>
+  <span class="kw">extern</span> <span class="str">"C"</span> <span class="kw">__declspec</span>(<span class="kw">dllexport</span>)
+    <span class="kw">int</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> SystemReaction(<span class="kw">int</span> CallMode,
+                      <a class="hidden" href="RDS_BLOCKDATA.htm#ref2" title="Указатель на RDS_BLOCKDATA">RDS_PBLOCKDATA</a> BlockData,
+                      <a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ExtParam)
+  { <span class="rem">// Вспомогательные переменные</span>
+    <span id="light_ref1"><a class="hidden" href="RDS_EDITORPARAMETERS.htm#ref1" title="Структура RDS_EDITORPARAMETERS">RDS_EDITORPARAMETERS</a></span> win;
+    <a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a> mouse;
+    <a class="hidden" href="RDS_BFM_KEYDOWN.htm#ref3" title="Указатель на RDS_KEYDATA">RDS_PKEYDATA</a> key;
+    <span class="kw">int</span> x,y;
+
+    <span class="kw">switch</span>(CallMode)
+      { <span class="rem">// Нажатие кнопки мыши в окне подсистемы</span>
+        <span class="kw">case</span> <span id="light_ref2"><a class="hidden" href="RDS_BFM_WINDOWMOUSEDOWN.htm" title="А.2.6.17. RDS_BFM_WINDOWMOUSEDOWN &ndash; реакция подсистемы на нажатие кнопки мыши в своем окне">RDS_BFM_WINDOWMOUSEDOWN</a></span>:
+          <span class="rem">// Приведение ExtParam к нужному типу</span>
+          mouse=(<a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#ref3" title="Указатель на RDS_MOUSEDATA">RDS_PMOUSEDATA</a>)ExtParam;
+          <span class="kw">if</span>(mouse-&gt;Button!=<span id="light_ref3"><a class="hidden" href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref5" title="RDS_MRIGHTBUTTON">RDS_MRIGHTBUTTON</a></span>)
+            <span class="kw">break</span>; <span class="rem">// Не правая кнопка - выходим</span>
+          <span class="rem">// Вычисляем координаты щелчка в масштабе 100%</span>
+          x=mouse-&gt;x/mouse-&gt;DoubleZoom;
+          y=mouse-&gt;y/mouse-&gt;DoubleZoom;
+          <span class="rem">// Установка нового масштаба подсистемы</span>
+          <span id="light_ref4"><a class="hidden" href="rdsSetZoomPercent.htm" title="А.5.8.22. rdsSetZoomPercent &ndash; задать масштаб окна подсистемы">rdsSetZoomPercent</a></span>(BlockData-&gt;Block,
+                            mouse-&gt;IntZoom&gt;<span class="const">100</span>?<span class="const">100</span>:<span class="const">400</span>,x,y);
+          <span class="kw">break</span>;
+
+        <span class="rem">// Нажатие клавиши в окне подсистемы</span>
+        <span class="kw">case</span> <span id="light_ref5"><a class="hidden" href="RDS_BFM_WINDOWKEYDOWN.htm" title="А.2.6.14. RDS_BFM_WINDOWKEYDOWN &ndash; реакция подсистемы на нажатие клавиши в своем окне">RDS_BFM_WINDOWKEYDOWN</a></span>:
+          <span class="rem">// Приведение ExtParam к нужному типу</span>
+          key=(<a class="hidden" href="RDS_BFM_KEYDOWN.htm#ref3" title="Указатель на RDS_KEYDATA">RDS_PKEYDATA</a>)ExtParam;
+          <span class="rem">// Проверяем, нажата ли Shift</span>
+          <span class="kw">if</span>(key-&gt;Shift!=<span id="light_ref6"><a class="hidden" href="RDS_BFM_KEYDOWN.htm#light_ref8" title="RDS_KSHIFT">RDS_KSHIFT</a></span>)
+            <span class="kw">break</span>; <span class="rem">// Не нажата - выходим</span>
+          <span class="rem">// Получаем текущее положение окна подсистемы</span>
+          win.servSize=<span class="kw">sizeof</span>(win);
+          <span class="kw">if</span>(!<span id="light_ref7"><a class="hidden" href="rdsGetEditorParameters.htm" title="А.5.8.6. rdsGetEditorParameters &ndash; получить описание окна подсистемы">rdsGetEditorParameters</a></span>(BlockData-&gt;Block,&amp;win))
+            <span class="kw">break</span>;
+          <span class="rem">// Если окно свернуто или развернуто, перемещать не надо</span>
+          <span class="kw">if</span>(win.WinMaximized || win.WinMinimized)
+            <span class="kw">break</span>;
+          <span class="rem">//В зависимости от нажатой клавиши, вычисляем</span>
+          <span class="rem">// перемещение окна (x,y)</span>
+          x=y=<span class="const">0</span>;
+          <span class="kw">switch</span>(key-&gt;KeyCode)
+            { <span class="kw">case</span> VK_LEFT:  x=-<span class="const">5</span>; <span class="kw">break</span>; <span class="rem">// Влево</span>
+              <span class="kw">case</span> VK_RIGHT: x=<span class="const">5</span>;  <span class="kw">break</span>; <span class="rem">// Вправо</span>
+              <span class="kw">case</span> VK_UP:    y=-<span class="const">5</span>; <span class="kw">break</span>; <span class="rem">// Вверх</span>
+              <span class="kw">case</span> VK_DOWN:  y=<span class="const">5</span>;  <span class="kw">break</span>; <span class="rem">// Вниз</span>
+            }
+          <span class="rem">// Если x или y не нулевые - перемещаем окно</span>
+          <span class="kw">if</span>(x||y)
+            <span id="light_ref8"><a class="hidden" href="rdsSetSystemWindowBounds.htm" title="А.5.8.19. rdsSetSystemWindowBounds &ndash; задать границы окна подсистемы">rdsSetSystemWindowBounds</a></span>(BlockData-&gt;Block,FALSE,
+                                     win.WinLeft+x,win.WinTop+y,
+                                     win.WinWidth,win.WinHeight);
+          <span class="kw">break</span>;
+      }
+    <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Модель состоит из двух реакций: реакции на нажатие кнопки мыши в окне подсистемы
+<span class="cpp"><a href="RDS_BFM_WINDOWMOUSEDOWN.htm" title="А.2.6.17. RDS_BFM_WINDOWMOUSEDOWN &ndash; реакция подсистемы на нажатие кнопки мыши в своем окне">RDS_BFM_WINDOWMOUSEDOWN</a></span> и реакции на нажатие клавиши в окне
+<span class="cpp"><a href="RDS_BFM_WINDOWKEYDOWN.htm" title="А.2.6.14. RDS_BFM_WINDOWKEYDOWN &ndash; реакция подсистемы на нажатие клавиши в своем окне">RDS_BFM_WINDOWKEYDOWN</a></span>. Они похожи на соответствующие реакции блока
+(<span class="cpp"><a href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span> и <span class="cpp"><a href="RDS_BFM_KEYDOWN.htm" title="А.2.6.5. RDS_BFM_KEYDOWN &ndash; нажатие клавиши">RDS_BFM_KEYDOWN</a></span>), в параметре
+<span class="cpp">ExtParam</span> при их вызове передаются указатели на те же самые структуры. Нужно помнить,
+что подсистема тоже является блоком в
+<a href="pm_1_2.htm#ref7" title="Родительская подсистема">родительской подсистеме</a>, и там, как и любой блок, она тоже
+может реагировать на нажатие кнопок мыши и клавиш, получая обычные сообщения
+<span class="cpp"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm" title="А.2.6.9. RDS_BFM_MOUSEDOWN &ndash; нажатие кнопки мыши">RDS_BFM_MOUSEDOWN</a></span> и <span class="cpp"><a class="hidden" href="RDS_BFM_KEYDOWN.htm" title="А.2.6.5. RDS_BFM_KEYDOWN &ndash; нажатие клавиши">RDS_BFM_KEYDOWN</a></span>
+(см. <a href="pm_1_7.htm#pic1" title="Реакция подсистемы на кнопку мыши на ее изображении (а) и внутри ее окна (б)">рис.&nbsp;12</a>).</p>
+
+<p>Рассмотрим сначала реакцию на нажатие кнопки мыши. В параметре <span class="cpp">ExtParam</span>
+в этом случае передается указатель на структуру описания события <span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm#ref2" title="Структура RDS_MOUSEDATA">RDS_MOUSEDATA</a></span>,
+который, после приведения к соответствующему типу, записывается во вспомогательную переменную
+<span class="cpp">mouse</span>. Поскольку нас интересуют только щелчки правой кнопкой, нажатая кнопка
+сравнивается с константой <span class="cpp"><a href="RDS_BFM_MOUSEDBLCLICK.htm#light_ref5" title="RDS_MRIGHTBUTTON">RDS_MRIGHTBUTTON</a></span>, и, при несовпадении, реакция завершается.
+Затем координаты щелчка приводятся к масштабу 100% (для этого их нужно поделить на масштабный коэффициент
+<span class="cpp">mouse-&gt;DoubleZoom</span>) и вызывается сервисная функция
+<span class="cpp"><a href="rdsSetZoomPercent.htm" title="А.5.8.22. rdsSetZoomPercent &ndash; задать масштаб окна подсистемы">rdsSetZoomPercent</a></span>, устанавливающая новый масштаб указанной подсистемы.
+В первом параметре функции передается идентификатор подсистемы (в нашей модели &ndash; идентификатор данного блока,
+то есть <span class="cpp">BlockData-&gt;Block</span>), во втором &ndash; устанавливаемый масштаб в процентах,
+в третьем и четвертом &ndash; координаты точки (указанные в масштабе 100%), которую нужно установить в центр окна.
+Масштаб, который мы устанавливаем, вычисляется на основе текущего масштаба в процентах
+<span class="cpp">mouse-&gt;IntZoom</span>: если он больше 100, устанавливается 100%, если меньше или равен &ndash;
+400%. Таким образом, вызов этой функции при масштабе 100% переключит его на 400%, а при 400% &ndash;
+обратно на 100%, что нам и требовалось.</p>
+
+<p>Теперь рассмотрим реакцию на нажатие клавиши. В параметре <span class="cpp">ExtParam</span>, как и в режиме
+<span class="cpp"><a class="hidden" href="RDS_BFM_KEYDOWN.htm" title="А.2.6.5. RDS_BFM_KEYDOWN &ndash; нажатие клавиши">RDS_BFM_KEYDOWN</a></span>, передается указатель на структуру описания нажатой клавиши
+<span class="cpp"><a href="RDS_BFM_KEYDOWN.htm#ref2" title="Структура RDS_KEYDATA">RDS_KEYDATA</a></span>, который записывается во вспомогательную переменную <span class="cpp">key</span>.
+Далее проверяется состояние флага клавиши <span class="keys">Shift</span>: если она не нажата, дальнейшая
+обработка не требуется, поскольку нажатия курсорных клавиш нас интересуют только при нажатой клавише
+<span class="keys">Shift</span>. Затем, вызывая уже знакомую нам функцию
+<span class="cpp"><a href="rdsGetEditorParameters.htm" title="А.5.8.6. rdsGetEditorParameters &ndash; получить описание окна подсистемы">rdsGetEditorParameters</a></span>, мы заполняем структуру <span class="cpp">win</span> описанием окна
+подсистемы. В ней нас будут интересовать логические поля <span class="cpp">WinMaximized</span> и
+<span class="cpp">WinMinimized</span>, указывающие на то, что окно полностью развернуто или свернуто (в
+обоих случаях перемещать его нельзя), а также координаты левого верхнего угла окна подсистемы
+<span class="cpp">WinLeft</span> и <span class="cpp">WinTop</span>, и размеры этого окна
+<span class="cpp">WinWidth</span> и <span class="cpp">WinHeight</span>. Далее, в зависимости от
+нажатой курсорной клавиши, в переменных <span class="cpp">x</span> и <span class="cpp">y</span> формируется необходимое
+смещение окна на &plusmn;5 точек экрана в нужном направлении (если нажатая клавиша &ndash;
+не курсорная, значения <span class="cpp">x</span> и <span class="cpp">y</span> останутся нулевыми). Затем,
+если смещения не нулевые, вызывается функция установки положения и размеров окна подсистемы
+<span class="cpp"><a href="rdsSetSystemWindowBounds.htm" title="А.5.8.19. rdsSetSystemWindowBounds &ndash; задать границы окна подсистемы">rdsSetSystemWindowBounds</a></span>, в которую прежний левый верхний угол окна передается с
+вычисленными смещениями. В первом параметре этой функции передается идентификатор подсистемы,
+окно которой двигается, во втором &ndash; логическое значение, указывающее на необходимость развернуть
+окно на весь экран (в данном случае <span class="cpp">FALSE</span>, разворачивать не нужно). Третий и
+четвертый параметры &ndash; новые координаты левого верхнего угла, пятый и шестой &ndash;
+новые ширина и высота (в нашем случае передаются старые, полученные из структуры описания окна, поскольку размер
+окна мы не меняем).</p>
+
+<p>Чтобы проверить работу этой модели, необходимо подключить ее к какой-либо подсистеме и разрешить
+в параметрах этой подсистемы реакцию на необработанные блоками события мыши и клавиатуры
+(<a href="#pic1" title="Включение реакции на клавиатуру и мышь в параметрах подсистемы">рис.&nbsp;81</a>).</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/SubsystemReaction.png" width="534" height="495" alt="Включение реакции на клавиатуру и мышь в параметрах подсистемы" />
+<p id="light_pic1">Рис.&nbsp;81. Включение реакции на клавиатуру и мышь<br />в параметрах подсистемы</p>
+</div></div>
+
+
+<p>Теперь в режимах моделирования и расчета нажатие курсорных клавиш одновременно с клавишей
+<span class="keys">Shift</span> должно перемещать окно по экрану, если это окно активно,
+а щелчок правой кнопкой мыши на рабочем поле окна должен менять масштаб со 100% на 400% и обратно.
+Разумеется, если щелкнуть правой кнопкой мыши по какому-либо блоку, которому разрешено реагировать
+на мышь, информацию о щелчке получит модель этого блока, и масштаб окна не изменится, поскольку модель
+подсистемы не будет вызвана (если только модель среагировавшего блока не вернет константу
+<span class="cpp"><a class="hidden" href="RDS_BFM_MOUSEDOWN.htm#light_ref1" title="RDS_BFR_NOTPROCESSED">RDS_BFR_NOTPROCESSED</a></span>).</p>
+
+<p>Надо отметить, что для того, чтобы управлять окном подсистемы, не обязательно подключать к подсистеме модель.
+Функции установки масштаба и положения окна, использованные в этом примере, работают с любой подсистемой,
+идентификатор которой передан им в параметрах. Эти функции можно вызывать и из моделей простых блоков,
+указывая идентификатор родительской подсистемы. Например, можно разместить в подсистеме на заднем плане
+(или на самом дальнем слое) блок размером во всю рабочую область этой подсистемы, разрешить ему реакцию на
+мышь, и в его модели по щелчку правой кнопкой мыши менять масштаб подсистемы так же, как и в
+описанном примере. Таким же образом один из простых блоков может реагировать на нажатия курсорных клавиш при нажатой
+клавише <span class="keys">Shift</span> и перемещать окно родительской подсистемы. Где реализовывать те или
+иные функции &ndash; в модели подсистемы или в модели одного из ее блоков &ndash;
+разработчик решает сам, исходя из своих представлений об удобстве программирования.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_12_4.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_6.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_12_5">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

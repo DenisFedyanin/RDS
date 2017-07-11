@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;2.11. Отображение всплывающих подсказок к блокам</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_2">Глава 2. Создание моделей блоков</a></p>
+<div class="level"><p>&sect;2.11. Отображение всплывающих подсказок к блокам</p>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_2_10_4.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_1.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_11">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_2_11_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 2. Создание моделей блоков</h2>
+<h3>&sect;2.11. Отображение всплывающих подсказок к блокам</h3>
+<p class="abstract">Рассматривается вывод различных текстов во всплывающих подсказках к блокам.
+            Приводятся примеры отображения в подсказке настроечных параметров блока-генератора и координат ближайшей к
+            курсору точки графика.</p>
+
+
+<p>Всплывающие подсказки &ndash; это окна с текстом, появляющиеся через некоторое время
+после наведения курсора на какой-либо элемент окна: кнопку, поле ввода и т.п. Они широко используются
+в Windows для вывода пояснений к различным объектам, поскольку текст, показываемый таким образом, появляется
+только при необходимости и не занимает места на экране в остальное время. RDS позволяет моделям выводить
+всплывающие подсказки к обслуживаемым этими моделями блокам, причем текст подсказки, время ее нахождения
+на экране и некоторые другие параметры могут задаваться программно. Если в параметрах блока разрешен вывод
+всплывающей подсказки (см. <a href="pm_1_4.htm#pic3" title="Параметры блока &ndash; модель и реакции">рис.&nbsp;7</a>),
+при задержке курсора над изображением этого блока RDS вызовет его модель в режиме
+<span class="cpp"><span id="light_ref1"><a href="RDS_BFM_POPUPHINT.htm" title="А.2.6.12. RDS_BFM_POPUPHINT &ndash; вывод всплывающей подсказки">RDS_BFM_POPUPHINT</a></span></span>, передав ей указатель на структуру
+<span class="cpp"><span id="light_ref2"><a href="RDS_BFM_POPUPHINT.htm#ref3" title="Структура RDS_POPUPHINTDATA">RDS_POPUPHINTDATA</a></span></span>, содержащую различные параметры, связанные с
+выводом подсказки: координаты курсора мыши, текущий масштаб подсистемы, временной интервал гашения подсказки
+и т.п. Некоторые параметры в этой структуре модель может изменить, например, увеличить или уменьшить
+задержку гашения подсказки, или указать на необходимость погасить ее немедленно при перемещении курсора. Установив
+текст подсказки при помощи сервисной функции <span class="cpp"><span id="light_ref3"><a href="rdsSetHintText.htm" title="А.5.6.53. rdsSetHintText &ndash; текст всплывающей подсказки">rdsSetHintText</a></span></span> и, при необходимости,
+изменив параметры в переданной структуре, модель возвращает управление RDS, после чего подсказка
+появляется на экране. Если модель не установит никакого текста функцией <span class="cpp"><a class="hidden" href="rdsSetHintText.htm" title="А.5.6.53. rdsSetHintText &ndash; текст всплывающей подсказки">rdsSetHintText</a></span>,
+подсказка выведена не будет.</p>
+
+<p>Следует помнить, что вызов <span class="cpp"><a class="hidden" href="rdsSetHintText.htm" title="А.5.6.53. rdsSetHintText &ndash; текст всплывающей подсказки">rdsSetHintText</a></span> устанавливает текст подсказки только
+внутри реакции модели на сообщение <span class="cpp"><a class="hidden" href="RDS_BFM_POPUPHINT.htm" title="А.2.6.12. RDS_BFM_POPUPHINT &ndash; вывод всплывающей подсказки">RDS_BFM_POPUPHINT</a></span>. Во всех остальных реакциях
+модели вызов <span class="cpp"><a class="hidden" href="rdsSetHintText.htm" title="А.5.6.53. rdsSetHintText &ndash; текст всплывающей подсказки">rdsSetHintText</a></span> будет проигнорирован. Таким образом, нельзя
+установить текст подсказки один раз, например, при создании блока. Этот текст должен передаваться в
+RDS каждый раз перед выводом подсказки. Поскольку всплывающая подсказка, как правило, должна зависеть
+от текущего состояния и режима работы блока, такая схема оправдана, так как текст подсказки может меняться
+от показа к показу.</p>
+
+<p><span id="ref4">В</span>
+<a href="pm_2_7_2.htm#light_ref13" title="Пример блока-генератора с настройкой параметров">&sect;2.7.2</a> рассмотрен блок, который, в зависимости от настроек,
+может выводить на выход синусоидальный и косинусоидальный сигнал или прямоугольные импульсы заданной скважности.
+Сделаем для этого блока всплывающую подсказку, которая будет отображать параметры блока, а также,
+при необходимости, сообщать об отсутствии доступа к переменной времени
+&laquo;<span class="rdsvar"><span id="light_ref4">DynTime</span></span>&raquo;, необходимой блоку для работы.</p>
+
+<p>Добавим в класс личной области данных блока <span class="cpp">TTestGenData</span> новую функцию
+<span class="cpp">PopupHint</span>, которая будет вызываться из модели и формировать всплывающую подсказку.</p>
+
+<pre class="cpp">  <span class="rem">//====== Класс личной области данных ======</span>
+  <span class="kw">class</span> TTestGenData
+  { <span class="kw">public</span>:
+      <span class="kw">int</span> Type;       <span class="rem">// Тип (0-sin,1-cos,2-прямоугольные)</span>
+      <span class="kw">double</span> Period;  <span class="rem">// Период</span>
+      <span class="kw">double</span> Impulse; <span class="rem">// Длительность импульса</span>
+
+      <a class="hidden" href="RDS_DYNVARLINK.htm#ref2" title="Указатель на RDS_DYNVARLINK">RDS_PDYNVARLINK</a> Time; <span class="rem">// Связь с динамической</span>
+                            <span class="rem">// переменной времени</span>
+
+      <span class="kw">int</span> Setup(<span class="kw">void</span>);           <span class="rem">// Функция настройки</span>
+      <span class="kw">void</span> SaveText(<span class="kw">void</span>);       <span class="rem">// Сохранение параметров</span>
+      <span class="kw">void</span> LoadText(<span class="kw">char</span> *text); <span class="rem">// Загрузка параметров</span>
+    <span class="changes">  <span class="kw">void</span> PopupHint(<span class="kw">void</span>);      <span class="rem">// Всплывающая подсказка  </span></span>
+      TTestGenData(<span class="kw">void</span>)         <span class="rem">// Конструктор класса</span>
+        { Type=<span class="const">0</span>; Period=<span class="const">1.0</span>; Impulse=<span class="const">0</span>.<span class="const">5</span>;
+          <span class="rem">// Подписка на динамическую переменную времени</span>
+          Time=<a class="hidden" href="rdsSubscribeToDynamicVar.htm" title="А.5.16.7. rdsSubscribeToDynamicVar &ndash; создать подписку на динамическую переменную">rdsSubscribeToDynamicVar</a>(<a class="hidden" href="rdsCreateAndSubscribeDV.htm#light_ref4" title="RDS_DVPARENT">RDS_DVPARENT</a>,
+                                        <span class="str">"DynTime"</span>,
+                                        <span class="str">"D"</span>,
+                                        TRUE);
+        };
+      ~TTestGenData(<span class="kw">void</span>)        <span class="rem">// Деструктор класса</span>
+        { <span class="rem">// Прекращение подписки</span>
+          <a class="hidden" href="rdsUnsubscribeFromDynamicVar.htm" title="А.5.16.8. rdsUnsubscribeFromDynamicVar &ndash; прекратить подписку на динамическую переменную">rdsUnsubscribeFromDynamicVar</a>(Time);
+        };
+  };
+  <span class="rem">//=================================================</span></pre>
+
+<p>В функцию модели блока необходимо добавить реакцию на вызов в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_POPUPHINT.htm" title="А.2.6.12. RDS_BFM_POPUPHINT &ndash; вывод всплывающей подсказки">RDS_BFM_POPUPHINT</a></span>:</p>
+
+<pre class="cpp">        <span class="rem">// &hellip;</span>
+        <span class="rem">// Очистка</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_CLEANUP.htm" title="А.2.4.3. RDS_BFM_CLEANUP &ndash; очистка данных блока">RDS_BFM_CLEANUP</a>:
+          data=(TTestGenData*)(BlockData-&gt;BlockData);
+          <span class="kw">delete</span> data;
+          <span class="kw">break</span>;
+      <span class="changes">  <span class="rem">// Всплывающая подсказка                       </span></span>
+      <span class="changes">  <span class="kw">case</span> <a class="hidden" href="RDS_BFM_POPUPHINT.htm" title="А.2.6.12. RDS_BFM_POPUPHINT &ndash; вывод всплывающей подсказки">RDS_BFM_POPUPHINT</a>:                        </span>
+      <span class="changes">    data=(TTestGenData*)(BlockData-&gt;BlockData);  </span>
+      <span class="changes">    data-&gt;PopupHint();                           </span>
+      <span class="changes">    <span class="kw">break</span>;                                       </span>
+        <span class="rem">// Проверка типа переменных</span>
+        <span class="kw">case</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm" title="А.2.4.18. RDS_BFM_VARCHECK &ndash; проверка допустимости структуры статических переменных блока">RDS_BFM_VARCHECK</a>:
+          <span class="kw">if</span>(strcmp((<span class="kw">char</span>*)ExtParam,<span class="str">"{SSD}"</span>)==<span class="const">0</span>)
+            <span class="kw">return</span> <a class="hidden" href="app_a_2_1.htm#ref2" title="Возврат RDS_BFR_DONE">RDS_BFR_DONE</a>;
+          <span class="kw">return</span> <a class="hidden" href="RDS_BFM_VARCHECK.htm#light_ref3" title="Возврат RDS_BFR_BADVARSMSG">RDS_BFR_BADVARSMSG</a>;
+        <span class="rem">// &hellip;</span></pre>
+
+<p>В данном случае нам не нужны параметры из структуры <span class="cpp"><a class="hidden" href="RDS_BFM_POPUPHINT.htm#ref3" title="Структура RDS_POPUPHINTDATA">RDS_POPUPHINTDATA</a></span>, поэтому
+в реакции на <span class="cpp"><a class="hidden" href="RDS_BFM_POPUPHINT.htm" title="А.2.6.12. RDS_BFM_POPUPHINT &ndash; вывод всплывающей подсказки">RDS_BFM_POPUPHINT</a></span> мы игнорируем указатель на структуру, переданный
+в <span class="cpp">ExtParam</span>, и не передаем ничего в функцию <span class="cpp">PopupHint</span>.</p>
+
+<p>Функция вывода всплывающей подсказки будет выглядеть следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Вывод всплывающей подсказки</span>
+  <span class="kw">void</span> TTestGenData::PopupHint(<span class="kw">void</span>)
+  { <span class="rem">// Есть ли доступ к переменной времени?</span>
+    <span class="kw">if</span>(Time==NULL || Time-&gt;Data==NULL) <span class="rem">// Доступа нет</span>
+      <a class="hidden" href="rdsSetHintText.htm" title="А.5.6.53. rdsSetHintText &ndash; текст всплывающей подсказки">rdsSetHintText</a>(<span class="str">"ОШИБКА: в схеме нет переменной DynTime"</span>);
+    <span class="kw">else</span>	<span class="rem">// Доступ есть</span>
+      { <span class="kw">char</span> buf[<span class="const">200</span>];	<span class="rem">// В этом буфере будем формировать текст</span>
+        <span class="kw">switch</span>(Type)
+          { <span class="kw">case</span> <span class="const">0</span>:	<span class="rem">// Синус</span>
+              sprintf(buf,<span class="str">"Генератор - синус\nПериод: %lf"</span>,Period);
+              <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="const">1</span>:	<span class="rem">// Косинус</span>
+              sprintf(buf,<span class="str">"Генератор – косинус\n"</span>
+                          <span class="str">"Период: %lf"</span>,Period);
+              <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="const">2</span>:	<span class="rem">// Импульсы</span>
+              sprintf(buf,<span class="str">"Генератор – прямоугольные импульсы\n"</span>
+                          <span class="str">"Период: %lf\n"</span>
+                          <span class="str">"Длительность импульса: %lf"</span>,
+                          Period,Impulse);
+              <span class="kw">break</span>;
+            <span class="kw">default</span>:	<span class="rem">// Недопустимый тип</span>
+              <span class="kw">return</span>;
+          }
+        <span class="rem">// Установка текста подсказки</span>
+        <a class="hidden" href="rdsSetHintText.htm" title="А.5.6.53. rdsSetHintText &ndash; текст всплывающей подсказки">rdsSetHintText</a>(buf);
+      }
+  }
+  <span class="rem">//=================================================</span></pre>
+
+<p>Прежде всего функция проверяет доступ к динамической переменной времени. Если его нет,
+она устанавливает в качестве текста всплывающей подсказки сообщение об ошибке при помощи функции
+<span class="cpp"><a class="hidden" href="rdsSetHintText.htm" title="А.5.6.53. rdsSetHintText &ndash; текст всплывающей подсказки">rdsSetHintText</a></span>, и на этом ее работа завершается.</p>
+
+<p>Если же доступ к динамической переменной есть, функция формирует текст подсказки с
+названием типа генерируемого сигнала и его параметрами. Текст записывается во вспомогательный массив
+<span class="cpp">buf</span> стандартной библиотечной функцией форматированного вывода
+<span class="cpp">sprintf</span> (для ее использования необходимо включить в исходный текст модели
+заголовочный файл &laquo;<span class="file">stdio.h</span>&raquo;). Текст, кроме названия сигнала, содержит значение
+его периода и, если поле <span class="cpp"></span> равно двум, еще и длительность прямоугольного импульса.
+Период и длительность импульса &ndash; вещественные числа двойной точности (тип <span class="cpp">double</span>),
+поэтому для их вывода используется формат &laquo;%lf&raquo;. Далее сформированный в <span class="cpp"></span>
+текст передается в RDS для использования в качестве подсказки. Символы перевода строки
+&laquo;
+&raquo; в тексте служат для разбиения подсказки на строки.</p>
+
+<div class="picright"><div class="container" id="pic1">
+<img src="../img/PopupHint_Gen.png" width="376" height="208" alt="Всплывающая подсказка к генератору" />
+<p id="light_pic1">Рис.&nbsp;71. Всплывающая подсказка к генератору</p>
+</div></div>
+
+
+<p>Теперь, если установить в параметрах блока на
+<a href="pm_1_4.htm#pic3" title="Параметры блока &ndash; модель и реакции">вкладке &laquo;<span class="menu">DLL</span>&raquo;</a>
+флаг &laquo;<span class="menu">блок выводит всплывающую подсказку</span>&raquo;, при наведении курсора мыши на блок через
+некоторое время будет появляться окно подсказки со сформированным текстом
+(<a href="#pic1" title="Всплывающая подсказка к генератору">рис.&nbsp;71</a>).</p>
+
+<p>Использование формата &laquo;%lf&raquo; для вывода периода и длительности импульса в данном
+случае выглядит не очень удачным, поскольку в обоих числах выведено слишком много незначащих нулей.
+Явно указать число знаков после десятичной точки затруднительно, поскольку заранее неизвестен масштаб чисел,
+с которыми будет работать пользователь. Здесь было бы желательно автоматически подбирать формат вывода
+под введенные пользователем числа. К счастью, в RDS есть подобная сервисная функция,
+которой мы и воспользуемся для улучшения внешнего вида подсказки. Переделаем функцию
+<span class="cpp"></span> следующим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Вывод всплывающей подсказки</span>
+  <span class="kw">void</span> TTestGenData::PopupHint(<span class="kw">void</span>)
+  { <span class="rem">// Есть ли доступ к переменной времени?</span>
+    <span class="kw">if</span>(Time==NULL || Time-&gt;Data==NULL) <span class="rem">// Доступа нет</span>
+      <a class="hidden" href="rdsSetHintText.htm" title="А.5.6.53. rdsSetHintText &ndash; текст всплывающей подсказки">rdsSetHintText</a>(<span class="str">"ОШИБКА: в схеме нет переменной DynTime"</span>);
+    <span class="kw">else</span> <span class="rem">// Доступ есть</span>
+      { <span class="kw">char</span> *str=NULL,
+             *period=<a class="hidden" href="rdsDtoA.htm" title="А.5.4.5. rdsDtoA &ndash; преобразование вещественного числа в строку">rdsDtoA</a>(Period,-<span class="const">1</span>,NULL),
+             *impulse=<a class="hidden" href="rdsDtoA.htm" title="А.5.4.5. rdsDtoA &ndash; преобразование вещественного числа в строку">rdsDtoA</a>(Impulse,-<span class="const">1</span>,NULL);
+        <span class="kw">switch</span>(Type)
+          { <span class="kw">case</span> <span class="const">0</span>: <span class="rem">// Синус</span>
+              str=<span id="light_ref5"><a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span>(<span class="str">"Генератор - синус\nПериод: "</span>,
+                               period,FALSE);
+              <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="const">1</span>: <span class="rem">// Косинус</span>
+              str=<a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a>(<span class="str">"Генератор – косинус\nПериод: "</span>,
+                               period,FALSE);
+              <span class="kw">break</span>;
+            <span class="kw">case</span> <span class="const">2</span>: <span class="rem">// Импульсы</span>
+              str=<a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a>(<span class="str">"Генератор – прямоугольные импульсы\n"</span>
+                          <span class="str">"Период: "</span>,period,FALSE);
+              <span id="light_ref6"><a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a></span>(&amp;str,<span class="str">"\nДлительность импульса: "</span>,FALSE);
+              <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;str,impulse,FALSE);
+              <span class="kw">break</span>;
+          }
+        <span class="rem">// Установка текста подсказки</span>
+        <a class="hidden" href="rdsSetHintText.htm" title="А.5.6.53. rdsSetHintText &ndash; текст всплывающей подсказки">rdsSetHintText</a>(str);
+        <span class="rem">// Освобождение памяти, занятой динамическими строками</span>
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(str);
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(period);
+        <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(impulse);
+      }
+  }
+  <span class="rem">//=================================================</span></pre>
+
+<p>Начало новой функции не отличается от прежнего варианта: при отсутствии доступа к переменной
+времени в качестве текста подсказки устанавливается сообщение об ошибке. Далее начинаются различия:
+если раньше мы формировали текст подсказки во вспомогательном массиве <span class="cpp">buf</span>,
+теперь для этого будут использоваться сервисные функции RDS, которые сами отводят память под строки.
+Для хранения указателя на динамически отведенную строку с текстом подсказки будем использовать вспомогательную
+переменную <span class="cpp">str</span>. Двум другим вспомогательным переменным,
+<span class="cpp">period</span> и <span class="cpp">impulse</span>, сразу же присваиваются указатели на
+динамические строки, в которые преобразуются вещественные значения <span class="cpp">Period</span> и
+<span class="cpp">Impulse</span> соответственно.
+<span id="ref7">Для</span>
+преобразования используется сервисная функция RDS
+<span id="light_ref7" class="cpp"><a href="rdsDtoA.htm" title="А.5.4.5. rdsDtoA &ndash; преобразование вещественного числа в строку">rdsDtoA</a></span>, принимающая три
+параметра: преобразуемое вещественное число, желаемое число знаков после десятичной точки и
+указатель на целую переменную, в которую нужно записать длину получившейся строки. Вместо числа знаков
+после десятичной точки мы в обоих вызовах передаем число &minus;1, указывающее функции на необходимость
+самостоятельно подобрать точность для преобразования числа и отбросить все незначащие нули в дробной части.
+Длина получившейся строки нас не интересует, поэтому в третьем параметре функции в обоих случаях передается
+<span class="cpp">NULL</span>. Теперь у нас есть две динамические строки, содержащие символьное представление чисел
+<span class="cpp">Period</span> и <span class="cpp">Impulse</span>, которые будут использоваться при формировании
+текста подсказки. Важно не забыть освободить отведенную под них память, вызвав в конце функции
+<span class="cpp"><a href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.</p>
+
+<p>Далее, в зависимости от значения <span class="cpp">Type</span>, мы формируем динамическую строку с
+подсказкой и записываем указатель на нее в переменную <span class="cpp">str</span>. Эту строку тоже нужно
+будет освободить в конце функции при помощи <span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>. Для значений <span class="cpp">Type</span>
+0 и 1 процедура проста: мы используем уже знакомую нам функцию
+<span class="cpp"><a href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span>, которая складывает две переданные ей строки. В данном случае первая строка
+&ndash; заголовок подсказки с названием формы сигнала и словом &laquo;период&raquo;, вторая &ndash;
+значение периода. В третьем параметре функции <span class="cpp"><a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span> передается
+<span class="cpp">FALSE</span>, что запрещает возврат <span class="cpp">NULL</span> вместо строки нулевой длины.
+На этом формирование подсказки для синусоидального и косинусоидального сигналов заканчивается.</p>
+
+<p>Для прямоугольных импульсов (<span class="cpp">Type==2</span>) подсказка формируется немного сложнее:
+кроме значения периода сигнала в подсказку нужно добавить значение ширины импульса. Сначала, как и
+для двух других форм сигнала, при помощи <span class="cpp"><a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span> формируется строка,
+состоящая из заголовка подсказки и значения периода сигнала.
+<span id="ref8">После</span>
+этого к уже сформированной динамической
+строке необходимо добавить слова &laquo;длительность импульса&raquo; и значение этой длительности.
+Для этого мы будем пользоваться не функцией <span class="cpp"><a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a></span>, а очень похожей на нее
+<span id="light_ref8" class="cpp"><a href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a></span>. Отличие этой функции заключается в том, что она добавляет к
+уже имеющейся динамической строке, переданной в первом параметре, строку, переданную во втором,
+увеличивая отведенную для первой строки память. Фактически, вызову</p>
+
+<pre class="cpp">  <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;str,text,FALSE);</pre>
+
+<p class="noindent">соответствует конструкция следующего вида:</p>
+
+<pre class="cpp">  <span class="kw">char</span> *oldstr=str;
+  str=<a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a>(oldstr,text,FALSE);
+  <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(oldstr);</pre>
+
+<p>При использовании этой функции следует всегда помнить, что в качестве первого параметра в нее
+передается указатель на переменную, содержащую указатель на динамическую строку.
+Эта строка не может быть статической, поскольку <span class="cpp"><a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a></span> после формирования
+новой объединенной строки пытается освободить старую строку при помощи <span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>.
+Вызов <span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span> не для динамической строки может привести к непредсказуемым
+последствиям. Например, конструкция</p>
+
+<pre class="cpp">  <span class="kw">char</span> teststr[]=<span class="str">"Некоторая статическая строка"</span>;
+  <span class="kw">char</span> *str=&amp;teststr;
+  <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;str,<span class="str">"добавляемая строка"</span>,FALSE);</pre>
+
+<p class="noindent">является ошибочной, поскольку переменная <span class="cpp">str</span> в данном
+случае указывает не на динамическую строку, а на массив <span class="cpp">teststr</span>, и при попытке
+<span class="cpp"><a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a></span> освободить занятую <span class="cpp">teststr</span>
+память произойдет ошибка.</p>
+
+<p>Вернемся к переделанной функции <span class="cpp">PopupHint</span> при
+<span class="cpp">Type==2</span>. Первый вызов <span class="cpp"><a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a></span> добавит к
+уже сформированному в <span class="cpp">str</span> тексту подсказки слова
+&laquo;длительность импульса&raquo; с двоеточием, второй &ndash; строку, в которую ранее
+было преобразовано значение этой длительности. Затем сформированный текст передается в
+RDS при помощи <span class="cpp">rdsSetHintText</span>, после чего все три использованные
+в функции динамические строки освобождаются вызовами <span class="cpp"><a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a></span>. Внешне подсказка,
+выведенная этой функцией, будет выглядеть так же, как и
+на <a href="#pic1" title="Всплывающая подсказка к генератору">рис.&nbsp;71</a>, только вместо
+&laquo;4.000000&raquo; и &laquo;2.000000&raquo; будут выведены числа
+&laquo;4&raquo; и &laquo;2&raquo; соответственно.</p>
+
+<p>В описанном примере мы не использовали параметры всплывающей подсказки, передаваемые в модель блока
+при ее вызове в режиме <span class="cpp"><a class="hidden" href="RDS_BFM_POPUPHINT.htm" title="А.2.6.12. RDS_BFM_POPUPHINT &ndash; вывод всплывающей подсказки">RDS_BFM_POPUPHINT</a></span>, и не пытались изменить поведение этой
+подсказки на экране. Рассмотрим теперь более сложный случай: сделаем всплывающую подсказку к графику,
+рассмотренному в <a href="pm_2_10_1.htm#ref12" title="Пример модели графика">&sect;2.10.1</a>. Эта подсказка должна отображать координаты
+точки графика возле курсора мыши. Таким образом, при перемещении курсора над изображением графика текст
+всплывающей подсказки должен изменяться, отражая изменение координат точки под курсором. Без изменения
+некоторых параметров подсказки этого добиться не получится: по умолчанию она просто исчезнет через некоторое
+время после появления, не реагируя на перемещения курсора в пределах изображения блока.</p>
+
+<p>В описание класса блока нам нужно добавить две новых функции: одна из них будет заниматься выводом
+всплывающей подсказки, другая, вспомогательная, будет искать в массиве индекс отсчета, ближайшего к
+переданному в параметре значению времени. Функция, выводящая всплывающую подсказку, будет принимать один
+параметр: указатель на структуру параметров подсказки <span class="cpp"><a href="RDS_BFM_POPUPHINT.htm#ref3" title="Структура RDS_POPUPHINTDATA">RDS_POPUPHINTDATA</a></span>:</p>
+
+<pre class="cpp">  <span class="rem">//=========================================</span>
+  <span class="rem">// Простой график – личная область данных</span>
+  <span class="rem">//=========================================</span>
+  <span class="kw">class</span> TSimplePlotData
+  {
+      <span class="rem">// &hellip;</span>
+
+      <span class="rem">// Рисование иконки при отсутствии доступа к DynTime</span>
+      <span class="kw">void</span> DrawAdditional(<a class="hidden" href="RDS_BFM_DRAW.htm#ref2" title="Указатель на RDS_DRAWDATA">RDS_PDRAWDATA</a> DrawData);
+<div class="changes">      <span class="rem">// Поиск индекса отсчета, соответствующего времени t</span>
+      <span class="kw">int</span> FindTimeIndex(<span class="kw">double</span> t);
+      <span class="rem">// Вывод всплывающей полсказки</span>
+      <span class="kw">void</span> PopupHint(<a class="hidden" href="RDS_BFM_POPUPHINT.htm#ref4" title="Указатель на RDS_POPUPHINTDATA">RDS_PPOPUPHINTDATA</a> hintdata);</div>
+      <span class="rem">// &hellip;</span>
+      <span class="rem">// &hellip; далее без изменений &hellip;</span></pre>
+
+<p>Напишем сначала функцию поиска отсчета в массиве <span class="cpp">Times</span>, учитывая тот факт,
+что из-за логики работы блока он упорядочен по возрастанию. Чтобы не усложнять пример, будем искать
+отсчет линейным поиском (позже мы перепишем эту функцию с использованием более быстрого алгоритма поиска).</p>
+
+<pre class="cpp">  <span class="rem">// Поиск отсчета, соответствующего времени t</span>
+  <span class="kw">int</span> TSimplePlotData::FindTimeIndex(<span class="kw">double</span> t)
+  {
+    <span class="kw">if</span>(Count==<span class="const">0</span>) <span class="rem">// Массивы пусты</span>
+      <span class="kw">return</span> -<span class="const">1</span>;
+
+    <span class="kw">if</span>(t&lt;=Times[<span class="const">0</span>]) <span class="rem">// t раньше начала массива</span>
+      <span class="kw">return</span> <span class="const">0</span>; <span class="rem">// Ближайший индекс - 0</span>
+
+    <span class="rem">// Поиск первого индекса, большего t</span>
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="const">1</span>;i&lt;NextIndex;i++)
+      <span class="kw">if</span>(Times[i]&gt;t) <span class="rem">// t между i-1 и i</span>
+        { <span class="kw">double</span> d1=fabs(t-Times[i-<span class="const">1</span>]),
+                 d2=fabs(t-Times[i]);
+          <span class="kw">return</span> (d1&lt;d2)?(i-<span class="const">1</span>):i; <span class="rem">// Возвращаем ближайший</span>
+        }
+    <span class="rem">// Ничего не нашли – значит, t&gt;Times[NextIndex-1]</span>
+    <span class="kw">return</span> NextIndex-<span class="const">1</span>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Эта функция устроена достаточно просто. Сначала мы проверяем, есть ли вообще отсчеты в массивах, и,
+если их нет, возвращаем вместо индекса значение &minus;1. Затем сравниваем переданное значение времени
+<span class="cpp">t</span> с началом массива. Если <span class="cpp">t</span> меньше
+<span class="cpp">Times[0]</span>, значит, все отсчеты массива находятся позднее <span class="cpp">t</span>,
+и ближайший к <span class="cpp">t</span> индекс &ndash; это начало массива, то есть 0. Далее мы в цикле
+проходим по массиву и ищем в нем самый первый отсчет, больший <span class="cpp">t</span>. Если такой найдется,
+значит, <span class="cpp">t</span> лежит между ним и предыдущим. Остается только определить, к какому из этих
+двух отсчетов <span class="cpp">t</span> ближе, и возвратить соответствующий индекс. Если же во всем массиве не
+нашлось ни одного отсчета, большего <span class="cpp">t</span>, значит, ближайшим к <span class="cpp">t</span>
+будет конец массива, то есть <span class="cpp">NextIndex-1</span>. При большом количестве отсчетов функция
+будет работать медленно, но при выводе всплывающей подсказки особенной скорости обычно не требуется.
+Тем более, что позже мы переделаем эту функцию.</p>
+
+<p>Теперь, когда мы можем определить индекс отсчета по значению времени, можно написать функцию,
+выводящую подсказку.</p>
+
+<pre class="cpp">  <span class="rem">// Всплывающая подсказка</span>
+  <span class="kw">void</span> TSimplePlotData::PopupHint(<span id="light_ref9"><a class="hidden" href="RDS_BFM_POPUPHINT.htm#ref4" title="Указатель на RDS_POPUPHINTDATA">RDS_PPOPUPHINTDATA</a></span> hintdata)
+  { <span class="kw">int</span> x1,x2,y1,y2,index;
+    <span class="kw">double</span> t;
+    <span class="kw">char</span> *text,*str_t,*str_v;
+
+    <span class="rem">// Проверка доступа к переменной времени</span>
+    <span class="kw">if</span>(Time==NULL || Time-&gt;Data==NULL)
+      { <a class="hidden" href="rdsSetHintText.htm" title="А.5.6.53. rdsSetHintText &ndash; текст всплывающей подсказки">rdsSetHintText</a>(<span class="str">"ОШИБКА: в схеме нет переменной DynTime"</span>);
+        <span class="kw">return</span>;
+      }
+
+    <span class="rem">// Определение абсолютных координат поля графика</span>
+    x1=hintdata-&gt;Left+Gr_x1;
+    x2=hintdata-&gt;Left+Gr_x2;
+    y1=hintdata-&gt;Top+Gr_y1;
+    y2=hintdata-&gt;Top+Gr_y2;
+
+    <span class="rem">// Если курсор мыши не попадает в поле графика,</span>
+    <span class="rem">// подсказку выводить не нужно</span>
+    <span class="kw">if</span>(hintdata-&gt;x&lt;x1 || hintdata-&gt;x&gt;x2 ||
+       hintdata-&gt;y&lt;y1 || hintdata-&gt;y&gt;y2)
+      <span class="kw">return</span>;
+
+    <span class="rem">// Преобразование экранной горизонтальной координаты</span>
+    <span class="rem">// в значение времени согласно масштабу графика</span>
+    t=(hintdata-&gt;x-x1)*(Xmax-Xmin)/(x2-x1)+Xmin;
+
+    <span class="rem">// Поиск отсчета, соответствующего этому моменту времени</span>
+    index=FindTimeIndex(t);
+    <span class="kw">if</span>(index&lt;<span class="const">0</span>) <span class="kw">return</span>; <span class="rem">// Ошибка – отчет не найден</span>
+
+    <span class="rem">// Преобразование времени и значения отсчета в строки</span>
+    str_t=<a class="hidden" href="rdsDtoA.htm" title="А.5.4.5. rdsDtoA &ndash; преобразование вещественного числа в строку">rdsDtoA</a>(Times[index],-<span class="const">1</span>,NULL);
+    str_v=<a class="hidden" href="rdsDtoA.htm" title="А.5.4.5. rdsDtoA &ndash; преобразование вещественного числа в строку">rdsDtoA</a>(Values[index],-<span class="const">1</span>,NULL);
+    <span class="rem">// Формирование текста подсказки</span>
+    text=<a class="hidden" href="rdsDynStrCat.htm" title="А.5.4.6. rdsDynStrCat &ndash; сложение двух строк">rdsDynStrCat</a>(<span class="str">"Время: "</span>,str_t,FALSE);
+    <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;text,<span class="str">"\nЗначение: "</span>,FALSE);
+    <a class="hidden" href="rdsAddToDynStr.htm" title="А.5.4.1. rdsAddToDynStr &ndash; добавление строки к динамически отведенной строке">rdsAddToDynStr</a>(&amp;text,str_v,FALSE);
+    <span class="rem">// Установка текста подсказки</span>
+    <a class="hidden" href="rdsSetHintText.htm" title="А.5.6.53. rdsSetHintText &ndash; текст всплывающей подсказки">rdsSetHintText</a>(text);
+    <span class="rem">// Освобождение динамических строк</span>
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(text);
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(str_t);
+    <a class="hidden" href="rdsFree.htm" title="А.5.4.8. rdsFree &ndash; освобождение отведенной динамической памяти">rdsFree</a>(str_v);
+
+    <span class="rem">// Изменение параметров подсказки таким образом, чтобы при</span>
+    <span class="rem">// смещении курсора на одну точку она вывелась снова</span>
+    hintdata-&gt;HZLeft=hintdata-&gt;x;
+    hintdata-&gt;HZTop=hintdata-&gt;y;
+    hintdata-&gt;HZWidth=hintdata-&gt;HZHeight=<span class="const">1</span>;
+    <span class="rem">// Задержка гашения подсказки – одна минута</span>
+    hintdata-&gt;HideTimeout=<span class="const">60000</span>;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Эта функция принимает единственный параметр &ndash; указатель на структуру параметров подсказки
+<span class="cpp"><a href="RDS_BFM_POPUPHINT.htm#ref3" title="Структура RDS_POPUPHINTDATA">RDS_POPUPHINTDATA</a></span>. Этот указатель RDS передает в модель блока, а она,
+в свою очередь, должна будет передать ее нашей новой функции. Структура <span class="cpp"><a class="hidden" href="RDS_BFM_POPUPHINT.htm#ref3" title="Структура RDS_POPUPHINTDATA">RDS_POPUPHINTDATA</a></span>
+описана следующим образом:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span>
+  { <span class="kw">int</span> x,y;              <span class="rem">// Координаты курсора</span>
+    <span class="kw">int</span> BlockX,BlockY;    <span class="rem">// Точка привязки блока</span>
+    <span class="rem">// Положение и размер блока на момент последнего рисования</span>
+    <span class="kw">int</span> Left,Top;         <span class="rem">// Левый верхний угол</span>
+    <span class="kw">int</span> Width,Height;     <span class="rem">// Ширина и высота</span>
+    <span class="rem">//------- Параметры, которые можно изменить -------</span>
+    <span class="kw">int</span> HZLeft,HZTop,     <span class="rem">// Размер зоны действия подсказки (по</span>
+        HZWidth,HZHeight; <span class="rem">// умолчанию – все изображение блока)</span>
+    <span class="kw">int</span> ReshowTimeout;    <span class="rem">// Интервал повторного вывода подсказки</span>
+                          <span class="rem">// (по умолчанию – 0, то есть не выводить)</span>
+    <span class="kw">int</span> HideTimeout;      <span class="rem">// Интервал гашения подсказки (по</span>
+                          <span class="rem">// умолчанию – стандартное для Windows)</span>
+    <span class="rem">//---------- Конец изменяемых параметров ----------</span>
+    <span class="kw">int</span> IntZoom;          <span class="rem">// Масштаб окна в %</span>
+    <span class="kw">double</span> DoubleZoom;    <span class="rem">// Масштабный к-т (в долях единицы)</span>
+  } <a class="hidden" href="RDS_BFM_POPUPHINT.htm#ref3" title="Структура RDS_POPUPHINTDATA">RDS_POPUPHINTDATA</a>;
+  <span class="kw">typedef</span> <a class="hidden" href="RDS_BFM_POPUPHINT.htm#ref3" title="Структура RDS_POPUPHINTDATA">RDS_POPUPHINTDATA</a> *<a class="hidden" href="RDS_BFM_POPUPHINT.htm#ref4" title="Указатель на RDS_POPUPHINTDATA">RDS_PPOPUPHINTDATA</a> ;</pre>
+
+<p>В этой структуре нас, прежде всего, интересуют координаты курсора мыши
+(<span class="cpp">x</span>,<span class="cpp">y</span>) и верхнего левого угла блока
+(<span class="cpp">Left</span>,<span class="cpp">Top</span>). Зная их, мы можем вычислить, какой точке
+массива соответствует положение курсора. Кроме того, мы будем менять зону действия подсказки
+(<span class="cpp">HZLeft</span>, <span class="cpp">HZTop</span>,
+<span class="cpp">HZWidth</span> и <span class="cpp"></span>). Пока курсор не покинет эту зону,
+подсказка меняться не будет. Нам нужно, чтобы текст подсказки отражал координаты точки графика, около
+которой находится курсор, поэтому мы каждый раз будем устанавливать зону действия размером в одну точку точно
+под курсором. Таким образом, любое перемещение курсора будет приводить к его выходу из зоны действия подсказки
+и выводу новой, с новым текстом. Мы также увеличим время гашения подсказки
+(<span class="cpp">HideTimeout</span>) до одной минуты, чтобы пользователь гарантированно успел прочесть ее.
+При выходе курсора за пределы блока подсказка будет погашена независимо от значения
+<span class="cpp">HideTimeout</span>, поэтому мы можем не беспокоиться о том, что этот интервал слишком велик.</p>
+
+<p>Как и в предыдущем примере с подсказкой, сначала мы проверим доступность динамической переменной времени
+и, в случае ее отсутствия, выведем вместо подсказки сообщение об ошибке. В совокупности с изображаемой
+блоком иконкой с восклицательным знаком
+(см. <a href="pm_2_10_3.htm" title="&sect;2.10.3. Дополнительное рисование">&sect;2.10.3</a>), это сообщение позволит пользователю понять причину
+неработоспособности блока. Если же с переменной времени все в порядке, то, как и в функции рисования,
+мы вычисляем абсолютные координаты поля графика в окне подсистемы. В функции рисования мы пользовались для
+этого полями <span class="cpp">Left</span> и <span class="cpp">Top</span> структуры
+<span class="cpp"><a href="RDS_BFM_DRAW.htm#ref1" title="Структура RDS_DRAWDATA">RDS_DRAWDATA</a></span>, здесь пользуемся одноименными полями
+<span class="cpp"><a class="hidden" href="RDS_BFM_POPUPHINT.htm#ref3" title="Структура RDS_POPUPHINTDATA">RDS_POPUPHINTDATA</a></span> &ndash; их значения будут одинаковыми. Если курсор мыши,
+координаты которого также передаются в структуре <span class="cpp"><a class="hidden" href="RDS_BFM_POPUPHINT.htm#ref3" title="Структура RDS_POPUPHINTDATA">RDS_POPUPHINTDATA</a></span>, не
+попадает в поле графика, функция немедленно завершается и подсказка при этом не выводится. Если же курсор
+находится внутри поля, мы, согласно масштабу горизонтальной оси, вычисляем значение времени, которому
+соответствует горизонтальная координата курсора, и записываем его в переменную <span class="cpp">t</span>.
+Используемая при этом формула обратна формуле преобразования времени в координату, использованной в
+<a href="pm_2_10_1.htm#ref30" title="Функция рисования (Draw) в примере модели графика">функции рисования</a>.</p>
+
+<p>Далее, при помощи написанной ранее функции <span class="cpp">FindTimeIndex</span>, мы вычисляем
+индекс в массиве отсчетов, которому соответствует значение времени <span class="cpp">t</span> и записываем
+его в целую переменную <span class="cpp">index</span>. Возврат функцией отрицательного значения свидетельствует об
+ошибке (массивы пусты), в этом случае функция завершается без вывода подсказки. Теперь, зная индекс
+в массивах, можно определить значение времени <span class="cpp">Times[index]</span> и вертикальной координаты
+<span class="cpp">Values[index]</span>, соответствующие текущей точке, и сформировать из них текст подсказки уже
+описывавшимся в предыдущем примере способом.</p>
+
+<p>Теперь нужно вставить вызов <span class="cpp">PopupHint</span> в функцию модели блока &ndash;
+для этого в оператор <span class="cpp">switch(CallMode)</span> добавляется новая метка <span class="cpp">case</span>:</p>
+
+<pre class="cpp">      <span class="rem">// &hellip;</span>
+
+<div class="changes">      <span class="rem">// Всплывающая подсказка</span>
+      <span class="kw">case</span> <a class="hidden" href="RDS_BFM_POPUPHINT.htm" title="А.2.6.12. RDS_BFM_POPUPHINT &ndash; вывод всплывающей подсказки">RDS_BFM_POPUPHINT</a>:
+        data-&gt;PopupHint((<a class="hidden" href="RDS_BFM_POPUPHINT.htm#ref4" title="Указатель на RDS_POPUPHINTDATA">RDS_PPOPUPHINTDATA</a>)ExtParam);
+        <span class="kw">break</span>;</div>
+      <span class="rem">// &hellip;</span></pre>
+
+<p>Здесь перед передачей в функцию <span class="cpp">PopupHint</span> указатель общего вида
+(<span class="cpp">void*</span>) <span class="cpp">ExtParam</span>, полученный функцией модели блока,
+приводится к типу <span class="cpp"><a class="hidden" href="RDS_BFM_POPUPHINT.htm#ref4" title="Указатель на RDS_POPUPHINTDATA">RDS_PPOPUPHINTDATA</a></span>, то есть
+&laquo;указатель на <span class="cpp">RDS_POPUPHINTDATA</span>&raquo;.</p>
+
+<div class="picright"><div class="container" id="pic2">
+<img src="../img/PopupHint_Graph.png" width="488" height="209" alt="Всплывающая подсказка к графику" />
+<p id="light_pic2">Рис.&nbsp;72. Всплывающая подсказка к графику</p>
+</div></div>
+
+
+<p>Осталось только настроить зону действия подсказки и время ее гашения. В координаты левого верхнего угла
+зоны копируются координаты курсора мыши, а размер зоны устанавливается в одну точку &ndash; теперь любое перемещение
+курсора выведет его за пределы зоны, и подсказка будет показана повторно, уже с новыми значениями координат.
+Время гашения подсказки устанавливается в 60000 миллисекунд, то есть в одну минуту. Теперь, если разрешить вывод
+всплывающей подсказки для блока, и навести курсор на поле графика, через некоторое время появится окно подсказки
+(<a href="#pic2" title="Всплывающая подсказка к графику">рис.&nbsp;72</a>),
+которое будет перемещаться вслед за курсором мыши, и числа в нем будут изменяться).</p>
+
+<p>Написанная нами функция <span class="cpp">FindTimeIndex</span> определяет соответствующий заданному времени
+отсчет в массиве при помощи простого линейного поиска. Перепишем ее так, чтобы она использовала более быстрый поиск
+делением пополам, пользуясь тем, что массив <span class="cpp">Times</span> упорядочен по возрастанию.
+Хотя используемый метод поиска и не имеет прямого отношения к рассматриваемому в примерах выводу всплывающих
+подсказок, следует помнить, что линейный поиск &ndash; достаточно медленный алгоритм, и при больших массивах
+отсчетов он может вызывать замедление работы при перемещениях курсора по графику. Поэтому лучше ускорить
+указанную функцию, тем более, что метод деления пополам не особенно сложен. Новая функция
+<span class="cpp">FindTimeIndex</span> будет иметь следующий вид:</p>
+
+<pre class="cpp">  <span class="rem">// Поиск отсчета, соответствующего времени t</span>
+  <span class="rem">// (метод деления пополам)</span>
+  <span class="kw">int</span> TSimplePlotData::FindTimeIndex(<span class="kw">double</span> t)
+  { <span class="kw">int</span> L,R;
+    <span class="kw">double</span> dl,dr;
+
+    <span class="kw">if</span>(Count==<span class="const">0</span> || NextIndex==<span class="const">0</span>) <span class="rem">// Нет данных в массивах</span>
+      <span class="kw">return</span> -<span class="const">1</span>;
+    <span class="kw">if</span>(NextIndex==<span class="const">1</span>) <span class="rem">// В массиве единственный отсчет</span>
+      <span class="kw">return</span> <span class="const">0</span>;
+
+    <span class="rem">// В массиве по крайней мере два значения – проверяем границы</span>
+    <span class="kw">if</span>(t&lt;=Times[<span class="const">0</span>]) <span class="rem">// t меньше первого отсчета</span>
+      <span class="kw">return</span> <span class="const">0</span>;
+    <span class="kw">if</span>(t&gt;=Times[NextIndex-<span class="const">1</span>]) <span class="rem">// t больше последнего отсчета</span>
+      <span class="kw">return</span> NextIndex-<span class="const">1</span>;
+
+    <span class="rem">// t - внутри диапазона массива</span>
+    L=<span class="const">0</span>; R=NextIndex-<span class="const">1</span>;
+    <span class="kw">while</span>(L&lt;R-<span class="const">1</span>)
+      { <span class="kw">int</span> m=(L+R)/<span class="const">2</span>;
+        <span class="kw">if</span>(Times[m]&lt;t) L=m; <span class="kw">else</span> R=m;
+      }
+    <span class="rem">// t лежит между L и R</span>
+    dl=fabs(t-Times[L]),
+    dr=fabs(t-Times[R]);
+    <span class="kw">return</span> (dl&lt;dr)?L:R; <span class="rem">// Возвращаем ближайший</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Проверив, что в массиве есть данные, и исключив случай, когда в нем записан единственный отсчет (при
+этом ничего искать, естественно, не нужно), мы сравниваем значение <span class="cpp">t</span> с первым
+и последним отсчетами массива. Если <span class="cpp">t</span> лежит за пределами диапазона отсчетов массива,
+искать его в массиве не нужно: ближайшим к <span class="cpp">t</span> отсчетом будет первый (если
+<span class="cpp">t&lt;=Times[0]</span>) или последний (если
+<span class="cpp">t&gt;=Times[NextIndex-1]</span>). Если <span class="cpp">t</span> &ndash;
+внутри диапазона, мы присваиваем переменным <span class="cpp">L</span> и <span class="cpp">R</span> граничные индексы
+массива и начинаем в цикле сравнивать отсчет в середине диапазона
+<span class="cpp">L</span>&hellip;<span class="cpp">R</span> с <span class="cpp">t</span>. В зависимости от того,
+будет этот отсчет меньше или больше <span class="cpp">t</span>, мы перемещаем одну из границ и повторяем деление
+до тех пор, пока <span class="cpp">L</span> и <span class="cpp">R</span> не окажутся соседними отсчетами, при
+этом значение <span class="cpp">t</span> будет лежать между ними. Останется только выбрать из этих отсчетов
+ближайший к <span class="cpp">t</span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_2_10_4.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_2_12_1.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_2_11">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

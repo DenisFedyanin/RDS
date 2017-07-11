@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.6.4. Реакция на мышь и клавиатуру</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3">Глава 3. Управление RDS из других приложений</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3_6">&sect;3.6. Отображение схемы RDS в собственном окне приложения</a></p>
+<div class="level"><p>&sect;3.6.4. Реакция на мышь и клавиатуру</p>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_3_6_3.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_6_5.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_6_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_3_6_4_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 3. Управление RDS из других приложений</h2>
+<h3 class="off">&sect;3.6. Отображение схемы RDS в собственном окне приложения</h3>
+<h4>&sect;3.6.4. Реакция на мышь и клавиатуру</h4>
+<p class="abstract">В рассматриваемый пример программы добавляется реакция блоков отображаемой подсистемы 
+                на мышь и клавиатуру.</p>
+
+
+<p>Добавим в нашу программу реакцию на мышь и клавиатуру, чтобы пользователь мог вводить данные в поля
+ввода, перемещать рукоятки и т.д. Фактически, наша задача &ndash; передать в
+RDS информацию о действиях пользователя в зоне
+<a href="pm_3_6_1.htm" title="&sect;3.6.1. Общие принципы работы с портом вывода">порта вывода</a>, заменив при этом константы Windows API
+на константы, используемые библиотекой RdsCtrl.dll (они описаны в
+&laquo;<span class="file">RdsCtrl.h</span>&raquo;). Начнем с функции передачи реакции на мышь
+<span class="cpp">RdsMouseOperation</span>: она вернет <span class="cpp">TRUE</span>, если блок
+RDS среагировал на мышь, и <span class="cpp">FALSE</span> в противном случае (при этом наша программа
+может выполнить какие-либо другие действия &ndash; например, перейти в другую подсистему по двойному щелчку).</p>
+
+<pre class="cpp">  <span class="rem">// Реакция на мышь</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> RdsMouseOperation(UINT msg,<span class="kw">int</span> X,<span class="kw">int</span> Y,WPARAM keys)
+  { <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> flags=<span class="const">0</span>;
+    <span class="kw">int</span> op;
+    <a class="hidden" href="app_ids.htm#light_ref23" title="Координаты прямоугольника в Windows API">RECT</a> r;
+    <span class="rem">// Проверяем наличие связи с RDS и существование порта</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span> FALSE;
+    <span class="rem">// Получаем прямоугольник порта вывода</span>
+    <span class="kw">if</span>(!GetAvailableRect(&amp;r))
+      <span class="kw">return</span> FALSE;
+
+    <span class="rem">// Если курсор за пределами порта, ничего не делаем</span>
+    <span class="kw">if</span>(X&lt;r.left||X&gt;r.right||Y&lt;r.top||Y&gt;r.bottom)
+      <span class="kw">return</span> FALSE;
+
+    <span class="rem">// В зависимости от сообщения, полученного окном,</span>
+    <span class="rem">// устанавливаем флаги и операцию для RDS</span>
+    <span class="kw">switch</span>(msg)
+      { <span class="kw">case</span> WM_LBUTTONDOWN: <span class="rem">// Нажатие левой</span>
+          op=<span id="light_ref1"><a class="hidden" href="rdsctrlViewportMouse.htm#light_ref1" title="RDSCTRL_MOUSEOP_DOWN">RDSCTRL_MOUSEOP_DOWN</a></span>;
+          flags=<span id="light_ref2"><a class="hidden" href="rdsctrlViewportMouse.htm#light_ref5" title="RDSCTRL_MOUSEF_LEFT">RDSCTRL_MOUSEF_LEFT</a></span>;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> WM_MBUTTONDOWN: <span class="rem">// Нажатие средней</span>
+          op=<a class="hidden" href="rdsctrlViewportMouse.htm#light_ref1" title="RDSCTRL_MOUSEOP_DOWN">RDSCTRL_MOUSEOP_DOWN</a>;
+          flags=<span id="light_ref3"><a class="hidden" href="rdsctrlViewportMouse.htm#light_ref7" title="RDSCTRL_MOUSEF_MIDDLE">RDSCTRL_MOUSEF_MIDDLE</a></span>;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> WM_RBUTTONDOWN: <span class="rem">// Нажатие правой</span>
+          op=<a class="hidden" href="rdsctrlViewportMouse.htm#light_ref1" title="RDSCTRL_MOUSEOP_DOWN">RDSCTRL_MOUSEOP_DOWN</a>;
+          flags=<span id="light_ref4"><a class="hidden" href="rdsctrlViewportMouse.htm#light_ref6" title="RDSCTRL_MOUSEF_RIGHT">RDSCTRL_MOUSEF_RIGHT</a></span>;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> WM_LBUTTONUP: <span class="rem">// Отпускание левой</span>
+          op=<span id="light_ref5"><a class="hidden" href="rdsctrlViewportMouse.htm#light_ref2" title="RDSCTRL_MOUSEOP_UP">RDSCTRL_MOUSEOP_UP</a></span>;
+          flags=<a class="hidden" href="rdsctrlViewportMouse.htm#light_ref5" title="RDSCTRL_MOUSEF_LEFT">RDSCTRL_MOUSEF_LEFT</a>;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> WM_MBUTTONUP: <span class="rem">// Отпускание средней</span>
+          op=<a class="hidden" href="rdsctrlViewportMouse.htm#light_ref2" title="RDSCTRL_MOUSEOP_UP">RDSCTRL_MOUSEOP_UP</a>;
+          flags=<a class="hidden" href="rdsctrlViewportMouse.htm#light_ref7" title="RDSCTRL_MOUSEF_MIDDLE">RDSCTRL_MOUSEF_MIDDLE</a>;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> WM_RBUTTONUP: <span class="rem">// Отпускание правой</span>
+          op=<a class="hidden" href="rdsctrlViewportMouse.htm#light_ref2" title="RDSCTRL_MOUSEOP_UP">RDSCTRL_MOUSEOP_UP</a>;
+          flags=<a class="hidden" href="rdsctrlViewportMouse.htm#light_ref6" title="RDSCTRL_MOUSEF_RIGHT">RDSCTRL_MOUSEF_RIGHT</a>;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> WM_LBUTTONDBLCLK: <span class="rem">// Двойной щелчок левой</span>
+          op=<span id="light_ref6"><a class="hidden" href="rdsctrlViewportMouse.htm#light_ref4" title="RDSCTRL_MOUSEOP_DBL">RDSCTRL_MOUSEOP_DBL</a></span>;
+          flags=<a class="hidden" href="rdsctrlViewportMouse.htm#light_ref5" title="RDSCTRL_MOUSEF_LEFT">RDSCTRL_MOUSEF_LEFT</a>;
+          <span class="kw">break</span>;
+        <span class="kw">case</span> WM_MOUSEMOVE: <span class="rem">// Перемещение курсора</span>
+          op=<span id="light_ref7"><a class="hidden" href="rdsctrlViewportMouse.htm#light_ref3" title="RDSCTRL_MOUSEOP_MOVE">RDSCTRL_MOUSEOP_MOVE</a></span>;
+          <span class="rem">// Запоминаем флаги нажатых кнопок</span>
+          <span class="kw">if</span>(keys &amp; MK_LBUTTON)
+            flags|=<a class="hidden" href="rdsctrlViewportMouse.htm#light_ref5" title="RDSCTRL_MOUSEF_LEFT">RDSCTRL_MOUSEF_LEFT</a>;
+          <span class="kw">if</span>(keys &amp; MK_MBUTTON)
+            flags|=<a class="hidden" href="rdsctrlViewportMouse.htm#light_ref7" title="RDSCTRL_MOUSEF_MIDDLE">RDSCTRL_MOUSEF_MIDDLE</a>;
+          <span class="kw">if</span>(keys &amp; MK_RBUTTON)
+            flags|=<a class="hidden" href="rdsctrlViewportMouse.htm#light_ref6" title="RDSCTRL_MOUSEF_RIGHT">RDSCTRL_MOUSEF_RIGHT</a>;
+          <span class="kw">if</span>(flags==<span class="const">0</span> &amp;&amp; (!FreeMouseMove)) <span class="rem">// Реакция не нужна</span>
+            <span class="kw">return</span> FALSE;
+          <span class="kw">break</span>;
+        <span class="kw">default</span>:
+          <span class="kw">return</span> FALSE;
+      }
+
+    <span class="rem">// Запоминаем флаги специальных клавиш клавиатуры</span>
+    <span class="kw">if</span>(keys &amp; MK_CONTROL)
+      flags|=<span id="light_ref8"><a class="hidden" href="rdsctrlViewportMouse.htm#light_ref8" title="RDSCTRL_MOUSEF_CTRL">RDSCTRL_MOUSEF_CTRL</a></span>;
+    <span class="kw">if</span>(keys &amp; MK_SHIFT)
+      flags|=<span id="light_ref9"><a class="hidden" href="rdsctrlViewportMouse.htm#light_ref10" title="RDSCTRL_MOUSEF_SHIFT">RDSCTRL_MOUSEF_SHIFT</a></span>;
+    <span class="kw">if</span>(GetKeyState(VK_MENU)&lt;<span class="const">0</span>)
+      flags|=<span id="light_ref10"><a class="hidden" href="rdsctrlViewportMouse.htm#light_ref9" title="RDSCTRL_MOUSEF_ALT">RDSCTRL_MOUSEF_ALT</a></span>;
+    <span class="rem">// Передаем в RDS</span>
+    <span class="kw">return</span> <span id="light_ref11"><a class="hidden" href="rdsctrlViewportMouse.htm" title="Б.3.7.14. rdsctrlViewportMouse &ndash; вызвать в RDS реакцию на мышь">rdsctrlViewportMouse</a></span>(RdsLink,Viewport,X,Y,op,flags);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Функция получилась довольно длинной из-за преобразования констант Windows API в константы &laquo;<span class="file">RdsCtrl.h</span>&raquo;,
+тем не менее, устроена она очень просто. Параметрами функции являются разобранные параметры сообщения,
+полученного главным окном программы при каких-либо действиях пользователя мышью &ndash; эти сообщения подробно
+описаны в литературе по Windows API. В параметре <span class="cpp">msg</span> передается тип полученного сообщения
+(нажата или отпущена кнопка, переместился курсор), в параметрах <span class="cpp">X</span> и <span class="cpp">Y</span>
+&ndash; координаты курсора, в параметре <span class="cpp">keys</span> &ndash; флаги нажатых в данный момент
+служебных клавиш и кнопок. Прежде чем разбирать полученные параметры, мы проверяем, попал ли курсор в
+область порта вывода: если он находится за пределами порта, никаких действий совершать не нужно. Убедившись,
+что курсор попадает в порт вывода, мы анализируем тип сообщения <span class="cpp">msg</span> и, в
+зависимости от него, присваиваем переменной <span class="cpp">op</span> тип действия, на которое должен
+среагировать блок схемы (нажатие кнопки, отпускание кнопки, перемещение курсора, двойной щелчок), а переменной
+<span class="cpp">flags</span> &ndash; флаг нажатой кнопки (левая, правая или средняя). Отдельно рассматривается
+перемещение курсора (сообщение Windows <span class="cpp">WM_MOUSEMOVE</span>) &ndash; при этом анализируется
+глобальная переменная <span class="cpp">FreeMouseMove</span>, которую мы устанавливаем при привязке
+подсистемы к порту вывода в функции <span class="cpp">SetViewport</span>, и, если она равна
+<span class="cpp">FALSE</span> (ни одному блоку подсистемы не нужна реакция на перемещение курсора без нажатия
+кнопок) и ни одна кнопка не нажата, мы прерываем выполнение функции.</p>
+
+<p>После этого мы добавляем к переменной <span class="cpp">flags</span> флаги состояния клавиш
+<span class="keys">Ctrl</span>, <span class="keys">Shift</span> и <span class="keys">Alt</span>
+и передаем информацию о мыши в RDS функцией <span class="cpp"><a href="rdsctrlViewportMouse.htm" title="Б.3.7.14. rdsctrlViewportMouse &ndash; вызвать в RDS реакцию на мышь">rdsctrlViewportMouse</a></span>. Результат этой
+функции будет и результатом и нашей функции <span class="cpp">RdsMouseOperation</span>: если какой-либо
+блок подсистемы или сама подсистема среагирует на действия мышью, наша функция вернет
+<span class="cpp">TRUE</span>.</p>
+
+<p>Функция реакции на клавиатуру <span class="cpp">RdsKeyboardOperation</span> устроена похожим образом:</p>
+
+<pre class="cpp">  <span class="rem">// Реакция на клавиатуру</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> RdsKeyboardOperation(<a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> down,<span class="kw">int</span> keycode,<a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> flags)
+  { <span class="kw">int</span> repeat;
+    <a class="hidden" href="app_ids.htm#light_ref14" title="Беззнаковое целое 32 бита">DWORD</a> shift=<span class="const">0</span>;
+    <span class="rem">// Проверяем наличие связи с RDS и существование порта</span>
+    <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span> || Viewport&lt;<span class="const">0</span>)
+      <span class="kw">return</span> FALSE;
+
+    <span class="rem">// Выделяем из данных о нажатии информацию об автоповторе</span>
+    <span class="kw">if</span>(down &amp;&amp; (flags &amp; <span class="const">0x40000000</span>)!=<span class="const">0</span>)
+      repeat=flags &amp; <span class="const">0xffff</span>;
+    <span class="kw">else</span>
+      repeat=<span class="const">0</span>;
+
+    <span class="rem">// Запоминаем состояние клавиш и кнопок мыши</span>
+    <span class="kw">if</span>(GetKeyState(VK_MENU)&lt;<span class="const">0</span>)
+      shift|=<span id="light_ref12"><a class="hidden" href="rdsctrlViewportKeyboard.htm#light_ref4" title="RDSCTRL_KEYF_ALT">RDSCTRL_KEYF_ALT</a></span>;
+    <span class="kw">if</span>(GetKeyState(VK_SHIFT)&lt;<span class="const">0</span>)
+      shift|=<span id="light_ref13"><a class="hidden" href="rdsctrlViewportKeyboard.htm#light_ref5" title="RDSCTRL_KEYF_SHIFT">RDSCTRL_KEYF_SHIFT</a></span>;
+    <span class="kw">if</span>(GetKeyState(VK_CONTROL)&lt;<span class="const">0</span>)
+      shift|=<span id="light_ref14"><a class="hidden" href="rdsctrlViewportKeyboard.htm#light_ref3" title="RDSCTRL_KEYF_CTRL">RDSCTRL_KEYF_CTRL</a></span>;
+    <span class="kw">if</span>(GetKeyState(VK_LBUTTON)&lt;<span class="const">0</span>)
+      shift|=<span id="light_ref15"><a class="hidden" href="rdsctrlViewportKeyboard.htm#light_ref6" title="RDSCTRL_KEYF_LEFT">RDSCTRL_KEYF_LEFT</a></span>;
+    <span class="kw">if</span>(GetKeyState(VK_RBUTTON)&lt;<span class="const">0</span>)
+      shift|=<span id="light_ref16"><a class="hidden" href="rdsctrlViewportKeyboard.htm#light_ref7" title="RDSCTRL_KEYF_RIGHT">RDSCTRL_KEYF_RIGHT</a></span>;
+    <span class="kw">if</span>(GetKeyState(VK_MBUTTON)&lt;<span class="const">0</span>)
+      shift|=<span id="light_ref17"><a class="hidden" href="rdsctrlViewportKeyboard.htm#light_ref8" title="RDSCTRL_KEYF_MIDDLE">RDSCTRL_KEYF_MIDDLE</a></span>;
+
+    <span class="rem">// Передаем информацию в RDS</span>
+    <span class="kw">return</span> <span id="light_ref18"><a class="hidden" href="rdsctrlViewportKeyboard.htm" title="Б.3.7.13. rdsctrlViewportKeyboard &ndash; вызвать в RDS реакцию на клавиатуру">rdsctrlViewportKeyboard</a></span>(RdsLink,Viewport,
+      down?<span id="light_ref19"><a class="hidden" href="rdsctrlViewportKeyboard.htm#light_ref1" title="RDSCTRL_KEYOP_DOWN">RDSCTRL_KEYOP_DOWN</a></span>:<span id="light_ref20"><a class="hidden" href="rdsctrlViewportKeyboard.htm#light_ref2" title="RDSCTRL_KEYOP_UP">RDSCTRL_KEYOP_UP</a></span>,
+      keycode,repeat,shift);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В параметре <span class="cpp">down</span> передается <span class="cpp">TRUE</span>, если клавиша нажата, и
+<span class="cpp">FALSE</span>, если отпущена, в параметре <span class="cpp">keycode</span> &ndash; код клавиши,
+в параметре <span class="cpp">flags</span> &ndash; дополнительные данные о нажатии, полученные процедурой главного
+окна программы при разборе сообщений <span class="cpp">WM_KEYDOWN</span>,
+<span class="cpp"></span>, <span class="cpp">WM_KEYUP</span> и <span class="cpp">WM_SYSKEYUP</span>. Мы
+извлекаем из этих дополнительных данных информацию об автоповторе клавиши (число автоматически сгенерированных
+Windows нажатий при длительном удержании клавиши) и записываем ее в переменную <span class="cpp">repeat</span>. В
+переменную <span class="cpp">shift</span> мы записываем флаги нажатия клавиш
+<span class="keys">Ctrl</span>, <span class="keys">Shift</span> и <span class="keys">Alt</span> и
+кнопок мыши, полученные при помощи функции Windows API <span class="cpp">GetKeyState</span>, а затем передаем
+всю эту информацию в RDS функцией <span class="cpp"><a href="rdsctrlViewportKeyboard.htm" title="Б.3.7.13. rdsctrlViewportKeyboard &ndash; вызвать в RDS реакцию на клавиатуру">rdsctrlViewportKeyboard</a></span>.</p>
+
+<p>Теперь мы транслируем все действия пользователя в RDS, и блоки текущей отображаемой подсистемы могут
+реагировать на щелчки, перемещения курсора, нажатия клавиш и т.п.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_3_6_3.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_6_5.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_6_4">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

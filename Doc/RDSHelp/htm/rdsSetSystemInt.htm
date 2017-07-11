@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.2.37. rdsSetSystemInt &ndash; установка целого системного параметра</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_2">А.5.2. Управление работой RDS и функции общего назначения</a></p>
+<div class="level"><p>А.5.2.37. <span class="cpp">rdsSetSystemInt</span> &ndash; установка целого системного параметра</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsSetModifiedFlag.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="rdsSetSystemUpdate.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsSetSystemInt">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.2. Управление работой RDS и функции общего назначения</h4>
+<h5>А.5.2.37. <span class="cpp">rdsSetSystemInt</span> &ndash; установка целого системного параметра</h5>
+
+
+<p>Функция <span class="cpp">rdsSetSystemInt</span> устанавливает целое значение для различных системных параметров.</p>
+
+<pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsSetSystemInt(
+      <span class="kw">int</span> Param,    <span class="rem">// Идентификатор параметра</span>
+      <span class="kw">int</span> Value     <span class="rem">// Значение параметра</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_VII</span></p>
+
+<p class="apphdr">Параметры</p>
+<dl>
+  <dt><span class="cpp">Param</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Идентификатор устанавливаемого параметра (одна из констант <span class="cpp">RDS_SSI*</span>, см. ниже).</dd>
+
+  <dt><span class="cpp">Value</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Значение устанавливаемого параметра.</dd>
+
+<p class="apphdr">Идентификаторы параметров</p>
+<dl>
+  <dt><span class="cpp"><span id="light_ref1">RDS_SSIFASTTEXTSAVE</span></span></dt>
+  <dd>Способ сохранения в текстовом формате. Этот параметр может устанавливаться только в реакции блока на
+  событие <span class="cpp"><a href="RDS_BFM_SAVETXT.htm" title="А.2.5.7. RDS_BFM_SAVETXT &ndash; запись данных блока в текстовом формате">RDS_BFM_SAVETXT</a></span>, во всех остальных реакциях вызов <span class="cpp">rdsSetSystemInt</span>
+  с этим идентификатором игнорируется. Параметр может принимать одно из следующих значений:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term">0</td>
+          <td>Обычное сохранение в текстовом формате: ко всем строкам, переданным в RDS для записи, добавляются
+          отступы слева, если это необходимо. Это значение параметр получает автоматически перед каждым вызовом блока для
+          сохранения данных.</td>
+        </tr>
+        <tr>
+          <td class="term">1</td>
+          <td>Быстрое сохранение &ndash; отступы не добавляются. Это значение имеет смысл устанавливать при
+          сохранении больших объемов текста, чтобы повысить скорость сохранения за счет худшего форматирования
+          получившегося файла схемы. Если не предполагается, что файл схемы будет корректироваться вручную,
+          его форматирование не играет роли &ndash; на загрузку файлов в RDS оно не влияет.</td>
+        </tr>
+      </table>
+    </div></div>
+  </dd>
+
+  <dt><span class="cpp"><span id="light_ref2">RDS_SSIWAITCURSOR</span></span></dt>
+  <dd>Установить курсор мыши &laquo;песочные часы&raquo;. Параметр может принимать одно из следующих значений:
+    <div class="tableleft"><div class="tcont">
+      <table class="list">
+        <tr>
+          <td class="term">1</td>
+          <td>Установить курсор &laquo;песочные часы&raquo;, его внешний вид не будет зависеть
+          от находящегося под ним элемента.</td>
+        </tr>
+        <tr>
+          <td class="term">0</td>
+          <td>Вернуть предыдущий, использовавшийся до установки значения 1, вид курсора мыши.</td>
+        </tr>
+        <tr>
+          <td class="term">&minus;1</td>
+          <td>Немедленно установить обычный курсор мыши, его внешний вид будет зависеть от находящегося под
+          ним элемента управления.</td>
+        </tr>
+      </table>
+    </div></div>
+    При каждом вызове функции <span class="cpp">rdsSetSystemInt</span> с параметрами
+    (<span class="cpp">RDS_SSIWAITCURSOR,1</span>) RDS устанавливает курсор &laquo;песочные часы&raquo;
+    (что обычно указывает на выполнение какой-либо длительной операции, во время которой пользователь не
+    может работать с программой) и увеличивает внутренний счетчик. При вызове функции с параметрами
+    (<span class="cpp">RDS_SSIWAITCURSOR,0</span>) внутренний счетчик уменьшается, и, когда он достигнет нуля,
+    RDS вернет курсору стандартную форму. Таким образом, пары вызовов установки/отмены
+    &laquo;песочных часов&raquo; можно безопасно вкладывать друг в друга. Если необходимо немедленно вернуть
+    курсору его обычную форму, следует вызвать функцию с параметрами (<span class="cpp">RDS_SSIWAITCURSOR,–1</span>).
+  </dd>
+</dl>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsGetSystemInt.htm" title="А.5.2.24. rdsGetSystemInt &ndash; получить целый системный параметр">rdsGetSystemInt</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsSetModifiedFlag.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="rdsSetSystemUpdate.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsSetSystemInt">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

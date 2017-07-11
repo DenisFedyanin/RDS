@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>&sect;3.2. Загрузка библиотеки и управление схемой</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="pm_index.htm">Руководство программиста</a></p>
+<div class="level"><p><a href="pm_index.htm#light_htm:pm_3">Глава 3. Управление RDS из других приложений</a></p>
+<div class="level"><p>&sect;3.2. Загрузка библиотеки и управление схемой</p>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="pm_3_1.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_3.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+<div class="right">
+<span class="curtab">Текст</span>
+<span class="tab"><a href="pm_3_2_c.htm">С++</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Руководство программиста</h1>
+<h2 class="off">Глава 3. Управление RDS из других приложений</h2>
+<h3>&sect;3.2. Загрузка библиотеки и управление схемой</h3>
+<p class="abstract">Рассматривается простой пример управления схемой из внешнего приложения. В программу, созданную в 
+            <a href="pm_3_1.htm" title="&sect;3.1. Общие принципы управления RDS">&sect;3.1</a>, добавляются функции для запуска RDS, загрузки 
+            выбранной пользователем схемы и переключения режимов работы RDS.</p>
+
+
+<p>В принципе, библиотеку RdsCtrl.dll можно загружать в память при старте приложения, однако, лучше делать это
+тогда, когда она действительно нужна. Сейчас мы сделаем так, чтобы при нажатии кнопки
+&laquo;<span class="menu">Открыть</span>&raquo; в нашей программе пользователю показывался стандартный диалог открытия файла.
+Если он выберет в нем какой-нибудь файл схемы, программа загрузит RdsCtrl.dll, запустит
+RDS и даст команду на открытие этой схемы.</p>
+
+<p><span id="ref1">Точно</span>
+<span id="ref2">так</span>
+<span id="ref3">же</span>, как для написании моделей
+блоков мы должны были включить в наш исходный текст файлы
+заголовков с описаниями, необходимыми для этих моделей, и получить доступ к сервисным функциям RDS, здесь
+мы тоже должны включить в текст программы файл
+&laquo;<span class="file"><span id="light_ref1">RdsCtrl.h</span></span>&raquo; и получить доступ к функциям библиотеки
+RdsCtrl.dll. Мы можем получать указатели на каждую функцию библиотеки вручную при помощи вызова
+<span class="cpp" id="light_ref2">GetProcAddress</span>, но гораздо удобнее <span id="light_ref3">воспользоваться
+встроенной в
+&laquo;<span class="file">RdsCtrl.h</span>&raquo; конструкцией для получения доступа ко всем функциям сразу</span>, аналогичной
+<a href="pm_2_2.htm#ref11" title="Использование RdsFunc.h">использовавшейся</a> нами при написании моделей файлу
+&laquo;<span class="file">RdsFunc.h</span>&raquo;.
+<span id="ref4">Необходимые</span> нам описания будут выглядеть так:</p>
+
+<pre class="cpp">  <span class="preproc">#define </span><span id="light_ref4"><span class="preproc">RDSCTRL_SERV_FUNC_BODY</span></span><span class="preproc"> GetRdsCtrlFuncs</span>
+  <span class="preproc">#include &lt;RdsCtrl.h&gt;</span>
+  <span class="rem">//=========================================</span></pre>
+
+<p>Перед включением файла заголовка мы разместили определение константы вида</p>
+
+<pre class="cpp">  <span class="preproc">#define RDSCTRL_SERV_FUNC_BODY </span><i><span class="preproc">имя_функции_пользователя</span></i></pre>
+
+<p>Это приведет к тому, что в месте включения файла &laquo;<span class="file">RdsCtrl.h</span>&raquo; в текст программы, во-первых,
+будет создан полный список глобальных переменных-указателей на функции библиотеки (причем имена переменных будут
+совпадать с именами этих функций), и, во-вторых, вставлено тело функции с заданным пользователем именем,
+которая заполняет эти переменные указателями на функции. После загрузки библиотеки нужно вызвать эту функцию,
+передав ей идентификатор модуля загруженной библиотеки, после чего все функции этой библиотеки можно будет вызывать
+просто по именам. Например, для функции <span class="cpp"><a href="rdsctrlCreateLink.htm" title="Б.3.2.3. rdsctrlCreateLink &ndash; создать связь с RDS">rdsctrlCreateLink</a></span> будет автоматически создано
+описание глобальной переменной</p>
+
+<pre class="cpp">  RDSCTRL_IV rdsctrlCreateLink;</pre>
+
+<p class="noindent">и внутри функции с заданным пользователем именем (в нашем случае &ndash;
+<span class="cpp">GetRdsCtrlFuncs</span>) ей будет соответствовать строчка</p>
+
+<pre class="cpp">  rdsctrlCreateLink=(RDSCTRL_IV)GetProcAddress(dll,<span class="str">"rdsctrlCreateLink"</span>);</pre>
+
+<p class="noindent">где <span class="cpp">dll</span> &ndash; переданный в функцию идентификатор модуля
+загруженной библиотеки, а тип <span class="cpp">RDSCTRL_IV</span> описан в
+&laquo;<span class="file">RdsCtrl.h</span>&raquo; как указатель на функцию, не принимающую параметров, и возвращающую
+целое число.</p>
+
+<p>Для создания этих глобальных переменных и функции получения указателей недостаточно просто включить
+в исходный текст программы файл &laquo;<span class="file">RdsCtrl.h</span>&raquo;, нужно обязательно вставить перед ним
+описание константы <span class="cpp">RDSCTRL_SERV_FUNC_BODY</span>. Без него программе будут доступны
+описания всех констант и типов, необходимых для работы с RdsCtrl.dll, но никаких описаний глобальных переменных
+и тела функции не будет.</p>
+
+<p><span id="ref5">Если</span>
+исходный текст управляющего приложения состоит из нескольких файлов, включать файл
+&laquo;<span class="file">RdsCtrl.h</span>&raquo; с описанной перед ним константой
+<span class="cpp">RDSCTRL_SERV_FUNC_BODY</span> можно только в один из них, иначе будет создано два
+набора переменных и две функции с одинаковыми именами, что приведет к ошибкам при компиляции программы. Чтобы
+можно было вызывать функции RdsCtrl.dll из других модулей программы, нужно перед включением
+&laquo;<span class="file">RdsCtrl.h</span>&raquo; описать константу
+<span id="light_ref5" class="cpp">RDSCTRL_SERV_FUNC_EXTERNAL</span>:</p>
+
+<pre class="cpp">  <span class="preproc">#define RDSCTRL_SERV_FUNC_EXTERNAL</span>
+  <span class="preproc">#include &lt;RdsCtrl.h&gt;</span></pre>
+
+<p>Этой константе не нужно давать какое-либо значение &ndash; сам факт ее описания приведет к тому,
+что в месте включения файла заголовка будет вставлен список внешних (<span class="cpp">extern</span>) описаний
+глобальных переменных-указателей на функции. Поскольку сами эти переменные будут присутствовать в другом
+модуле, где есть описание <span class="cpp">RDSCTRL_SERV_FUNC_BODY</span>, программа будет скомпилирована
+без ошибок. В нашем случае исходный текст приложения будет состоять из единственного файла, поэтому константа
+<span class="cpp">RDSCTRL_SERV_FUNC_EXTERNAL</span> нам здесь не понадобится.</p>
+
+<p>Разумеется, все приведенные выше описания можно использовать только в программах, написанных на C или C++.
+В других языках программирования придется получать доступ к функциям библиотеки вручную, вызовами
+<span class="cpp">GetProcAddress</span>.</p>
+
+<p>В нашей программе мы пока не будем реагировать на события, возникающие в RDS, но, чтобы потом
+эти реакции проще было добавить, мы создадим пустую функцию, которая будет регистрировать их в библиотеке:</p>
+
+<pre class="cpp">  <span class="rem">// Разрешение событий и регистрация их функций</span>
+  <span class="kw">void</span> RegisterEvents(<span class="kw">void</span>)
+  { <span class="rem">// Пока оставим эту функцию пустой</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Еще мы опишем <a href="pm_3_1.htm#light_ref4" title="Возврат строк в RdsCtrl.dll">функцию возврата строки</a>, но тоже оставим ее пустой.
+Пока нам не нужно получать какие-либо строки от RDS, тем не менее, в дальнейшем она нам понадобится:</p>
+
+<pre class="cpp">  <span class="rem">// Функция возврата строки</span>
+  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> ReturnString(<a class="hidden" href="app_ids.htm#light_ref21" title="Указатель на любые данные (void*)">LPVOID</a> ptr,<a class="hidden" href="app_ids.htm#light_ref20" title="Указатель на строку (char*)">LPSTR</a> str)
+  { <span class="rem">// Пока пустая</span>
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p><span id="ref6">Загрузку</span>
+библиотеки и создание связи с одной копией RDS (нам потребуется только одна) мы оформим в
+виде отдельной функции. Для того, чтобы другие функции нашей программы могли работать с
+RDS через созданную связь, идентификаторы модуля загруженной библиотеки и связи мы сделаем глобальными
+переменными:</p>
+
+<pre class="cpp">  <span class="rem">// Глобальные переменные для связи с RDS</span>
+  <span id="light_ref6">HMODULE</span> RdsCtrl=NULL; <span class="rem">// Модуль библиотеки RdsCtrl.dll</span>
+  <span class="kw">int</span> RdsLink=-<span class="const">1</span>;       <span class="rem">// Связь с RDS</span>
+  <span class="rem">//=========================================</span></pre>
+
+<p>Переменную <span class="cpp">RdsCtrl</span> мы инициализируем нулем, после загрузки библиотеки в
+нее будет записан идентификатор модуля. Анализируя значение этой переменной, мы сможем загружать библиотеку только
+в том случае, если она еще не загружалась (<span class="cpp">RdsCtrl</span> равна <span class="cpp">NULL</span>).
+Идентификатор связи <span class="cpp">RdsLink</span> имеет начальное значение &minus;1 (созданная связь не
+может иметь отрицательный идентификатор), что позволяет нам проверять, создавалась ли уже связь с
+RDS: если она была создана, <span class="cpp">RdsLink</span> будет иметь нулевое или положительное
+значение.</p>
+
+<p>Теперь можно написать функцию, которая будет загружать RdsCtrl.dll и создавать связь с
+RDS (&laquo;<span class="file">rds.exe</span>&raquo; загружаться при этом не будет, мы просто подготавливаем библиотеку к работе).</p>
+
+<pre class="cpp">  <span class="rem">// Загрузка RdsCtrl.dll и создание связи</span>
+  <span class="kw">void</span> InitRdsCtrl(<span class="kw">void</span>)
+  {
+    <span class="kw">if</span>(RdsCtrl==NULL) <span class="rem">// Библиотека еще не загружена</span>
+      { <span class="kw">char</span> rdsctrldll[MAX_PATH+<span class="const">1</span>],*s;
+        <span class="rem">// Считаем, что наша программа находится в одной папке с RDS</span>
+        <span class="rem">// Получаем путь к RdsCtrl.dll из пути к нашей программе</span>
+        <span id="light_ref7">GetModuleFileName</span>(NULL,rdsctrldll,MAX_PATH);
+        s=<span id="light_ref8">strrchr</span>(rdsctrldll,<span class="str">'&#92;&#92;'</span>); <span class="rem">// Ищем последний разделитель</span>
+        <span class="kw">if</span>(!s) <span class="rem">// Ошибка</span>
+          { DisplayText(<span class="str">"Библиотека не найдена"</span>);
+            <span class="kw">return</span>;
+          }
+        <span class="rem">// Заменяем имя файла в пути</span>
+        <span id="light_ref9">strcpy</span>(s+<span class="const">1</span>,<span class="str">"RdsCtrl.dll"</span>);
+
+        <span class="rem">// Загружаем библиотеку RdsCtrl.dll</span>
+        RdsCtrl=<span id="light_ref10">LoadLibrary</span>(rdsctrldll);
+        <span class="kw">if</span>(RdsCtrl==NULL) <span class="rem">// Загрузка не удалась</span>
+          { DisplayText(<span class="str">"Ошибка загрузки RdsCtrl.dll"</span>);
+            <span class="kw">return</span>;
+          }
+        <span class="rem">// Получаем доступ к функциям библиотеки</span>
+        <span class="kw">if</span>(!GetRdsCtrlFuncs(RdsCtrl))
+          { <span class="rem">// Ошибка</span>
+            DisplayText(<span class="str">"Нет доступа к функциям RdsCtrl.dll"</span>);
+            <span class="rem">// Выгружаем библиотеку - она бесполезна</span>
+            <span id="light_ref11">FreeLibrary</span>(RdsCtrl);
+            RdsCtrl=NULL;
+            <span class="kw">return</span>;
+          }
+        <span class="rem">// Доступ к функциям получен – можно их вызывать</span>
+
+        <span class="rem">// Установка функции возврата строки</span>
+        <span id="light_ref12"><a class="hidden" href="rdsctrlSetStringCallback.htm" title="Б.3.2.10. rdsctrlSetStringCallback &ndash; регистрация функции возврата строки">rdsctrlSetStringCallback</a></span>(ReturnString);
+        <span class="rem">// Сброс идентификатора связи (если он почему-то не сброшен)</span>
+        RdsLink=-<span class="const">1</span>;
+      } <span class="rem">// if(RdsCtrl==NULL)</span>
+
+    <span class="rem">// Создание связи с RDS</span>
+    <span class="kw">if</span>(RdsLink&lt;<span class="const">0</span>) <span class="rem">// Связь не создана</span>
+      { <span class="rem">// Создаем связь (rds.exe пока не запускается)</span>
+        RdsLink=<span id="light_ref13"><a class="hidden" href="rdsctrlCreateLink.htm" title="Б.3.2.3. rdsctrlCreateLink &ndash; создать связь с RDS">rdsctrlCreateLink</a></span>();
+        <span class="kw">if</span>(RdsLink&lt;<span class="const">0</span>) <span class="rem">// Ошибка</span>
+          { DisplayText(<span class="str">"Ошибка создания связи с RDS"</span>);
+            <span class="kw">return</span>;
+          }
+        <span class="rem">// Запрет главного окна RDS</span>
+        <span id="light_ref14"><a class="hidden" href="rdsctrlShowMainWindow.htm" title="Б.3.3.13. rdsctrlShowMainWindow &ndash; видимость главного окна RDS">rdsctrlShowMainWindow</a></span>(RdsLink,FALSE);
+        <span class="rem">// Регистрация откликов на события</span>
+        RegisterEvents();
+      }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>В этой функции сначала проверяется, не загружена ли уже RdsCtrl.dll &ndash; если это так, глобальная
+переменная <span class="cpp">RdsCtrl</span> будет содержать идентификатор загруженного модуля.
+Если же в ней находится значение <span class="cpp">NULL</span>, значит, нужно загрузить библиотеку и записать
+указатели на ее функции в автоматически вставленный в нашу программу набор глобальных переменных.</p>
+
+<p>Чтобы загрузить библиотеку в память, мы должны знать полный путь к ее файлу. Для простоты будем считать, что и
+RdsCtrl.dll, и &laquo;<span class="file">rds.exe</span>&raquo; находятся в одной папке с нашей программой. При создании
+&laquo;настоящего&raquo; приложения нужно либо включать RDS в его состав, размещая необходимые файлы
+в одной из внутренних папок, либо предусматривать в настройках приложения указание пути к RDS. В
+данном случае мы просто будем помещать исполняемый файл нашей программы в папку RDS, поэтому для поиска
+пути к библиотеке нам достаточно получить полный путь к нашей программе и заменить в нем имя файла на
+&laquo;<span class="file">RdsCtrl.dll</span>&raquo;. Для получения полного пути к исполняемому файлу нашей программы используется
+функция Windows API <span class="cpp">GetModuleFileName</span>, в которую вместо идентификатора модуля передается
+<span class="cpp">NULL</span>, чтобы она вернула путь к файлу, из которого создан вызвавший ее процесс,
+то есть к нашей программе. Путь записывается в массив <span class="cpp">rdsctrldll</span>, в котором затем
+функцией <span class="cpp">strrchr</span> ищется последний символ обратной косой черты &ndash; за ним
+идет имя файла нашей программы. Вместо этого имени файла мы записываем
+&laquo;RdsCtrl.dll&raquo;, в результате чего в <span class="cpp">rdsctrldll</span>
+получается полный путь к библиотеке.</p>
+
+<p>Для загрузки библиотеки мы вызываем функцию Windows API <span class="cpp">LoadLibrary</span>, после чего
+записываем идентификатор загруженного модуля в глобальную переменную <span class="cpp">RdsCtrl</span>. Затем
+этот идентификатор передается в автоматически вставленную в нашу программу функцию
+<span class="cpp">GetRdsCtrlFuncs</span>, которая получит указатели на все функции загруженной библиотеки и
+запишет их в одноименные глобальные переменные (эта функция была вставлена в текст нашей программы в
+момент включения файла заголовков &laquo;<span class="file">RdsCtrl.h</span>&raquo;, поскольку перед ним мы описали константу
+<span class="cpp">RDSCTRL_SERV_FUNC_BODY</span>). Функция вернет <span class="cpp">FALSE</span>, если в
+библиотеке не окажется хотя бы одной из функций &ndash; так бывает, если версия файла
+&laquo;<span class="file">RdsCtrl.h</span>&raquo; не соответствует версии самой библиотеки. В этом случае мы выгружаем
+библиотеку &ndash; мы не можем ей пользоваться.</p>
+
+<p>После того, как доступ к функциям библиотеки получен, мы вызываем функцию
+<span class="cpp"><a href="rdsctrlSetStringCallback.htm" title="Б.3.2.10. rdsctrlSetStringCallback &ndash; регистрация функции возврата строки">rdsctrlSetStringCallback</a></span> (теперь функции библиотеки можно вызывать просто по именам), чтобы
+зарегистрировать в библиотеке нашу функцию возврата строк <span class="cpp">ReturnString</span>. Эта функция
+пока пуста, но мы все равно регистрируем ее, чтобы в дальнейшем, когда она нам понадобится, не переписывать
+функцию <span class="cpp">InitRdsCtrl</span>. Затем мы на всякий случай присваиваем глобальной переменной
+<span class="cpp">RdsLink</span> значение &minus;1, указывающее на то, что связь с RDS не создана.</p>
+
+<p>Теперь нужно создать связь с RDS. На всякий случай, мы проверяем, не создана ли она уже (это
+позволит нам безопасно вызывать <span class="cpp">InitRdsCtrl</span> при уже созданной связи), сравнивая глобальную
+переменную <span class="cpp">RdsLink</span> с нулем. Идентификатор связи не может быть отрицательным, поэтому
+если <span class="cpp">RdsLink</span> меньше нуля, связь еще не создавалась. В этом случае мы вызываем функцию
+библиотеки <span class="cpp"><a href="rdsctrlCreateLink.htm" title="Б.3.2.3. rdsctrlCreateLink &ndash; создать связь с RDS">rdsctrlCreateLink</a></span> и записываем в <span class="cpp">RdsLink</span> идентификатор,
+который она возвращает. Начиная с этого момента, мы можем управлять RDS через созданную связь. Мы
+пока не будем запускать &laquo;<span class="file">rds.exe</span>&raquo;, мы просто установим некоторые параметры связи.
+Во-первых, мы отключим <a href="um_2_1.htm" title="&sect;2.1. Главное окно и главное меню">главное окно</a>
+RDS &ndash; для этого вызывается функция
+<span class="cpp"><a href="rdsctrlShowMainWindow.htm" title="Б.3.3.13. rdsctrlShowMainWindow &ndash; видимость главного окна RDS">rdsctrlShowMainWindow</a></span> с параметром <span class="cpp">FALSE</span>. Запрет показа главного
+окна запомнится в параметрах связи и, при запуске RDS, библиотека отключит его. Во-вторых, мы вызываем
+нашу собственную функцию <span class="cpp">RegisterEvents</span> для настройки реакций программы на события,
+возникающие в RDS. Мы пока оставили эту функцию пустой, поэтому наша программа никак не будет
+реагировать на события, но, в дальнейшем, мы введем эти реакции.</p>
+
+<p>На этом функция <span class="cpp">InitRdsCtrl</span> завершается. После ее вызова, если не возникло
+никаких ошибок, идентификатор загруженной библиотеки окажется в глобальной переменной
+<span class="cpp">RdsCtrl</span>, а идентификатор созданной связи с RDS &ndash; в
+<span class="cpp"></span>.</p>
+
+<p>Теперь напишем функцию <span class="cpp">BeforeExit</span>, которую мы вызываем перед завершением нашей
+программы &ndash; она должна уничтожить связь и выгрузить библиотеку. Ранее мы оставили эту функцию пустой,
+сейчас мы ее заполним:</p>
+
+<pre class="cpp">  <span class="rem">// Функция, вызываемая перед завершением программы</span>
+  <span class="kw">void</span> BeforeExit(<span class="kw">void</span>)
+  {
+    <span class="kw">if</span>(RdsCtrl!=NULL) <span class="rem">// Библиотека загружена</span>
+      { <span class="kw">if</span>(RdsLink&gt;=<span class="const">0</span>) <span class="rem">// Создана связь с RDS</span>
+          { <span class="rem">// Завершаем RDS</span>
+            <span id="light_ref15"><a class="hidden" href="rdsctrlClose.htm" title="Б.3.2.1. rdsctrlClose &ndash; завершить RDS">rdsctrlClose</a></span>(RdsLink);
+            <span class="rem">// Удаляем связь</span>
+            <span id="light_ref16"><a class="hidden" href="rdsctrlDeleteLink.htm" title="Б.3.2.4. rdsctrlDeleteLink &ndash; уничтожить связь с RDS">rdsctrlDeleteLink</a></span>(RdsLink);
+            RdsLink=-<span class="const">1</span>;
+          }
+        <span class="rem">// Выгружаем библиотеку</span>
+        FreeLibrary(RdsCtrl);
+        RdsCtrl=NULL;
+      }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Перед уничтожением связи мы вызываем функцию <span class="cpp"><a href="rdsctrlClose.htm" title="Б.3.2.1. rdsctrlClose &ndash; завершить RDS">rdsctrlClose</a></span>, которая завершает запущенную
+копию RDS. В принципе, команда на завершение и так передалась бы RDS в момент уничтожения связи,
+но такой вызов надежнее &ndash; если при завершении произойдут какие-либо события, управляющая программа
+сможет на них отреагировать. Затем связь уничтожается функцией <span class="cpp"><a href="rdsctrlDeleteLink.htm" title="Б.3.2.4. rdsctrlDeleteLink &ndash; уничтожить связь с RDS">rdsctrlDeleteLink</a></span>, после
+чего переменной <span class="cpp">RdsLink</span> присваивается значение &minus;1, говорящее об отсутствии связи.
+После этого мы выгружаем библиотеку функцией Windows API <span class="cpp">FreeLibrary</span> и присваиваем
+глобальной переменной <span class="cpp">RdsCtrl</span> значение <span class="cpp">NULL</span>. Функция
+<span class="cpp">BeforeExit</span> у нас вызывается только один раз перед завершением приложения, поэтому
+можно было бы и не сбрасывать переменные <span class="cpp">RdsLink</span> и <span class="cpp">RdsCtrl</span>.
+Однако, в таком виде ее можно вызвать в любой момент времени для разрыва связи и выгрузки библиотеки, с
+возможностью ее повторной загрузки функцией <span class="cpp">InitRdsCtrl</span>, хотя в этом
+примере нам это и не нужно.</p>
+
+<p>Теперь напишем функцию <span class="cpp">LoadScheme</span>, которая загрузит в RDS схему, имя
+которой передается в ее параметре. Эта функция должна будет сама вызвать уже написанную нами
+<span class="cpp">InitRdsCtrl</span>, если библиотека не загружена и связь не создана.</p>
+
+<pre class="cpp">  <span class="rem">// Открыть файл схемы (filename – имя файла)</span>
+  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> LoadScheme(<span class="kw">char</span> *filename)
+  { <span class="kw">if</span>(RdsCtrl==NULL || RdsLink&lt;<span class="const">0</span>)
+      { <span class="rem">// Библиотека RdsCtrl.dll еще не загружена</span>
+        InitRdsCtrl(); <span class="rem">// Загружаем</span>
+        <span class="kw">if</span>(RdsCtrl==NULL) <span class="rem">// Ошибка</span>
+          <span class="kw">return</span> FALSE;
+        <span class="rem">// Запускаем rds.exe</span>
+        <span class="kw">if</span>(!<span id="light_ref17"><a class="hidden" href="rdsctrlConnect.htm" title="Б.3.2.2. rdsctrlConnect &ndash; запустить RDS">rdsctrlConnect</a></span>(RdsLink))
+          { DisplayText(<span class="str">"Ошибка запуска RDS"</span>);
+            <span class="kw">return</span> FALSE;
+          }
+      }
+    <span class="rem">// Если rds.exe не работает (пользователь вышел из RDS),</span>
+    <span class="rem">// перезапускаем RDS</span>
+    <span id="light_ref18"><a class="hidden" href="rdsctrlRestoreConnection.htm" title="Б.3.2.8. rdsctrlRestoreConnection &ndash; перезапустить RDS при необходимости">rdsctrlRestoreConnection</a></span>(RdsLink);
+
+    <span class="rem">// RDS работает - загружаем схему</span>
+    <span class="kw">if</span>(!<span id="light_ref19"><a class="hidden" href="rdsctrlLoadSystemFromFile.htm" title="Б.3.5.6. rdsctrlLoadSystemFromFile &ndash; загрузить схему из файла">rdsctrlLoadSystemFromFile</a></span>(RdsLink,filename,FALSE))
+      { <span class="rem">// Ошибка загрузки</span>
+        DisplayText(<span class="str">"Ошибка загрузки схемы"</span>);
+        <span class="kw">return</span> FALSE;
+      }
+    <span class="rem">// Переходим в режим моделирования</span>
+    <span id="light_ref20"><a class="hidden" href="rdsctrlSetCalcMode.htm" title="Б.3.4.27. rdsctrlSetCalcMode &ndash; включить режим моделирования">rdsctrlSetCalcMode</a></span>(RdsLink);
+    <span class="kw">return</span> TRUE;
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Прежде всего мы проверяем, инициализированы ли глобальные переменные <span class="cpp">RdsCtrl</span> и
+<span class="cpp">RdsLink</span>, то есть загружена ли библиотека RdsCtrl.dll и создана ли связь с
+RDS. Если хотя бы одна из переменных имеет неправильное значение, мы вызываем функцию
+<span class="cpp">InitRdsCtrl</span>, которая загрузит библиотеку и создаст связь, после чего функцией
+<span class="cpp"><a href="rdsctrlConnect.htm" title="Б.3.2.2. rdsctrlConnect &ndash; запустить RDS">rdsctrlConnect</a></span>, в которую передается идентификатор связи <span class="cpp">RdsLink</span>, мы
+запускаем &laquo;<span class="file">rds.exe</span>&raquo; для работы с этой связью. Следует помнить, что во все функции, которые
+вызываются для управления RDS, передается идентификатор связи, чтобы библиотека могла понять,
+к какой из копий RDS (если их несколько) относятся эти вызовы.</p>
+
+<p>Если библиотека загружена и связь создана (не важно, создана она только что или уже была до вызова функции
+<span class="cpp">LoadScheme</span>), нам необходимо проверить, работает ли сейчас процесс
+&laquo;<span class="file">rds.exe</span>&raquo;, которым управляет эта связь, и запустить RDS, если это не так. Для
+этого используется функция <span class="cpp"><a href="rdsctrlRestoreConnection.htm" title="Б.3.2.8. rdsctrlRestoreConnection &ndash; перезапустить RDS при необходимости">rdsctrlRestoreConnection</a></span>, которая проверит наличие управляемого
+процесса и запустит RDS, если это необходимо. Ее можно безопасно вызывать и при работающем
+&laquo;<span class="file">rds.exe</span>&raquo; &ndash; если он уже есть, она не будет запускать новую его копию. Может
+показаться, что проверять наличие процесса не нужно: сразу после загрузки библиотеки мы запустили его функцией
+<span class="cpp"><a class="hidden" href="rdsctrlConnect.htm" title="Б.3.2.2. rdsctrlConnect &ndash; запустить RDS">rdsctrlConnect</a></span>. Однако, пользователь может выйти из RDS и завершить этот
+процесс, при этом библиотека RdsCtrl.dll останется в памяти нашего приложения, и связь с идентификатором
+<span class="cpp">RdsLink</span> тоже будет доступна для работы, просто ей не будет соответствовать
+работающая копия RDS. Поэтому перед тем, как загружать схему, нужно либо вызвать
+<span class="cpp"><a class="hidden" href="rdsctrlRestoreConnection.htm" title="Б.3.2.8. rdsctrlRestoreConnection &ndash; перезапустить RDS при необходимости">rdsctrlRestoreConnection</a></span>, либо проверить наличие процесса RDS вручную,
+вызвав <span class="cpp"><span id="light_ref21"><a href="rdsctrlIsConnected.htm" title="Б.3.2.6. rdsctrlIsConnected &ndash; проверить связь с RDS">rdsctrlIsConnected</a></span></span>, и повторить вызов <span class="cpp"><a class="hidden" href="rdsctrlConnect.htm" title="Б.3.2.2. rdsctrlConnect &ndash; запустить RDS">rdsctrlConnect</a></span>,
+если она вернула <span class="cpp">FALSE</span>.</p>
+
+<p>Теперь библиотека загружена, связь создана, и RDS работает &ndash; можно загружать схему, имя файла
+которой передано в параметре <span class="cpp">filename</span>. Для этого используется функция
+<span class="cpp"><a href="rdsctrlLoadSystemFromFile.htm" title="Б.3.5.6. rdsctrlLoadSystemFromFile &ndash; загрузить схему из файла">rdsctrlLoadSystemFromFile</a></span>, в которую, как всегда, передается идентификатор связи
+(<span class="cpp">RdsLink</span>), имя файла и логический параметр, указывающий на необходимость предупреждать
+пользователя о наличии изменений в текущей схеме, вместо которой загружается новая. В данном случае не
+сохраненные изменения нас не волнуют, поэтому мы передаем <span class="cpp">FALSE</span>. После того, как
+схема загрузится, мы переводим RDS в
+<a href="pm_1_3.htm#ref2" title="Режим моделирования">режим моделирования</a> функцией <span class="cpp"><a href="rdsctrlSetCalcMode.htm" title="Б.3.4.27. rdsctrlSetCalcMode &ndash; включить режим моделирования">rdsctrlSetCalcMode</a></span>
+и возвращаем <span class="cpp">TRUE</span> &ndash; загрузка схемы выполнена успешно.</p>
+
+<p>Все вспомогательные функции готовы &ndash; осталось сделать так, чтобы при нажатии кнопки
+&laquo;<span class="menu">Открыть</span>&raquo; (см. <a href="pm_3_1.htm#pic1" title="Главное окно управляющего приложения">рис.&nbsp;121</a>) пользователь мог
+выбрать схему и загрузить ее в RDS (при этом будет вызываться только что написанная нами функция
+<span class="cpp">LoadScheme</span>), а нажатие кнопки &laquo;<span class="menu">Закрыть</span>&raquo; завершало бы
+RDS. При нажатии кнопок &laquo;<span class="menu">Открыть</span>&raquo; и &laquo;<span class="menu">Закрыть</span>&raquo; в нашей программе вызываются
+пустые функции <span class="cpp">OpenButtonClick</span> и <span class="cpp">CloseButtonClick</span> соответственно,
+теперь мы их заполним.</p>
+
+<p>Функция, вызываемая при нажатии кнопки &laquo;<span class="menu">Открыть</span>&raquo;, будет выглядеть так:</p>
+
+<pre class="cpp">  <span class="rem">// Нажатие кнопки "Открыть"</span>
+  <span class="kw">void</span> OpenButtonClick(<span class="kw">void</span>)
+  { <span class="kw">char</span> filename[MAX_PATH+<span class="const">1</span>]=<span class="str">""</span>; <span class="rem">// Буфер для имени файла</span>
+    <span id="light_ref22">OPENFILENAME</span> ofn;
+    <span class="rem">// Заполняем структуру OPENFILENAME</span>
+    <span id="light_ref23">ZeroMemory</span>(&amp;ofn,<span class="kw">sizeof</span>(ofn));
+    ofn.lStructSize=<span class="kw">sizeof</span>(ofn);
+    ofn.hwndOwner=MainWin;
+    ofn.lpstrFile=filename;
+    ofn.nMaxFile=<span class="kw">sizeof</span>(filename);
+    ofn.lpstrFilter=<span class="str">"Схемы (*.rds)\0*.rds\0Все файлы\0*.*\0"</span>;
+    ofn.nFilterIndex=<span class="const">1</span>;
+    ofn.Flags=OFN_EXPLORER | OFN_FILEMUSTEXIST;
+    <span class="rem">// Вызываем стандартный диалог открытия файла</span>
+    <span class="kw">if</span>(<span id="light_ref24">GetOpenFileName</span>(&amp;ofn)) <span class="rem">// Пользователь выбрал файл</span>
+      { <span class="rem">// Загружаем схему</span>
+        <span class="kw">if</span>(LoadScheme(filename))
+          DisplayText(filename);
+      }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Для выбора файла пользователем мы используем стандартный диалог открытия файла Windows, который вызывается
+функцией <span class="cpp">GetOpenFileName</span>. Для работы с этой функцией необходимо предварительно
+заполнить информацией структуру <span class="cpp">OPENFILENAME</span>: в ней должен находиться указатель на
+массив для имени файла, дескриптор главного окна приложения (мы берем его из глобальной переменной
+<span class="cpp">MainWin</span>, см. <a href="pm_3_1.htm" title="&sect;3.1. Общие принципы управления RDS">&sect;3.1</a>), описание фильтров имен
+файлов диалога, флаги и т.п. Если пользователь выберет в диалоге какой-либо файл, функция вернет
+<span class="cpp">TRUE</span>, и мы вызовем <span class="cpp">LoadScheme</span> для запуска
+RDS и загрузки схемы, имя файла которой <span class="cpp">GetOpenFileName</span> поместила в массив
+<span class="cpp">filename</span>. Если схема будет загружена успешно,
+<span class="cpp">LoadScheme</span> тоже вернет <span class="cpp">TRUE</span>, и имя загруженного файла
+будет выведено в верхней части окна нашей программы функцией <span class="cpp">DisplayText</span>
+(<a href="#pic1" title="Загрузка схемы из программы">рис.&nbsp;122</a>).</p>
+
+<div class="pic"><div class="container" id="pic1">
+<img src="../img/WinApplicationLoad.png" width="783" height="385" alt="Загрузка схемы из программы" />
+<p id="light_pic1">Рис.&nbsp;122. Загрузка схемы из программы</p>
+</div></div>
+
+
+<p>Поскольку мы запретили показ главного окна RDS, на экране появятся только
+<a href="um_2_3.htm" title="&sect;2.3. Элементы и меню окна подсистемы">окна подсистем</a> этой схемы, которые были открыты на момент ее сохранения.
+Кнопка вызова главного окна в окнах подсистем будет недоступна по этой же причине.</p>
+
+<p>Для того, чтобы кнопкой &laquo;<span class="menu">Закрыть</span>&raquo; можно было завершить RDS, в функцию
+<span class="cpp">CloseButtonClick</span> нужно вставить следующие операторы:</p>
+
+<pre class="cpp">  <span class="rem">// Нажатие кнопки "Закрыть"</span>
+  <span class="kw">void</span> CloseButtonClick(<span class="kw">void</span>)
+  { <span class="kw">if</span>(RdsLink&gt;=<span class="const">0</span>) <span class="rem">// Есть связь</span>
+      { <a class="hidden" href="rdsctrlClose.htm" title="Б.3.2.1. rdsctrlClose &ndash; завершить RDS">rdsctrlClose</a>(RdsLink); <span class="rem">// Завершаем RDS</span>
+        DisplayText(<span class="str">"Схема закрыта"</span>);
+      }
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Здесь, если существует связь с RDS (переменная <span class="cpp">RdsLink</span> имеет неотрицательное
+значение), мы завершаем процесс RDS функцией <span class="cpp"><a class="hidden" href="rdsctrlClose.htm" title="Б.3.2.1. rdsctrlClose &ndash; завершить RDS">rdsctrlClose</a></span>. Связь при этом
+не удаляется, мы можем в любой момент снова запустить через нее RDS вызовом
+<span class="cpp"><a class="hidden" href="rdsctrlConnect.htm" title="Б.3.2.2. rdsctrlConnect &ndash; запустить RDS">rdsctrlConnect</a></span> или <span class="cpp"><a class="hidden" href="rdsctrlRestoreConnection.htm" title="Б.3.2.8. rdsctrlRestoreConnection &ndash; перезапустить RDS при необходимости">rdsctrlRestoreConnection</a></span>. Если
+бы мы хотели вместе с завершением RDS выгрузить из памяти библиотеку
+RdsCtrl.dll (например, если мы знаем, что в следующий раз она понадобится нам не скоро), можно было
+бы вызвать вместо <span class="cpp"><a class="hidden" href="rdsctrlClose.htm" title="Б.3.2.1. rdsctrlClose &ndash; завершить RDS">rdsctrlClose</a></span> нашу функцию <span class="cpp">BeforeExit</span>:
+она не только завершила бы &laquo;<span class="file">rds.exe</span>&raquo;, но и уничтожила бы связь и выгрузила библиотеку
+из памяти. При следующем нажатии кнопки &laquo;<span class="menu">Открыть</span>&raquo; библиотека снова бы загрузилась из-за вызова
+<span class="cpp">InitRdsCtrl</span> внутри <span class="cpp">LoadScheme</span>, так что работоспособность нашей
+программы при этом не пострадала бы.</p>
+
+<p>Теперь заставим кнопки &laquo;<span class="menu">Старт</span>&raquo; и &laquo;<span class="menu">Стоп</span>&raquo; запускать и останавливать
+<a href="pm_1_3.htm#ref3" title="Режим расчета">расчет</a> в запущенной копии RDS. Для этого нужно наполнить содержимым функции
+<span class="cpp">StartClick</span> и <span class="cpp">StopClick</span>, которые мы оставили пустыми:</p>
+
+<pre class="cpp">  <span class="rem">// Нажатие кнопки "Старт"</span>
+  <span class="kw">void</span> StartClick(<span class="kw">void</span>)
+  { <span class="kw">if</span>(RdsLink&gt;=<span class="const">0</span>) <span class="rem">// Есть связь</span>
+      <span id="light_ref25"><a class="hidden" href="rdsctrlStartCalc.htm" title="Б.3.4.32. rdsctrlStartCalc &ndash; запустить расчет">rdsctrlStartCalc</a></span>(RdsLink);
+  }
+  <span class="rem">//=========================================</span>
+
+  <span class="rem">// Нажатие кнопки "Стоп"</span>
+  <span class="kw">void</span> StopClick(<span class="kw">void</span>)
+  { <span class="kw">if</span>(RdsLink&gt;=<span class="const">0</span>) <span class="rem">// Есть связь</span>
+      <span id="light_ref26"><a class="hidden" href="rdsctrlStopCalc.htm" title="Б.3.4.33. rdsctrlStopCalc &ndash; остановить расчет">rdsctrlStopCalc</a></span>(RdsLink);
+  }
+  <span class="rem">//=========================================</span></pre>
+
+<p>Обе функции устроены одинаково: если в программе создана связь с RDS (значение
+<span class="cpp">RdsLink</span> неотрицательно), вызывается функция запуска расчета
+<span class="cpp"><a href="rdsctrlStartCalc.htm" title="Б.3.4.32. rdsctrlStartCalc &ndash; запустить расчет">rdsctrlStartCalc</a></span> или функция остановки <span class="cpp"><a href="rdsctrlStopCalc.htm" title="Б.3.4.33. rdsctrlStopCalc &ndash; остановить расчет">rdsctrlStopCalc</a></span>. Точно так же
+можно было бы добавить кнопку <a href="um_1_3.htm#ref9" title="Сброс расчета">сброса расчета</a>, которая вызывала бы функцию
+<span class="cpp"><a href="rdsctrlResetCalc.htm" title="Б.3.4.24. rdsctrlResetCalc &ndash; сбросить расчет">rdsctrlResetCalc</a></span>, но мы не будем делать этого в связи с очевидностью примера. Можно заметить,
+что в этих функциях, в отличие от функции <span class="cpp">LoadScheme</span>, мы не проверяем, работает
+ли процесс RDS, а сразу пытаемся им управлять. Это безопасно &ndash; при отсутствии управляемого процесса
+вызовы управляющих функций просто игнорируются библиотекой. Если бы мы хотели автоматически перезапускать
+завершенный пользователем процесс RDS при нажатии на кнопку &laquo;<span class="menu">Старт</span>&raquo;, нам нужно было бы
+всегда помнить имя последней загруженной схемы (например, копировать его в глобальную переменную), и повторно
+вызывать <span class="cpp">LoadScheme</span> с этим именем перед вызовом
+<span class="cpp"><a class="hidden" href="rdsctrlStartCalc.htm" title="Б.3.4.32. rdsctrlStartCalc &ndash; запустить расчет">rdsctrlStartCalc</a></span>, чтобы на момент вызова была загружена последняя
+выбранная пользователем схема.</p>
+
+<p>Все остальные функции управления RDS (переключения режимов, разрешения и запрещения различных функций
+и т.п.) работают точно так же: при их вызове указывается идентификатор связи, соответствующей управляемой копии
+RDS, и передаваемые параметры. Все эти функции подробно описаны в <a href="app_index.htm#light_htm:app_b" title="Приложение Б. Функции, константы и структуры библиотеки RdsCtrl.dll">приложении Б</a>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="pm_3_1.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="pm_3_3.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="pm_index.htm#light_htm:pm_3_2">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

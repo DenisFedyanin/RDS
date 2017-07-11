@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.2.6.12. RDS_BFM_POPUPHINT &ndash; вывод всплывающей подсказки</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2">А.2. События блока и связанные с ними описания</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_2_6">А.2.6. События пользовательского интерфейса и рисования внешнего вида блоков</a></p>
+<div class="level"><p>А.2.6.12. <span class="cpp">RDS_BFM_POPUPHINT</span> &ndash; вывод всплывающей подсказки</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="RDS_BFM_MOUSEUP.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_SETUP.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_POPUPHINT">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.2. События блока и связанные с ними описания</h3>
+<h4 class="off">А.2.6. События пользовательского интерфейса и рисования внешнего вида блоков</h4>
+<h5>А.2.6.12. <span class="cpp">RDS_BFM_POPUPHINT</span> &ndash; вывод всплывающей подсказки</h5>
+
+
+<p class="apphdr">Поток, в котором вызывается <a href="app_a_2_1.htm" title="А.2.1. Функция модели блока">функция модели</a></p>
+<p>Главный поток RDS.</p>
+
+<p class="apphdr">Первый параметр функции модели (<span class="cpp">int&nbsp;CallMode</span>)</p>
+<p>Константа <span class="cpp">RDS_BFM_POPUPHINT</span>.</p>
+
+<p class="apphdr">Третий параметр функции модели (<span class="cpp">void&nbsp;*ExtParam</span>)</p>
+<p>Указатель на структуру описания события <span class="cpp"><a href="#ref3" title="Структура RDS_POPUPHINTDATA">RDS_POPUPHINTDATA</a></span>.</p>
+
+<p class="apphdr">Возвращаемое функцией модели значение</p>
+    <div class="tableshift"><div class="tcont">
+    <table>
+      <tr>
+        <td><span class="cpp">RDS_BFR_DONE</span></td>
+        <td>Необходимо вывести всплывающую подсказку (игнорируется, если строка
+        подсказки не передана в RDS).</td>
+      </tr>
+      <tr>
+        <td><span class="cpp"><span id="light_ref1">RDS_BFR_NOTPROCESSED</span></span></td>
+        <td>Всплывающую подсказку выводить не нужно.</td>
+      </tr>
+    </table>
+    </div></div>
+
+<p class="apphdr">Примечания</p>
+<p>Реакция на событие <span class="cpp">RDS_BFM_POPUPHINT</span> вызывается у блока, в
+<a href="pm_1_4.htm#pic3" title="Параметры блока &ndash; модель и реакции">параметрах</a> которого разрешен вывод
+всплывающей подсказки, если курсор мыши задержался в пределах его изображения (время задержки
+определяется операционной системой). В этой реакции модель может передать RDS текст подсказки,
+которую необходимо вывести, при помощи сервисной функции <span class="cpp"><span id="light_ref2"><a href="rdsSetHintText.htm" title="А.5.6.53. rdsSetHintText &ndash; текст всплывающей подсказки">rdsSetHintText</a></span></span>,
+а также записать в поля переданной структуры <span class="cpp">RDS_POPUPHINTDATA</span> параметры
+подсказки &ndash; размеры зоны, интервал гашения и т.д. Если функция модели не установит текст
+подсказки или передаст в функцию <span class="cpp">rdsSetHintText</span> пустую строку, подсказка
+выведена не будет. Вывод всплывающих подсказок к блокам подробно рассмотрен в
+<a href="pm_2_11.htm" title="&sect;2.11. Отображение всплывающих подсказок к блокам">&sect;2.11 руководства программиста</a>.</p>
+
+<p><span id="ref3">В</span> <span id="ref4">параметре</span>
+<span class="cpp">ExtParam</span> передается указатель на структуру <span class="cpp">RDS_POPUPHINTDATA</span>,
+в которой содержатся текущие параметры изображения блока и через которую модель возвращает параметры
+показа подсказки, если это необходимо:</p>
+
+<pre class="cpp">  <span class="kw">typedef</span> <span class="kw">struct</span> {
+    <span class="kw">int</span> x,y;              <span class="rem">// Координаты курсора мыши</span>
+    <span class="kw">int</span> BlockX,BlockY;    <span class="rem">// Координаты точки привязки блока</span>
+    <span class="kw">int</span> Left,Top;         <span class="rem">// Верхний левый угол изображения блока</span>
+    <span class="kw">int</span> Width,Height;     <span class="rem">// Размеры изображения блока</span>
+    <span class="kw">int</span> HZLeft,HZTop,     <span class="rem">// Возвращаемый размер зоны</span>
+        HZWidth,HZHeight; <span class="rem">// действия подсказки</span>
+    <span class="kw">int</span> ReshowTimeout;    <span class="rem">// Возвращаемый интервал повторного вывода</span>
+    <span class="kw">int</span> HideTimeout;      <span class="rem">// Возвращаемый интервал гашения</span>
+    <span class="kw">int</span> IntZoom;          <span class="rem">// Масштаб окна в %</span>
+    <span class="kw">double</span> DoubleZoom;    <span class="rem">// Масштабный к-т окна (в долях единицы)</span>
+  } <span id="light_ref3">RDS_POPUPHINTDATA</span>;
+  <span class="kw">typedef</span> RDS_POPUPHINTDATA *<span id="light_ref4">RDS_PPOPUPHINTDATA</span>;</pre>
+
+<p class="apphdr">Поля структуры</p>
+
+<dl>
+  <dt><span class="cpp">x</span>,&nbsp;<span class="cpp">y</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Текущие координаты курсора мыши в окне подсистемы на момент возможного вывода подсказки.</dd>
+
+  <dt><span class="cpp">BlockX</span>,&nbsp;<span class="cpp">BlockY</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Координаты точки привязки изображения блока в текущем масштабе. Для блоков с
+  <a href="um_1_2.htm#light_ref22">векторной картинкой</a> это
+  положение начала координат этой картинки, для
+  <a href="pm_2_10_1.htm" title="&sect;2.10.1. Рисование изображения блока в окне подсистемы">программно рисуемых</a>
+  блоков и блоков, изображаемых прямоугольником с текстом, это координаты левого верхнего угла изображения
+  (горизонтальная ось координат направлена вправо, вертикальная &ndash; вниз, начало координат
+  &ndash; левый верхний угол рабочего поля). Если положение блока связано с его
+  <a href="pm_1_5.htm" title="&sect;1.5. Статические переменные блоков, входы и выходы">переменными</a>, значения
+  <span class="cpp">BlockX</span> и <span class="cpp">BlockY</span> в этой структуре указываются уже с учетом
+  значений этих переменных.</dd>
+
+  <dt><span class="cpp">Left</span>,&nbsp;<span class="cpp">Top</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Горизонтальная (<span class="cpp">Left</span>) и вертикальная (<span class="cpp">Top</span>)
+  фактические координаты верхнего левого угла изображения блока в текущем масштабе на момент последней
+  перерисовки окна подсистемы.</dd>
+
+  <dt><span class="cpp">Width</span>,&nbsp;<span class="cpp">Height</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Фактические ширина (<span class="cpp">Width</span>) и высота (<span class="cpp">Height</span>)
+  изображения блока в текущем масштабе на момент последней перерисовки окна подсистемы.</dd>
+
+  <dt><span class="cpp">HZLeft</span>,&nbsp;<span class="cpp">HZTop</span>,&nbsp;<span class="cpp">HZWidth</span>,&nbsp;<span class="cpp">HZHeight</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Возвращаемая моделью зона действия подсказки: горизонтальная (<span class="cpp">HZLeft</span>)
+  и вертикальная (<span class="cpp">HZTop</span>) координаты верхнего левого угла зоны, ее ширина
+  (<span class="cpp">HZWidth</span>) и высота (<span class="cpp">HZHeight</span>). При выходе курсора
+  мыши за пределы этой прямоугольной зоны будет запрошен повторный вывод подсказки &ndash; так
+  можно разбить всю площадь блока на несколько участков и выводить в них разные подсказки. На момент
+  вызова функции модели в этих полях записаны координаты и размеры всего изображения блока, поэтому,
+  если модель ничего в них не изменит, весь блок будет считаться одной зоной.</dd>
+
+  <dt><span class="cpp">ReshowTimeout</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Возвращаемое моделью время в миллисекундах после гашения подсказки, по истечении которого
+  подсказку необходимо вывести снова. На момент вызова функции модели это поле имеет нулевое значение,
+  что означает, что подсказка не будет выведена повторно до тех пор, пока курсор мыши не покинет зону
+  ее действия.</dd>
+
+  <dt><span class="cpp">HideTimeout</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Возвращаемое моделью время в миллисекундах после вывода подсказки, по истечении которого ее
+  необходимо убрать с экрана. На момент вызова функции модели в это поле записано стандартное для
+  операционной системы значение.</dd>
+
+  <dt><span class="cpp">IntZoom</span>&emsp;(<span class="cpp"><i>int</i></span>)</dt>
+  <dd>Текущий масштаб окна подсистемы в процентах.</dd>
+
+  <dt><span class="cpp">DoubleZoom</span>&emsp;(<span class="cpp"><i>double</i></span>)</dt>
+  <dd>Текущий масштаб окна подсистемы в долях единицы: 1 для 100%, 2 для 200%, 0.5 для 50% и т.п.</dd>
+</dl>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsSetHintText.htm" title="А.5.6.53. rdsSetHintText &ndash; текст всплывающей подсказки">rdsSetHintText</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="RDS_BFM_MOUSEUP.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_BFM_SETUP.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:RDS_BFM_POPUPHINT">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>

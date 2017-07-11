@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru" xml:lang="ru">
+<head>
+  <link rel="stylesheet" type="text/css" href="../css/main.css" />
+  <link rel="stylesheet" type="text/css" href="../css/cpp.css" />
+  <meta http-equiv="Content-Type" content="text/html;charset=windows-1251" />
+  <script type="text/javascript" src="script.js"></script>
+  <title>А.5.28.7. rdsFORMShowModalServ &ndash; открыть окно с расширенной функцией обратного вызова</title>
+</head><body onload="DocLoad()">
+<div class="pageheader"><span class="off"><b>Текущий раздел:</b></span>
+<div class="int"><p id="top"><a href="../index.htm">Описания RDS</a></p>
+<div class="level"><p><a href="app_index.htm">Приложения</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a">Приложение А. Функции, константы и структуры RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5">А.5. Сервисные функции RDS</a></p>
+<div class="level"><p><a href="app_index.htm#light_htm:app_a_5_28">А.5.28. Вспомогательный объект для работы с модальными окнами</a></p>
+<div class="level"><p>А.5.28.7. <span class="cpp">rdsFORMShowModalServ</span> &ndash; открыть окно с расширенной функцией обратного вызова</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<div class="topnav"><span class="off"><b>Навигация:</b></span>
+<div class="left">
+<span class="button"><a href="rdsFORMShowModalEx.htm" title="Предыдущий параграф" id="pgup">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_FORM_CLEAR.htm" title="Следующий параграф" id="pgdn">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsFORMShowModalServ">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+
+<div class="text">
+<h1 class="off">Приложения</h1>
+<h2 class="off">Приложение А. Функции, константы и структуры RDS</h2>
+<h3 class="off">А.5. Сервисные функции RDS</h3>
+<h4 class="off">А.5.28. Вспомогательный объект для работы с модальными окнами</h4>
+<h5>А.5.28.7. <span class="cpp">rdsFORMShowModalServ</span> &ndash; открыть окно с расширенной функцией обратного вызова</h5>
+
+
+<p>Функция <span class="cpp">rdsFORMShowModalServ</span> открывает модальное окно, описанное указанным
+<a href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">вспомогательным объектом</a>, и не возвращает управления
+вызвавшей программе до закрытия окна. В ответ на различные действия, выполняемые пользователем
+в окне, вызывается указанная в параметрах функция.</p>
+
+<pre class="cpp">  <a class="hidden" href="app_ids.htm#light_ref11" title="Логический тип Windows API">BOOL</a> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> rdsFORMShowModalServ(
+      <a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> Win,        <span class="rem">// Объект</span>
+      RDS_VHoFsfd ServFunc    <span class="rem">// Функция реакции</span>
+  );</pre>
+
+<p class="apphdr">Тип указателя на эту функцию</p>
+<p><span class="cpp">RDS_BHoCb6</span></p>
+
+<p class="apphdr">Параметры</p>
+
+<dl>
+  <dt><span class="cpp">Win</span>&emsp;(<span class="cpp"><i><a href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a></i></span>)</dt>
+  <dd>Идентификатор вспомогательного объекта для работы с модальным окном,
+  ранее созданного функцией <span class="cpp"><a href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a></span>.</dd>
+
+  <dt><span class="cpp">ServFunc</span>&emsp;(<span class="cpp"><i>указатель на функцию: RDS_VHoFsfd</i></span>)</dt>
+  <dd>Указатель на функцию, которую нужно вызывать в ответ на действия в окне, или <span class="cpp">NULL</span>,
+  если такая функция не нужна. Функция должна иметь следующий вид:<br />
+  <pre class="cpp">  <span class="kw">void</span> <a class="hidden" href="app_ids.htm#light_ref24" title="Тип вызова сервисных функций">RDSCALL</a> <i>имя_функции</i>(<a class="hidden" href="app_ids.htm#light_ref6" title="Идентификатор вспомогательного объекта">RDS_HOBJECT</a> win,<a class="hidden" href="RDS_FORMSERVFUNCDATA.htm#ref2" title="Указатель на RDS_FORMSERVFUNCDATA">RDS_PFORMSERVFUNCDATA</a> pdata);</pre>
+  В параметре <span class="cpp">win</span> этой функции передается идентификатор вспомогательного объекта,
+  которому принадлежит окно, а в параметре <span class="cpp">pdata</span> &ndash; указатель на структуру
+  <span class="cpp"><a href="RDS_FORMSERVFUNCDATA.htm#ref1" title="Структура RDS_FORMSERVFUNCDATA">RDS_FORMSERVFUNCDATA</a></span>, описывающую произошедшее событие.
+  </dd>
+</dl>
+
+<p class="apphdr">Возвращаемое значение</p>
+<p><span class="cpp">TRUE</span> &ndash; пользователь закрыл окно кнопкой &laquo;<span class="menu">OK</span>&raquo;,
+<span class="cpp">FALSE</span> &ndash; кнопкой &laquo;<span class="menu">Отмена</span>&raquo;.</p>
+
+<p class="apphdr">Примечания</p>
+<p>Эта функция открывает окно, описанное объектом <span class="cpp">Win</span>, и ждет, пока пользователь
+не закроет его. Пользователь может изменить любые поля, ввод в которые не запрещен. Если в параметре
+<span class="cpp">ServFunc</span> передан указатель на функцию обратного вызова, при различных событиях в
+окне эта функция будет автоматически вызываться. В функцию обратного вызова передается идентификатор объекта-окна
+и указатель на структуру <span class="cpp">RDS_FORMSERVFUNCDATA</span>, в полях которой содержится информация
+о произошедшем событии, идентификатор поля ввода, с которым связано это событие и другая необходимая информация.
+На данный момент поддерживается реакция на три события: изменение значения поля ввода, нажатие кнопки
+(для полей типа <span class="cpp"><a href="app_a_fields.htm#light_ref1" title="RDS_FORMCTRL_BUTTON">RDS_FORMCTRL_BUTTON</a></span>) и программное рисование (для полей типа
+<span class="cpp"><a href="app_a_fields.htm#light_ref16" title="RDS_FORMCTRL_PAINTBOX">RDS_FORMCTRL_PAINTBOX</a></span>). Реагировать на нажатия кнопок и программно рисовать изображения
+в окне можно, только если окно открыто функцией <span class="cpp">rdsFORMShowModalServ</span>, поскольку только
+в ее функции обратного вызова предусмотрена реакция на такие события.</p>
+
+<p class="apphdr">Пример</p>
+<p>Пример использования функции <span class="cpp">rdsFORMShowModalServ</span> приведен в
+<a href="pm_2_7_3.htm" title="&sect;2.7.3. Расширенные возможности функции обратного вызова">&sect;2.7.3 руководства программиста</a>.</p>
+
+<p class="apphdr">См. также</p>
+<p class="seealso"><span class="cpp"><a href="rdsFORMCreate.htm" title="А.5.28.1. rdsFORMCreate &ndash; создать объект для работы с окном">rdsFORMCreate</a></span>,
+<span class="cpp"><a href="RDS_FORMSERVFUNCDATA.htm#ref1" title="Структура RDS_FORMSERVFUNCDATA">RDS_FORMSERVFUNCDATA</a></span>,
+<span class="cpp"><a href="rdsFORMAddEdit.htm" title="А.5.28.2. rdsFORMAddEdit &ndash; добавить поле ввода">rdsFORMAddEdit</a></span>,
+<span class="cpp"><a href="rdsFORMAddTab.htm" title="А.5.28.4. rdsFORMAddTab &ndash; добавить вкладку">rdsFORMAddTab</a></span>,
+<span class="cpp"><a href="rdsFORMShowModalEx.htm" title="А.5.28.6. rdsFORMShowModalEx &ndash; открыть окно с функцией обратного вызова">rdsFORMShowModalEx</a></span>,
+<span class="cpp"><a href="RDS_FORM_SHOWMODAL.htm" title="А.5.28.10. Команда RDS_FORM_SHOWMODAL &ndash; открыть окно">RDS_FORM_SHOWMODAL</a></span>.</p>
+
+</div>
+<p style="clear:both; min-height:1em; padding:0px; margin: 0px;"></p><hr class="off" /><div class="bottomnav">
+<div class="left">
+<span class="button"><a href="rdsFORMShowModalEx.htm" title="Предыдущий параграф" id="pgup_f">&lt;&lt;</a></span>
+<span class="button"><a href="RDS_FORM_CLEAR.htm" title="Следующий параграф" id="pgdn_f">&gt;&gt;</a></span>
+<span class="divider"></span>
+<span class="button"><a href="app_index.htm#light_htm:rdsFORMShowModalServ">Оглавление</a></span>
+<span class="button"><a href="alpha.htm">Указатель</a></span>
+</div>
+</div>
+</body>
+</html>
